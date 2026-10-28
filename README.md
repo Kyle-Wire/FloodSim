@@ -120,6 +120,31 @@ D8 flow directions, and every cell whose flow path reaches the area. The search 
 - Surface drainage only: pipes, and water routed around buildings, are not in the trace; in flat urban terrain the
   line is approximate. `npm run test:watershed`.
 
+**Infiltration: Green-Ampt with soil wetness and the water table** (Storm → *Infiltration*, *Soil wetness before the
+storm*, *Water table depth*; `src/soil.js`). The default; *Constant rate by soil group* keeps the old behaviour.
+- **Soil properties from SSURGO:** for each map unit, the largest major component with data ("Urban land" components in
+  urban complexes have none): K = half the most restrictive saturated conductivity in the top 50 cm (Bouwer), porosity,
+  and texture → wetting-front suction (Rawls, Brakensiek & Miller 1983); depth to the seasonal high water table and
+  bedrock. Units without horizons fall back to their hydrologic group's texture, else compacted urban fill.
+- **Green-Ampt:** capacity K·(1 + ψΔθ/F) on each cell's pervious share (streets, roofs and water take none), F the depth
+  infiltrated so far, Δθ = effective porosity × (1 − initial wetness): dry, normal, wet or saturated start. Once the soil
+  holds Δθ × (depth to the water table or bedrock), it takes nothing more (saturation excess), so a shallow water table
+  floods sooner. A water-table depth typed in overrides the survey for every cell.
+- **Groundwater check:** the nearest USGS well with levels since 2000 (Water Data API field measurements) is shown
+  beside the setting; wells can tap deeper aquifers than the water table, so it is a check, not an input.
+- Tracked every step on the GPU (and the CPU solver); ponded infiltration matches the analytic Green-Ampt solution to
+  0.3 %, GPU vs CPU to 1e-7. Ellicott City: 33 of 35 units with data, K 1.7–42 mm/hr, water table 0.1–1.5 m on the
+  floodplain. `npm run test:soil`.
+
+**Scour potential** (View → *Peak over the run* → *Scour*; `src/scour.js`). Every step, bed shear τ = ρg·n²·v²/h^⅓ per
+cell, its excess over what the ground resists, and an indicative scour depth from the excess-shear law
+ε = k_d(τ − τc), k_d = 0.2·τc^−½ cm³/(N·s) (Hanson & Simon 2001). Critical shear: paved, roofed and water not erodible;
+grass and vegetation 30 Pa (FHWA HEC-15 class D); bare or cropped soil 1 Pa (sand) to 10 Pa (clay) by SSURGO texture.
+Classes by peak shear over critical: none, low (≤ 2×), moderate (2–5×), high (> 5×). Run folders get
+`max_bed_shear.asc`, `scour_class.asc` and `scour_potential_cm.asc`. It is a potential: no sediment supply limit, no
+deposition, and the ground does not change shape during the run (full morphodynamics is a later step). Ellicott City
+with the Patapsco's 10-year flow: 1.8 ha high, mostly floodplain grass along the river, up to 18 cm.
+
 **Upstream river inflow from USGS gauges** (Storm → *Upstream river inflow*; `src/inflow.js`). After a build, every
 mapped river or stream crossing into the area (OSM waterways run downstream) is listed with the USGS discharge gauges
 within ~15 km. A gauge on the same river whose datum sits above the river where it enters is picked as upstream
@@ -414,6 +439,7 @@ Bed elevations are stored relative to the domain minimum for fp32 headroom.
 | Green infrastructure: CPU parity, tiled = untiled | – | 9e-8 m, bit-identical |
 | Flood barriers: overtopping vs CPU, books, tiled = untiled | weir rate within 2 % of C·H^1.5 | 2e-5 m, books 4e-7, bit-identical |
 | Hazard products every step vs CPU (classes, force, duration, arrival) | – | 0 class differences, force 9e-5 kN/m, times exact |
+| Green-Ampt and scour vs CPU (infiltrated volume, shear, scour depth) | ponded GA within 0.3 % of analytic | 1e-7, 1e-4, 3e-4 mm |
 | Subgrid speed mode vs 1 m run, 320 m urban cloudburst (4 m / 8 m) | – | peak depth MAE 2.6 / 5.6 cm, CSI 0.80 / 0.63, 15× / 36× faster |
 
 Full numbers: `tests/results-cpu.json`, `tests/results-gpu.json`.
@@ -432,6 +458,7 @@ node tests/run-subgrid-tests.mjs # subgrid speed mode tables: storage, conveyanc
 node tests/run-watershed-tests.mjs # watersheds: depression filling, D8, upstream trace, outlines, rivers from off the DEM
 node tests/run-calibrate-tests.mjs # calibration: observation import, scoring, sweep plan
 node tests/run-inflow-tests.mjs   # river inflow: LP3, hydrographs, river entries, inflow books, STN marks (--live: a real gauge)
+node tests/run-soil-tests.mjs     # soils: texture classes, SSURGO rows, ponded Green-Ampt vs analytic, water table, aggregation
 # GPU suite in your own browser: npm start, then open http://localhost:8766/tests/gpu-browser.html
 
 # GPU suite in headless Chromium (works with software WebGPU):
@@ -479,6 +506,8 @@ src/subgrid.js        subgrid speed mode: 1 m storage / conveyance tables per ce
 src/watershed.js      watersheds from 3DEP: priority flood, D8, upstream trace, local watershed past a river
 src/calibrate.js      observations (high-water marks, depths, reports, USGS STN), run scoring, parameter sweeps
 src/inflow.js         upstream river inflow: USGS gauges, recorded and design (LP3) hydrographs, entry cells
+src/soil.js           SSURGO soil hydraulics, Green-Ampt parameters per cell (wetness, water table)
+src/scour.js          critical shear by surface, scour-potential classes
 src/gi.js             green infrastructure layers (permeable pavement, rain gardens) and green-roof retention
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy

@@ -19,6 +19,8 @@ export class GPUSolver {
    * axis 1 = between (i, j−1) and (i, j); z = crest (m, absolute; −Infinity = not deployed), C = weir coefficient
    * (m^½/s), ground = ground under the barrier (m, for the hydrostatic load).
    * Every step the solver also tracks the hazard products of src/hazard.js per cell (readHazard).
+   * o.scour: { tauC, n } per cell (src/scour.js): bed shear and scour potential tracked every step (readHazard).
+   * o.ga: Green-Ampt infiltration ({ psiD, fmax, perv } per cell from src/soil.js gaCells; o.infil is then K, cell basis).
    * o.subgrid: a buildSubgrid() model (src/subgrid.js) runs the opt-in speed mode: local inertial on these cells with
    * 1 m storage and conveyance tables. Then o.z is each cell's lowest open ground, U.x is stored volume per cell area,
    * the packed depth is the depth at the lowest point, and readState's hmax is the peak water level (absolute).
@@ -69,6 +71,15 @@ export class GPUSolver {
       const k = j * this.nx + i, c = this.idx(i, j); if (!(o.gi.cap[k] > 0)) continue;
       this.GIh[c * 4] = o.gi.rate[k]; this.GIh[c * 4 + 1] = o.gi.cap[k]; this.GIh[c * 4 + 2] = o.gi.drain[k];
     }
+    // Green-Ampt (o.ga: { psiD, fmax, perv } per interior cell, src/soil.js gaCells; o.infil is then K on the cell basis)
+    this.GAPh = new Float32Array(N * 4); this.hasGA = !!o.ga;
+    if (o.ga) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const k = j * this.nx + i, c = this.idx(i, j); if (this.sinkC[c] || !(o.ga.perv[k] > 0)) continue;
+      this.GAPh.set([o.ga.psiD[k], Math.min(o.ga.fmax[k], 1e6), o.ga.perv[k], 1], c * 4);
+    }
+    // scour (o.scour: { tauC (Pa), n } per interior cell; omitted = no shear tracked)
+    this.TCh = new Float32Array(N * 2); for (let c = 0; c < N; c++) this.TCh[2 * c] = 1e9;
+    if (o.scour) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) { const k = j * this.nx + i, c = this.idx(i, j); this.TCh[2 * c] = Math.min(1e9, o.scour.tauC[k]); this.TCh[2 * c + 1] = o.scour.n[k]; }
     // drainage inlets (o.inlets: interior cell indices k = j*nx+i, unique)
     const ink = o.inlets ? Array.from(o.inlets) : [];
     this.nInlets = ink.length;
@@ -130,8 +141,8 @@ export class GPUSolver {
       INC: mk(this.INCh.byteLength), INQ: mk(this.INCh.length * 4), INX: mk(this.INCh.length * 16), STG: mk(N * 4),
       TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 8), TC: mk(8),
       TA: mk(24, GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
-      GI: mk(N * 16), GS: mk(N * 8),
-      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 32),
+      GI: mk(N * 16), GS: mk(N * 16), GAP: mk(N * 16),
+      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 48), SCR: mk(N * 8),
       SGC: mk(this.sg ? N * CT * 4 : 16), SGF: mk(this.sg ? 2 * N * FT * 4 : 16), EO: mk(2 * (this.nx + this.ny) * 8),
     };
     this.read = {
@@ -148,22 +159,24 @@ export class GPUSolver {
     d.queue.writeBuffer(this.buf.STG, 0, this.STGh);
     d.queue.writeBuffer(this.buf.TS, 0, this.TSh);
     d.queue.writeBuffer(this.buf.GI, 0, this.GIh);
+    d.queue.writeBuffer(this.buf.GAP, 0, this.GAPh);
     d.queue.writeBuffer(this.buf.CR, 0, this.CRh);
     d.queue.writeBuffer(this.buf.BF, 0, this.BFh);
     d.queue.writeBuffer(this.buf.BQ, 0, this.BQh);
     if (this.sg) { d.queue.writeBuffer(this.buf.SGC, 0, this.SGCh); d.queue.writeBuffer(this.buf.SGF, 0, this.SGFh); }
-    const hz = new Float32Array(N * 8); for (let c = 0; c < N; c++) hz[8 * c + 3] = -1; d.queue.writeBuffer(this.buf.HZ, 0, hz);
+    const hz = new Float32Array(N * 12); for (let c = 0; c < N; c++) hz[12 * c + 3] = -1; d.queue.writeBuffer(this.buf.HZ, 0, hz);
+    d.queue.writeBuffer(this.buf.SCR, 0, this.TCh);
     this._writeParams(0);
 
     const mod = d.createShaderModule({ code: KERNELS_WGSL });
     this.module = mod;
     const B = [this.buf.params, this.buf.U, this.buf.U0, this.buf.S, this.buf.W, this.buf.FX, this.buf.FY, this.buf.A, this.buf.DT, this.buf.RED, this.buf.OUT, this.buf.TH, this.buf.RF, this.buf.INC, this.buf.INQ, this.buf.INX, this.buf.STG,
-      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO];
+      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR];
     const uses = {
-      prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
+      prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27, 32], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
       sgPrim: [0, 1, 4, 16, 28], sgFluxX: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgFluxY: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgUpdate: [0, 1, 3, 5, 6, 7, 8, 11],
-      sgHazard: [0, 1, 3, 5, 6, 7, 8, 27, 28], sgDt: [0, 1, 9, 28], sgPack: [0, 1, 5, 6, 10, 28], sgExchange: [0, 1, 8, 13, 14, 15, 28],
-      update: [0, 1, 2, 3, 5, 6, 7, 8, 11], theta: [0, 1, 3, 5, 6, 8, 11], sources: [0, 1, 3, 7, 8, 12, 22, 23],
+      sgHazard: [0, 1, 5, 6, 7, 8, 27, 28, 32], sgDt: [0, 1, 9, 28], sgPack: [0, 1, 5, 6, 10, 28], sgExchange: [0, 1, 8, 13, 14, 15, 28],
+      update: [0, 1, 2, 3, 5, 6, 7, 8, 11], theta: [0, 1, 3, 5, 6, 8, 11], sources: [0, 1, 3, 7, 8, 12, 22, 23, 31],
       dtReduce: [0, 1, 3, 9], dtFinal: [0, 8, 9], pack: [0, 1, 10], exchange: [0, 1, 8, 13, 14, 15],
       tileClear: [0, 17, 20], tileWet: [0, 1, 17], tileList: [0, 17, 18, 19, 20], tileArgs: [20, 21],
     };
@@ -331,13 +344,15 @@ export class GPUSolver {
   /** Hazard products per interior cell (k = j·nx + i), tracked every step: peak d·v (m²/s), peak force (kN/m),
    *  duration deeper than 15 cm (s), arrival (s; NaN = never), and the worst class per standard of src/hazard.js. */
   async readHazard() {
-    const a = await this._readBuffer(this.buf.HZ, this.N * 32), n = this.nx * this.ny;
+    const a = await this._readBuffer(this.buf.HZ, this.N * 48), n = this.nx * this.ny;
     const o = { dv: new Float32Array(n), force: new Float32Array(n), duration: new Float32Array(n), arrival: new Float32Array(n),
+      shear: new Float32Array(n), excess: new Float32Array(n), erosion: new Float32Array(n), tShear: new Float32Array(n),
       cls: { arr: new Uint8Array(n), defra: new Uint8Array(n), defraUrban: new Uint8Array(n) } };
     for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
-      const k = j * this.nx + i, q = 8 * this.idx(i, j);
+      const k = j * this.nx + i, q = 12 * this.idx(i, j);
       o.dv[k] = a[q]; o.force[k] = a[q + 1]; o.duration[k] = a[q + 2]; o.arrival[k] = a[q + 3] >= 0 ? a[q + 3] : NaN;
       o.cls.arr[k] = a[q + 4]; o.cls.defra[k] = a[q + 5]; o.cls.defraUrban[k] = a[q + 6];
+      o.shear[k] = a[q + 8]; o.excess[k] = a[q + 9]; o.erosion[k] = a[q + 10]; o.tShear[k] = a[q + 11];
     }
     return o;
   }
@@ -438,12 +453,12 @@ export class GPUSolver {
     // one submission: copy depths, totals, pending inlet exchange and GI stores, then restart the totals on the GPU, so
     // the snapshot is from one moment and steps queued by a concurrent frame are neither lost nor counted twice
     const nE = 2 * (this.nx + this.ny);
-    const parts = [[this.buf.U, this.N * 16], [this.buf.A, this.N * 16], [this.buf.EO, nE * 8], ...(this.nInlets ? [[this.buf.INX, this.nInlets * 16]] : []), ...(this.hasGI ? [[this.buf.GS, this.N * 8]] : [])];
+    const parts = [[this.buf.U, this.N * 16], [this.buf.A, this.N * 16], [this.buf.EO, nE * 8], ...(this.nInlets ? [[this.buf.INX, this.nInlets * 16]] : []), ...(this.hasGI ? [[this.buf.GS, this.N * 16]] : [])];
     const [U, Ab, E, X, G] = await this._snapshot(parts, (pass) => this._dispatch(pass, this.k.resetTotals, Math.ceil(this.NX / 8), Math.ceil(this.NY / 8)), (enc) => enc.clearBuffer(this.buf.EO, 0, nE * 8));
     for (let m = 0; m < nE; m++) (this.acc ??= { inf: 0, out: 0, clip: 0 }).out += E[2 * m] - E[2 * m + 1]; // edge outflow, compensated
     let pending = 0; if (this.nInlets) for (let m = 0; m < this.nInlets; m++) pending += X[4 * m] - X[4 * m + 2];
     const exchanged = this.vol.exchanged + pending;
-    let giStored = 0; if (this.hasGI) { const GG = this.nInlets ? G : X; for (let c = 0; c < this.N; c++) giStored += GG[2 * c]; giStored *= this.dx * this.dx; }
+    let giStored = 0; if (this.hasGI) { const GG = this.nInlets ? G : X; for (let c = 0; c < this.N; c++) giStored += GG[4 * c]; giStored *= this.dx * this.dx; }
     const n = this.nx * this.ny, h = new Float64Array(n), hu = new Float64Array(n), hv = new Float64Array(n), hmax = new Float64Array(n);
     // per-cell infiltration / outflow / clipping totals are fp32 sums of tiny increments: fold them into fp64 books here
     // and restart them from zero, so a GPU total never holds more than the water since the last read

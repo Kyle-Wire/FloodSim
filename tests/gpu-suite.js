@@ -283,5 +283,30 @@ export async function runGpuSuite(device, log = console.log) {
     log(`subgrid water-level boundary: at rest boundary flux ${restOut.toExponential(1)} m³;  +0.8 m: inflow ${inflow.toFixed(0)} of ${expected.toFixed(0)} m³ (${(100 * (inflow / expected - 1)).toFixed(1)}%, a seiche of ~1% remains)  mass rel ${s.mass.rel.toExponential(1)}`);
   }
 
+  // Green-Ampt infiltration and scour, GPU vs CPU: rain on a slope with two soils (a shallow water table on one), half
+  // grass (30 Pa) and half bare loam (2 Pa); infiltrated volume, depths, peak shear and scour potential
+  {
+    const nx = 60, ny = 30, dx = 2, N = nx * ny, z = new Float64Array(N), K = new Float64Array(N), psiD = new Float64Array(N), fmax = new Float64Array(N), perv = new Float64Array(N);
+    const tauC = new Float32Array(N), nn = new Float32Array(N);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const k = j * nx + i; z[k] = 5 - 0.03 * i + 0.06 * Math.abs(j - 14.5); // a valley along j = 14.5 gathers the runoff
+      K[k] = i < 30 ? 3e-6 : 1e-6; psiD[k] = i < 30 ? 0.03 : 0.08; fmax[k] = j < 15 ? 0.02 : 1e3; perv[k] = 0.8;
+      tauC[k] = i < 30 ? 30 : 2; nn[k] = 0.04; // grass upslope, bare loam downslope
+    }
+    const opts = { nx, ny, dx, z, manning: 0.04, ga: { psiD, fmax, perv }, scour: { tauC, n: nn }, bc: { west: 'wall', east: 'outflow', south: 'wall', north: 'wall' } };
+    const g = new GPUSolver(device, { ...opts, infil: K }), c = new CPUSolver({ ...opts, hdry: g.hdry });
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) c.infil[c.idx(i, j)] = K[j * nx + i];
+    g.setDepth(() => 0); c.setDepth(() => 0); g.rainRate = c.rainRate = 120 * MMHR;
+    await g.advance(1800); c.run(1800); g.rainRate = c.rainRate = 0; await g.advance(2700); c.run(2700);
+    const s = await g.readState(), G = await g.readHazard(), C = c.readHazard(), ch = c.field('h'); g.destroy();
+    let dh = 0, dShear = 0, dEro = 0, eroMax = 0; for (let k = 0; k < N; k++) {
+      dh = Math.max(dh, Math.abs(ch[k] - s.h[k])); dShear = Math.max(dShear, Math.abs(C.shear[k] - G.shear[k]) / Math.max(1, C.shear[k]));
+      dEro = Math.max(dEro, Math.abs(C.erosion[k] - G.erosion[k])); eroMax = Math.max(eroMax, C.erosion[k]);
+    }
+    const infCpu = c.vol.infil;
+    results.greenAmptScour = { infilGpu: s.mass.infil, infilCpu: infCpu, infilRel: Math.abs(s.mass.infil / infCpu - 1), maxDiffH: dh, shearRel: dShear, erosionDiff: dEro, erosionMax: eroMax, massRel: s.mass.rel };
+    log(`Green-Ampt + scour: infiltrated gpu/cpu ${s.mass.infil.toFixed(1)}/${infCpu.toFixed(1)} m³  max|Δh| ${dh.toExponential(1)} m  peak shear rel diff ${dShear.toExponential(1)}  scour potential ≤ ${(eroMax * 100).toFixed(2)} cm, max|Δ| ${(dEro * 1000).toFixed(3)} mm  mass rel ${s.mass.rel.toExponential(1)}`);
+  }
+
   return results;
 }

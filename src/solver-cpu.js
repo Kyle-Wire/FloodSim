@@ -61,6 +61,8 @@ export class CPUSolver {
     this.infil = new Float64Array(N);  // infiltration capacity, m/s
     // green infrastructure: extra infiltration into a store of capacity giCap (m) that drains at giDrain (m/s)
     this.giRate = new Float64Array(N); this.giCap = new Float64Array(N); this.giDrain = new Float64Array(N); this.giStore = new Float64Array(N);
+    // Green-Ampt (o.ga, as GPUSolver): ψΔθ, soil storage to the water table, pervious share; F = depth infiltrated
+    this.gaPsiD = new Float64Array(N); this.gaFmax = new Float64Array(N); this.gaPerv = new Float64Array(N); this.gaF = new Float64Array(N);
 
     // primitive + stage buffers
     this.Hp = new Float64Array(N); this.Ep = new Float64Array(N);
@@ -80,6 +82,7 @@ export class CPUSolver {
       this.n[c] = typeof o.manning === 'number' ? o.manning : (o.manning ? o.manning[k] : 0);
       this.M[c] = o.mask ? o.mask[k] : 1;
       if (o.gi && o.gi.cap[k] > 0) { this.giRate[c] = o.gi.rate[k]; this.giCap[c] = o.gi.cap[k]; this.giDrain[c] = o.gi.drain[k]; }
+      if (o.ga && o.ga.perv[k] > 0) { this.gaPsiD[c] = o.ga.psiD[k]; this.gaFmax[c] = Math.min(o.ga.fmax[k], 1e6); this.gaPerv[c] = o.ga.perv[k]; }
     }
     // flood barriers: crest (−Infinity = none) and weir coefficient on x-faces (stored at the right cell) and y-faces
     this.CX = new Float64Array(N).fill(-Infinity); this.CY = new Float64Array(N).fill(-Infinity);
@@ -87,7 +90,7 @@ export class CPUSolver {
     this.crest = (o.crest ?? []).map(f => ({ ...f, c: nIn(f.i, f.j) }));
     const nb = this.crest.length, F64 = (v = 0) => new Float64Array(nb).fill(v);
     this.bar = { plus: F64(), minus: F64(), peak: F64(), level: F64(-Infinity), load: F64(), tPeak: F64(), tLevel: F64(), tLoad: F64(), tOver: F64(NaN) };
-    this.hz = new HazardTracker(o.nx * o.ny);
+    this.hz = new HazardTracker(o.nx * o.ny); this.scour = o.scour ?? null;
     this.setCrestLevels(this.crest.map(f => f.z));
     this.t = 0; this.steps = 0;
     this.vol = { rain: 0, infil: 0, outflow: 0, clipped: 0, initial: 0 };
@@ -353,7 +356,10 @@ export class CPUSolver {
         hu[c] /= k; hv[c] /= k;
       }
       const r = r0 * (rainField ? rainField[c] : 1) * dt;
-      let inf = Math.min(infil[c] * dt, d + r);
+      let cap = infil[c] * dt;
+      if (this.gaPerv[c] > 0) cap = this.gaF[c] >= this.gaFmax[c] ? 0 : Math.min(cap * (1 + this.gaPsiD[c] / Math.max(this.gaF[c], 1e-3)), (this.gaFmax[c] - this.gaF[c]) * this.gaPerv[c]);
+      let inf = Math.min(cap, d + r);
+      if (this.gaPerv[c] > 0) this.gaF[c] += inf / this.gaPerv[c];
       if (this.giCap[c] > 0) {
         const st = Math.max(0, this.giStore[c] - this.giDrain[c] * dt), g2 = Math.min(this.giRate[c] * dt, d + r - inf, this.giCap[c] - st);
         this.giStore[c] = st + Math.max(0, g2); if (g2 > 0) inf += g2;
@@ -366,7 +372,7 @@ export class CPUSolver {
     this.t += dt; this.steps++;
     for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) { // hazard products, as the GPU hazard kernel
       const c = this.idx(i, j); if (!M[c]) continue;
-      const d = h[c]; this.hz.cell(j * this.nx + i, d, d >= VCUT ? Math.hypot(hu[c], hv[c]) / d : 0, this.t, dt);
+      const d = h[c], k = j * this.nx + i; this.hz.cell(k, d, d >= VCUT ? Math.hypot(hu[c], hv[c]) / d : 0, this.t, dt, this.scour ? this.scour.tauC[k] : Infinity, this.scour ? this.scour.n[k] : 0);
     }
     return dt;
   }

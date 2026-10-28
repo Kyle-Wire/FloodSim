@@ -2,6 +2,7 @@
 // Every fetch goes through `fetcher(url, {method, body, contentType})` → Response, so the browser can use the
 // caching proxy (server/server.mjs) and tests can stub it. Rasters come back row-major, row 0 = north.
 import { toUTM } from './geo.js';
+import { soilPropsQuery, soilParams } from './soil.js';
 
 const DEP = 'https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer';
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
@@ -204,7 +205,16 @@ export async function fetchSoils([w, s, e, n], fetcher) {
   const r = await fetcher(SDA, { method: 'POST', body: JSON.stringify({ query, format: 'JSON+COLUMNNAME' }), contentType: 'application/json' });
   if (!r.ok) throw new Error(`Soil Data Access request failed (${r.status})`);
   const t = (await r.json()).Table || [];
-  return t.slice(1).map(([mukey, hsg, name, wktOut]) => ({ mukey, hsg, name, rings: parseWKTRings(wktOut) }));
+  const units = t.slice(1).map(([mukey, hsg, name, wktOut]) => ({ mukey, hsg, name, rings: parseWKTRings(wktOut) }));
+  // Green-Ampt properties (conductivity, porosity, texture, water table) for the same map units; optional
+  try {
+    const keys = [...new Set(units.map(u => u.mukey))];
+    if (keys.length) {
+      const q = await fetcher(SDA, { method: 'POST', body: JSON.stringify({ query: soilPropsQuery(keys), format: 'JSON+COLUMNNAME' }), contentType: 'application/json' });
+      if (q.ok) { const props = soilParams((await q.json()).Table || [[]]); for (const u of units) u.props = props.get(String(u.mukey)) ?? null; }
+    }
+  } catch { /* the hydrologic group alone still drives infiltration */ }
+  return units;
 }
 
 /** All rings of a WKT POLYGON / MULTIPOLYGON / GEOMETRYCOLLECTION as [[lon,lat],...] (even-odd fill). */

@@ -1,6 +1,8 @@
 // Terrain conditioning and model assembly on the fine (DEM-resolution) grid, then coarsening to the solver grid.
 // All arrays are row-major with row 0 = north. Units: metres, seconds.
 import { toCells } from './ingest.js';
+import { hsgParams, URBAN_FILL } from './soil.js';
+import { tauFor } from './scour.js';
 
 const MMHR = 1 / 1000 / 3600;
 
@@ -62,6 +64,7 @@ export function buildFine(fine, dem, osm, nlcd, soils, opts = {}) {
   const z = Float32Array.from(dem.z);
   const bld = new Uint8Array(N), bldH = new Float32Array(N), road = new Uint8Array(N);
   const hsg = new Uint8Array(N); // 0 unknown/urban, 1..4 = A..D
+  const unit = new Int16Array(N).fill(-1); // soil map unit index per pixel (Green-Ampt properties)
 
   for (const b of osm.buildings) {
     const rings = b.rings.map(r => toCells(fine, r)), h = b.height ?? 0;
@@ -71,7 +74,8 @@ export function buildFine(fine, dem, osm, nlcd, soils, opts = {}) {
   for (const s of soils) {
     const g = (s.hsg || '').toUpperCase(), letter = g.includes('/') ? g.split('/')[1] : g; // dual groups: undrained (conservative)
     const code = { A: 1, B: 2, C: 3, D: 4 }[letter[0]] || 0;
-    if (code) fillRings(s.rings.map(r => toCells(fine, r)), nx, ny, (k) => { hsg[k] = code; });
+    const si = soils.indexOf(s);
+    fillRings(s.rings.map(r => toCells(fine, r)), nx, ny, (k) => { if (code) hsg[k] = code; unit[k] = si; });
   }
 
   const curb = opts.curb ?? 0; // m; burn streets below their lots so they act as channels
@@ -85,9 +89,21 @@ export function buildFine(fine, dem, osm, nlcd, soils, opts = {}) {
     const base = hsg[k] ? HSG_RATE['ABCD'[hsg[k] - 1]] : URBAN_FILL_RATE;
     infil[k] = SATURATED.has(c) ? 0 : base * (1 - (IMPERVIOUS[c] ?? 0)) * MMHR;
   }
+  // Green-Ampt per pixel: the survey's properties where it has them, else the hydrologic group, else compacted fill;
+  // perv = the share of the pixel that takes water in (0 on streets, buildings, water and wetlands)
+  const ga = { K: new Float32Array(N), psi: new Float32Array(N), thetaE: new Float32Array(N), depth: new Float32Array(N) }, perv = new Float32Array(N), tauC = new Float32Array(N);
+  const params = soils.map(s => (s.props?.K > 0 ? s.props : null));
+  for (let k = 0; k < N; k++) {
+    const c = nlcd ? nlcd[k] : 0;
+    const p = (unit[k] >= 0 && params[unit[k]]) || (hsg[k] ? hsgParams('ABCD'[hsg[k] - 1]) : URBAN_FILL), u = unit[k] >= 0 ? soils[unit[k]].props : null;
+    const lim = [u?.wt, u?.bedrock].filter(v => v != null && v >= 0);
+    ga.K[k] = p.K; ga.psi[k] = p.psi; ga.thetaE[k] = p.thetaE; ga.depth[k] = lim.length ? Math.max(0.05, Math.min(...lim)) : Infinity;
+    perv[k] = bld[k] || road[k] || SATURATED.has(c) ? 0 : 1 - (IMPERVIOUS[c] ?? 0);
+    tauC[k] = tauFor(perv[k], c, p.texture); // critical shear for the scour map (src/scour.js)
+  }
   const A = fine.dx * fine.dx;
   return {
-    nx, ny, dx: fine.dx, z, bld, bldH, road, cls: nlcd, manning, infil, hsg,
+    nx, ny, dx: fine.dx, z, bld, bldH, road, cls: nlcd, manning, infil, hsg, ga, perv, tauC, soilUnit: unit,
     stats: { buildings: osm.buildings.length, roads: osm.roads.length, soilUnits: soils.length, buildingArea: bldCells * A, roadArea: roadCells * A, curb },
   };
 }

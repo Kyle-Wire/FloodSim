@@ -63,6 +63,9 @@ STANDARDS.defraUrban.classes = STANDARDS.defra.classes;
 const KEYS = Object.keys(STANDARDS);
 const hrClass = (hr) => (hr < 0.75 ? 1 : hr < 1.25 ? 2 : hr < 2 ? 3 : 4);
 
+/** Bed shear stress (Pa) under Manning friction: ρg·n²·v²/h^⅓. */
+export const shearStress = (d, v, n) => RHO * G * n * n * v * v / Math.cbrt(d);
+
 /** Momentum flux per metre of width (kN/m) for depth d (m) and speed v (m/s). */
 export const forcePerWidth = (d, v) => RHO * (d * v * v + 0.5 * G * d * d) / 1000;
 
@@ -73,6 +76,7 @@ export class HazardTracker {
     this.dv = new Float32Array(n); this.force = new Float32Array(n);
     this.duration = new Float32Array(n); this.arrival = new Float32Array(n).fill(NaN);
     this.cls = Object.fromEntries(Object.keys(STANDARDS).map(k => [k, new Uint8Array(n)]));
+    this.shear = new Float32Array(n); this.excess = new Float32Array(n); this.erosion = new Float32Array(n); this.tShear = new Float32Array(n);
   }
   /** Packed [depth, speed] per cell at time t (s), for a host-side tracker. Duration counts each interval at the state
    *  seen at its end. */
@@ -80,17 +84,22 @@ export class HazardTracker {
     const dt = this.t == null ? 0 : Math.max(0, t - this.t); this.t = t;
     for (let k = 0; k < this.n; k++) { const d = out[2 * k]; if (d >= WET) this.cell(k, d, d >= VCUT ? out[2 * k + 1] : 0, t, dt); }
   }
-  /** One cell after a step ending at t of length dt: depth d, speed v (already 0 under VCUT). */
-  cell(k, d, v, t, dt) {
+  /** One cell after a step ending at t of length dt: depth d, speed v (already 0 under VCUT); tauC (Pa) and n for scour. */
+  cell(k, d, v, t, dt, tauC = Infinity, n = 0) {
     if (!(d >= WET)) return;
     const dv = d * v; if (dv > this.dv[k]) this.dv[k] = dv;
     const f = forcePerWidth(d, v); if (f > this.force[k]) this.force[k] = f;
     if (d > this.thr) { this.duration[k] += dt; if (Number.isNaN(this.arrival[k])) this.arrival[k] = t; }
     for (const s of KEYS) { const c = STANDARDS[s].classify(d, v); if (c > this.cls[s][k]) this.cls[s][k] = c; }
+    if (d >= VCUT && n > 0) { // bed shear and scour, as the GPU kernel
+      const tau = shearStress(d, v, n);
+      if (tau > this.shear[k]) { this.shear[k] = tau; this.tShear[k] = t; }
+      if (tau > tauC) { this.excess[k] += (tau - tauC) * dt; this.erosion[k] += 0.2e-6 / Math.sqrt(tauC) * (tau - tauC) * dt; }
+    }
     this.t = t;
   }
   /** Take a solver's every-step results (GPUSolver.readHazard / CPUSolver.readHazard) at time t. */
-  load(r, t) { this.dv = r.dv; this.force = r.force; this.duration = r.duration; this.arrival = r.arrival; this.cls = r.cls; this.t = t; }
+  load(r, t) { Object.assign(this, { dv: r.dv, force: r.force, duration: r.duration, arrival: r.arrival, cls: r.cls, shear: r.shear ?? this.shear, excess: r.excess ?? this.excess, erosion: r.erosion ?? this.erosion, tShear: r.tShear ?? this.tShear, t }); }
   /** Area (m²) in each class of a standard, from the worst class each cell reached; `keep(k)` filters cells, and
    *  `areaOf(k)` replaces the cell area (the subgrid mode counts only the 1 m pixels that got wet). */
   classAreas(std, cellArea, keep = () => true, areaOf = null) {

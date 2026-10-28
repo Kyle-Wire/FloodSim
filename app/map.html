@@ -342,6 +342,12 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <p class="note" id="stormSummary">Build a model to load Atlas 14 estimates for the site.</p>
       <div class="field"><label for="tail">Keep running after the storm</label><output id="tailOut"></output><input type="range" id="tail" min="0" max="180" step="5" value="30"></div>
       <div class="field"><label for="roof">Roof runoff routed to ground</label><output id="roofOut"></output><input type="range" id="roof" min="0" max="100" step="5" value="100"></div>
+      <div class="field"><label for="infilModel">Infiltration</label>
+        <select id="infilModel"><option value="ga">Green-Ampt from the soil survey</option><option value="const">Constant rate by soil group</option></select></div>
+      <div class="field"><label for="wetness">Soil wetness before the storm</label>
+        <select id="wetness"><option value="dry">Dry</option><option value="normal" selected>Normal</option><option value="wet">Wet (rain in the days before)</option><option value="saturated">Saturated</option></select></div>
+      <div class="field"><label for="wtDepth">Water table depth, m (blank = soil survey)</label><input id="wtDepth" type="number" min="0" step="0.1" placeholder="soil survey" style="width:7em"></div>
+      <p class="note" id="wtNote"></p>
       <p class="note">Storm settings lock once a run starts; Reset to change them. Roof rain goes to the open cells around each building, except the share whose downspouts connect to the sewer (Drainage).</p>
       <div id="inflowBox" hidden>
         <p class="vlabel">Upstream river inflow (USGS gauges)</p>
@@ -416,7 +422,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <p class="vlabel">Peak over the run</p>
       <div class="seg vseg" id="viewSeg2">
         <button data-v="max" title="Maximum depth">Depth</button><button data-v="peakHaz" title="Worst hazard class reached (depth and velocity at the same moment)">Hazard</button>
-        <button data-v="force" title="Peak force per metre of width, ρ(h·v² + ½g·h²)">Force</button><button data-v="duration" title="Time deeper than 15 cm">Duration</button><button data-v="arrival" title="When it first got 15 cm deep">Arrival</button>
+        <button data-v="force" title="Peak force per metre of width, ρ(h·v² + ½g·h²)">Force</button><button data-v="duration" title="Time deeper than 15 cm">Duration</button><button data-v="arrival" title="When it first got 15 cm deep">Arrival</button><button data-v="scour" title="Peak bed shear against what the ground resists (scour potential)">Scour</button>
       </div>
       <div class="field"><label for="hazStd">Hazard classes</label>
         <select id="hazStd"><option value="arr">ARR 2019 / AIDR H1–H6 (depth, velocity, d·v limits)</option><option value="defra">UK FD2320, HR = d(v + 0.5)</option><option value="defraUrban">UK FD2320 with urban debris factor</option></select></div>

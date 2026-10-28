@@ -37,13 +37,17 @@ override STAGE: u32 = 0u;
 @group(0) @binding(21) var<storage, read_write> TA: array<u32>;         // indirect dispatch args: (n1, 1, 1), (n2, 1, 1)
 // green infrastructure: per-cell GI infiltration into a store of fixed capacity that drains to native soil
 @group(0) @binding(22) var<storage, read> GI: array<vec4f>;          // rate (m/s), capacity (m), drain (m/s), unused; capacity 0 = no GI
-@group(0) @binding(23) var<storage, read_write> GS: array<vec2f>;   // stored (m), time of last update (s)
+@group(0) @binding(23) var<storage, read_write> GS: array<vec4f>;   // GI stored (m), time of last update (s), Green-Ampt depth infiltrated F (m per pervious area), -
+// Green-Ampt (src/soil.js): ψ·Δθ (m), soil storage to the water table / bedrock (m per pervious area), pervious share, on
+@group(0) @binding(31) var<storage, read> GAP: array<vec4f>;
 // flood barriers on cell faces: crest (m, -1e30 = none) and weir coefficient, for the x-face west of the cell and the
 // y-face below it; the barrier faces in a list, and per face the volume over in each direction plus its peak rate
 @group(0) @binding(24) var<storage, read> CR: array<vec4f>;          // x crest, x weir C, y crest, y weir C
 @group(0) @binding(25) var<storage, read> BF: array<u32>;            // padded cell index x 2 + (1 for a y-face)
 @group(0) @binding(26) var<storage, read_write> BQ: array<vec4f>;  // [3m] volume over +, −, Kahan +, −; [3m+1] peak |q| (m²/s), highest water, peak load (kN/m), ground; [3m+2] their times, first overtopping (−1 = never)
-@group(0) @binding(27) var<storage, read_write> HZ: array<vec4f>;  // [2c] peak d·v, peak force, time deeper than 15 cm, arrival (−1 = never); [2c+1] worst class ARR, FD2320, FD2320 urban
+@group(0) @binding(27) var<storage, read_write> HZ: array<vec4f>;  // [3c] peak d·v, peak force, time deeper than 15 cm, arrival (−1 = never); [3c+1] worst class ARR, FD2320, FD2320 urban;
+                                                                    // [3c+2] peak bed shear (Pa), excess shear × time (Pa·s), potential erosion (m), time of peak shear
+@group(0) @binding(32) var<storage, read> SCR: array<vec2f>;       // scour: critical shear of the erodible ground (Pa; 1e9 = paved / not erodible), Manning n
 override LIST: u32 = 1u;
 override TRACKMAX: bool = true; // tiled entry points: 1 = update list (wet ⊕ 1), 2 = flux list (wet ⊕ 2)
 const TILE: u32 = 8u;
@@ -327,12 +331,22 @@ fn hazardAt(x: u32, y: u32) {
   hzRecord(c, d, v, dt);
 }
 fn hzRecord(c: i32, d: f32, v: f32, dt: f32) {
-  var h0 = HZ[2 * c]; var h1 = HZ[2 * c + 1];
+  var h0 = HZ[3 * c]; var h1 = HZ[3 * c + 1];
   h0.x = max(h0.x, d * v); h0.y = max(h0.y, d * v * v + 0.5 * P.g * d * d);
   if (d > HZ_THR) { h0.z += dt; if (h0.w < 0.0) { h0.w = DT[1]; } }
   let hr = d * (v + 0.5);
   h1.x = max(h1.x, arrClass(d, v)); h1.y = max(h1.y, hrClass(hr)); h1.z = max(h1.z, hrClass(hr + select(0.0, 1.0, d > 0.25)));
-  HZ[2 * c] = h0; HZ[2 * c + 1] = h1;
+  HZ[3 * c] = h0; HZ[3 * c + 1] = h1;
+  // bed shear τ = ρg·n²·v²/h^⅓ (Manning); over the ground's critical shear it scours at ε = k_d·(τ − τc), with the
+  // erodibility k_d = 0.2·τc^−½ cm³/(N·s) (Hanson & Simon 2001). Indicative depths: no supply limit, no deposition.
+  let tc = SCR[c];
+  if (d >= HZ_VCUT && tc.y > 0.0) {
+    let tau = 1000.0 * P.g * tc.y * tc.y * v * v / pow(d, 1.0 / 3.0);
+    var h2 = HZ[3 * c + 2];
+    if (tau > h2.x) { h2.x = tau; h2.w = DT[1]; }
+    if (tau > tc.x) { h2.y += (tau - tc.x) * dt; h2.z += 0.2e-6 * inverseSqrt(tc.x) * (tau - tc.x) * dt; }
+    HZ[3 * c + 2] = h2;
+  }
 }
 
 // ---- conservative update: STAGE 0 = Euler / RK stage 1, STAGE 1 = RK stage 2 (Heun average)
@@ -394,20 +408,27 @@ fn sourcesAt(x: u32, y: u32) {
     q.y = q.y / k; q.z = q.z / k;
   }
   let r = P.rain * RF[c] * dt;
-  var inf = min(s.w * dt, d + r);
+  // infiltration capacity: constant (s.w), or Green-Ampt K·(1 + ψΔθ/F) with s.w = K on the cell basis, none once the
+  // soil is full to the water table
+  var st = GS[c]; let ga = GAP[c];
+  var cap = s.w * dt;
+  if (ga.w > 0.5) { cap = select(min(cap * (1.0 + ga.x / max(st.z, 1e-3)), (ga.y - st.z) * ga.z), 0.0, st.z >= ga.y); }
+  var inf = min(cap, d + r);
+  let soil = inf;
   let gi = GI[c];
   if (gi.y > 0.0) {
     // the store drains linearly since its last update (tiles may skip dry cells, so the elapsed time is exact either way)
-    var st = GS[c]; let now = DT[1];
+    let now = DT[1];
     st.x = max(0.0, st.x - gi.z * (now - st.y)); st.y = now;
     let g2 = min(min(gi.x * dt, d + r - inf), gi.y - st.x);
     if (g2 > 0.0) { inf += g2; st.x += g2; }
-    GS[c] = st;
   }
   // two infiltration paths can round past the water available (fp32): never leave a negative depth, and book
   // exactly what left the cell
   let hn = kadd(q, r - inf);
   if (hn.x < 0.0) { inf = d - q.w + r; q.x = 0.0; q.w = 0.0; } else { q = hn; }
+  if (ga.w > 0.5) { st.z += min(soil, inf) / max(ga.z, 1e-6); }
+  if (gi.y > 0.0 || ga.w > 0.5) { GS[c] = st; }
   a.y += inf;
   if (q.x <= P.hdry) { q.y = 0.0; q.z = 0.0; }
   if (TRACKMAX) { a.x = max(a.x, q.x); } // the subgrid mode tracks the peak water level instead (sgHazard)
@@ -651,7 +672,7 @@ fn sgSpeed(c: i32) -> f32 {
 fn sgHazardAt(x: u32, y: u32) {
   if (x >= P.nx || y >= P.ny) { return; }
   let c = (i32(y) + GH) * i32(P.NX) + i32(x) + GH;
-  if (S[c].z < 0.5) { return; }
+  if (SGC[u32(c) * SG_CT] > 1e29) { return; } // a wall cell
   let dt = DT[0];
   if (dt <= 0.0) { return; }
   let eta = sgLevel(c, U[c].x); var a = A[c]; a.x = max(a.x, eta); A[c] = a;
