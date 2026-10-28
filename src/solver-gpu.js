@@ -80,12 +80,27 @@ export class GPUSolver {
     // scour (o.scour: { tauC (Pa), n } per interior cell; omitted = no shear tracked)
     this.TCh = new Float32Array(N * 4); for (let c = 0; c < N; c++) this.TCh[4 * c] = 1e9;
     if (o.scour) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) { const k = j * this.nx + i, c = this.idx(i, j); this.TCh[4 * c] = Math.min(1e9, o.scour.tauC[k]); this.TCh[4 * c + 1] = o.scour.n[k]; }
-    // sediment transport (o.sediment: { ws (m/s), erodible (m) } per interior cell, with o.scour; not in the subgrid mode)
-    this.sed = !!o.sediment && !this.sg; this.SDh = new Float32Array(N * 4); this.SDPh = new Float32Array(N * 2);
+    // sediment transport (o.sediment, per interior cell, from src/sediment.js: erodible (4 per cell: clay, silt, sand,
+    // gravel, m of bed), dSand, dGravel (m), tauSoil, nSkin, and for o.debris cohesion (Pa), tanPhi, soilDepth (m),
+    // thetaE; with o.scour; not in the subgrid mode). o.debris: the debris-flow mode (mixture flow, slope failures).
+    this.sed = !!o.sediment && !this.sg; this.debris = this.sed && !!o.debris;
+    this.SDh = new Float32Array(this.sed ? N * 16 : 4); this.SDPh = new Float32Array(this.sed ? N * 4 : 4); this.SE0h = new Float32Array(this.sed ? N * 8 : 4);
+    if (this.sed) for (let c = 0; c < N; c++) { this.SE0h[8 * c + 4] = this.Sh[4 * c]; this.SDh[16 * c + 13] = -1; } // every cell's initial bed, ghosts too
     if (this.sed) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
-      const k = j * this.nx + i, c = this.idx(i, j), sd = o.sediment; this.TCh[4 * c + 2] = sd.ws[k]; this.TCh[4 * c + 3] = sd.d50?.[k] ?? 0; this.SDh[4 * c + 2] = sd.erodible[k];
-      this.SDPh[2 * c] = sd.tauSoil?.[k] ?? this.TCh[4 * c]; this.SDPh[2 * c + 1] = sd.nSkin?.[k] ?? this.TCh[4 * c + 1];
+      const k = j * this.nx + i, c = this.idx(i, j), sd = o.sediment;
+      this.TCh[4 * c + 2] = sd.dSand?.[k] ?? 0.15e-3; this.TCh[4 * c + 3] = sd.dGravel?.[k] ?? 8e-3;
+      for (let m = 0; m < 4; m++) this.SE0h[8 * c + m] = sd.erodible[4 * k + m];
+      this.SE0h[8 * c + 5] = sd.soilDepth?.[k] ?? 1.5; this.SE0h[8 * c + 6] = sd.thetaE?.[k] ?? 0.4;
+      this.SDPh.set([sd.tauSoil?.[k] ?? this.TCh[4 * c], sd.nSkin?.[k] ?? this.TCh[4 * c + 1], sd.cohesion?.[k] ?? 2000, sd.tanPhi?.[k] ?? 0.58], 4 * c);
     }
+    // bank stability (o.banks from src/banks.js findBanks: top, toe as interior indices, L, c, tanPhi, T, wt depth or null)
+    const bk = this.sg ? [] : (o.banks ?? []); this.nBank = bk.length;
+    this.BKh = new Float32Array(Math.max(8, bk.length * 8)); this.BRh = new Float32Array(Math.max(12, bk.length * 12));
+    bk.forEach((q, b) => {
+      const top = this.idx(q.top % this.nx, (q.top / this.nx) | 0), toe = this.idx(q.toe % this.nx, (q.toe / this.nx) | 0);
+      this.BKh.set([top, toe, q.L, q.c, q.tanPhi, q.T, q.wt != null ? this.zh[top] - q.wt : -1e30, 0], 8 * b);
+      this.BRh.set([-1e30, 1e30, 0, -1, 1e30, 0, 0, -1, 0, 0, 1, 0], 12 * b);
+    });
     // drainage inlets (o.inlets: interior cell indices k = j*nx+i, unique)
     const ink = o.inlets ? Array.from(o.inlets) : [];
     this.nInlets = ink.length;
@@ -148,7 +163,7 @@ export class GPUSolver {
       TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 8), TC: mk(8),
       TA: mk(24, GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
       GI: mk(N * 16), GS: mk(N * 16), GAP: mk(N * 16),
-      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 48), SCR: mk(N * 16), SDA: mk(this.sed ? N * 16 : 16), SDB: mk(this.sed ? N * 16 : 16), SDP: mk(this.sed ? N * 8 : 16),
+      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 48), SCR: mk(N * 16), SDA: mk(this.sed ? N * 64 : 16), SDB: mk(this.sed ? N * 64 : 16), SDP: mk(this.sed ? N * 16 : 16), SE0: mk(this.sed ? N * 32 : 16), BK: mk(this.BKh.byteLength), BR: mk(this.BRh.byteLength),
       SGC: mk(this.sg ? N * CT * 4 : 16), SGF: mk(this.sg ? 2 * N * FT * 4 : 16), EO: mk(2 * (this.nx + this.ny) * 8),
     };
     this.read = {
@@ -172,13 +187,14 @@ export class GPUSolver {
     if (this.sg) { d.queue.writeBuffer(this.buf.SGC, 0, this.SGCh); d.queue.writeBuffer(this.buf.SGF, 0, this.SGFh); }
     const hz = new Float32Array(N * 12); for (let c = 0; c < N; c++) hz[12 * c + 3] = -1; d.queue.writeBuffer(this.buf.HZ, 0, hz);
     d.queue.writeBuffer(this.buf.SCR, 0, this.TCh);
-    if (this.sed) { d.queue.writeBuffer(this.buf.SDA, 0, this.SDh); d.queue.writeBuffer(this.buf.SDP, 0, this.SDPh); }
+    if (this.nBank) { d.queue.writeBuffer(this.buf.BK, 0, this.BKh); d.queue.writeBuffer(this.buf.BR, 0, this.BRh); }
+    if (this.sed) { d.queue.writeBuffer(this.buf.SDA, 0, this.SDh); d.queue.writeBuffer(this.buf.SDB, 0, this.SDh); d.queue.writeBuffer(this.buf.SDP, 0, this.SDPh); d.queue.writeBuffer(this.buf.SE0, 0, this.SE0h); }
     this._writeParams(0);
 
     const mod = d.createShaderModule({ code: KERNELS_WGSL });
     this.module = mod;
     const B = [this.buf.params, this.buf.U, this.buf.U0, this.buf.S, this.buf.W, this.buf.FX, this.buf.FY, this.buf.A, this.buf.DT, this.buf.RED, this.buf.OUT, this.buf.TH, this.buf.RF, this.buf.INC, this.buf.INQ, this.buf.INX, this.buf.STG,
-      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP];
+      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP, this.buf.SE0, this.buf.BK, this.buf.BR];
     const uses = {
       prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27, 32], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
       sgPrim: [0, 1, 4, 16, 28], sgFluxX: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgFluxY: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgUpdate: [0, 1, 3, 5, 6, 7, 8, 11],
@@ -223,13 +239,17 @@ export class GPUSolver {
       });
     }
     if (this.sed) { // ping-pong: [A → B, B → A]; this.sedPar = which buffer holds the latest state (0 = A)
+      // the debris mode compiles its own module with DEBRIS fixed (Dawn has crashed on the override across these pipelines)
+      const sm = this.debris ? d.createShaderModule({ code: KERNELS_WGSL.replace('override DEBRIS: bool = false;', 'const DEBRIS: bool = true;') }) : mod;
       const pp = (entry, binds) => {
-        const pipeline = d.createComputePipeline({ layout: 'auto', compute: { module: mod, entryPoint: entry } });
+        const pipeline = d.createComputePipeline({ layout: 'auto', compute: { module: sm, entryPoint: entry } });
         const bg = (inB, outB) => d.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: binds.map(b => ({ binding: b, resource: { buffer: b === 33 ? inB : b === 34 ? outB : B[b] } })) });
         return [{ pipeline, bg: bg(this.buf.SDA, this.buf.SDB) }, { pipeline, bg: bg(this.buf.SDB, this.buf.SDA) }];
       };
-      this.k.sedAdvect = pp('sedAdvect', [0, 1, 5, 6, 8, 11, 33, 34]); this.k.sedSource = pp('sedSource', [0, 1, 3, 5, 6, 8, 32, 33, 34, 35]); this.sedPar = 0;
+      this.k.sedAdvect = pp('sedAdvect', [0, 1, 5, 6, 8, 11, 33, 34]); this.k.sedSource = pp('sedSource', [0, 1, 3, 5, 6, 8, 32, 33, 34, 35, 36]); this.sedPar = 0;
+      if (this.debris) this.k.slopeFail = pp('slopeFail', [0, 1, 3, 8, 23, 33, 34, 35, 36]);
     }
+    if (this.nBank) this.k.bankFS = make('bankFS', [1, 3, 8, 37, 38]);
     // resolves when the pipelines are known good; rejects with the WGSL/validation error otherwise
     this.ready = d.popErrorScope().then((e) => { if (e) throw new Error('GPU pipeline error: ' + e.message); });
   }
@@ -300,27 +320,58 @@ export class GPUSolver {
       if (this.tiled) this._indirect(pass, k.sourcesT, 1); else this._dispatch(pass, k.sources, w(nx), w(ny));
       if (this.tiled) this._indirect(pass, k.hazardT, 1); else this._dispatch(pass, k.hazard, w(nx), w(ny));
       if (this.sed) this._sed(pass, k.sedSource);
+      if (this.debris) this._sed(pass, k.slopeFail);
+      if (this.nBank) this._dispatch(pass, k.bankFS, Math.ceil(this.nBank / 64));
       if (this.nInlets) this._dispatch(pass, k.exchange, Math.ceil(this.nInlets / 64));
     }
   }
   /** One sediment pass over the whole grid, reading the latest state and writing the other buffer. */
   _sed(pass, pair) { this._dispatch(pass, pair[this.sedPar], Math.ceil(this.nx / 8), Math.ceil(this.ny / 8)); this.sedPar ^= 1; }
 
-  /** Suspended solids per area (m), bed change (m), erodible depth left (m) per interior cell, and solids carried out
-   *  of the domain (m³). Solids are conserved: Σ suspended + (1 − porosity)·Σ bed change + out = 0 (from a clean start). */
+  /** Sediment per interior cell: suspended solids per area (m, all classes), bed change (m), bed store left (m), the
+   *  bed's geometric mean grain size (m), and slope failures (time, s; −1 none); per class (clay, silt, sand, gravel)
+   *  suspended, store and carried out (m³) in `classes`. Solids are conserved per class: Σ suspended
+   *  + (1 − porosity)·Σ store change + out = 0 (from a clean start). */
   async readSediment() {
-    const a = await this._readBuffer(this.sedPar ? this.buf.SDB : this.buf.SDA, this.N * 16), n = this.nx * this.ny, A = this.dx * this.dx;
-    const o = { suspended: new Float32Array(n), bed: new Float32Array(n), erodible: new Float32Array(n), out: 0, totals: { suspended: 0, eroded: 0, deposited: 0 } };
+    const a = await this._readBuffer(this.sedPar ? this.buf.SDB : this.buf.SDA, this.N * 64), n = this.nx * this.ny, A = this.dx * this.dx;
+    const o = { suspended: new Float32Array(n), bed: new Float32Array(n), erodible: new Float32Array(n), size: new Float32Array(n), failed: new Float32Array(n), out: 0, pore: 0,
+      classes: ['clay', 'silt', 'sand', 'gravel'].map(name => ({ name, suspended: 0, store: 0, change: 0, out: 0 })), totals: { suspended: 0, eroded: 0, deposited: 0, failures: 0 } };
     for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
-      const k = j * this.nx + i, q = 4 * this.idx(i, j);
-      o.suspended[k] = a[q]; o.bed[k] = a[q + 1]; o.erodible[k] = a[q + 2]; o.out += a[q + 3] * A;
-      o.totals.suspended += a[q] * A; if (a[q + 1] < 0) o.totals.eroded -= a[q + 1] * A; else o.totals.deposited += a[q + 1] * A;
+      const k = j * this.nx + i, c = this.idx(i, j), q = 16 * c, d = [2e-6, 3e-5, this.TCh[4 * c + 2], this.TCh[4 * c + 3]];
+      let st = 0, ld = 0, db = 0;
+      for (let m = 0; m < 4; m++) {
+        const cl = o.classes[m], e = this.SE0h[8 * c + m] + a[q + 4 + m]; o.suspended[k] += a[q + m]; st += e; db += a[q + 4 + m];
+        const out = a[q + 8 + m] + (m >= 2 ? a[q + 12 + m] : 0); // in suspension, plus sand and gravel as bedload
+        cl.suspended += a[q + m] * A; cl.store += e * A; cl.change += a[q + 4 + m] * A; cl.out += out * A; o.out += out * A;
+        if (e > 0) ld += e * Math.log(d[m]);
+      }
+      o.erodible[k] = st; o.bed[k] = db; o.size[k] = st > 0 ? Math.exp(ld / st) : 0; o.failed[k] = a[q + 13]; o.pore += a[q + 12] * A;
+      if (a[q + 13] >= 0) o.totals.failures++;
+      o.totals.suspended += o.suspended[k] * A; if (o.bed[k] < 0) o.totals.eroded -= o.bed[k] * A; else o.totals.deposited += o.bed[k] * A;
     }
     return o;
   }
-  /** Initial suspended solids (m per area) by cell, fn(x, y) at cell centres. */
+  /** Bank stability per bank (in o.banks order): lowest factor of safety and highest probability of failure over the
+   *  run (given the bank stood at the start; −1 = not rated), with their times (s; −1 = never), now, the highest channel
+   *  water against the bank (m), the bank water table (m), and the start's levels over the toe. */
+  async readBanks() {
+    const a = this.nBank ? await this._readBuffer(this.buf.BR, this.nBank * 48) : new Float32Array(0), n = this.nBank;
+    const o = { minFS: new Float32Array(n), maxPf: new Float32Array(n), tMaxPf: new Float32Array(n), tMinFS: new Float32Array(n), fsNow: new Float32Array(n), pfNow: new Float32Array(n), hwMax: new Float32Array(n), table: new Float32Array(n), start: [], stand: new Float32Array(n) };
+    for (let b = 0; b < n; b++) {
+      const q = 12 * b; o.table[b] = a[q] + this.zref; o.minFS[b] = a[q + 1]; o.maxPf[b] = a[q + 2]; o.tMaxPf[b] = a[q + 3]; o.fsNow[b] = a[q + 4]; o.pfNow[b] = a[q + 5]; o.hwMax[b] = a[q + 6]; o.tMinFS[b] = a[q + 7];
+      o.start.push({ hp: a[q + 8], hw: a[q + 9] }); o.stand[b] = a[q + 10];
+    }
+    return o;
+  }
+  /** Initial suspended solids (m per area) by cell, fn(x, y) at cell centres: a number (all clay) or [clay, silt, sand, gravel].
+   *  In the debris mode call it after setDepth, whose depth then includes these solids. */
   setSediment(fn) {
-    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) this.SDh[4 * this.idx(i, j)] = fn((i + 0.5) * this.dx, (j + 0.5) * this.dx);
+    let solids = 0;
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const v = fn((i + 0.5) * this.dx, (j + 0.5) * this.dx), q = 16 * this.idx(i, j); this.SDh.set(typeof v === 'number' ? [v, 0, 0, 0] : v, q);
+      solids += this.SDh[q] + this.SDh[q + 1] + this.SDh[q + 2] + this.SDh[q + 3];
+    }
+    if (this.debris) this.vol.initial -= solids * this.dx * this.dx; // the debris mode's depth is the mixture's: the books are of its water
     this.device.queue.writeBuffer(this.sedPar ? this.buf.SDB : this.buf.SDA, 0, this.SDh);
   }
 
@@ -498,8 +549,10 @@ export class GPUSolver {
     // one submission: copy depths, totals, pending inlet exchange and GI stores, then restart the totals on the GPU, so
     // the snapshot is from one moment and steps queued by a concurrent frame are neither lost nor counted twice
     const nE = 2 * (this.nx + this.ny);
-    const parts = [[this.buf.U, this.N * 16], [this.buf.A, this.N * 16], [this.buf.EO, nE * 8], ...(this.nInlets ? [[this.buf.INX, this.nInlets * 16]] : []), ...(this.hasGI ? [[this.buf.GS, this.N * 16]] : [])];
-    const [U, Ab, E, X, G] = await this._snapshot(parts, (pass) => this._dispatch(pass, this.k.resetTotals, Math.ceil(this.NX / 8), Math.ceil(this.NY / 8)), (enc) => enc.clearBuffer(this.buf.EO, 0, nE * 8));
+    const parts = [[this.buf.U, this.N * 16], [this.buf.A, this.N * 16], [this.buf.EO, nE * 8], ...(this.nInlets ? [[this.buf.INX, this.nInlets * 16]] : []), ...(this.hasGI ? [[this.buf.GS, this.N * 16]] : []),
+      ...(this.debris ? [[this.sedPar ? this.buf.SDB : this.buf.SDA, this.N * 64]] : [])];
+    const snap = await this._snapshot(parts, (pass) => this._dispatch(pass, this.k.resetTotals, Math.ceil(this.NX / 8), Math.ceil(this.NY / 8)), (enc) => enc.clearBuffer(this.buf.EO, 0, nE * 8));
+    const [U, Ab, E, X, G] = snap, SD = this.debris ? snap.at(-1) : null;
     for (let m = 0; m < nE; m++) (this.acc ??= { inf: 0, out: 0, clip: 0 }).out += E[2 * m] - E[2 * m + 1]; // edge outflow, compensated
     let pending = 0; if (this.nInlets) for (let m = 0; m < this.nInlets; m++) pending += X[4 * m] - X[4 * m + 2];
     const exchanged = this.vol.exchanged + pending;
@@ -518,8 +571,13 @@ export class GPUSolver {
         acc.out += Ab[c * 4 + 2]; acc.clip += Ab[c * 4 + 3] * A;
       }
     }
-    const inf = acc.inf / A, out = acc.out, clip = acc.clip / A;
-    const volume = vol * A, infil = inf * A, expected = this.vol.initial + this.vol.rain - infil - out - exchanged;
+    // debris mode: U holds the water–sediment mixture; the books are of the water: less the solids in the flow and those
+    // carried out with it (in suspension; bedload never was in the flow), plus the pore water the bed gave the flow (net of
+    // what deposits took back)
+    let solids = 0, solidsOut = 0, pore = 0;
+    if (SD) for (let c = 0; c < this.N; c++) { const q = 16 * c; solids += SD[q] + SD[q + 1] + SD[q + 2] + SD[q + 3]; solidsOut += SD[q + 8] + SD[q + 9] + SD[q + 10] + SD[q + 11]; pore += SD[q + 12]; }
+    const inf = acc.inf / A, out = acc.out - solidsOut * A, clip = acc.clip / A;
+    const volume = (vol - solids) * A, infil = inf * A, expected = this.vol.initial + this.vol.rain - infil - out - exchanged + pore * A;
     // relative to all the water that came in: initial, rain, and net inflow through exchange cells (a river) or the edge (a tide)
     const scale = Math.max(1e-30, Math.abs(expected), this.vol.initial + this.vol.rain + Math.max(0, -exchanged) + Math.max(0, -out));
     return {

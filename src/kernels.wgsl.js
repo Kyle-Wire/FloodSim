@@ -47,14 +47,25 @@ override STAGE: u32 = 0u;
 @group(0) @binding(26) var<storage, read_write> BQ: array<vec4f>;  // [3m] volume over +, −, Kahan +, −; [3m+1] peak |q| (m²/s), highest water, peak load (kN/m), ground; [3m+2] their times, first overtopping (−1 = never)
 @group(0) @binding(27) var<storage, read_write> HZ: array<vec4f>;  // [3c] peak d·v, peak force, time deeper than 15 cm, arrival (−1 = never); [3c+1] worst class ARR, FD2320, FD2320 urban;
                                                                     // [3c+2] peak bed shear (Pa), excess shear × time (Pa·s), potential erosion (m), time of peak shear
-@group(0) @binding(32) var<storage, read> SCR: array<vec4f>;       // scour: critical shear of the erodible ground (Pa; 1e9 = paved / not erodible), Manning n, settling velocity (m/s), median grain size d50 (m)
-// sediment (ping-pong: each pass reads SDI and writes SDO, and the host swaps them): suspended solids per area (m of
-// solids), bed change (m), erodible depth left (m), solids carried out across the domain edge (m per edge cell)
+@group(0) @binding(32) var<storage, read> SCR: array<vec4f>;       // scour: critical shear of the erodible ground (Pa; 1e9 = paved / not erodible), Manning n; sediment: sand and gravel sizes (m)
+// sediment state, 4 vec4 per cell (ping-pong: each pass reads SDI and writes SDO, and the host swaps them; see sedAdvect)
 @group(0) @binding(33) var<storage, read> SDI: array<vec4f>;
 @group(0) @binding(34) var<storage, read_write> SDO: array<vec4f>;
 // sediment ground per cell: the soil's own critical shear (Pa) and its skin (grain) roughness n = d50^⅙ / 21.1: the share of
-// the flow's shear that reaches the soil under grass or trees (HEC-15's effective shear), not the total that includes drag
-@group(0) @binding(35) var<storage, read> SDP: array<vec2f>;
+// the flow's shear that reaches the soil under grass or trees (HEC-15's effective shear), not the total that includes drag;
+// its strength for slope failure: cohesion c′ with roots (Pa), tan φ′
+@group(0) @binding(35) var<storage, read> SDP: array<vec4f>;
+// sediment, fixed per cell (2 vec4, ghosts included): the initial bed store per class (m); the initial bed z (the bed is
+// always z0 + its change, so small changes are not lost to rounding), soil depth to bedrock (m), effective porosity, -
+@group(0) @binding(36) var<storage, read> SE0: array<vec4f>;
+// bank stability (src/banks.js), 2 vec4 per bank: [2b] bank-top cell, toe (water) cell (padded indices), horizontal run
+// L (m), cohesion c′ (Pa); [2b+1] tan φ′, the bank water table's lag T (s), water-table elevation (−1e30 = none), -
+@group(0) @binding(37) var<storage, read> BK: array<vec4f>;
+// per bank: [3b] bank water-table elevation (state), lowest FS, highest probability of failure during the run given the
+// bank stood at the start (−1 = not rated: it stands only on strength the survey lacks), its time; [3b+1] FS now,
+// probability now, highest channel water against the bank (m), time of the lowest FS; [3b+2] bank water and river
+// over the toe at the start (m), the chance it stands then (from the soil's strength alone), -
+@group(0) @binding(38) var<storage, read_write> BR: array<vec4f>;
 override LIST: u32 = 1u;
 override TRACKMAX: bool = true; // tiled entry points: 1 = update list (wet ⊕ 1), 2 = flux list (wet ⊕ 2)
 const TILE: u32 = 8u;
@@ -759,87 +770,256 @@ fn edgeOut(@builtin(global_invocation_id) gid: vec3u) {
   var e = EO[m]; let y = v - e.y; let t = e.x + y; e.y = (t - e.x) - y; e.x = t; EO[m] = e;
 }
 
-// ---- sediment transport (src/sediment.js): suspended load carried with the water, erosion by excess shear, settling,
-// and the bed (S.x) moving with the difference (Exner), so the flow sees the scour and the deposits.
+// ---- sediment transport (src/sediment.js) in four grain classes: clay (as flocs), silt, sand and gravel, each carried
+// with the water and settling at its own velocity; sand and gravel also move as bedload; the bed keeps a store of each
+// class, so a scoured bed loses its fines and coarsens. The bed (S.x) moves with the difference (Exner), so the flow sees
+// the scour and the deposits. State per cell, 4 vec4 (ping-pong SDI → SDO, the host swaps them):
+//   [4c]   suspended solids per class (m of solids per area)
+//   [4c+1] change of the bed store per class (m of bed, pores included) since the start: the store, SE0[2c] + this, is
+//          what the flow can take (kept as the change so solids balance to rounding of small numbers)
+//   [4c+2] solids carried out across the domain edge in suspension, per class (m per cell area)
+//   [4c+3] pore water the bed gave the flow, net (m; debris mode), time of a slope failure (s, −1 = none), sand and
+//          gravel carried out across the domain edge as bedload (m per cell area)
+// Debris-flow mode (DEBRIS): the flow is a water–sediment mixture (U.x is the mixture depth: entrained bed brings its
+// pore water, deposits take theirs), it erodes and deposits toward the equilibrium of Egashira et al. (1997), resists
+// with the quadratic rheology of O'Brien & Julien (1988), and saturated steep soil fails (infinite slope) into it.
 const SED_POR: f32 = 0.4; // bed porosity
 const SED_CMAX: f32 = 0.1; // suspended solids by volume at most (≈ 265 g/L: hyperconcentrated flow)
+const DEB_CMAX: f32 = 0.5; // in the debris-flow mode
 const SED_BEDCAP: f32 = 0.5; // bedload (bulk bed volume) at most this share of the water flux across the face
-fn sedConc(k: i32) -> f32 { let h = U[k].x - U[k].w; return select(0.0, SDI[k].x / h, h > P.hdry); }
+const DEB_SLOPE: f32 = 0.1763; // tan 10°: debris flows entrain the bed on slopes this steep
+const DEB_C: f32 = 0.2; // solids by volume from which the flow is a debris flow (entrains and deposits as a mass)
+override DEBRIS: bool = false;
+fn sedCmax() -> f32 { return select(SED_CMAX, DEB_CMAX, DEBRIS); }
+fn sedSizes(k: i32) -> vec4f { let sc = SCR[k]; return vec4f(2e-6, 3e-5, sc.z, sc.w); }
+fn sedWs(d: f32) -> f32 { return max(1e-4, 1.65 * P.g * d * d / (18.0e-6 + sqrt(0.75 * 1.65 * P.g * d * d * d))); }
+fn vsum(v: vec4f) -> f32 { return v.x + v.y + v.z + v.w; }
+fn sedConc(k: i32) -> vec4f { let h = U[k].x - U[k].w; return select(vec4f(0.0), SDI[4 * k] / h, h > P.hdry); }
 // advection, once per RK stage with that stage's (theta-limited) water fluxes and weight, before the update (U is the
 // stage-start state): solids move with the water at the upstream cell's concentration; ghost cells bring clean water
-fn sedFace(f0: f32, l: i32, r: i32) -> f32 { let F = f0 * TH[select(r, l, f0 > 0.0)]; return F * select(sedConc(r), sedConc(l), F > 0.0); }
+fn sedFace(f0: f32, l: i32, r: i32) -> vec4f { let F = f0 * TH[select(r, l, f0 > 0.0)]; return F * select(sedConc(r), sedConc(l), F > 0.0); }
 @compute @workgroup_size(8, 8)
 fn sedAdvect(@builtin(global_invocation_id) gid: vec3u) {
   if (gid.x >= P.nx || gid.y >= P.ny) { return; }
   let NX = i32(P.NX); let i = i32(gid.x) + GH; let j = i32(gid.y) + GH; let c = j * NX + i;
-  var s = SDI[c]; let dt = DT[0];
+  var s = SDI[4 * c]; var o = SDI[4 * c + 2]; let dt = DT[0];
   if (dt > 0.0) {
     let w = dt / P.dx * select(1.0, 0.5, P.secondOrder == 1u);
     let fw = sedFace(FX[c * 9], c - 1, c); let fe = sedFace(FX[(c + 1) * 9], c, c + 1);
     let fs = sedFace(FY[c * 9], c - NX, c); let fq = sedFace(FY[(c + NX) * 9], c, c + NX);
-    s.x = max(0.0, s.x - w * (fe - fw + fq - fs));
-    var out = 0.0; // solids across the domain edge (m per cell width), + = out
+    s = max(vec4f(0.0), s - w * (fe - fw + fq - fs));
+    var out = vec4f(0.0); // solids across the domain edge, + = out
     if (i == GH) { out -= fw; } if (i == NX - GH - 1) { out += fe; } if (j == GH) { out -= fs; } if (j == i32(P.NY) - GH - 1) { out += fq; }
-    s.w += w * out;
+    o += w * out;
   }
-  SDO[c] = s;
+  SDO[4 * c] = s; SDO[4 * c + 1] = SDI[4 * c + 1]; SDO[4 * c + 2] = o; SDO[4 * c + 3] = SDI[4 * c + 3];
 }
 // shear on the soil in a cell (Pa), with the skin roughness
 fn sedTau(k: i32) -> f32 {
   let q = U[k]; let h = q.x - q.w; if (h < HZ_VCUT) { return 0.0; }
   let n = SDP[k].y; return 1000.0 * P.g * n * n * (q.y * q.y + q.z * q.z) / (q.x * q.x) / pow(h, 1.0 / 3.0);
 }
-// bedload across a face (bulk bed volume per unit width, m²/s, + toward r): Meyer-Peter & Müller 1948 for sand-sized
-// beds, q = 8(θ − 0.047)^1.5·√((s − 1)g·d³), θ = τ / ((ρs − ρ)g·d), from the upstream cell (by the face's water flux),
-// the share of its flow crossing this face, no more than a quarter of its erodible depth per step, and no more than half
-// the water crossing the face (so the bed cannot be pushed where the water does not go)
-fn bedFace(f0: f32, l: i32, r: i32, isY: bool, dt: f32) -> f32 {
-  if (f0 == 0.0) { return 0.0; }
-  let d = select(r, l, f0 > 0.0); let sc = SCR[d]; let e = SDI[d].z;
-  if (sc.w < 6.25e-5 || e <= 0.0 || d < 0) { return 0.0; }
-  let theta = sedTau(d) / (1650.0 * P.g * sc.w); if (theta <= 0.047) { return 0.0; }
-  let q = U[d]; let sp = sqrt(q.y * q.y + q.z * q.z); if (sp <= 0.0) { return 0.0; }
-  var qb = 8.0 * pow(theta - 0.047, 1.5) * sqrt(1.65 * P.g * sc.w * sc.w * sc.w) / (1.0 - SED_POR) * abs(select(q.y, q.z, isY)) / sp;
-  qb = min(min(qb, e * P.dx / (4.0 * dt)), SED_BEDCAP * abs(f0)); // no more bed than half the water crossing the face
+// bedload of sand and gravel across a face (bulk bed volume per unit width, m²/s, + toward r): Wilcock & Crowe (2003)
+// for the bed's sand and gravel, W*ᵢ = 0.002φ^7.5 (φ < 1.35) or 14(1 − 0.894/√φ)^4.5 with φ = τ/τᵣᵢ,
+// τᵣᵢ = τᵣₘ(Dᵢ/Dₛₘ)^b, b = 0.67/(1 + e^(1.5 − Dᵢ/Dₛₘ)), τ*ᵣₘ = 0.021 + 0.015e^(−20Fₛ), qᵢ = W*ᵢFᵢu*³/((s − 1)g), the
+// fractions Fᵢ of the whole bed (fines bind the rest), from the upstream cell (by the face's water flux), the share of
+// its flow crossing this face, no more than a quarter of its store per step, and no more than half the water crossing
+fn bedFace(f0: f32, l: i32, r: i32, isY: bool, dt: f32) -> vec2f {
+  if (f0 == 0.0) { return vec2f(0.0); }
+  let d = select(r, l, f0 > 0.0); let e = SE0[2 * d] + SDI[4 * d + 1]; let tot = vsum(e);
+  if (tot <= 0.0 || e.z + e.w <= 0.0) { return vec2f(0.0); }
+  let tau = sedTau(d); let q = U[d]; let sp = sqrt(q.y * q.y + q.z * q.z); if (tau <= 0.0 || sp <= 0.0) { return vec2f(0.0); }
+  let sz = sedSizes(d); let Fs = e.z / tot; let Fg = e.w / tot;
+  let Dsm = exp((Fs * log(sz.z) + Fg * log(sz.w)) / (Fs + Fg));
+  let trm = (0.021 + 0.015 * exp(-20.0 * Fs)) * 1650.0 * P.g * Dsm; let us3 = pow(tau / 1000.0, 1.5);
+  var qb = vec2f(0.0);
+  for (var m = 0; m < 2; m++) {
+    let Di = select(sz.z, sz.w, m == 1); let Fi = select(Fs, Fg, m == 1);
+    let b = 0.67 / (1.0 + exp(1.5 - Di / Dsm)); let phi = tau / (trm * pow(Di / Dsm, b));
+    let W = select(14.0 * pow(max(0.0, 1.0 - 0.894 * inverseSqrt(phi)), 4.5), 0.002 * pow(phi, 7.5), phi < 1.35);
+    qb[m] = W * Fi * us3 / (1.65 * P.g) / (1.0 - SED_POR);
+  }
+  qb = min(qb * abs(select(q.y, q.z, isY)) / sp, vec2f(e.z, e.w) * P.dx / (4.0 * dt));
+  let cap = SED_BEDCAP * abs(f0); if (qb.x + qb.y > cap) { qb *= cap / (qb.x + qb.y); }
   return select(-qb, qb, f0 > 0.0);
 }
+// bed slope along the flow (tan θ, + = downhill), central differences over open neighbours
+fn flowSlope(c: i32, u: vec2f) -> f32 {
+  let NX = i32(P.NX); let sp = length(u); if (sp <= 0.0) { return 0.0; }
+  let zx = select(0.0, (S[c + 1].x - S[c - 1].x) / (2.0 * P.dx), S[c + 1].z > 0.5 && S[c - 1].z > 0.5);
+  let zy = select(0.0, (S[c + NX].x - S[c - NX].x) / (2.0 * P.dx), S[c + NX].z > 0.5 && S[c - NX].z > 0.5);
+  return -(zx * u.x + zy * u.y) / sp;
+}
+// the bed of a cell is its initial bed plus its change (b, m); the ghost cells beyond an edge cell carry the change too
+// (else the edge would see a step and leak through a wall)
+fn bedSet(k: i32, b: f32) { S[k].x = SE0[2 * k + 1].x + b; }
+fn bedShift(c: i32, i: i32, j: i32, b: f32) {
+  bedSet(c, b);
+  let NX = i32(P.NX);
+  if (i == GH) { bedSet(c - 1, b); bedSet(c - 2, b); }
+  if (i == NX - GH - 1) { bedSet(c + 1, b); bedSet(c + 2, b); }
+  if (j == GH) { bedSet(c - NX, b); bedSet(c - 2 * NX, b); }
+  if (j == i32(P.NY) - GH - 1) { bedSet(c + NX, b); bedSet(c + 2 * NX, b); }
+}
 // erosion, settling and bedload at the end of the step, and the bed update. Settling: the exact decay of a well-mixed
-// column over dt (all of it when the cell runs dry). Erosion into suspension: k_d·(τ − τc) on erodible ground while any
-// is left (loose deposits, also on pavement, resist 1 Pa). Bedload: the face fluxes above, upwind by the water flux.
+// column over dt per class (all of it when the cell runs dry), hindered in a dense mixture (Richardson–Zaki, (1 − C)⁴)
+// and none for grains the mixture's yield stress holds up (τy > 0.1·(ρs − ρm)g·d). Erosion into suspension: k_d·(τ − τc)
+// on the bed's classes in proportion while any is left, except a class the flow cannot hold (u* < w_s): it stays behind
+// (loose deposits, also on pavement, resist 1 Pa). Bedload: the face fluxes above, upwind by the water flux.
 @compute @workgroup_size(8, 8)
 fn sedSource(@builtin(global_invocation_id) gid: vec3u) {
   if (gid.x >= P.nx || gid.y >= P.ny) { return; }
-  let c = (i32(gid.y) + GH) * i32(P.NX) + i32(gid.x) + GH;
-  var s = SDI[c]; let dt = DT[0]; var sv = S[c];
-  if (dt <= 0.0 || sv.z < 0.5) { SDO[c] = s; return; }
-  let NXc = i32(P.NX);
+  let NX = i32(P.NX); let i = i32(gid.x) + GH; let j = i32(gid.y) + GH; let c = j * NX + i;
+  var s = SDI[4 * c]; let de = SDI[4 * c + 1]; var o = SDI[4 * c + 2]; var x = SDI[4 * c + 3]; let dt = DT[0];
+  if (dt <= 0.0 || S[c].z < 0.5) { SDO[4 * c] = s; SDO[4 * c + 1] = de; SDO[4 * c + 2] = o; SDO[4 * c + 3] = x; return; }
+  let e = SE0[2 * c] + de;
   let bw = bedFace(FX[c * 9], c - 1, c, false, dt); let be = bedFace(FX[(c + 1) * 9], c, c + 1, false, dt);
-  let bs = bedFace(FY[c * 9], c - NXc, c, true, dt); let bq = bedFace(FY[(c + NXc) * 9], c, c + NXc, true, dt);
-  let dzb = -dt / P.dx * (be - bw + bq - bs);
-  var bout = 0.0; let ii = i32(gid.x) + GH; let jj = i32(gid.y) + GH;
-  if (ii == GH) { bout -= bw; } if (ii == NXc - GH - 1) { bout += be; } if (jj == GH) { bout -= bs; } if (jj == i32(P.NY) - GH - 1) { bout += bq; }
-  s.w += dt / P.dx * bout * (1.0 - SED_POR); // solids leaving the domain as bedload
-  let q = U[c]; let h = q.x - q.w; let sc = SCR[c];
-  var dep = s.x;
-  if (h > P.hdry) { dep = s.x * (1.0 - exp(-sc.z * dt / h)); }
-  var ero = 0.0;
+  let bs = bedFace(FY[c * 9], c - NX, c, true, dt); let bq = bedFace(FY[(c + NX) * 9], c, c + NX, true, dt);
+  let k = dt / P.dx; let dzb = -k * (be - bw + bq - bs);
+  let bo = k * (max(be, vec2f(0.0)) + max(-bw, vec2f(0.0)) + max(bq, vec2f(0.0)) + max(-bs, vec2f(0.0))); // what leaves this cell's store
+  var bout = vec2f(0.0);
+  if (i == GH) { bout -= bw; } if (i == NX - GH - 1) { bout += be; } if (j == GH) { bout -= bs; } if (j == i32(P.NY) - GH - 1) { bout += bq; }
+  x = vec4f(x.xy, x.zw + k * bout * (1.0 - SED_POR)); // sand and gravel leaving the domain as bedload (not in the water)
+  var q = U[c]; let h = q.x - q.w; let sz = sedSizes(c); let C = select(0.0, min(0.6, vsum(s) / h), h > P.hdry);
+  var ws = vec4f(sedWs(sz.x), sedWs(sz.y), sedWs(sz.z), sedWs(sz.w));
+  var tauY = 0.0;
+  if (DEBRIS) { // O'Brien & Julien (1988), Glenwood sample 1: τy = 0.0345e^(20.1C) dyn/cm², η = 0.0283e^(23.0C) P
+    tauY = 0.00345 * exp(20.1 * C); ws *= pow(1.0 - C, 4.0);
+    let held = vec4f(tauY) > 0.1 * (2650.0 - 1000.0 * (1.0 + 1.65 * C)) * P.g * sz; ws = select(ws, vec4f(0.0), held);
+  }
+  var dep = s; if (h > P.hdry) { dep = s * (1.0 - exp(-ws * dt / h)); }
+  // a mixture packed like the bed (infiltration drained its water) is a deposit: all of it settles, so the infiltration
+  // never takes the solids' volume as water
+  if (DEBRIS && vsum(s) >= (1.0 - SED_POR) * h) { dep = s; }
+  var ero = vec4f(0.0); let tot = vsum(e); let avail = max(vec4f(0.0), e - vec4f(0.0, 0.0, bo));
   let sp = SDP[c]; let tc = select(1.0, sp.x, sp.x < 1e8 && sp.x > 0.0);
-  if (h >= HZ_VCUT && sp.y > 0.0 && s.z > 0.0) {
+  if (h >= HZ_VCUT && sp.y > 0.0 && tot > 0.0) {
     let tau = sedTau(c);
-    if (tau > tc) { ero = min(0.2e-6 * inverseSqrt(tc) * (tau - tc) * dt, s.z); }
-    ero = min(ero, max(0.0, (SED_CMAX * h - (s.x - dep)) / (1.0 - SED_POR))); // the water carries at most SED_CMAX solids by volume
+    if (tau > tc) { ero = 0.2e-6 * inverseSqrt(tc) * (tau - tc) * dt * e / tot * select(vec4f(0.0), vec4f(1.0), vec4f(sqrt(tau / 1000.0)) > ws); }
   }
-  let dz = dep / (1.0 - SED_POR) - ero + dzb;
-  s.x = s.x - dep + ero * (1.0 - SED_POR); s.y += dz; s.z = max(0.0, s.z - ero + dep / (1.0 - SED_POR) + dzb);
-  SDO[c] = s; sv.x += dz; S[c] = sv;
-  // the ghost cells beyond an edge cell carry its bed (else the edge would see a step and leak through a wall)
-  let NX = i32(P.NX); let i = i32(gid.x) + GH; let j = i32(gid.y) + GH;
-  if (dz != 0.0) {
-    if (i == GH) { S[c - 1].x += dz; S[c - 2].x += dz; }
-    if (i == NX - GH - 1) { S[c + 1].x += dz; S[c + 2].x += dz; }
-    if (j == GH) { S[c - NX].x += dz; S[c - 2 * NX].x += dz; }
-    if (j == i32(P.NY) - GH - 1) { S[c + NX].x += dz; S[c + 2 * NX].x += dz; }
+  let u = select(vec2f(0.0), q.yz / q.x, h > P.hdry); let spd = length(u);
+  if (DEBRIS && h >= 0.01 && spd > 0.0 && C >= DEB_C) {
+    // a debris flow (≥ 20 % solids; thinner flows entrain by shear alone), Egashira et al. (1997): the bed erodes (+) or
+    // the mixture deposits (−) at i = u·tan(θ − θe), toward the slope the mixture is in equilibrium with,
+    // tan θe = (σ/ρ − 1)C·tan φ / ((σ/ρ − 1)C + 1); erosion only on steep ground, unsorted
+    let tS = flowSlope(c, u); let G = 1.65 * C; let tE = G * sp.w / (G + 1.0);
+    let ie = spd * tan(atan(tS) - atan(tE)) * dt;
+    if (ie > 0.0 && tS >= DEB_SLOPE && tot > 0.0) { ero += ie * e / tot; }
+    if (ie < 0.0) { dep = max(dep, min(s, -ie * (1.0 - SED_POR) * s / max(1e-12, vsum(s)))); }
   }
+  ero = min(ero, avail);
+  let room = max(0.0, sedCmax() * h - vsum(s - dep)); let er = vsum(ero) * (1.0 - SED_POR); // the water carries at most Cmax solids by volume
+  if (er > room) { ero *= room / er; }
+  let nde = de + max(-e, dep / (1.0 - SED_POR) - ero + vec4f(0.0, 0.0, dzb)); // the store never below zero
+  s = s - dep + ero * (1.0 - SED_POR);
+  if (DEBRIS) {
+    // the mixture: entrained bed brings its pore water, deposits trap theirs; then the rheology's resistance, implicit
+    // the pore water booked is what the mixture depth actually gained less the solids it gained (a nearly dry cell's
+    // deposit cannot take more water than it holds)
+    let dv = vsum(ero) - vsum(dep) / (1.0 - SED_POR); let qx = max(0.0, q.x + dv);
+    x.x += (qx - q.x) - (vsum(ero) * (1.0 - SED_POR) - vsum(dep)); q.x = qx;
+    let hm = q.x - q.w; let Cm = select(0.0, min(0.6, vsum(s) / hm), hm > P.hdry); let mag = length(q.yz);
+    if (hm > P.hdry && mag > 0.0) {
+      let rho = 1000.0 * (1.0 + 1.65 * Cm); let ty = 0.00345 * exp(20.1 * Cm); let eta = 0.00283 * exp(23.0 * Cm);
+      let m1 = max(0.0, mag - dt * ty / rho) / (1.0 + dt * 24.0 * eta / (8.0 * rho * hm * hm)); // yield (stops a plug), then laminar (K = 24)
+      q = vec4f(q.x, q.yz * (m1 / mag), q.w);
+    }
+    U[c] = q;
+  }
+  SDO[4 * c] = s; SDO[4 * c + 1] = nde; SDO[4 * c + 2] = o; SDO[4 * c + 3] = x;
+  bedShift(c, i, j, vsum(nde));
+}
+// shallow landslides (debris mode), once per step after sedSource: infinite-slope factor of safety on the cell's
+// steepest slope, FS = (c′ + (γ·z·cos²θ − u)·tan φ′) / (γ·z·sin θ·cos θ), at the Green-Ampt wetting front z = F/θe (no
+// suction credit) or at bedrock once the soil is saturated to it (then slope-parallel seepage, u = γw·z·cos²θ). On
+// FS < 1 the soil above the failure plane (as far as the bed store goes) joins the flow with its pore water.
+@compute @workgroup_size(8, 8)
+fn slopeFail(@builtin(global_invocation_id) gid: vec3u) {
+  if (gid.x >= P.nx || gid.y >= P.ny) { return; }
+  let NX = i32(P.NX); let i = i32(gid.x) + GH; let j = i32(gid.y) + GH; let c = j * NX + i;
+  var s = SDI[4 * c]; var de = SDI[4 * c + 1]; let o = SDI[4 * c + 2]; var x = SDI[4 * c + 3];
+  let e = SE0[2 * c] + de; let tot = vsum(e); let soil = SE0[2 * c + 1];
+  if (DT[0] > 0.0 && S[c].z > 0.5 && x.y < 0.0 && tot > 0.0 && soil.z > 0.0) {
+    let zx = max(abs(S[c + 1].x - S[c].x), abs(S[c].x - S[c - 1].x)) / P.dx; let zy = max(abs(S[c + NX].x - S[c].x), abs(S[c].x - S[c - NX].x)) / P.dx;
+    let t = length(vec2f(zx, zy));
+    if (t > 0.2679) { // steeper than 15°
+      let cs = inverseSqrt(1.0 + t * t); let sn = t * cs; let wet = GS[c].z / soil.z; let sat = wet >= soil.y;
+      let z = min(wet, soil.y); let sp = SDP[c];
+      if (z >= 0.1) {
+        let gam = select(18.0e3, 20.0e3, sat); let u = select(0.0, 9810.0 * z * cs * cs, sat);
+        let fs = (sp.z + (gam * z * cs * cs - u) * sp.w) / (gam * z * sn * cs);
+        if (fs < 1.0) {
+          let d = min(z, tot); let take = e * (d / tot);
+          de -= take; s += take * (1.0 - SED_POR); x.x += SED_POR * d; x.y = DT[1];
+          var q = U[c]; q.x += d; U[c] = q;
+          bedShift(c, i, j, vsum(de));
+        }
+      }
+    }
+  }
+  SDO[4 * c] = s; SDO[4 * c + 1] = de; SDO[4 * c + 2] = o; SDO[4 * c + 3] = x;
+}
+
+// ---- bank collapse probability (src/banks.js), every step: the Culmann wedge through the toe, searched over 8 plane
+// angles, with the channel water confining the face and the bank's own water table lagging the river (rapid drawdown);
+// the probability of failure given the bank stood at the start (c′, tan φ′ uncertain; Gauss–Hermite over tan φ′)
+fn normCdf(x: f32) -> f32 {
+  let z = abs(x) * 0.70710678; let t = 1.0 / (1.0 + 0.3275911 * z);
+  let erf = 1.0 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * exp(-z * z);
+  return select(0.5 * (1.0 - erf), 0.5 * (1.0 + erf), x >= 0.0);
+}
+// (Lp, N, D) on the plane at angle a: FS = (c·Lp + N·tan φ′)/D
+fn bankPlane(H: f32, beta: f32, a: f32, hp: f32, hw: f32) -> vec3f {
+  let sa = sin(a); let ca = cos(a);
+  let W = 0.5 * H * H * (ca / sa - cos(beta) / sin(beta)) * (18.0e3 + 2.0e3 * (hp / H) * (hp / H));
+  let Uw = 0.5 * 9810.0 * hp * hp / sa; let Pw = 0.5 * 9810.0 * hw * hw / sin(beta);
+  return vec3f(H / sa, max(0.0, W * ca - Uw + Pw * cos(beta - a)), W * sa - Pw * sin(beta - a));
+}
+var<private> GHX: array<f32, 5> = array<f32, 5>(0.3429013272, 1.0366108298, 1.7566836493, 2.5327316742, 3.4361591188);
+var<private> GHW: array<f32, 5> = array<f32, 5>(0.6108626337, 0.2401386111, 0.0338743945, 0.0013436457, 0.0000076404);
+@compute @workgroup_size(64)
+fn bankFS(@builtin(global_invocation_id) gid: vec3u) {
+  let b = i32(gid.x); if (b >= i32(arrayLength(&BK)) / 2) { return; }
+  let dt = DT[0]; if (dt <= 0.0) { return; }
+  let k0 = BK[2 * b]; let k1 = BK[2 * b + 1];
+  let top = i32(k0.x); let toe = i32(k0.y); let L = k0.z; let c = k0.w; let tp = k1.x;
+  let zt = S[top].x; let zb = S[toe].x; let H = zt - zb;
+  var r0 = BR[3 * b]; var r1 = BR[3 * b + 1]; var r2 = BR[3 * b + 2];
+  let eta = zb + max(0.0, U[toe].x - U[toe].w);
+  var goal = max(eta, k1.z); if (U[top].x - U[top].w > 0.01) { goal = zt; } // water standing on the bank soaks it
+  let first = r0.x < -1e29;
+  if (first) { r0.x = goal; } else { r0.x += (goal - r0.x) * (1.0 - exp(-dt / k1.y)); }
+  if (H > 0.3) {
+    let hp = clamp(r0.x - zb, 0.0, H); let hw = clamp(eta - zb, 0.0, H);
+    if (first) { r2.x = hp; r2.y = hw; } // the start: the bank stands with these
+    let beta = atan2(H, L); let sc = max(1.0, 0.4 * c); let st = 0.1 * tp;
+    var fsB = 1e30; var pfB = 0.0; var standMin = 1.0;
+    for (var m = 0; m < 8; m++) {
+      let a = beta * (0.2 + 0.79 * f32(m) / 7.0);
+      let p = bankPlane(H, beta, a, hp, hw);
+      if (p.z > 0.0) {
+        let fs = (c * p.x + p.y * tp) / p.z;
+        let q = bankPlane(H, beta, a, clamp(r2.x, 0.0, H), clamp(r2.y, 0.0, H));
+        var stand = 1.0;
+        if (q.z > 0.0) { let sd0 = length(vec2f(0.4 * c * q.x, st * q.y)) / q.z; stand = select(1.0, normCdf(((c * q.x + q.y * tp) / q.z - 1.0) / sd0), sd0 > 0.0); }
+        var joint = 0.0;
+        for (var g = 0; g < 10; g++) {
+          let gi = g % 5; let x = select(-GHX[gi], GHX[gi], g < 5); let t = tp + 1.41421356 * st * x;
+          let p1 = normCdf(((p.z - p.y * t) / p.x - c) / sc);
+          let p0 = select(0.0, normCdf(((q.z - q.y * t) / q.x - c) / sc), q.z > 0.0);
+          joint += GHW[gi] * 0.56418958 * max(0.0, p1 - p0);
+        }
+        standMin = min(standMin, stand);
+        let pf = select(0.0, min(1.0, joint / stand), stand > 0.02);
+        if (pf > pfB || (pf == pfB && fs < fsB)) { pfB = pf; fsB = fs; }
+      }
+    }
+    if (standMin <= 0.02) { pfB = -1.0; } // it would stand only on strength the survey lacks: not rated
+    r1.x = fsB; r1.y = pfB; r1.z = max(r1.z, hw); r2.z = standMin;
+    if (fsB < r0.y) { r0.y = fsB; r1.w = DT[1]; }
+    if (pfB > r0.z || pfB < 0.0) { r0.z = pfB; r0.w = select(DT[1], -1.0, pfB < 0.0); }
+  }
+  BR[3 * b] = r0; BR[3 * b + 1] = r1; BR[3 * b + 2] = r2;
 }
 
 // ---- restart the per-cell running totals (infiltration, outflow, clipping) and keep max depth; encoded right after the

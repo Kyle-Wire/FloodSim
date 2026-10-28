@@ -3,6 +3,7 @@
 // the cell aggregation.  Usage: node tests/run-soil-tests.mjs
 import { textureClass, soilParams, hsgParams, gaCells, WETNESS, collapseScreen, swellClass } from '../src/soil.js';
 import { CPUSolver } from '../src/solver-cpu.js';
+import { sedimentCells, strength, settling, TEXTURES, CLASSES } from '../src/sediment.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -63,6 +64,25 @@ const column = (o) => { const s = new CPUSolver({ nx: 1, ny: 1, dx: 1, z: new Fl
   check('humid colluvium without a primary driver stays low', piedmont.score >= 3 && piedmont.cls === 1, `score ${piedmont.score}`);
   check('collapse screening says why', loess.reasons.some(r => /Loess/.test(r)) && desert.reasons.some(r => /gypsum/.test(r)));
   check('shrink–swell from linear extensibility', swellClass({ hz: [{ top: 0, lep: 7.5 }] }).cls === 3 && swellClass({ hz: [{ top: 0, lep: 2 }] }).cls === 1);
+}
+
+{ // grain classes: SSURGO rock fragments become gravel, the fine earth splits by sand and clay
+  const head = ['mukey', 'wtdepannmin', 'brockdepmin', 'cokey', 'compname', 'comppct_r', 'hzdept_r', 'ksat_r', 'wsatiated_r', 'sandtotal_r', 'claytotal_r', 'kffact', 'fragvol'];
+  const p = soilParams([head, ['1', null, 80, 'c1', 'Gravelly loam', 90, 0, 9, 40, 40, 20, 0.2, 25]]).get('1');
+  check('rock fragments as gravel, the fine earth by sand and clay', Math.abs(p.grains.gravel - 25) < 1e-9 && Math.abs(p.grains.sand - 30) < 1e-9 && Math.abs(p.grains.clay - 15) < 1e-9);
+  // a 2 × 1 cell grid (F = 2): left cell loam (grass), right cell paved; one cell steep for the debris mode
+  const nx = 4, ny = 2, N = nx * ny, tex = TEXTURES.indexOf('loam'), grains = new Uint8Array(N * 4);
+  for (let q = 0; q < N; q++) grains.set([20, 40, 30, 10], 4 * q);
+  const f = { nx, ny, bld: new Uint8Array(N), tauC: Float32Array.from({ length: N }, (_, q) => (q % nx < 2 ? 30 : 1e9)), perv: new Float32Array(N).fill(1), texture: new Uint8Array(N).fill(tex), grains,
+    cls: new Uint8Array(N).fill(71), bedrock: new Float32Array(N).fill(1.2), ga: { thetaE: new Float32Array(N).fill(0.43) } };
+  const s = sedimentCells(f, 2, 1, 2, new Uint8Array([1, 1]), { topsoil: 0.3 });
+  const e = Array.from(s.erodible.slice(0, 4));
+  check('the topsoil splits by grain class', [0.2, 0.4, 0.3, 0.1].every((v, m) => Math.abs(e[m] - 0.3 * v) < 1e-6) && s.erodible.slice(4).every(v => v === 0), e.map(v => v.toFixed(3)).join(' '));
+  check('loam strength with grass roots', Math.abs(s.cohesion[0] - (strength('loam', 10).c + 1500)) < 1e-6 && Math.abs(s.soilDepth[0] - 1.2) < 1e-6);
+  const steep = sedimentCells(f, 2, 1, 2, new Uint8Array([1, 1]), { topsoil: 0.3, debris: { z: new Float64Array([0, 1]), dx: 2 } });
+  check('debris mode: the whole soil to bedrock is erodible on steep ground', Math.abs(steep.erodible[0] + steep.erodible[1] + steep.erodible[2] + steep.erodible[3] - 1.2) < 1e-5);
+  check('gravel raises the friction angle', strength('loam', 50).tanPhi > strength('loam', 0).tanPhi && Math.abs(Math.atan(strength('loam', 50).tanPhi) * 180 / Math.PI - 36) < 1e-9);
+  check('settling by grain class', settling(CLASSES[0].d) === 1e-4 && settling(CLASSES[1].d) > 5e-4 && settling(CLASSES[1].d) < 1e-3 && settling(CLASSES[3].d) > 0.3);
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall soil tests passed');

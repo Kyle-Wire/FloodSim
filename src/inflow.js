@@ -16,12 +16,13 @@ const rdb = (text) => {
   return rows.map(r => Object.fromEntries(r.split('\t').map((v, i) => [head[i], v])));
 };
 
-/** Stream gauges with discharge data in a lon/lat box. → [{ site, name, lon, lat, areaMi2, altM (gauge datum, m) }] */
+/** Stream gauges with discharge data in a lon/lat box. → [{ site, name, lon, lat, areaMi2, altM (gauge datum, m), datum, acyM (its accuracy, m) }] */
 export async function findGauges([w, s, e, n], fetcher) {
   const r = await fetcher(`${NWIS}/site/?format=rdb&bBox=${w.toFixed(5)},${s.toFixed(5)},${e.toFixed(5)},${n.toFixed(5)}&siteType=ST&parameterCd=00060&hasDataTypeCd=iv&siteOutput=expanded`);
   if (!r.ok) return [];
   return rdb(await r.text()).map(o => ({ site: o.site_no, name: o.station_nm, lon: Number(o.dec_long_va), lat: Number(o.dec_lat_va), areaMi2: Number(o.drain_area_va) || null,
-    altM: o.alt_va !== '' && Number.isFinite(Number(o.alt_va)) ? Number(o.alt_va) * 0.3048 : null }))
+    altM: o.alt_va !== '' && Number.isFinite(Number(o.alt_va)) ? Number(o.alt_va) * 0.3048 : null, datum: o.alt_datum_cd || null,
+    acyM: o.alt_acy_va !== '' && Number.isFinite(Number(o.alt_acy_va)) ? Number(o.alt_acy_va) * 0.3048 : null }))
     .filter(g => g.site && Number.isFinite(g.lon));
 }
 

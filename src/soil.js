@@ -43,7 +43,7 @@ export function textureClass(sand, clay) {
 
 /** SQL for the properties of a list of map units (major components, all horizons). */
 export const soilPropsQuery = (mukeys) => 'SELECT M.mukey, A.wtdepannmin, A.brockdepmin, C.cokey, C.compname, C.comppct_r, H.hzdept_r, H.ksat_r, H.wsatiated_r, H.sandtotal_r, H.claytotal_r, H.kffact, ' +
-  'H.dbovendry_r, H.gypsum_r, H.lep_r, (SELECT TOP 1 T.taxmoistcl FROM cotaxmoistcl T WHERE T.cokey = C.cokey) AS moist, ' +
+  'H.dbovendry_r, H.gypsum_r, H.lep_r, (SELECT SUM(R.fragvol_r) FROM chfrags R WHERE R.chkey = H.chkey) AS fragvol, (SELECT TOP 1 T.taxmoistcl FROM cotaxmoistcl T WHERE T.cokey = C.cokey) AS moist, ' +
   "(SELECT TOP 1 PM.pmkind FROM copmgrp G JOIN copm PM ON PM.copmgrpkey = G.copmgrpkey WHERE G.cokey = C.cokey AND G.rvindicator = 'Yes' ORDER BY PM.pmorder) AS pmkind " +
   `FROM mapunit M JOIN muaggatt A ON A.mukey = M.mukey LEFT JOIN component C ON C.mukey = M.mukey AND C.majcompflag = 'Yes' LEFT JOIN chorizon H ON H.cokey = C.cokey ` +
   `WHERE M.mukey IN (${mukeys.map(k => `'${String(k).replace(/\D/g, '')}'`).join(',')})`;
@@ -60,7 +60,7 @@ export function soilParams(table) {
     const u = byUnit.get(mk), ck = r[col.cokey]; if (ck == null) continue;
     if (!u.comps.has(ck)) u.comps.set(ck, { name: r[col.compname], pct: num(r[col.comppct_r]) ?? 0, hz: [], moist: col.moist != null ? r[col.moist] : null, pm: col.pmkind != null ? r[col.pmkind] : null });
     if (r[col.hzdept_r] != null) u.comps.get(ck).hz.push({ top: num(r[col.hzdept_r]), ks: num(r[col.ksat_r]), sat: num(r[col.wsatiated_r]), sand: num(r[col.sandtotal_r]), clay: num(r[col.claytotal_r]), kf: num(r[col.kffact]),
-      db: col.dbovendry_r != null ? num(r[col.dbovendry_r]) : null, gyp: col.gypsum_r != null ? num(r[col.gypsum_r]) : null, lep: col.lep_r != null ? num(r[col.lep_r]) : null });
+      frag: col.fragvol != null ? num(r[col.fragvol]) : null, db: col.dbovendry_r != null ? num(r[col.dbovendry_r]) : null, gyp: col.gypsum_r != null ? num(r[col.gypsum_r]) : null, lep: col.lep_r != null ? num(r[col.lep_r]) : null });
   }
   const out = new Map();
   for (const [mk, u] of byUnit) {
@@ -73,7 +73,9 @@ export function soilParams(table) {
     const ks = near.length ? Math.min(...near.map(h => h.ks)) * 1e-6 * 0.5 : R ? R[0] / 3.6e6 : null; // µm/s → m/s, Bouwer's half
     const thetaE = top.sat != null && R ? Math.max(0.05, top.sat / 100 - (R[2] - R[3])) : R ? R[3] : null;
     if (ks == null || thetaE == null) { out.set(mk, { wt, bedrock, source: 'incomplete horizon data' }); continue; }
-    out.set(mk, { K: ks, psi: (R ? R[1] : 110) / 1000, thetaE, wt, bedrock, texture: tex ?? 'unknown', kf: top.kf, component: comp.name, source: 'SSURGO',
+    // grain classes of the surface horizon (% of the whole soil): rock fragments (> 2 mm) as gravel, the fine earth's sand and clay
+    const g = Math.min(90, Math.max(0, top.frag ?? 0)), grains = top.sand != null && top.clay != null ? { gravel: g, sand: top.sand * (1 - g / 100), clay: top.clay * (1 - g / 100) } : null;
+    out.set(mk, { K: ks, psi: (R ? R[1] : 110) / 1000, thetaE, wt, bedrock, texture: tex ?? 'unknown', kf: top.kf, component: comp.name, source: 'SSURGO', grains,
       collapse: collapseScreen(comp), swell: swellClass(comp) });
   }
   return out;

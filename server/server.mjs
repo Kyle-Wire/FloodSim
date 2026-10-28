@@ -34,6 +34,7 @@ const ALLOW = new Set([
   'api.waterdata.usgs.gov',         // USGS Water Data APIs: STN high-water marks, groundwater levels
   'waterservices.usgs.gov',         // USGS NWIS: stream gauges, instantaneous flows, site lists
   'nwis.waterdata.usgs.gov',        // USGS NWIS: annual peak flows
+  'geodesy.noaa.gov',               // NOAA NCAT / VERTCON: NGVD29 → NAVD88 for gauge datums
 ]);
 const UA = 'FloodSim/0.1 (urban flood research prototype)';
 const MIME = {

@@ -146,23 +146,101 @@ deposition, and the ground does not change shape during the run (full morphodyna
 with the Patapsco's 10-year flow: 1.8 ha high, mostly floodplain grass along the river, up to 18 cm.
 
 **Sediment transport and bed change** (Storm → *Sediment transport and bed change*, *Erodible topsoil depth*; View →
-*Bed*; `src/sediment.js`, kernels `sedAdvect` / `sedSource`). Off by default; the standard solver only (1–4 m grids,
-not the subgrid speed mode) and a GPU with 9 storage buffers per shader stage.
-- **Suspended load:** carried with the solver's own face fluxes in each Runge–Kutta stage at the upstream cell's
-  concentration, so solids move exactly with the water; entrained by excess shear ε = k_d(τ − τc), k_d = 0.2·τc^−½
-  cm³/(N·s) (Hanson & Simon 2001), against the soil's critical shear by texture; settling at the Ferguson–Church
-  velocity of the median grain, exactly over each step; at most 10 % solids by volume.
-- **Bedload** for sand-sized ground (d50 ≥ 0.0625 mm): Meyer-Peter & Müller across each face, upwind by the water flux,
-  at most half the water crossing the face (so the bed is never pushed where the water does not go).
+*Bed*, *Grain*; `src/sediment.js`, kernels `sedAdvect` / `sedSource`). Off by default; the standard solver only (1–4 m
+grids, not the subgrid speed mode) and a GPU with 10 storage buffers per shader stage.
+- **Four grain classes:** clay (2 µm, settling as flocs at 0.1 mm/s), silt (30 µm), sand (the area's sand size by
+  texture, 0.15–0.35 mm) and gravel (8 mm). The mix per cell comes from the soil survey's surface horizon: rock
+  fragments (`chfrags.fragvol_r`) as gravel, the fine earth split by its sand and clay (the texture's typical mix where
+  the survey has no horizon data).
+- **Suspended load:** each class carried with the solver's own face fluxes in each Runge–Kutta stage at the upstream
+  cell's concentration, so solids move exactly with the water, and settling at its own Ferguson–Church velocity,
+  exactly over each step; at most 10 % solids by volume.
+- **Entrainment** by excess shear ε = k_d(τ − τc), k_d = 0.2·τc^−½ cm³/(N·s) (Hanson & Simon 2001), against the soil's
+  critical shear by texture, taking the bed's classes in proportion, except a class the flow cannot hold in suspension
+  (u* < w_s), which stays behind: fines wash out of a scoured bed and it coarsens.
+- **Bedload** of sand and gravel: Wilcock & Crowe (2003), with hiding between the sizes, across each face, upwind by the
+  water flux, at most half the water crossing the face (so the bed is never pushed where the water does not go).
 - **Shear on the soil** uses the skin (grain) roughness n = d50^⅙/21.1, not the total n with vegetation drag (the
   effective shear of HEC-15 for vegetated linings); the total-shear scour-potential map is unchanged.
 - **The bed moves** (Exner, porosity 0.4): scour and deposits change the ground the flow sees during the run. The
   erodible budget is the topsoil depth you set (30 cm default) on erodible ground; paved ground erodes only the loose
   deposits that land on it; mapped water (rivers) takes deposits but does not erode (the survey has no bed material).
-- **Checks** (GPU suite): settling matches the exact decay to 0.001 %; a dam break over loam and over sand conserves solids
-  to ~1e-6 and water to ~1e-7 (sand moves 26× more, mostly as bedload). Ellicott City at 2 m with the Patapsco's
-  10-year flow: 50 m³ eroded, up to 27 cm scour on the sandy-loam floodplain, deposits in the river pools.
-- Run folders get `bed_change_cm.asc` and `suspended_solids_mm.asc`; the totals go under the run readouts.
+  The state keeps each class's store as its change from the start, and the bed as its initial level plus the change,
+  so solids balance per class and small bed changes are not lost to fp32 rounding.
+- **Limit:** the bed store is mixed over its depth (no separate surface layer), so armouring shows only where the scour
+  is a fair share of the erodible depth.
+- **Checks** (GPU suite): settling of each class matches its exact decay to 0.001 %; a dam break over loam and over a
+  sand–gravel mix conserves solids per class to ~1e-6 and water to ~1e-7, and 45 % of the scoured sand–gravel bed
+  ends coarser than it started.
+- Run folders get `bed_change_cm.asc`, `suspended_solids_mm.asc`, `bed_grain_size_mm.asc` and
+  `sediment_by_grain_class.csv`; the totals go under the run readouts.
+
+**Debris flows** (Storm → *Debris flows*, with sediment transport; kernels `sedSource`, `slopeFail`). Off by default.
+- **Mixture flow:** the water depth becomes the mixture depth. Entrained bed brings its pore water, and deposits take
+  theirs back, so the flow bulks as it picks up material. The mass books stay of water: the solids in the flow and
+  carried out are taken off, and the pore water the bed released is added.
+- **Entrainment and deposition** toward the equilibrium slope of Egashira et al. (1997):
+  - only once the flow is a debris flow (≥ 20 % solids; thinner flows, such as sheet flow on a steep slope, entrain by
+    shear alone, so a debris flow starts from a landslide or from shear erosion building the load);
+  - rate i = u·tan(θ − θe), with tan θe = (σ/ρ − 1)C·tan φ′ / ((σ/ρ − 1)C + 1);
+  - it erodes on slopes of 10° or more, unsorted (all classes together);
+  - it deposits wherever the slope falls below θe;
+  - the concentration is capped at 50 % by volume.
+- **Rheology:** the quadratic model of O'Brien & Julien (1988), using the Glenwood 1 sample's coefficients:
+  - yield stress τy = 0.0345·e^(20.1C) dyn/cm², which stops a plug on its own;
+  - viscosity η = 0.0283·e^(23.0C) P, with laminar resistance K = 24, applied implicitly.
+- **Settling** is hindered in the mixture (Richardson–Zaki, (1 − C)⁴). Grains whose weight the yield stress holds up do
+  not settle.
+- **Shallow landslides:** where steeper than 15°, each step tests the infinite-slope factor of safety:
+  - at the Green-Ampt wetting front (no suction credit), or at bedrock once the soil is saturated to it (then with
+    slope-parallel seepage);
+  - strength is the soil's c′ and φ′ plus root cohesion by land cover;
+  - a cell with FS < 1 releases its soil (as far as the store goes) into the flow, with its pore water.
+
+  On slopes of 10° or more the whole soil to bedrock is erodible (the survey's depth to bedrock, 1.5 m where it gives
+  none, at most 3 m).
+- **Check** (GPU suite), a 2 m slurry at 40 % solids released down a 20° gully onto a flat fan:
+  - 305 m³ scoured from the gully and 173 m³ laid on the fan;
+  - peak concentration 52 %;
+  - solids balance per class 1e-7, water books 2e-7.
+- Run folders get `slope_failure_min.asc` (when each cell failed).
+
+**Bank collapse probability** (Storm → *Bank collapse probability*, on by default; View → *Banks*; `src/banks.js`,
+kernel `bankFS`). The standard solver only.
+- **Possible bank tops:** every cell within 20 m of open water (NLCD water or a mapped river or stream) standing at
+  least 0.5 m over its nearest water cell (the toe), at a slope of 10° or more.
+- **Factor of safety**, every step: a planar failure through the toe (a Culmann wedge), searched over 8 plane angles,
+  FS = [c′·Lp + (W·cos α − U + Pw·cos(β − α))·tan φ′] / [W·sin α − Pw·sin(β − α)].
+  - Weight uses the saturated unit weight below the bank's water table.
+  - U is the pore water force on the plane.
+  - Pw is the river against the face, confining it.
+- **Strength:** c′ and φ′ by texture (BSTEM-style defaults; gravel raises φ′ toward 36°), plus root cohesion by land
+  cover over the top metre (forest 5 kPa, grass 1.5 kPa).
+- **Bank water table:** follows the river (and any water standing on the bank) with a lag T = θe·L/K, the Darcy travel
+  time through the bank. A quick fall after a long high stage leaves the bank saturated and unconfined: rapid drawdown,
+  the usual collapse case.
+- **Toe scour:** the toe is the water cell's current bed, so with sediment transport on, toe scour raises the bank.
+- **Probability, given the bank stands today:** c′ and tan φ′ are uncertain (normal, coefficients of variation 40 % and
+  10 %), but whatever their true values, they hold the bank up at the start with the river at its starting level.
+  - The app reports P(the bank fails during the run | it stood at the start). FS is linear in both, so per plane
+    this is a 10-point Gauss–Hermite integral over tan φ′ of a difference of normal CDFs in c′; the worst plane counts.
+  - A bank that is unchanged does not fail. A bank that could stand only on strength the survey lacks (rock,
+    cementation: under 2 % chance of standing from the survey's strength) is shown grey and not rated.
+  - Banks more than twice as high as the soil is deep (to bedrock) are left out as rock-controlled.
+  - Classes: unlikely (< 5 %), possible (5–25 %), likely (25–60 %), very likely (> 60 %).
+  - The readout gives the lowest FS and the highest probability, with their times.
+- **Limits:**
+  - no bathymetry: the toe is the lidar water surface, so a bank's submerged part is not counted;
+  - no tension cracks or matric suction (conservative);
+  - one planar mode (no rotational slips).
+- **Checks:**
+  - `npm run test:banks`: dry sand fails at its friction angle; cohesion and river water hold a bank up; rapid
+    drawdown is the worst case; Pf = ½ at FS = 1; an unchanged bank does not fail; the conditional probability matches
+    Monte Carlo (98.58 % vs 98.53 %); a cliff that stands only on rock is not rated;
+  - GPU suite: the kernel's FS matches `src/banks.js` to 2e-7, and draining a full channel drops a 3 m loam bank from
+    FS 1.73 to 0.69 (92 % probability of collapse, given it stood with the channel full).
+- Run folders get `bank_collapse_probability.asc` and `banks.csv`: per bank top, its location, height, run, slope,
+  strength, lowest FS and highest probability with their times, and the highest water against it.
 
 **Collapsible and expansive soils (screening)** (View → *Collapse*; Data & assumptions → *Ground hazards*;
 `src/soil.js`). From the same survey: a collapse (hydrocompaction) score per soil component from loess or eolian /
@@ -186,6 +264,27 @@ Catonsville and Elkridge gauges).
   books include it. Flows are used as measured (no drainage-area scaling between gauge and crossing).
 - Check: Ellicott City in the speed mode with the Patapsco's 10-year flow: 1.35 million m³ through the model in 90
   minutes, surface mass error 1.6e-6 of the water that entered. `npm run test:inflow` (`--live` fits Hollofield).
+
+**Starting water levels** (Storm → *Rivers, lakes and tidal water start at*; `src/waterlevels.js`). The 3DEP lidar is
+hydro-flattened: open water is a flat surface at the level of the day it was flown, so without this the channels and
+lakes start at that day's level. With *Gauge levels* (the default), before the run starts the app reads the USGS gauges
+nearby and the inflow gauges, at the storm start for a historic storm or their latest reading for a design storm.
+- **River gauge:** water surface (gage height + gauge datum, or a NAVD88 water-surface elevation) minus the lidar water
+  surface at the gauge (the 5th-percentile ground of a 120 m patch: gauges sit on banks and bridges) gives the rise;
+  the river rises by that much along its length.
+- **Lake or reservoir gauge:** fills its lake flat to the reading.
+- **Tidal water** touching the tide-gauge boundary starts at the tide level.
+- **Spreading:** water spreads, nearest water first, onto connected ground below its level, so a gauge above bankfull
+  starts the floodplain wet.
+- **Datums:**
+  - gage heights need a surveyed NGVD29 or NAVD88 datum, accurate to within 0.5 ft (datums read off maps are skipped);
+  - NGVD29 is converted with NOAA's NCAT/VERTCON.
+- **Base flow:** each design inflow hydrograph's base is the gauge's flow at the start (else 5 % of the peak).
+- **Not covered:** ungauged water stays at the lidar surface, and there is still no bathymetry below it.
+- **Checks:**
+  - `npm run test:waterlevels`: parallel rise, flat lake fill, spreading onto connected ground only, datum rules,
+    NGVD29 shift;
+  - `--live` reads Hollofield: 57.46 m NAVD88, 0.46 m above its lidar water surface at 57 cfs.
 
 **Calibration** (section 6; `src/calibrate.js`). Import observations (CSV or GeoJSON points, feet or metres NAVD88):
 high-water marks (water surface elevation), observed depths, or flooded / dry reports (311 complaints, photos).
@@ -401,7 +500,8 @@ an area is instant and works offline. Overpass is the least reliable source (pub
   tide gates are not modelled (edge outfalls stand in for the interceptor)
 - 1D–2D exchange every 2 s sets the pace on small domains (~47× real time at 190 k cells)
 - Rain is uniform over the domain (no areal reduction factor, no MRMS radar replay yet); Atlas 14 temporal distributions not yet offered
-- Rivers come from hydro-flattened lidar with no bathymetry; no river inflow hydrographs yet (tide/surge levels are in)
+- Rivers come from hydro-flattened lidar with no bathymetry: gauged water starts at its gauge level above the lidar
+  surface, but the channel below that surface is not modelled
 - No catchment delineation: water from upstream of the drawn area is ignored (draw the polygon around the catchment);
   the drainage network is built over the polygon's bounding box, so inlets outside the polygon sit in dry sink cells
 - Max speed in exports is sampled at the display frame rate, not every solver step
@@ -467,7 +567,10 @@ Bed elevations are stored relative to the domain minimum for fp32 headroom.
 | Green infrastructure: CPU parity, tiled = untiled | – | 9e-8 m, bit-identical |
 | Flood barriers: overtopping vs CPU, books, tiled = untiled | weir rate within 2 % of C·H^1.5 | 2e-5 m, books 4e-7, bit-identical |
 | Hazard products every step vs CPU (classes, force, duration, arrival) | – | 0 class differences, force 9e-5 kN/m, times exact |
-| Sediment: settling vs exact; dam break over loam and sand (solids, water) | – | 0.001 %; solids ~1e-6, water ~1e-7 |
+| Sediment, 4 grain classes: settling vs exact; dam break over loam and sand–gravel (solids per class, water, coarsening) | – | 0.001 %; solids ~1e-6, water ~1e-7, 45 % of scoured cells coarser |
+| Debris flow: a 40 % slurry down a 20° gully onto a fan (solids per class, water books of the mixture) | – | solids 1e-7, water 2e-7, peak concentration 52 % |
+| Bank stability: kernel FS vs `src/banks.js`; drawdown of a full channel; conditional probability vs Monte Carlo | dry sand fails at φ′ within 3 %; 98.58 % vs 98.53 % | 2e-7; FS 1.73 → 0.69 |
+| Starting water levels: parallel rise, flat lake fill, datum rules | exact | – |
 | Green-Ampt and scour vs CPU (infiltrated volume, shear, scour depth) | ponded GA within 0.3 % of analytic | 1e-7, 1e-4, 3e-4 mm |
 | Subgrid speed mode vs 1 m run, 320 m urban cloudburst (4 m / 8 m) | – | peak depth MAE 2.6 / 5.6 cm, CSI 0.80 / 0.63, 15× / 36× faster |
 
@@ -487,7 +590,9 @@ node tests/run-subgrid-tests.mjs # subgrid speed mode tables: storage, conveyanc
 node tests/run-watershed-tests.mjs # watersheds: depression filling, D8, upstream trace, outlines, rivers from off the DEM
 node tests/run-calibrate-tests.mjs # calibration: observation import, scoring, sweep plan
 node tests/run-inflow-tests.mjs   # river inflow: LP3, hydrographs, river entries, inflow books, STN marks (--live: a real gauge)
-node tests/run-soil-tests.mjs     # soils: texture classes, SSURGO rows, ponded Green-Ampt vs analytic, water table, aggregation
+node tests/run-soil-tests.mjs     # soils: texture classes, SSURGO rows, ponded Green-Ampt vs analytic, water table, aggregation, grain classes
+node tests/run-waterlevel-tests.mjs # starting water levels: river rise, lake fill, spreading, gauge datums (--live: a real gauge)
+node tests/run-bank-tests.mjs     # bank stability: friction-angle failure, cohesion, confinement, rapid drawdown, probability, bank tops
 # GPU suite in your own browser: npm start, then open http://localhost:8766/tests/gpu-browser.html
 
 # GPU suite in headless Chromium (works with software WebGPU):
@@ -537,7 +642,9 @@ src/calibrate.js      observations (high-water marks, depths, reports, USGS STN)
 src/inflow.js         upstream river inflow: USGS gauges, recorded and design (LP3) hydrographs, entry cells
 src/soil.js           SSURGO soil hydraulics, Green-Ampt parameters per cell (wetness, water table)
 src/scour.js          critical shear by surface, scour-potential classes
-src/sediment.js       sediment transport inputs (grain size, settling, erodible depth, skin roughness)
+src/waterlevels.js    starting water levels from USGS gauges: river rise, lake fill, tide, spreading, datums
+src/banks.js          bank tops next to water, Culmann bank stability, probability of collapse
+src/sediment.js       sediment transport inputs (4 grain classes, settling, erodible stores, skin roughness, soil strength)
 src/gi.js             green infrastructure layers (permeable pavement, rain gardens) and green-roof retention
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy

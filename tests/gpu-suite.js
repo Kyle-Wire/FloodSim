@@ -4,6 +4,8 @@ import { CPUSolver } from '../src/solver-cpu.js';
 import { damBreak, thackerPlanar } from '../src/analytic.js';
 import { cloudburst, dambreak, MMHR } from '../src/scenarios.js';
 import { buildSubgrid, fineDepth, cellVolume, CT } from '../src/subgrid.js';
+import { settling, bedSize } from '../src/sediment.js';
+import { bankFS } from '../src/banks.js';
 
 export async function runGpuSuite(device, log = console.log) {
   const results = {};
@@ -308,25 +310,64 @@ export async function runGpuSuite(device, log = console.log) {
     log(`Green-Ampt + scour: infiltrated gpu/cpu ${s.mass.infil.toFixed(1)}/${infCpu.toFixed(1)} m³  max|Δh| ${dh.toExponential(1)} m  peak shear rel diff ${dShear.toExponential(1)}  scour potential ≤ ${(eroMax * 100).toFixed(2)} cm, max|Δ| ${(dEro * 1000).toFixed(3)} mm  mass rel ${s.mass.rel.toExponential(1)}`);
   }
 
-  // Sediment transport: settling in still water against the exact decay; a dam break over an erodible bed (cohesive
-  // loam, then 0.3 mm sand with bedload) conserves solids and water while the bed moves
+  // Sediment transport in four grain classes: settling of each class in still water against its exact decay; a dam
+  // break over an erodible bed (30 cm of cohesive loam; 1 cm of a sand–gravel mix with bedload) conserves solids per
+  // class and water while the bed moves, and the scoured mix coarsens (the store is mixed over its depth); then a debris flow down a 20° gully onto a flat fan
   {
-    const N0 = 100, ws = 1e-3;
-    const g0 = new GPUSolver(device, { nx: 10, ny: 10, dx: 2, z: new Float64Array(N0), manning: 0.03, scour: { tauC: new Float32Array(N0).fill(1e9), n: new Float32Array(N0).fill(0.03) }, sediment: { ws: new Float32Array(N0).fill(ws), erodible: new Float32Array(N0) } });
-    g0.setDepth(() => 1); g0.setSediment(() => 0.001); await g0.advance(600);
+    const N0 = 100, sD = 0.2e-3, all = (v) => new Float32Array(N0).fill(v);
+    const g0 = new GPUSolver(device, { nx: 10, ny: 10, dx: 2, z: new Float64Array(N0), manning: 0.03, scour: { tauC: all(1e9), n: all(0.03) }, sediment: { erodible: new Float32Array(N0 * 4), dSand: all(sD), dGravel: all(8e-3) } });
+    g0.setDepth(() => 1); g0.setSediment(() => [0.001, 0.001, 0.001, 0.001]); await g0.advance(60);
     const s0 = await g0.readSediment(); g0.destroy();
-    const settleErr = Math.abs(s0.suspended[55] / (0.001 * Math.exp(-ws * 600)) - 1), settleSum = Math.abs(s0.suspended[55] + 0.6 * s0.bed[55] - 0.001) / 0.001;
+    const ws = [settling(2e-6), settling(30e-6), settling(sD)], left = s0.classes.map(cl => cl.suspended / 400);
+    const settleErr = Math.max(...ws.map((w, m) => Math.abs(left[m] / (0.001 * Math.exp(-w * 60)) - 1)));
+    const settleSum = Math.max(...s0.classes.map(cl => Math.abs(cl.suspended + 0.6 * cl.change + cl.out - 0.4) / 0.4));
     const runs = {};
-    for (const [name, d50, tauC, w] of [['loam', 0, 2, 2e-3], ['sand', 3e-4, 1, 0.04]]) {
+    for (const [name, mix, tauC, depth] of [['loam', [0.18, 0.4, 0.42, 0], 2, 0.3], ['sand+gravel', [0.02, 0.08, 0.6, 0.3], 1, 0.01]]) {
       const nx = 100, ny = 20, N = nx * ny, z = new Float64Array(N); for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = 0.002 * (nx - i);
-      const g = new GPUSolver(device, { nx, ny, dx: 2, z, manning: 0.03, bc: { east: 'outflow' }, scour: { tauC: new Float32Array(N).fill(tauC), n: new Float32Array(N).fill(0.03) }, sediment: { ws: new Float32Array(N).fill(w), erodible: new Float32Array(N).fill(0.3), d50: new Float32Array(N).fill(d50) } });
+      const er = new Float32Array(N * 4); for (let k = 0; k < N; k++) for (let m = 0; m < 4; m++) er[4 * k + m] = depth * mix[m];
+      const g = new GPUSolver(device, { nx, ny, dx: 2, z, manning: 0.03, bc: { east: 'outflow' }, scour: { tauC: new Float32Array(N).fill(tauC), n: new Float32Array(N).fill(0.03) },
+        sediment: { erodible: er, dSand: new Float32Array(N).fill(0.3e-3), dGravel: new Float32Array(N).fill(8e-3), tauSoil: new Float32Array(N).fill(tauC), nSkin: new Float32Array(N).fill(0.016) } });
       g.setDepth((x, y, zz) => (x < 40 ? 2 - zz : 0)); await g.advance(300);
       const sd = await g.readSediment(), st = await g.readState(); g.destroy();
-      let bedVol = 0, lo = 0; for (let k = 0; k < N; k++) { bedVol += sd.bed[k] * 4; lo = Math.min(lo, sd.bed[k]); }
-      runs[name] = { eroded: sd.totals.eroded, out: sd.out, solidsRel: (sd.totals.suspended + 0.6 * bedVol + sd.out) / (0.6 * sd.totals.eroded), scourCm: -lo * 100, waterMass: st.mass.rel };
+      let lo = 0, coarser = 0, scoured = 0; const d0 = bedSize(mix, 0.3e-3);
+      for (let k = 0; k < N; k++) { lo = Math.min(lo, sd.bed[k]); if (sd.bed[k] < -0.001) { scoured++; if (sd.size[k] > d0 * 1.01) coarser++; } }
+      const bal = Math.max(...sd.classes.map(cl => Math.abs(cl.suspended + 0.6 * cl.change + cl.out) / Math.max(1e-9, 0.6 * sd.totals.eroded)));
+      runs[name] = { eroded: sd.totals.eroded, out: sd.out, solidsRel: bal, scourCm: -lo * 100, coarsened: scoured ? coarser / scoured : 0, waterMass: st.mass.rel };
     }
+    // debris flow: a 20° gully 80 m long onto a flat fan, 1 m of gravelly sandy soil, a 2 m slurry at 40 % solids released at the top
+    const nx = 80, ny = 24, dx = 2, N = nx * ny, z = new Float64Array(N), er = new Float32Array(N * 4);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const k = j * nx + i, x = i * dx; z[k] = Math.max(0, (80 - x) * Math.tan(20 * Math.PI / 180)) + 0.3 * Math.abs(j - 11.5); [0.05, 0.15, 0.5, 0.3].forEach((v, m) => { er[4 * k + m] = (x < 80 ? 1 : 0.3) * v; }); }
+    const fill = (v) => new Float32Array(N).fill(v);
+    const g = new GPUSolver(device, { nx, ny, dx, z, manning: 0.05, bc: { east: 'outflow' }, scour: { tauC: fill(3), n: fill(0.05) }, debris: true,
+      sediment: { erodible: er, dSand: fill(0.3e-3), dGravel: fill(8e-3), tauSoil: fill(3), nSkin: fill(0.02), cohesion: fill(1000), tanPhi: fill(Math.tan(34 * Math.PI / 180)), soilDepth: fill(1), thetaE: fill(0.35) } });
+    const slurry = (x, y) => x < 10 && Math.abs(y / dx - 11.5) < 4;
+    g.setDepth((x, y) => (slurry(x, y) ? 2 : 0)); g.setSediment((x, y) => (slurry(x, y) ? [0.04, 0.12, 0.4, 0.24] : 0)); await g.advance(120);
+    const sd = await g.readSediment(), st = await g.readState(); g.destroy();
+    let cMax = 0, fan = 0, gully = 0; for (let k = 0; k < N; k++) { const h = st.h[k]; if (h > 0.05) cMax = Math.max(cMax, sd.suspended[k] / h); const x = (k % nx) * dx; if (x >= 80) fan += Math.max(0, sd.bed[k]) * dx * dx; else gully -= Math.min(0, sd.bed[k]) * dx * dx; }
+    let nSl = 0; for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) if (slurry((i + 0.5) * dx, (j + 0.5) * dx)) nSl++;
+    const init = [0.04, 0.12, 0.4, 0.24].map(v => v * nSl * dx * dx), debBal = Math.max(...sd.classes.map((cl, m) => Math.abs(cl.suspended + 0.6 * cl.change + cl.out - init[m]) / (init[0] + init[1] + init[2] + init[3])));
+    runs.debris = { gullyEroded: gully, fanDeposit: fan, cMax, solidsRel: debBal, waterMass: st.mass.rel, pore: sd.pore };
     results.sediment = { settleErr, settleSum, ...runs };
-    log(`sediment: settling vs exact ${(settleErr * 100).toFixed(3)} % (solids ${settleSum.toExponential(1)})  dam break loam / sand: eroded ${runs.loam.eroded.toFixed(2)} / ${runs.sand.eroded.toFixed(1)} m³, scour ${runs.loam.scourCm.toFixed(2)} / ${runs.sand.scourCm.toFixed(1)} cm, solids balance ${runs.loam.solidsRel.toExponential(1)} / ${runs.sand.solidsRel.toExponential(1)}, water mass ${runs.loam.waterMass.toExponential(1)} / ${runs.sand.waterMass.toExponential(1)}`);
+    log(`sediment, 4 classes: settling vs exact ${(settleErr * 100).toFixed(3)} % (solids ${settleSum.toExponential(1)})  dam break loam / sand+gravel: eroded ${runs.loam.eroded.toFixed(2)} / ${runs['sand+gravel'].eroded.toFixed(1)} m³, scour ${runs.loam.scourCm.toFixed(2)} / ${runs['sand+gravel'].scourCm.toFixed(1)} cm, scoured beds coarser ${(runs.loam.coarsened * 100).toFixed(0)} / ${(runs['sand+gravel'].coarsened * 100).toFixed(0)} %, solids balance per class ${runs.loam.solidsRel.toExponential(1)} / ${runs['sand+gravel'].solidsRel.toExponential(1)}, water mass ${runs.loam.waterMass.toExponential(1)} / ${runs['sand+gravel'].waterMass.toExponential(1)}`);
+    log(`debris flow: gully eroded ${gully.toFixed(1)} m³, fan deposit ${fan.toFixed(1)} m³, peak concentration ${(cMax * 100).toFixed(0)} %, solids balance ${debBal.toExponential(1)}, water (mixture books) ${st.mass.rel.toExponential(1)}, pore water released ${sd.pore.toFixed(1)} m³`);
+  }
+
+  // Bank stability every step: a full channel drains through its open end; the banks' water table lags (T = 20 min),
+  // so the lowest factor of safety comes after the river has dropped (rapid drawdown); the kernel's FS at the end
+  // matches src/banks.js for the same water levels
+  {
+    const nx = 80, ny = 16, dx = 1, N = nx * ny, z = new Float64Array(N), water = new Uint8Array(N);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const k = j * nx + i; z[k] = (j < 6 ? 0 : Math.min(3, (j - 5) * 1.5)) - 0.001 * i; if (j < 6) water[k] = 1; }
+    const banks = []; for (let i = 5; i < 75; i += 5) banks.push({ top: 8 * nx + i, toe: 5 * nx + i, L: 3, c: 3000, tanPhi: Math.tan(28 * Math.PI / 180), T: 1200, wt: null });
+    const g = new GPUSolver(device, { nx, ny, dx, z, manning: 0.03, banks, bc: { west: 'wall', east: 'outflow', south: 'wall', north: 'wall' } });
+    g.setDepth((x, y, zz) => (y < 6 ? Math.max(0, 2.4 - zz) : 0));
+    const r0 = (await g.advance(1), await g.readBanks()); await g.advance(3600);
+    const r = await g.readBanks(), st = await g.readState(); g.destroy();
+    const b = 7, top = banks[b].top, toe = banks[b].toe, H = z[top] - z[toe];
+    const hb = H, hp = r.table[b] - z[toe], hw = st.h[toe];
+    const js = bankFS(hb, 3, 3000, Math.tan(28 * Math.PI / 180), hp, hw);
+    results.banks = { fsStart: r0.fsNow[b], minFS: r.minFS[b], tMinFS: r.tMinFS[b], fsEnd: r.fsNow[b], fsJs: js.fs, fsRel: Math.abs(r.fsNow[b] / js.fs - 1), maxPf: r.maxPf[b], hwMax: r.hwMax[b], table: r.table[b], H };
+    log(`banks: FS at the start ${r0.fsNow[b].toFixed(2)} (channel full), lowest ${r.minFS[b].toFixed(2)} at ${(r.tMinFS[b] / 60).toFixed(0)} min (rapid drawdown), end ${r.fsNow[b].toFixed(2)} vs src/banks.js ${js.fs.toFixed(2)} (rel ${results.banks.fsRel.toExponential(1)}), peak probability of failure ${(r.maxPf[b] * 100).toFixed(0)} %`);
   }
 
   return results;

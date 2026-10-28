@@ -350,8 +350,15 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <p class="note" id="wtNote"></p>
       <label class="toggle"><input type="checkbox" id="sedOn"> Sediment transport and bed change</label>
       <div class="field"><label for="topsoil">Erodible topsoil depth, m</label><input id="topsoil" type="number" value="0.3" min="0" step="0.05" style="width:6em"></div>
-      <p class="note" id="sedNote">Erosion by excess shear, settling, sand bedload (Meyer-Peter &amp; Müller), and the ground moving with it. Standard solver only (not the subgrid speed mode).</p>
+      <p class="note" id="sedNote">Four grain classes from the soil survey (clay, silt, sand, gravel): erosion by excess shear, settling by size, sand and gravel bedload (Wilcock &amp; Crowe), and the ground moving with it. Standard solver only (not the subgrid speed mode).</p>
+      <label class="toggle"><input type="checkbox" id="debrisOn"> Debris flows (with sediment transport)</label>
+      <p class="note" id="debrisNote">The flow becomes a water–sediment mixture that bulks as it picks up the bed, entrains on slopes over 10° and drops its load where it flattens (Egashira), and slows with a yield stress and viscosity that rise with concentration (O'Brien &amp; Julien). Steep soil saturated by the storm fails as a shallow landslide (infinite slope, Green-Ampt wetting front) and joins the flow. On slopes over 10° the whole soil to bedrock is erodible.</p>
+      <label class="toggle"><input type="checkbox" id="bankOn" checked> Bank collapse probability along rivers, streams and lakes</label>
+      <p class="note" id="bankNote">Every step, for the ground within 20 m of open water: a planar (Culmann) failure through the toe with the soil's strength and roots, the river confining the bank, the bank's water table lagging the river (rapid drawdown), and toe scour when sediment transport is on. The probability comes from the spread of the soil's strength. Standard solver only.</p>
       <p class="note">Storm settings lock once a run starts; Reset to change them. Roof rain goes to the open cells around each building, except the share whose downspouts connect to the sewer (Drainage).</p>
+      <div class="field"><label for="startWater">Rivers, lakes and tidal water start at</label>
+        <select id="startWater"><option value="gauge" selected>Gauge levels (at the storm start; latest reading for design storms)</option><option value="lidar">The lidar water surface (no extra water)</option></select></div>
+      <p class="note" id="startNote"></p>
       <div id="inflowBox" hidden>
         <p class="vlabel">Upstream river inflow (USGS gauges)</p>
         <div id="inflowList"></div>
@@ -425,7 +432,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <p class="vlabel">Peak over the run</p>
       <div class="seg vseg" id="viewSeg2">
         <button data-v="max" title="Maximum depth">Depth</button><button data-v="peakHaz" title="Worst hazard class reached (depth and velocity at the same moment)">Hazard</button>
-        <button data-v="force" title="Peak force per metre of width, ρ(h·v² + ½g·h²)">Force</button><button data-v="duration" title="Time deeper than 15 cm">Duration</button><button data-v="arrival" title="When it first got 15 cm deep">Arrival</button><button data-v="scour" title="Peak bed shear against what the ground resists (scour potential)">Scour</button><button data-v="bed" title="Bed change from sediment transport: erosion red, deposition blue">Bed</button><button data-v="collapse" title="Collapsible soils (survey screening) the flood wetted">Collapse</button>
+        <button data-v="force" title="Peak force per metre of width, ρ(h·v² + ½g·h²)">Force</button><button data-v="duration" title="Time deeper than 15 cm">Duration</button><button data-v="arrival" title="When it first got 15 cm deep">Arrival</button><button data-v="scour" title="Peak bed shear against what the ground resists (scour potential)">Scour</button><button data-v="bed" title="Bed change from sediment transport: erosion red, deposition blue">Bed</button><button data-v="collapse" title="Collapsible soils (survey screening) the flood wetted">Collapse</button><button data-v="banks" title="Highest probability of bank collapse over the run, at each bank top">Banks</button><button data-v="grain" title="Bed grain size against the soil's: coarser (scoured, armoured) brown, finer (silted) blue">Grain</button>
       </div>
       <div class="field"><label for="hazStd">Hazard classes</label>
         <select id="hazStd"><option value="arr">ARR 2019 / AIDR H1–H6 (depth, velocity, d·v limits)</option><option value="defra">UK FD2320, HR = d(v + 0.5)</option><option value="defraUrban">UK FD2320 with urban debris factor</option></select></div>
