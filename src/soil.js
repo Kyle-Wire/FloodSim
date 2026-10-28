@@ -42,7 +42,9 @@ export function textureClass(sand, clay) {
 }
 
 /** SQL for the properties of a list of map units (major components, all horizons). */
-export const soilPropsQuery = (mukeys) => 'SELECT M.mukey, A.wtdepannmin, A.brockdepmin, C.cokey, C.compname, C.comppct_r, H.hzdept_r, H.ksat_r, H.wsatiated_r, H.sandtotal_r, H.claytotal_r, H.kffact ' +
+export const soilPropsQuery = (mukeys) => 'SELECT M.mukey, A.wtdepannmin, A.brockdepmin, C.cokey, C.compname, C.comppct_r, H.hzdept_r, H.ksat_r, H.wsatiated_r, H.sandtotal_r, H.claytotal_r, H.kffact, ' +
+  'H.dbovendry_r, H.gypsum_r, H.lep_r, (SELECT TOP 1 T.taxmoistcl FROM cotaxmoistcl T WHERE T.cokey = C.cokey) AS moist, ' +
+  "(SELECT TOP 1 PM.pmkind FROM copmgrp G JOIN copm PM ON PM.copmgrpkey = G.copmgrpkey WHERE G.cokey = C.cokey AND G.rvindicator = 'Yes' ORDER BY PM.pmorder) AS pmkind " +
   `FROM mapunit M JOIN muaggatt A ON A.mukey = M.mukey LEFT JOIN component C ON C.mukey = M.mukey AND C.majcompflag = 'Yes' LEFT JOIN chorizon H ON H.cokey = C.cokey ` +
   `WHERE M.mukey IN (${mukeys.map(k => `'${String(k).replace(/\D/g, '')}'`).join(',')})`;
 
@@ -56,8 +58,9 @@ export function soilParams(table) {
   for (const r of rows) {
     const mk = String(r[col.mukey]); if (!byUnit.has(mk)) byUnit.set(mk, { wt: num(r[col.wtdepannmin]), bed: num(r[col.brockdepmin]), comps: new Map() });
     const u = byUnit.get(mk), ck = r[col.cokey]; if (ck == null) continue;
-    if (!u.comps.has(ck)) u.comps.set(ck, { name: r[col.compname], pct: num(r[col.comppct_r]) ?? 0, hz: [] });
-    if (r[col.hzdept_r] != null) u.comps.get(ck).hz.push({ top: num(r[col.hzdept_r]), ks: num(r[col.ksat_r]), sat: num(r[col.wsatiated_r]), sand: num(r[col.sandtotal_r]), clay: num(r[col.claytotal_r]), kf: num(r[col.kffact]) });
+    if (!u.comps.has(ck)) u.comps.set(ck, { name: r[col.compname], pct: num(r[col.comppct_r]) ?? 0, hz: [], moist: col.moist != null ? r[col.moist] : null, pm: col.pmkind != null ? r[col.pmkind] : null });
+    if (r[col.hzdept_r] != null) u.comps.get(ck).hz.push({ top: num(r[col.hzdept_r]), ks: num(r[col.ksat_r]), sat: num(r[col.wsatiated_r]), sand: num(r[col.sandtotal_r]), clay: num(r[col.claytotal_r]), kf: num(r[col.kffact]),
+      db: col.dbovendry_r != null ? num(r[col.dbovendry_r]) : null, gyp: col.gypsum_r != null ? num(r[col.gypsum_r]) : null, lep: col.lep_r != null ? num(r[col.lep_r]) : null });
   }
   const out = new Map();
   for (const [mk, u] of byUnit) {
@@ -70,7 +73,8 @@ export function soilParams(table) {
     const ks = near.length ? Math.min(...near.map(h => h.ks)) * 1e-6 * 0.5 : R ? R[0] / 3.6e6 : null; // µm/s → m/s, Bouwer's half
     const thetaE = top.sat != null && R ? Math.max(0.05, top.sat / 100 - (R[2] - R[3])) : R ? R[3] : null;
     if (ks == null || thetaE == null) { out.set(mk, { wt, bedrock, source: 'incomplete horizon data' }); continue; }
-    out.set(mk, { K: ks, psi: (R ? R[1] : 110) / 1000, thetaE, wt, bedrock, texture: tex ?? 'unknown', kf: top.kf, component: comp.name, source: 'SSURGO' });
+    out.set(mk, { K: ks, psi: (R ? R[1] : 110) / 1000, thetaE, wt, bedrock, texture: tex ?? 'unknown', kf: top.kf, component: comp.name, source: 'SSURGO',
+      collapse: collapseScreen(comp), swell: swellClass(comp) });
   }
   return out;
 }
@@ -102,4 +106,41 @@ export function gaCells(f, nx, ny, F, mask, { Se = WETNESS.normal, wtOverride = 
     K[C] = k / area; perv[C] = p / area; psiD[C] = p > 0 ? pd / p : 0; fmax[C] = p > 0 ? fm / p : 0;
   }
   return { K, psiD, fmax, perv };
+}
+
+// ------------------------------------------------------------------ collapsible and expansive soils (screening)
+
+export const COLLAPSE_CLASSES = ['None', 'Low', 'Moderate', 'High'];
+/**
+ * Collapse (hydrocompaction) susceptibility of a soil component, a screening score from the survey: soils that lose
+ * volume when first wetted under load are low-density, silty, wind- or fan-deposited and dry (Houston, Houston & Lewis
+ * 2001; USBR Earth Manual); gypsum dissolves. Points: loess or eolian parent material +2, alluvial fan / debris flow /
+ * mudflow / colluvium +1; dry bulk density in the top metre < 1.4 g/cm³ +2, < 1.6 +1; silt ≥ 40 % with clay ≤ 25 % +1,
+ * clay > 35 % −2 (clays swell instead); aridic / torric moisture regime +2, ustic / xeric +1; gypsum ≥ 3 % in the top
+ * 1.5 m +2. Class: ≥ 5 high, 3–4 moderate, 1–2 low; without a primary driver (loess / eolian, aridic, gypsum), low at
+ * most. A flag for geotechnical follow-up (oedometer collapse tests), not
+ * a prediction. → { score, cls (0–3), reasons }
+ */
+export function collapseScreen(comp) {
+  const hz = comp.hz.filter(h => h.top < 150), top = comp.hz[0] ?? {}, reasons = []; let score = 0, primary = false;
+  const pm = String(comp.pm ?? '').toLowerCase(), moist = String(comp.moist ?? '').toLowerCase();
+  if (/loess|eolian|aeolian/.test(pm)) { score += 2; primary = true; reasons.push(`${comp.pm} parent material`); }
+  else if (/fan|debris|mudflow|colluvi/.test(pm)) { score += 1; reasons.push(`${comp.pm} parent material`); }
+  const db = Math.min(...hz.filter(h => h.top < 100 && h.db > 0).map(h => h.db));
+  if (db < 1.4) { score += 2; reasons.push(`dry density ${db.toFixed(2)} g/cm³`); } else if (db < 1.6) { score += 1; reasons.push(`dry density ${db.toFixed(2)} g/cm³`); }
+  if (top.sand != null && top.clay != null) {
+    const silt = 100 - top.sand - top.clay;
+    if (top.clay > 35) { score -= 2; } else if (silt >= 40 && top.clay <= 25) { score += 1; reasons.push(`silty (${Math.round(silt)} % silt)`); }
+  }
+  if (/aridic|torric/.test(moist)) { score += 2; primary = true; reasons.push(`${comp.moist} (dry climate)`); } else if (/ustic|xeric/.test(moist)) { score += 1; reasons.push(`${comp.moist} moisture regime`); }
+  const gyp = Math.max(0, ...hz.map(h => h.gyp ?? 0));
+  if (gyp >= 3) { score += 2; primary = true; reasons.push(`gypsum ${gyp} % (dissolves)`); }
+  // without a primary driver (wind-laid silt, a dry climate, gypsum) humid soils rarely collapse: at most low
+  const cls = score >= 5 ? 3 : score >= 3 ? 2 : score >= 1 ? 1 : 0;
+  return { score, cls: primary ? cls : Math.min(cls, 1), reasons };
+}
+/** Shrink–swell (expansive clay) class from the linear extensibility of the top metre: ≥ 6 % high, 3–6 % moderate, else low. */
+export function swellClass(comp) {
+  const lep = Math.max(0, ...comp.hz.filter(h => h.top < 100).map(h => h.lep ?? 0));
+  return { lep, cls: lep >= 6 ? 3 : lep >= 3 ? 2 : lep > 0 ? 1 : 0 };
 }

@@ -348,6 +348,9 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <select id="wetness"><option value="dry">Dry</option><option value="normal" selected>Normal</option><option value="wet">Wet (rain in the days before)</option><option value="saturated">Saturated</option></select></div>
       <div class="field"><label for="wtDepth">Water table depth, m (blank = soil survey)</label><input id="wtDepth" type="number" min="0" step="0.1" placeholder="soil survey" style="width:7em"></div>
       <p class="note" id="wtNote"></p>
+      <label class="toggle"><input type="checkbox" id="sedOn"> Sediment transport and bed change</label>
+      <div class="field"><label for="topsoil">Erodible topsoil depth, m</label><input id="topsoil" type="number" value="0.3" min="0" step="0.05" style="width:6em"></div>
+      <p class="note" id="sedNote">Erosion by excess shear, settling, sand bedload (Meyer-Peter &amp; Müller), and the ground moving with it. Standard solver only (not the subgrid speed mode).</p>
       <p class="note">Storm settings lock once a run starts; Reset to change them. Roof rain goes to the open cells around each building, except the share whose downspouts connect to the sewer (Drainage).</p>
       <div id="inflowBox" hidden>
         <p class="vlabel">Upstream river inflow (USGS gauges)</p>
@@ -422,7 +425,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <p class="vlabel">Peak over the run</p>
       <div class="seg vseg" id="viewSeg2">
         <button data-v="max" title="Maximum depth">Depth</button><button data-v="peakHaz" title="Worst hazard class reached (depth and velocity at the same moment)">Hazard</button>
-        <button data-v="force" title="Peak force per metre of width, ρ(h·v² + ½g·h²)">Force</button><button data-v="duration" title="Time deeper than 15 cm">Duration</button><button data-v="arrival" title="When it first got 15 cm deep">Arrival</button><button data-v="scour" title="Peak bed shear against what the ground resists (scour potential)">Scour</button>
+        <button data-v="force" title="Peak force per metre of width, ρ(h·v² + ½g·h²)">Force</button><button data-v="duration" title="Time deeper than 15 cm">Duration</button><button data-v="arrival" title="When it first got 15 cm deep">Arrival</button><button data-v="scour" title="Peak bed shear against what the ground resists (scour potential)">Scour</button><button data-v="bed" title="Bed change from sediment transport: erosion red, deposition blue">Bed</button><button data-v="collapse" title="Collapsible soils (survey screening) the flood wetted">Collapse</button>
       </div>
       <div class="field"><label for="hazStd">Hazard classes</label>
         <select id="hazStd"><option value="arr">ARR 2019 / AIDR H1–H6 (depth, velocity, d·v limits)</option><option value="defra">UK FD2320, HR = d(v + 0.5)</option><option value="defraUrban">UK FD2320 with urban debris factor</option></select></div>

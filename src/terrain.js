@@ -3,6 +3,7 @@
 import { toCells } from './ingest.js';
 import { hsgParams, URBAN_FILL } from './soil.js';
 import { tauFor } from './scour.js';
+import { TEXTURES } from './sediment.js';
 
 const MMHR = 1 / 1000 / 3600;
 
@@ -92,6 +93,7 @@ export function buildFine(fine, dem, osm, nlcd, soils, opts = {}) {
   // Green-Ampt per pixel: the survey's properties where it has them, else the hydrologic group, else compacted fill;
   // perv = the share of the pixel that takes water in (0 on streets, buildings, water and wetlands)
   const ga = { K: new Float32Array(N), psi: new Float32Array(N), thetaE: new Float32Array(N), depth: new Float32Array(N) }, perv = new Float32Array(N), tauC = new Float32Array(N);
+  const texture = new Uint8Array(N), collapse = new Uint8Array(N), swell = new Uint8Array(N), fill = TEXTURES.indexOf('compacted fill');
   const params = soils.map(s => (s.props?.K > 0 ? s.props : null));
   for (let k = 0; k < N; k++) {
     const c = nlcd ? nlcd[k] : 0;
@@ -100,10 +102,12 @@ export function buildFine(fine, dem, osm, nlcd, soils, opts = {}) {
     ga.K[k] = p.K; ga.psi[k] = p.psi; ga.thetaE[k] = p.thetaE; ga.depth[k] = lim.length ? Math.max(0.05, Math.min(...lim)) : Infinity;
     perv[k] = bld[k] || road[k] || SATURATED.has(c) ? 0 : 1 - (IMPERVIOUS[c] ?? 0);
     tauC[k] = tauFor(perv[k], c, p.texture); // critical shear for the scour map (src/scour.js)
+    const ti = TEXTURES.indexOf(p.texture); texture[k] = ti >= 0 ? ti : fill;
+    if (!SATURATED.has(c)) { collapse[k] = u?.collapse?.cls ?? 0; swell[k] = u?.swell?.cls ?? 0; } // screening classes (src/soil.js)
   }
   const A = fine.dx * fine.dx;
   return {
-    nx, ny, dx: fine.dx, z, bld, bldH, road, cls: nlcd, manning, infil, hsg, ga, perv, tauC, soilUnit: unit,
+    nx, ny, dx: fine.dx, z, bld, bldH, road, cls: nlcd, manning, infil, hsg, ga, perv, tauC, texture, collapse, swell, soilUnit: unit,
     stats: { buildings: osm.buildings.length, roads: osm.roads.length, soilUnits: soils.length, buildingArea: bldCells * A, roadArea: roadCells * A, curb },
   };
 }

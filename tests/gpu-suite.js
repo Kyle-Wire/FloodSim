@@ -308,5 +308,26 @@ export async function runGpuSuite(device, log = console.log) {
     log(`Green-Ampt + scour: infiltrated gpu/cpu ${s.mass.infil.toFixed(1)}/${infCpu.toFixed(1)} m³  max|Δh| ${dh.toExponential(1)} m  peak shear rel diff ${dShear.toExponential(1)}  scour potential ≤ ${(eroMax * 100).toFixed(2)} cm, max|Δ| ${(dEro * 1000).toFixed(3)} mm  mass rel ${s.mass.rel.toExponential(1)}`);
   }
 
+  // Sediment transport: settling in still water against the exact decay; a dam break over an erodible bed (cohesive
+  // loam, then 0.3 mm sand with bedload) conserves solids and water while the bed moves
+  {
+    const N0 = 100, ws = 1e-3;
+    const g0 = new GPUSolver(device, { nx: 10, ny: 10, dx: 2, z: new Float64Array(N0), manning: 0.03, scour: { tauC: new Float32Array(N0).fill(1e9), n: new Float32Array(N0).fill(0.03) }, sediment: { ws: new Float32Array(N0).fill(ws), erodible: new Float32Array(N0) } });
+    g0.setDepth(() => 1); g0.setSediment(() => 0.001); await g0.advance(600);
+    const s0 = await g0.readSediment(); g0.destroy();
+    const settleErr = Math.abs(s0.suspended[55] / (0.001 * Math.exp(-ws * 600)) - 1), settleSum = Math.abs(s0.suspended[55] + 0.6 * s0.bed[55] - 0.001) / 0.001;
+    const runs = {};
+    for (const [name, d50, tauC, w] of [['loam', 0, 2, 2e-3], ['sand', 3e-4, 1, 0.04]]) {
+      const nx = 100, ny = 20, N = nx * ny, z = new Float64Array(N); for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = 0.002 * (nx - i);
+      const g = new GPUSolver(device, { nx, ny, dx: 2, z, manning: 0.03, bc: { east: 'outflow' }, scour: { tauC: new Float32Array(N).fill(tauC), n: new Float32Array(N).fill(0.03) }, sediment: { ws: new Float32Array(N).fill(w), erodible: new Float32Array(N).fill(0.3), d50: new Float32Array(N).fill(d50) } });
+      g.setDepth((x, y, zz) => (x < 40 ? 2 - zz : 0)); await g.advance(300);
+      const sd = await g.readSediment(), st = await g.readState(); g.destroy();
+      let bedVol = 0, lo = 0; for (let k = 0; k < N; k++) { bedVol += sd.bed[k] * 4; lo = Math.min(lo, sd.bed[k]); }
+      runs[name] = { eroded: sd.totals.eroded, out: sd.out, solidsRel: (sd.totals.suspended + 0.6 * bedVol + sd.out) / (0.6 * sd.totals.eroded), scourCm: -lo * 100, waterMass: st.mass.rel };
+    }
+    results.sediment = { settleErr, settleSum, ...runs };
+    log(`sediment: settling vs exact ${(settleErr * 100).toFixed(3)} % (solids ${settleSum.toExponential(1)})  dam break loam / sand: eroded ${runs.loam.eroded.toFixed(2)} / ${runs.sand.eroded.toFixed(1)} m³, scour ${runs.loam.scourCm.toFixed(2)} / ${runs.sand.scourCm.toFixed(1)} cm, solids balance ${runs.loam.solidsRel.toExponential(1)} / ${runs.sand.solidsRel.toExponential(1)}, water mass ${runs.loam.waterMass.toExponential(1)} / ${runs.sand.waterMass.toExponential(1)}`);
+  }
+
   return results;
 }

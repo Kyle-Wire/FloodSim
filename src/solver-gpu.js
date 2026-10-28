@@ -78,8 +78,14 @@ export class GPUSolver {
       this.GAPh.set([o.ga.psiD[k], Math.min(o.ga.fmax[k], 1e6), o.ga.perv[k], 1], c * 4);
     }
     // scour (o.scour: { tauC (Pa), n } per interior cell; omitted = no shear tracked)
-    this.TCh = new Float32Array(N * 2); for (let c = 0; c < N; c++) this.TCh[2 * c] = 1e9;
-    if (o.scour) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) { const k = j * this.nx + i, c = this.idx(i, j); this.TCh[2 * c] = Math.min(1e9, o.scour.tauC[k]); this.TCh[2 * c + 1] = o.scour.n[k]; }
+    this.TCh = new Float32Array(N * 4); for (let c = 0; c < N; c++) this.TCh[4 * c] = 1e9;
+    if (o.scour) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) { const k = j * this.nx + i, c = this.idx(i, j); this.TCh[4 * c] = Math.min(1e9, o.scour.tauC[k]); this.TCh[4 * c + 1] = o.scour.n[k]; }
+    // sediment transport (o.sediment: { ws (m/s), erodible (m) } per interior cell, with o.scour; not in the subgrid mode)
+    this.sed = !!o.sediment && !this.sg; this.SDh = new Float32Array(N * 4); this.SDPh = new Float32Array(N * 2);
+    if (this.sed) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const k = j * this.nx + i, c = this.idx(i, j), sd = o.sediment; this.TCh[4 * c + 2] = sd.ws[k]; this.TCh[4 * c + 3] = sd.d50?.[k] ?? 0; this.SDh[4 * c + 2] = sd.erodible[k];
+      this.SDPh[2 * c] = sd.tauSoil?.[k] ?? this.TCh[4 * c]; this.SDPh[2 * c + 1] = sd.nSkin?.[k] ?? this.TCh[4 * c + 1];
+    }
     // drainage inlets (o.inlets: interior cell indices k = j*nx+i, unique)
     const ink = o.inlets ? Array.from(o.inlets) : [];
     this.nInlets = ink.length;
@@ -142,7 +148,7 @@ export class GPUSolver {
       TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 8), TC: mk(8),
       TA: mk(24, GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
       GI: mk(N * 16), GS: mk(N * 16), GAP: mk(N * 16),
-      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 48), SCR: mk(N * 8),
+      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 48), SCR: mk(N * 16), SDA: mk(this.sed ? N * 16 : 16), SDB: mk(this.sed ? N * 16 : 16), SDP: mk(this.sed ? N * 8 : 16),
       SGC: mk(this.sg ? N * CT * 4 : 16), SGF: mk(this.sg ? 2 * N * FT * 4 : 16), EO: mk(2 * (this.nx + this.ny) * 8),
     };
     this.read = {
@@ -166,12 +172,13 @@ export class GPUSolver {
     if (this.sg) { d.queue.writeBuffer(this.buf.SGC, 0, this.SGCh); d.queue.writeBuffer(this.buf.SGF, 0, this.SGFh); }
     const hz = new Float32Array(N * 12); for (let c = 0; c < N; c++) hz[12 * c + 3] = -1; d.queue.writeBuffer(this.buf.HZ, 0, hz);
     d.queue.writeBuffer(this.buf.SCR, 0, this.TCh);
+    if (this.sed) { d.queue.writeBuffer(this.buf.SDA, 0, this.SDh); d.queue.writeBuffer(this.buf.SDP, 0, this.SDPh); }
     this._writeParams(0);
 
     const mod = d.createShaderModule({ code: KERNELS_WGSL });
     this.module = mod;
     const B = [this.buf.params, this.buf.U, this.buf.U0, this.buf.S, this.buf.W, this.buf.FX, this.buf.FY, this.buf.A, this.buf.DT, this.buf.RED, this.buf.OUT, this.buf.TH, this.buf.RF, this.buf.INC, this.buf.INQ, this.buf.INX, this.buf.STG,
-      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR];
+      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP];
     const uses = {
       prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27, 32], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
       sgPrim: [0, 1, 4, 16, 28], sgFluxX: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgFluxY: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgUpdate: [0, 1, 3, 5, 6, 7, 8, 11],
@@ -214,6 +221,14 @@ export class GPUSolver {
         sgUpdateT: make('sgUpdateT', T(uses.sgUpdate), { LIST: 1 }), sgHazardT: make('sgHazardT', T(uses.sgHazard), { LIST: 1 }),
         sgSourcesT: make('sourcesT', T(uses.sources), { LIST: 1, TRACKMAX: false }),
       });
+    }
+    if (this.sed) { // ping-pong: [A → B, B → A]; this.sedPar = which buffer holds the latest state (0 = A)
+      const pp = (entry, binds) => {
+        const pipeline = d.createComputePipeline({ layout: 'auto', compute: { module: mod, entryPoint: entry } });
+        const bg = (inB, outB) => d.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: binds.map(b => ({ binding: b, resource: { buffer: b === 33 ? inB : b === 34 ? outB : B[b] } })) });
+        return [{ pipeline, bg: bg(this.buf.SDA, this.buf.SDB) }, { pipeline, bg: bg(this.buf.SDB, this.buf.SDA) }];
+      };
+      this.k.sedAdvect = pp('sedAdvect', [0, 1, 5, 6, 8, 11, 33, 34]); this.k.sedSource = pp('sedSource', [0, 1, 3, 5, 6, 8, 32, 33, 34, 35]); this.sedPar = 0;
     }
     // resolves when the pipelines are known good; rejects with the WGSL/validation error otherwise
     this.ready = d.popErrorScope().then((e) => { if (e) throw new Error('GPU pipeline error: ' + e.message); });
@@ -270,6 +285,7 @@ export class GPUSolver {
           this._indirect(pass, k.faceXT, 2); this._indirect(pass, k.faceYT, 2); this._indirect(pass, k.thetaT, 2);
           if (this.nBar) this._dispatch(pass, st ? k.barrier1 : k.barrier0, Math.ceil(this.nBar / 64));
           this._dispatch(pass, k.edgeOut, Math.ceil(2 * (this.nx + this.ny) / 64));
+          if (this.sed) this._sed(pass, k.sedAdvect);
           this._indirect(pass, st ? k.updateT1 : k.updateT0, 1);
         } else {
           this._dispatch(pass, k.faceX, w(nx + 1), w(ny));
@@ -277,13 +293,35 @@ export class GPUSolver {
           this._dispatch(pass, k.theta, w(nx), w(ny));
           if (this.nBar) this._dispatch(pass, st ? k.barrier1 : k.barrier0, Math.ceil(this.nBar / 64));
           this._dispatch(pass, k.edgeOut, Math.ceil(2 * (this.nx + this.ny) / 64));
+          if (this.sed) this._sed(pass, k.sedAdvect);
           this._dispatch(pass, st ? k.update1 : k.update0, w(nx), w(ny));
         }
       }
       if (this.tiled) this._indirect(pass, k.sourcesT, 1); else this._dispatch(pass, k.sources, w(nx), w(ny));
       if (this.tiled) this._indirect(pass, k.hazardT, 1); else this._dispatch(pass, k.hazard, w(nx), w(ny));
+      if (this.sed) this._sed(pass, k.sedSource);
       if (this.nInlets) this._dispatch(pass, k.exchange, Math.ceil(this.nInlets / 64));
     }
+  }
+  /** One sediment pass over the whole grid, reading the latest state and writing the other buffer. */
+  _sed(pass, pair) { this._dispatch(pass, pair[this.sedPar], Math.ceil(this.nx / 8), Math.ceil(this.ny / 8)); this.sedPar ^= 1; }
+
+  /** Suspended solids per area (m), bed change (m), erodible depth left (m) per interior cell, and solids carried out
+   *  of the domain (m³). Solids are conserved: Σ suspended + (1 − porosity)·Σ bed change + out = 0 (from a clean start). */
+  async readSediment() {
+    const a = await this._readBuffer(this.sedPar ? this.buf.SDB : this.buf.SDA, this.N * 16), n = this.nx * this.ny, A = this.dx * this.dx;
+    const o = { suspended: new Float32Array(n), bed: new Float32Array(n), erodible: new Float32Array(n), out: 0, totals: { suspended: 0, eroded: 0, deposited: 0 } };
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const k = j * this.nx + i, q = 4 * this.idx(i, j);
+      o.suspended[k] = a[q]; o.bed[k] = a[q + 1]; o.erodible[k] = a[q + 2]; o.out += a[q + 3] * A;
+      o.totals.suspended += a[q] * A; if (a[q + 1] < 0) o.totals.eroded -= a[q + 1] * A; else o.totals.deposited += a[q + 1] * A;
+    }
+    return o;
+  }
+  /** Initial suspended solids (m per area) by cell, fn(x, y) at cell centres. */
+  setSediment(fn) {
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) this.SDh[4 * this.idx(i, j)] = fn((i + 0.5) * this.dx, (j + 0.5) * this.dx);
+    this.device.queue.writeBuffer(this.sedPar ? this.buf.SDB : this.buf.SDA, 0, this.SDh);
   }
 
   /** Subgrid step: wave speed, dt, tiles, levels, face momentum, draining limiter, barrier books, continuity, rain and
@@ -343,6 +381,13 @@ export class GPUSolver {
 
   /** Hazard products per interior cell (k = j·nx + i), tracked every step: peak d·v (m²/s), peak force (kN/m),
    *  duration deeper than 15 cm (s), arrival (s; NaN = never), and the worst class per standard of src/hazard.js. */
+  /** Depth infiltrated so far per interior cell under Green-Ampt (m per pervious area; 0 without it). */
+  async readInfiltration() {
+    const a = await this._readBuffer(this.buf.GS, this.N * 16), n = this.nx * this.ny, F = new Float32Array(n);
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) F[j * this.nx + i] = a[4 * this.idx(i, j) + 2];
+    return F;
+  }
+
   async readHazard() {
     const a = await this._readBuffer(this.buf.HZ, this.N * 48), n = this.nx * this.ny;
     const o = { dv: new Float32Array(n), force: new Float32Array(n), duration: new Float32Array(n), arrival: new Float32Array(n),

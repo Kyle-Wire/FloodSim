@@ -1,7 +1,7 @@
 // Soil and Green-Ampt tests: USDA texture classes, SSURGO rows → parameters (the real Eastwick "Urban land–Howell
 // complex" rows), ponded Green-Ampt infiltration against the analytic solution, the water table capping storage, and
 // the cell aggregation.  Usage: node tests/run-soil-tests.mjs
-import { textureClass, soilParams, hsgParams, gaCells, WETNESS } from '../src/soil.js';
+import { textureClass, soilParams, hsgParams, gaCells, WETNESS, collapseScreen, swellClass } from '../src/soil.js';
 import { CPUSolver } from '../src/solver-cpu.js';
 
 let fails = 0;
@@ -52,6 +52,17 @@ const column = (o) => { const s = new CPUSolver({ nx: 1, ny: 1, dx: 1, z: new Fl
   const dth = 0.4 * 0.6;
   check('cell K averages the pervious parts over the open area (or the whole cell, subgrid)', Math.abs(g.K[0] / ((1e-6 + 0.5 * 2e-6) / 3) - 1) < 1e-6 && Math.abs(s.K[0] / (2e-6 / 4) - 1) < 1e-6);
   check('ψΔθ and storage are pervious-weighted', Math.abs(g.psiD[0] / ((1 * 0.1 * dth + 0.5 * 0.2 * dth) / 1.5) - 1) < 1e-6 && Math.abs(g.fmax[0] / ((1 * dth * 1 + 0.5 * 1e3) / 1.5) - 1) < 1e-6);
+}
+
+{ // collapse screening: Iowa loess (Hamburg silt loam, as Soil Data Access returns it), a gypsiferous desert soil, a clay
+  const loess = collapseScreen({ pm: 'Loess', moist: 'Udic', hz: [{ top: 0, db: 1.47, sand: 15, clay: 10 }, { top: 36, db: 1.46, sand: 12, clay: 10 }] });
+  const desert = collapseScreen({ pm: 'Eolian deposits', moist: 'Aridic (torric)', hz: [{ top: 0, db: 1.35, sand: 30, clay: 12, gyp: 5 }] });
+  const clay = collapseScreen({ pm: 'Lacustrine deposits', moist: 'Udic', hz: [{ top: 0, db: 1.45, sand: 10, clay: 50 }] });
+  check('collapse screening: loess moderate, gypsiferous desert eolian high, lake clay none', loess.cls === 2 && desert.cls === 3 && clay.cls === 0, `scores ${loess.score} / ${desert.score} / ${clay.score}`);
+  const piedmont = collapseScreen({ pm: 'Colluvium', moist: 'Udic', hz: [{ top: 0, db: 1.45, sand: 30, clay: 15 }] });
+  check('humid colluvium without a primary driver stays low', piedmont.score >= 3 && piedmont.cls === 1, `score ${piedmont.score}`);
+  check('collapse screening says why', loess.reasons.some(r => /Loess/.test(r)) && desert.reasons.some(r => /gypsum/.test(r)));
+  check('shrink–swell from linear extensibility', swellClass({ hz: [{ top: 0, lep: 7.5 }] }).cls === 3 && swellClass({ hz: [{ top: 0, lep: 2 }] }).cls === 1);
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall soil tests passed');

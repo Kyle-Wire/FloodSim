@@ -145,6 +145,34 @@ Classes by peak shear over critical: none, low (≤ 2×), moderate (2–5×), hi
 deposition, and the ground does not change shape during the run (full morphodynamics is a later step). Ellicott City
 with the Patapsco's 10-year flow: 1.8 ha high, mostly floodplain grass along the river, up to 18 cm.
 
+**Sediment transport and bed change** (Storm → *Sediment transport and bed change*, *Erodible topsoil depth*; View →
+*Bed*; `src/sediment.js`, kernels `sedAdvect` / `sedSource`). Off by default; the standard solver only (1–4 m grids,
+not the subgrid speed mode) and a GPU with 9 storage buffers per shader stage.
+- **Suspended load:** carried with the solver's own face fluxes in each Runge–Kutta stage at the upstream cell's
+  concentration, so solids move exactly with the water; entrained by excess shear ε = k_d(τ − τc), k_d = 0.2·τc^−½
+  cm³/(N·s) (Hanson & Simon 2001), against the soil's critical shear by texture; settling at the Ferguson–Church
+  velocity of the median grain, exactly over each step; at most 10 % solids by volume.
+- **Bedload** for sand-sized ground (d50 ≥ 0.0625 mm): Meyer-Peter & Müller across each face, upwind by the water flux,
+  at most half the water crossing the face (so the bed is never pushed where the water does not go).
+- **Shear on the soil** uses the skin (grain) roughness n = d50^⅙/21.1, not the total n with vegetation drag (the
+  effective shear of HEC-15 for vegetated linings); the total-shear scour-potential map is unchanged.
+- **The bed moves** (Exner, porosity 0.4): scour and deposits change the ground the flow sees during the run. The
+  erodible budget is the topsoil depth you set (30 cm default) on erodible ground; paved ground erodes only the loose
+  deposits that land on it; mapped water (rivers) takes deposits but does not erode (the survey has no bed material).
+- **Checks** (GPU suite): settling matches the exact decay to 0.001 %; a dam break over loam and over sand conserves solids
+  to ~1e-6 and water to ~1e-7 (sand moves 26× more, mostly as bedload). Ellicott City at 2 m with the Patapsco's
+  10-year flow: 50 m³ eroded, up to 27 cm scour on the sandy-loam floodplain, deposits in the river pools.
+- Run folders get `bed_change_cm.asc` and `suspended_solids_mm.asc`; the totals go under the run readouts.
+
+**Collapsible and expansive soils (screening)** (View → *Collapse*; Data & assumptions → *Ground hazards*;
+`src/soil.js`). From the same survey: a collapse (hydrocompaction) score per soil component from loess or eolian /
+fan / colluvial parent material, dry density in the top metre, silty texture, a dry moisture regime and gypsum
+(soils that lose volume when first wetted under load are low-density, silty, wind- or fan-laid and dry). Without a
+primary driver (loess / eolian, aridic, gypsum) humid soils stay low at most. The Collapse view and `collapse_wetted.asc`
+show the moderate and high classes where the flood wetted the ground (ponded 5 cm or soaked in 5 cm). Shrink–swell
+(expansive clay) from linear extensibility is listed alongside. Flags for geotechnical follow-up (oedometer collapse,
+swell tests), not predictions. Iowa loess hills: moderate; Ellicott City: no moderate collapse, 9.4 ha moderate swell.
+
 **Upstream river inflow from USGS gauges** (Storm → *Upstream river inflow*; `src/inflow.js`). After a build, every
 mapped river or stream crossing into the area (OSM waterways run downstream) is listed with the USGS discharge gauges
 within ~15 km. A gauge on the same river whose datum sits above the river where it enters is picked as upstream
@@ -439,6 +467,7 @@ Bed elevations are stored relative to the domain minimum for fp32 headroom.
 | Green infrastructure: CPU parity, tiled = untiled | – | 9e-8 m, bit-identical |
 | Flood barriers: overtopping vs CPU, books, tiled = untiled | weir rate within 2 % of C·H^1.5 | 2e-5 m, books 4e-7, bit-identical |
 | Hazard products every step vs CPU (classes, force, duration, arrival) | – | 0 class differences, force 9e-5 kN/m, times exact |
+| Sediment: settling vs exact; dam break over loam and sand (solids, water) | – | 0.001 %; solids ~1e-6, water ~1e-7 |
 | Green-Ampt and scour vs CPU (infiltrated volume, shear, scour depth) | ponded GA within 0.3 % of analytic | 1e-7, 1e-4, 3e-4 mm |
 | Subgrid speed mode vs 1 m run, 320 m urban cloudburst (4 m / 8 m) | – | peak depth MAE 2.6 / 5.6 cm, CSI 0.80 / 0.63, 15× / 36× faster |
 
@@ -508,6 +537,7 @@ src/calibrate.js      observations (high-water marks, depths, reports, USGS STN)
 src/inflow.js         upstream river inflow: USGS gauges, recorded and design (LP3) hydrographs, entry cells
 src/soil.js           SSURGO soil hydraulics, Green-Ampt parameters per cell (wetness, water table)
 src/scour.js          critical shear by surface, scour-potential classes
+src/sediment.js       sediment transport inputs (grain size, settling, erodible depth, skin roughness)
 src/gi.js             green infrastructure layers (permeable pavement, rain gardens) and green-roof retention
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy

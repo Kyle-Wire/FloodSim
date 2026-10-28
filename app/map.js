@@ -23,7 +23,8 @@ import { initProjects } from './projects.js';
 import { buildBarriers, BarrierWatch } from '../src/barriers.js';
 import { buildSubgrid, fineDepth, CT as SG_CT, FT as SG_FT } from '../src/subgrid.js';
 import { watershed } from '../src/watershed.js';
-import { gaCells, WETNESS } from '../src/soil.js';
+import { gaCells, WETNESS, COLLAPSE_CLASSES } from '../src/soil.js';
+import { sedimentCells } from '../src/sediment.js';
 import { scourCells, scourClass, SCOUR_CLASSES, NOT_ERODIBLE } from '../src/scour.js';
 import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/calibrate.js';
 import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, InflowLinks, CFS } from '../src/inflow.js';
@@ -535,6 +536,7 @@ function setTiers() {
     ['Streets', `${osm.roads.length.toLocaleString()} OSM segments, n = ${MANNING_ROAD}, ${curb ? `burned ${curb * 100} cm` : 'lidar elevations kept'}`],
     ['Land cover', nlcd ? `${nlcd.label} (30 m) → Manning’s n, impervious %` : 'no NLCD here: urban defaults (n 0.045, compacted-fill infiltration)'],
     ['Soils', soilsRow()],
+    ['Ground hazards', groundRow()],
     ['Drainage', drainLabel()],
     ['Boundaries', 'all edges free outfall: water leaves, nothing enters (no upstream inflow yet)'],
     ['Rivers', 'hydro-flattened lidar, no bathymetry'],
@@ -894,6 +896,10 @@ function resetRun() {
   if (cal().infil !== 1) c.infil = c.infil.map(v => v * cal().infil);
   // scour: critical shear of the erodible ground and the n for the shear (the subgrid mode has no per-cell n of its own)
   const scour = model.f.tauC ? scourCells(model.f, c.nx, c.ny, F, c.mask, c.sg ? null : c.manning) : null;
+  // sediment transport: the standard solver only, and it needs 9 storage buffers per shader stage (as active tiles)
+  const sedOk = $('sedOn').checked && scour && model.f.texture && !c.sg && device?.limits.maxStorageBuffersPerShaderStage >= 9;
+  const sed = sedOk ? sedimentCells(model.f, c.nx, c.ny, F, c.mask, { topsoil: Math.max(0, Number($('topsoil').value) || 0) }) : null;
+  if ($('sedOn').checked && !sed) $('sedNote').textContent = c.sg ? 'Sediment transport needs the standard solver: pick a 1–4 m grid without the subgrid speed mode.' : 'This GPU cannot run the sediment kernels (needs 9 storage buffers per shader stage).';
   if (scour && c.sg && cal().manning !== 1) scour.n.forEach((v, k) => { scour.n[k] = v * cal().manning; });
   c.inside = model.poly ? polygonCells(model.fine, model.poly, F) : null; // polygon area: cells outside become sinks
   const bars = buildBarriers(lay.barriers, model.fine, model.f, c, F, { fill: !c.sg }); // berms fill the bed: before anything reads c.z
@@ -915,7 +921,7 @@ function resetRun() {
   if (roofEarly && c.sg) roofEarly.rainField = roof ? sgRain(c, roofEarly.rainField, (1 - green) * (1 - down) * rf / Math.max(1e-9, 1 - down * (1 - green)), net, down * (1 - green), roofEarly.roofArea)
     : sgRain(c, roofEarly.rainField, rf * (1 - green));
   const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
-  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, bars, gi, tanks, storage, green, roofEarly, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
+  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, bars, gi, tanks, storage, green, roofEarly, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
   run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
   $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('hud').hidden = false;
   $('runTag').textContent = `${c.nx.toLocaleString()} × ${c.ny.toLocaleString()} @ ${F} m`;
@@ -944,7 +950,7 @@ function ensureSolver() {
   const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
   run.solver = new GPUSolver(device, {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask: c.mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
-    sink: c.inside?.map(v => 1 - v), gi: run.gi ?? undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, rainField: run.roofEarly ? run.roofEarly.rainField : c.rainField,
+    sink: c.inside?.map(v => 1 - v), gi: run.gi ?? undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, rainField: run.roofEarly ? run.roofEarly.rainField : c.rainField,
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
   });
   run.solver.setDepth(() => 0);
@@ -1060,7 +1066,7 @@ async function readMassNow() {
   // hazard products are tracked every step on the GPU; reading them back is 32 bytes a cell, so a running large grid
   // refreshes them less often (about 4 MB per second of wall time), and the end of a run always reads them
   const now = performance.now(), every = Math.max(2500, run.c.nx * run.c.ny * 32 / 4e3);
-  if (!run.playing || !run.lastHz || now - run.lastHz > every) { run.lastHz = now; run.haz.load(await run.solver.readHazard(), run.solver.t); hazardNote(); }
+  if (!run.playing || !run.lastHz || now - run.lastHz > every) { run.lastHz = now; run.haz.load(await run.solver.readHazard(), run.solver.t); await readGround(); hazardNote(); }
 }
 /** Subgrid mode: per solver cell, the area of its 1 m pixels that got at least 1 cm deep (else null: whole cells). */
 function wetAreaOf() {
@@ -1077,6 +1083,15 @@ function hazardNote() {
   const parts = a.map((v, i) => (v > 0 ? `${cl[i].label} ${fmtArea(v)}` : '')).filter(Boolean);
   $('hazNote').hidden = !parts.length;
   $('hazNote').innerHTML = `Peak hazard (${STANDARDS[std].name}${run.c.sg ? `, speed mode: per ${run.F} m cell at its deepest point` : ''}): ${parts.join(' · ')}. Peak force ${fmax.toFixed(1)} kN/m (${Math.round(fmax * 68.52).toLocaleString()} lb/ft).`;
+  if (run.sedState) {
+    const sd = run.sedState; let lo = 0, hi = 0; for (let k = 0; k < sd.bed.length; k++) { if (sd.bed[k] < lo) lo = sd.bed[k]; if (sd.bed[k] > hi) hi = sd.bed[k]; }
+    $('hazNote').innerHTML += ` Sediment: ${fmtVol(sd.totals.eroded)} eroded, ${fmtVol(sd.totals.deposited)} deposited (bed volume), ${fmtVol(sd.out)} of solids carried out; deepest scour ${(lo * -100).toFixed(1)} cm, thickest deposit ${(hi * 100).toFixed(1)} cm.`;
+  }
+  if (model.f.collapse && run.hmax) {
+    const A = model.fine.dx ** 2, cnt = [0, 0, 0, 0], W = model.fine.nx; run.lastMaxFine = null;
+    for (let k = 0; k < model.f.collapse.length; k++) { if (!model.f.collapse[k] || model.f.bld[k]) continue; const n = collapseAt(k, k % W, (k / W) | 0); cnt[n] += A; }
+    if (cnt[2] + cnt[3] > 0) $('hazNote').innerHTML += ` Collapsible soils wetted: ${cnt[3] ? fmtArea(cnt[3]) + ' high, ' : ''}${fmtArea(cnt[2])} moderate susceptibility (screening).`;
+  }
   if (run.scour) {
     const sc = [0, 0, 0, 0], wa = wetAreaOf(), A = (k) => (wa ? wa(k) : run.F * run.F); let deep = 0;
     for (let k = 0; k < run.haz.n; k++) { if (!keep(k)) continue; const n = scourClass(run.haz.shear[k], run.scour.tauC[k]); if (n > 0) sc[n] += A(k); if (run.haz.erosion[k] > deep) deep = run.haz.erosion[k]; }
@@ -1135,13 +1150,14 @@ const RAMPS = {
   depth: { stops: [[0, [190, 236, 255]], [0.15, [96, 188, 232]], [0.5, [31, 120, 196]], [1.0, [21, 64, 160]], [2.0, [40, 20, 110]]], max: 2, unit: 'm', ticks: [0, 0.5, 1, 1.5, 2] },
   max: null,
   speed: { stops: [[0, [255, 245, 200]], [0.5, [250, 190, 80]], [1, [235, 110, 40]], [2, [180, 30, 40]], [3, [90, 0, 40]]], max: 3, unit: 'm/s', ticks: [0, 1, 2, 3] },
-  hazard: { classes: true }, peakHaz: { classes: true }, scour: { classes: true },
+  hazard: { classes: true }, peakHaz: { classes: true }, scour: { classes: true }, collapse: { classes: true },
+  bed: { stops: [[-10, [150, 20, 30]], [-3, [225, 90, 60]], [-0.5, [250, 200, 170]], [0, [240, 240, 240]], [0.5, [190, 215, 245]], [3, [80, 140, 220]], [10, [20, 50, 140]]], min: -10, max: 10, unit: 'cm', ticks: [-10, -5, 0, 5, 10] },
   force: { stops: [[0, [235, 245, 210]], [1, [180, 220, 120]], [3, [250, 190, 70]], [6, [225, 90, 40]], [10, [120, 20, 60]]], max: 10, unit: 'kN/m', ticks: [0, 2, 4, 6, 8, 10] },
   duration: { stops: [[0, [225, 240, 250]], [15, [150, 200, 235]], [45, [70, 130, 200]], [90, [40, 60, 150]], [180, [30, 15, 80]]], max: 180, unit: 'min', ticks: [0, 60, 120, 180] },
   arrival: { stops: [[0, [120, 20, 60]], [15, [215, 60, 45]], [30, [245, 160, 60]], [60, [250, 225, 130]], [120, [240, 245, 225]]], max: 120, unit: 'min', ticks: [0, 30, 60, 90, 120] },
 };
 RAMPS.max = RAMPS.depth;
-const PEAK = new Set(['peakHaz', 'force', 'duration', 'arrival', 'scour']);
+const PEAK = new Set(['peakHaz', 'force', 'duration', 'arrival', 'scour', 'bed', 'collapse']);
 const hazStd = () => STANDARDS[$('hazStd').value];
 function rampColor(r, v) {
   const st = r.stops; if (v >= st[st.length - 1][0]) return st[st.length - 1][1];
@@ -1151,12 +1167,13 @@ function rampColor(r, v) {
 function drawLegend() {
   const r = RAMPS[S.view];
   if (r.classes) {
-    const st = S.view === 'scour' ? { classes: SCOUR_CLASSES, note: 'Scour potential: peak bed shear ρg·n²·v²/h^⅓ against the critical shear of the ground (grass 30 Pa, bare soil 1–10 Pa by texture; paved ground not erodible)' } : hazStd(), cl = st.classes, w = 100 / cl.length;
+    const st = S.view === 'collapse' ? { classes: COLLAPSE_CLASSES.map((label, i) => ({ label, text: label + ' collapse susceptibility, wetted by the flood', color: [[225, 225, 210], [245, 210, 120], [230, 130, 60], [150, 40, 90]][i] })), note: 'Collapsible soils: SSURGO screening (loess / eolian / fan parent material, low dry density, silty, dry climate, gypsum) where the flood ponded 5 cm or soaked in 5 cm. A flag for geotechnical follow-up, not a prediction.' }
+      : S.view === 'scour' ? { classes: SCOUR_CLASSES, note: 'Scour potential: peak bed shear ρg·n²·v²/h^⅓ against the critical shear of the ground (grass 30 Pa, bare soil 1–10 Pa by texture; paved ground not erodible)' } : hazStd(), cl = st.classes, w = 100 / cl.length;
     $('ramp').style.background = `linear-gradient(90deg, ${cl.map((c, i) => `rgb(${c.color}) ${(i * w).toFixed(1)}% ${((i + 1) * w).toFixed(1)}%`).join(',')})`;
     $('ticks').innerHTML = cl.map(c => `<span title="${c.text}">${c.label}</span>`).join('');
     $('ticks').title = st.note + (S.view === 'peakHaz' ? '. Worst class each cell reached, from depth and velocity at the same moment.' : '');
   } else {
-    $('ramp').style.background = `linear-gradient(90deg, ${r.stops.map(([v, c]) => `rgb(${c}) ${(v / r.max * 100).toFixed(0)}%`).join(',')})`;
+    const lo = r.min ?? 0; $('ramp').style.background = `linear-gradient(90deg, ${r.stops.map(([v, c]) => `rgb(${c}) ${((v - lo) / (r.max - lo) * 100).toFixed(0)}%`).join(',')})`;
     $('ticks').innerHTML = r.ticks.map((t, i) => `<span>${t}${i === r.ticks.length - 1 ? '+ ' + r.unit : ''}</span>`).join('');
     $('ticks').title = '';
   }
@@ -1201,6 +1218,8 @@ function drawDepth() {
       if (view === 'peakHaz') { const n = hz.cls[std][c]; if (!n) continue; col = st.classes[n - 1].color; }
       else if (view === 'force') { if (!(hz.force[c] > 0)) continue; col = rampColor(r, hz.force[c]); }
       else if (view === 'duration') { if (!(hz.duration[c] > 0)) continue; col = rampColor(r, hz.duration[c] / 60); }
+      else if (view === 'bed') { const b = run.sedState?.bed[c] ?? 0; if (Math.abs(b) < 0.001) continue; col = rampColor(r, Math.max(-10, Math.min(10, b * 100))); }
+      else if (view === 'collapse') { const n = collapseAt(k, i, j); if (n <= 0) continue; col = r.classes ? [[225, 225, 210], [245, 210, 120], [230, 130, 60], [150, 40, 90]][n] : col; }
       else if (view === 'scour') { const n = run.scour ? scourClass(hz.shear[c], run.scour.tauC[c]) : -1; if (n < 0) continue; col = SCOUR_CLASSES[n].color; }
       else { const a = hz.arrival[c]; if (Number.isNaN(a)) continue; col = rampColor(r, a / 60); }
     } else {
@@ -1237,6 +1256,8 @@ function probe(e) {
         const st = hazStd(), n = hz.cls[$('hazStd').value][c];
         t += ` · peak hazard ${st.classes[n - 1].label} · force ${hz.force[c].toFixed(1)} kN/m`;
         if (hz.duration[c] > 0) t += ` · ${Math.round(hz.duration[c] / 60)} min over 15 cm from ${fmtTime(hz.arrival[c])}`;
+        if (run.sedState && Math.abs(run.sedState.bed[c]) > 1e-4) t += ` · bed ${run.sedState.bed[c] > 0 ? '+' : ''}${(run.sedState.bed[c] * 100).toFixed(1)} cm`;
+        if (model.f.collapse?.[k]) t += ` · collapse susceptibility ${COLLAPSE_CLASSES[model.f.collapse[k]].toLowerCase()}`;
         if (hz.shear[c] > 0) t += ` · bed shear ${hz.shear[c].toFixed(1)} Pa` + (run.scour?.tauC[c] < NOT_ERODIBLE ? ` (ground resists ${run.scour.tauC[c].toFixed(1)})` + (hz.erosion[c] > 1e-4 ? `, scour potential ${(hz.erosion[c] * 100).toFixed(1)} cm` : '') : ', paved');
       }
     }
@@ -1249,7 +1270,7 @@ for (const seg of ['viewSeg', 'viewSeg2']) $(seg).onclick = async (e) => {
   const b = e.target.closest('button'); if (!b) return;
   S.view = b.dataset.v; for (const x of [...$('viewSeg').children, ...$('viewSeg2').children]) x.setAttribute('aria-pressed', x === b);
   drawLegend();
-  if (PEAK.has(S.view) && run?.solver) { const r = run; r.haz.load(await r.solver.readHazard(), r.solver.t); if (run !== r) return; } // latest every-step totals
+  if (PEAK.has(S.view) && run?.solver) { const r = run; r.haz.load(await r.solver.readHazard(), r.solver.t); await readGround(); if (run !== r) return; } // latest every-step totals
   if (run?.out) { if (run.view) run.view.lastMax = 0; drawDepth(); }
 };
 $('hazStd').onchange = () => { drawLegend(); if (run?.out) drawDepth(); if (run?.haz?.t != null) hazardNote(); };
@@ -1372,7 +1393,7 @@ function soilsRow() {
     `K ${p.length ? `${Math.min(...p.map(x => x.K * 3.6e6)).toFixed(1)}–${Math.max(...p.map(x => x.K * 3.6e6)).toFixed(1)} mm/hr` : 'by group'}, ${$('wetness').selectedOptions[0].textContent.toLowerCase()} start, ` +
     ($('wtDepth').value.trim() ? `water table set at ${$('wtDepth').value} m` : wts.length ? `water table ${Math.min(...wts).toFixed(1)}–${Math.max(...wts).toFixed(1)} m (survey)` : 'no shallow water table in the survey') + (p.length ? '<span class="pill good">tier 1</span>' : '<span class="pill warn">defaults</span>');
 }
-for (const id of ['infilModel', 'wetness', 'wtDepth']) $(id).addEventListener('change', () => { if (model) { setTiers(); if (!run || !run.solver) resetRun(); } });
+for (const id of ['infilModel', 'wetness', 'wtDepth', 'sedOn', 'topsoil']) $(id).addEventListener('change', () => { if (model) { setTiers(); if (!run || !run.solver) resetRun(); } });
 /** The nearest USGS groundwater well with measured levels (Water Data API field measurements since 2000), as a check
  *  on the survey's water table. Depth below land surface; wells can tap deeper aquifers than the water table. */
 async function groundwaterNote() {
@@ -1392,6 +1413,28 @@ async function groundwaterNote() {
     note.textContent = `Nearest USGS well with levels: ${near.id} (${(near.d / 1000).toFixed(1)} km), ${last.m.toFixed(1)} m to water on ${last.t.slice(0, 10)}` +
       (near.v.length > 1 ? ` (${near.v.length} readings since 2000, ${Math.min(...ms).toFixed(1)}–${Math.max(...ms).toFixed(1)} m)` : '') + '. Wells can tap deeper aquifers than the water table; enter a depth above to use it.';
   } catch { /* informational only */ }
+}
+
+// ------------------------------------------------------------------ sediment and collapsible soils
+/** Latest sediment state and the Green-Ampt depth infiltrated (for the collapse trigger), read on demand. */
+async function readGround() {
+  if (!run?.solver) return;
+  if (run.sed) run.sedState = await run.solver.readSediment();
+  if (run.ga) run.gaF = await run.solver.readInfiltration();
+  run.lastMaxFine = null;
+}
+/** Collapse class (1–3) at fine pixel k if the flood wetted it (ponded ≥ 5 cm or soaked in ≥ 5 cm), else 0. */
+function collapseAt(k, i, j) {
+  const cls = model.f.collapse?.[k] ?? 0; if (!cls) return 0;
+  const c = ck(i, j), maxD = run.F === 1 ? run.hmax[k] : (run.lastMaxFine ??= toFine(run.c, run.hmax, 1))[k];
+  return maxD >= 0.05 || (run.gaF?.[c] ?? 0) >= 0.05 ? cls : 0;
+}
+function groundRow() {
+  const f = model.f; if (!f.collapse) return 'not available';
+  const A = model.fine.dx ** 2, col = [0, 0, 0, 0], sw = [0, 0, 0, 0];
+  for (let k = 0; k < f.collapse.length; k++) { if (f.bld[k]) continue; col[f.collapse[k]] += A; sw[f.swell[k]] += A; }
+  const part = (a, what) => (a[2] + a[3] > 0 ? `${what}: ${a[3] ? `${fmtArea(a[3])} high, ` : ''}${fmtArea(a[2])} moderate` : `${what}: none moderate or high`);
+  return `${part(col, 'Collapsible soils (screening)')}; ${part(sw, 'shrink–swell clays')}. From the soil survey; flags for geotechnical follow-up<span class="pill warn">screening</span>`;
 }
 
 // ------------------------------------------------------------------ upstream river inflow
@@ -1670,7 +1713,7 @@ async function runFiles() {
       'barriers.csv': 'per flood barrier: crest, freeboard, overtopping volume and rates, peak hydrostatic load',
       'hazard_arr.asc': 'worst ARR 2019 / AIDR hazard class reached, 1–6 = H1–H6 (0 = never 1 cm deep)', 'hazard_fd2320.asc': 'worst UK FD2320 class, 1–4 = Low…Extreme (debris factor 0)',
       'hazard_fd2320_urban.asc': 'the same with the FD2320 urban debris factor', 'max_dv.asc': 'peak depth × velocity at the same moment (m²/s)',
-      'max_force.asc': 'peak force per metre of width ρ(h·v² + ½g·h²) (kN/m)', 'max_bed_shear.asc': 'peak bed shear ρg·n²·v²/h^⅓ (Pa)', 'scour_class.asc': 'scour potential 0 none, 1 low, 2 moderate, 3 high (NODATA = paved)', 'scour_potential_cm.asc': 'indicative scour depth, excess-shear law (cm)', 'flood_duration_min.asc': 'minutes deeper than 15 cm', 'arrival_min.asc': 'minutes from the start until 15 cm deep (NODATA = never)',
+      'max_force.asc': 'peak force per metre of width ρ(h·v² + ½g·h²) (kN/m)', 'max_bed_shear.asc': 'peak bed shear ρg·n²·v²/h^⅓ (Pa)', 'bed_change_cm.asc': 'sediment transport: bed change (cm, − scour, + deposit)', 'suspended_solids_mm.asc': 'solids still in suspension at the end (mm per area)', 'collapse_wetted.asc': 'collapsible-soil susceptibility (1 low, 2 moderate, 3 high) where the flood wetted the ground, 1 m', 'scour_class.asc': 'scour potential 0 none, 1 low, 2 moderate, 3 high (NODATA = paved)', 'scour_potential_cm.asc': 'indicative scour depth, excess-shear law (cm)', 'flood_duration_min.asc': 'minutes deeper than 15 cm', 'arrival_min.asc': 'minutes from the start until 15 cm deep (NODATA = never)',
       notes: 'Max depth, hazard, force, d·v, duration, arrival and barrier levels, loads and volumes are tracked every solver step; velocity counts in hazard and force only where water is at least 5 cm deep.' },
   };
   const st = run.storm, csv = ['start_min,end_min,mm_per_hr', ...st.intensity.map((v, i) => `${i * st.blockMin},${(i + 1) * st.blockMin},${v}`)].join('\n');
@@ -1683,6 +1726,8 @@ async function runFiles() {
   const hz = run.haz, grid = (name, v) => files.push({ path: name + '.asc', data: ascGrid(v) }, { path: name + '.prj', data: prj });
   grid('hazard_arr', hz.cls.arr); grid('hazard_fd2320', hz.cls.defra); grid('hazard_fd2320_urban', hz.cls.defraUrban);
   grid('max_dv', hz.dv); grid('max_force', hz.force);
+  if (run.sedState) { grid('bed_change_cm', run.sedState.bed.map(v => v * 100)); grid('suspended_solids_mm', run.sedState.suspended.map(v => v * 1000)); }
+  if (model.f.collapse) { const W = model.fine.nx; run.lastMaxFine = null; files.push({ path: 'collapse_wetted.asc', data: ascFine(Float32Array.from(model.f.collapse, (v, k) => collapseAt(k, k % W, (k / W) | 0))) }, { path: 'collapse_wetted.prj', data: prj }); }
   if (run.scour) { grid('max_bed_shear', hz.shear); grid('scour_class', Float32Array.from(hz.shear, (v, k) => scourClass(v, run.scour.tauC[k]) < 0 ? NaN : scourClass(v, run.scour.tauC[k]))); grid('scour_potential_cm', hz.erosion.map(v => v * 100)); } grid('flood_duration_min', hz.duration.map(s => s / 60)); grid('arrival_min', hz.arrival.map(s => s / 60));
   if (run.inp) files.push({ path: 'network.inp', data: run.inp });
   if (run.watch) files.push({ path: 'barriers.csv', data: barrierCSV(run.watch.results()) });
