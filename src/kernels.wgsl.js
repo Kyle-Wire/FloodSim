@@ -556,14 +556,17 @@ fn sgFace(isY: bool, b: i32, zeta: f32) -> vec2f {
   return vec2f(H, K);
 }
 
-// levels for every cell, ghosts copy the edge cell; wall cells get level −1e30
+// levels for every cell, ghosts copy the edge cell; wall cells get level −1e30. A ghost that sees the observed water
+// level (tide / surge) holds that level instead, flagged in W.z, and its edge face then runs the momentum equation
 @compute @workgroup_size(8, 8)
 fn sgPrim(@builtin(global_invocation_id) gid: vec3u) {
   let NX = i32(P.NX); let NY = i32(P.NY); let i = i32(gid.x); let j = i32(gid.y);
   if (i >= NX || j >= NY) { return; }
-  let e = clamp(j, GH, NY - GH - 1) * NX + clamp(i, GH, NX - GH - 1);
+  let e = clamp(j, GH, NY - GH - 1) * NX + clamp(i, GH, NX - GH - 1); let c = j * NX + i;
+  let lo = SGC[u32(e) * SG_CT];
+  if (STG[c] > 0.5 && lo < 1e29 && P.stage - lo > P.hdry) { W[c] = vec4f(P.stage - lo, P.stage, 1.0, 0.0); return; }
   let eta = sgLevel(e, U[e].x);
-  W[j * NX + i] = vec4f(max(0.0, eta - SGC[u32(e) * SG_CT]), eta, 0.0, 0.0);
+  W[c] = vec4f(max(0.0, eta - lo), eta, 0.0, 0.0);
 }
 
 // local-inertial momentum on each face: q ← (q − g·H·Δt·Δη/Δx) / (1 + g·Δt·|q|·H/K²), H and K from the face table at
@@ -576,7 +579,8 @@ fn sgFluxAt(x: u32, y: u32, isY: bool) {
   let lo = select(x == 0u, y == 0u, isY); let hi = select(x == P.nx, y == P.ny, isY);
   let wa = W[a]; let wb = W[b]; let dt = DT[0];
   var q = 0.0; var H = 0.0;
-  if (lo || hi) {
+  let stg = (lo && wa.z > 0.5) || (hi && wb.z > 0.5); // the ghost holds the observed water level
+  if ((lo || hi) && !stg) {
     let bc = select(select(P.bcW, P.bcE, hi), select(P.bcS, P.bcN, hi), isY);
     let e = select(b, a, hi); let n = select(e + s, e - s, hi);
     let we = W[e]; let wn = W[n];

@@ -22,6 +22,8 @@ import { initInfra } from './infra-ui.js';
 import { initProjects } from './projects.js';
 import { buildBarriers, BarrierWatch } from '../src/barriers.js';
 import { buildSubgrid, fineDepth, CT as SG_CT, FT as SG_FT } from '../src/subgrid.js';
+import { watershed } from '../src/watershed.js';
+import { parseObservations, scoreRun, sweepPlan, PARAMS } from '../src/calibrate.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
 
 const $ = (id) => document.getElementById(id);
@@ -46,8 +48,10 @@ const fetcher = (url, o = {}) => fetch('/api/fetch', { method: 'POST', headers: 
 /** Fetcher for links the user pasted: the proxy lets these reach any public https host (GET only). */
 const linkedFetcher = (url) => fetcher(url, { linked: true });
 
-const S = { area: null, poly: null, view: 'depth', opacity: 0.85, hmin: 0.01 }; // poly: lon/lat ring of a polygon area (S.area is its box)
+const S = { area: null, poly: null, view: 'depth', opacity: 0.85, hmin: 0.01, obs: [] }; // poly: lon/lat ring of a polygon area (S.area is its box)
 let device = null, model = null, run = null;
+let runGen = 0; // never reset: stopRun clears `run`, so a fresh run must not reuse a generation an old loop still holds
+const ws = { last: null, busy: null }; // the area's watershed, once traced
 
 // ------------------------------------------------------------------ WebGPU
 async function initGPU() {
@@ -188,9 +192,75 @@ function setArea(box, ring = null) {
   const inside = ring ? polygonCells(g, ring, 8).reduce((a, b) => a + b, 0) * 64 : 0;
   $('areaDesc').textContent = (ring ? `Polygon of ${(inside / 1e6).toFixed(2)} km² in a ` : '') + `${(g.nx / 1000).toFixed(2)} × ${(g.ny / 1000).toFixed(2)} km grid in UTM ${g.zone}N (EPSG:${g.epsg})` +
     (ring ? '; water leaving the polygon is gone (free overfall at its edge)' : '') + (tooBig ? ' — too large for a 1 m model in the browser; draw a smaller area.' : '');
-  $('buildBtn').disabled = tooBig;
+  $('buildBtn').disabled = tooBig; $('wsBtn').disabled = false;
+  if (!S.wsUsing) { ws.last = null; $('wsNote').hidden = true; showWatershed(null); } // a new area: its watershed is not known yet
+  S.wsUsing = false;
   updateSizeNote();
 }
+
+// ------------------------------------------------------------------ watershed
+/**
+ * The ground that drains into the area, from 3DEP elevation (5 m, or 10 m for wide searches): the search box grows
+ * until the catchment no longer runs off it (up to ~8 km). Running on the watershed makes the model a closed system:
+ * nothing flows in across its edge, and water leaves only where the terrain does. Surface drainage only.
+ */
+async function findWatershed() {
+  const area = S.area, ring = S.poly ?? [[area[0], area[1]], [area[2], area[1]], [area[2], area[3]], [area[0], area[3]]];
+  const lat = (area[1] + area[3]) / 2, mLat = 111320, mLon = 111320 * Math.cos(lat * Math.PI / 180);
+  const ext = Math.max((area[2] - area[0]) * mLon, (area[3] - area[1]) * mLat);
+  let margin = Math.max(500, ext), res = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const box = [area[0] - margin / mLon, area[1] - margin / mLat, area[2] + margin / mLon, area[3] + margin / mLat];
+    const dx = ext + 2 * margin > 4000 ? 10 : 5, g = gridFromLonLatBox(...box, dx);
+    const dem = await fetchDEM(g, fetcher), target = polygonCells(g, ring);
+    const w = watershed(dem.z, g.nx, g.ny, target);
+    const toLL = (r) => r.map(([x, y]) => fromUTM(g.x0 + x * dx, g.y1 - y * dx, g.zone));
+    res = { w, g, dx, cellArea: dx * dx, studyArea: w.studyCells * dx * dx, upstreamArea: w.upstreamCells * dx * dx, searchKm: (ext + 2 * margin) / 1000,
+      ring: toLL(w.ring), localRing: w.local ? toLL(w.local.ring) : null };
+    if (!w.touchesEdge) break;
+    margin *= 3;
+  }
+  return res;
+}
+function showWatershed(ringLL) {
+  const fc = { type: 'FeatureCollection', features: ringLL ? [{ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[...ringLL, ringLL[0]]] } }] : [] };
+  if (!map.getSource('ws')) {
+    if (!ringLL) return;
+    map.addSource('ws', { type: 'geojson', data: fc });
+    map.addLayer({ id: 'ws-fill', type: 'fill', source: 'ws', paint: { 'fill-color': '#3fd0ff', 'fill-opacity': 0.06 } });
+    map.addLayer({ id: 'ws-line', type: 'line', source: 'ws', paint: { 'line-color': '#3fd0ff', 'line-width': 2, 'line-dasharray': [3, 2] } });
+  } else map.getSource('ws').setData(fc);
+}
+/** Find the watershed and say what it means for this area; `quiet` logs instead of filling the Area note. */
+async function checkWatershed({ quiet = false } = {}) {
+  if (!S.area) return null;
+  const note = $('wsNote'), l = quiet ? log('Watershed draining into the area (3DEP)') : null;
+  if (!quiet) { note.hidden = false; note.textContent = 'Tracing the watershed from 3DEP elevation…'; }
+  try {
+    ws.busy = findWatershed(); const r = ws.last = await ws.busy; ws.busy = null;
+    const river = r.w.touchesEdge, L = r.w.local, useRing = river ? r.localRing : r.ring;
+    showWatershed(useRing);
+    const cells = river ? L.cells : r.w.cells, up = river ? L.upstreamCells * r.cellArea : r.upstreamArea;
+    const share = up / Math.max(1, r.studyArea), big = cells * r.cellArea > MAX_FINE, open = up >= 0.02 * r.studyArea;
+    const msg = (river ? `A river runs in from a basin larger than the ${r.searchKm.toFixed(1)} km search: its flow is not in the model until it has an inflow from a stream gauge. Not counting the river, ` : '')
+      + (!open ? `${river ? 'nothing' : 'no ground'} outside the area drains into it${river ? ' locally' : ''}: closed (watershed ${fmtArea(cells * r.cellArea)}).`
+        : `${fmtArea(up)} outside the area drains into it${river ? ' locally' : ''} (${share >= 2 ? `${share.toFixed(share >= 10 ? 0 : 1)}×` : `${Math.round(share * 100)} % of`} the area's own size). That water is missing unless the model runs on the ${river ? 'local ' : ''}watershed (${fmtArea(cells * r.cellArea)}${big ? ', larger than a 1 m model holds in the browser' : ''}).`);
+    if (l) l.set('Watershed: ' + (river ? 'a river enters from a large basin' + (open ? `; ${fmtArea(up)} more drains in locally` : '') : open ? `${fmtArea(up)} drains in from outside` : 'closed'), river || open ? 'warn' : 'ok', 'surface drainage on 3DEP at ' + r.dx + ' m');
+    note.hidden = false; r.use = useRing; r.useArea = cells * r.cellArea;
+    note.innerHTML = msg + (open && !big ? ` <button class="btn" id="wsUse" type="button">Run on the ${river ? 'local ' : ''}watershed</button>` : '');
+    $('wsUse')?.addEventListener('click', useWatershed);
+    return r;
+  } catch (e) { ws.busy = null; if (l) l.set('Watershed: ' + e.message, 'warn'); if (!quiet) note.textContent = 'Watershed failed: ' + e.message; return null; }
+}
+/** Make the watershed the model area (a polygon: the edge is a ridge, so nothing flows in). */
+function useWatershed() {
+  const r = ws.last; if (!r?.use) return;
+  const lo = r.use.map(p => p[0]), la = r.use.map(p => p[1]);
+  S.wsUsing = true; setArea([Math.min(...lo), Math.min(...la), Math.max(...lo), Math.max(...la)], r.use);
+  $('wsNote').innerHTML = `Model area set to the ${r.w.touchesEdge ? 'local ' : ''}watershed (${fmtArea(r.useArea)})` + (r.w.touchesEdge ? ': closed except for the river, which needs a gauge inflow.' : ': a closed system.') + ' Build to model it.';
+  map.fitBounds([[Math.min(...lo), Math.min(...la)], [Math.max(...lo), Math.max(...la)]], { padding: 40 });
+}
+$('wsBtn').onclick = () => checkWatershed();
 function updateSizeNote() {
   if (!S.area) return;
   const g = gridFromLonLatBox(...S.area, 1), F = gridF();
@@ -415,6 +485,8 @@ swmmReady.then(updateDrainUI);
     $('runBtn').disabled = !device; $('resetBtn').disabled = false;
     if (!device) log('WebGPU is required to run the solver', 'err');
     resetRun();
+    if (!ws.last) checkWatershed({ quiet: true }); // does anything drain in from outside? (background, after the build)
+    obsNote();
   } catch (e) {
     console.error(e); log('Build failed: ' + e.message, 'err');
   } finally { $('buildBtn').disabled = false; }
@@ -804,15 +876,18 @@ function resetRun() {
   let c;
   if (isSubgrid()) { // speed mode: berms go into the 1 m ground, then the cell and face tables are built from it
     const berms = lay.barriers.filter(b => b.type === 'berm'); let f = model.f;
+    if (cal().manning !== 1) f = { ...f, manning: f.manning.map(v => v * cal().manning) }; // calibration: the tables carry n
     if (berms.length) { const z = Float64Array.from(model.f.z); buildBarriers(berms, model.fine, model.f, { nx: model.fine.nx, ny: model.fine.ny, z, mask: model.f.bld.map(b => 1 - b) }, 1); f = { ...model.f, z }; }
     const sg = buildSubgrid(f, F);
     c = { ...sg, sg, manning: new Float64Array(sg.nx * sg.ny) };
     c.rainField = sgRain(c, roofRouting(c.mask, c.nx, c.ny, roofF).rainField, roofF);
-  } else c = coarsen(model.f, F, roofF);
+  } else { c = coarsen(model.f, F, roofF); if (cal().manning !== 1) c.manning = c.manning.map(v => v * cal().manning); }
+  if (cal().infil !== 1) c.infil = c.infil.map(v => v * cal().infil);
   c.inside = model.poly ? polygonCells(model.fine, model.poly, F) : null; // polygon area: cells outside become sinks
   const bars = buildBarriers(lay.barriers, model.fine, model.f, c, F, { fill: !c.sg }); // berms fill the bed: before anything reads c.z
   infra.setBarriers(bars.list, bars.skipped);
   const net = drainSrc === 'network' ? makeNetwork(c, F) : null;
+  if (net) net.opts = { ...net.opts, clog: cal().clog };
   const down = Number($('downspout').value) / 100; // downspouts straight into the nearest manhole (needs the SWMM engine)
   const roof = net && swmmEngine && down > 0 ? roofConnections(c, net, down, Number($('roof').value) / 100) : null;
   if (roof) c.rainField = c.sg ? sgRain(c, roof.rainField, roofF, net, down, roof.roofArea) : roof.rainField;
@@ -828,7 +903,8 @@ function resetRun() {
   if (roofEarly && c.sg) roofEarly.rainField = roof ? sgRain(c, roofEarly.rainField, (1 - green) * (1 - down) * rf / Math.max(1e-9, 1 - down * (1 - green)), net, down * (1 - green), roofEarly.roofArea)
     : sgRain(c, roofEarly.rainField, rf * (1 - green));
   const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
-  run = { bars, gi, tanks, storage, green, roofEarly, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: (run?.gen || 0) + 1 };
+  run = { bars, gi, tanks, storage, green, roofEarly, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
+  run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
   $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('hud').hidden = false;
   $('runTag').textContent = `${c.nx.toLocaleString()} × ${c.ny.toLocaleString()} @ ${F} m`;
   canvases.depth.getContext('2d').clearRect(0, 0, canvases.depth.width, canvases.depth.height); refreshCanvas('depth');
@@ -845,7 +921,6 @@ function ensureSolver() {
   if (drainSrc === 'lumped') { const extra = lumpedInfil(c, c.roadFrac, Number($('lumpRate').value)); infil = c.infil.map((v, k) => v + extra[k]); }
   const coupled = drainSrc === 'network' && run.net && swmmEngine;
   const st0 = currentStorm(), stageCells = st0?.wl ? waterEdgeCells(c, F) : undefined;
-  if (c.sg && stageCells?.length) throw new Error('the subgrid speed mode does not take an observed water level (tide / surge) boundary yet: use the 1 m run for this storm');
   run.stageCells = stageCells?.length ?? 0;
   run.culverts = run.culv.length ? new CulvertLinks(run.culv, c.z, { cellArea: F * F }) : null;
   run.watch = run.bars.faces.length ? new BarrierWatch(run.bars, c.z, F) : null;
@@ -940,10 +1015,11 @@ async function loop(gen) {
         run.netMass.combinedRel = (rain - m.infil - m.outflow - outfalls - m.volume - c.finalStored * 1000) / rain;
       }
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
-      projects.runFinished();
+      if (S.obs.length) scoreAndShow();
+      projects.runFinished(); run.finish?.();
     }
   } catch (e) {
-    console.error(e); run.playing = false; log('Solver error: ' + e.message, 'err'); return;
+    console.error(e); run.playing = false; log('Solver error: ' + e.message, 'err'); run.finish?.(e); return;
   }
   nextTick(() => loop(gen));
 }
@@ -1262,6 +1338,105 @@ Files
 `;
 
 // ------------------------------------------------------------------ start
+// ------------------------------------------------------------------ calibration
+const cal = () => ({ manning: Number($('calManning').value), infil: Number($('calInfil').value), clog: Number($('calClog').value) });
+for (const [id, f] of [['calManning', v => `${Number(v).toFixed(2)}×`], ['calInfil', v => `${Number(v).toFixed(2)}×`], ['calClog', v => `${Math.round(v * 100)} %`]]) {
+  const upd = () => { $(id + 'Out').textContent = f($(id).value); }; $(id).addEventListener('input', upd); upd();
+  $(id).addEventListener('change', () => { if (model && (!run || !run.solver)) resetRun(); });
+}
+function obsNote() {
+  const o = S.obs, lv = o.filter(p => p.wse != null).length, dp = o.filter(p => p.depth != null).length, fl = o.filter(p => p.wse == null && p.depth == null).length;
+  $('obsNote').textContent = o.length ? `${o.length} observations: ${lv} water levels, ${dp} depths, ${fl} flooded / dry reports. Each finished run is scored against them.` : $('obsNote').dataset.empty ?? $('obsNote').textContent;
+  $('obsNote').dataset.empty ??= 'CSV with lat, lon and a water surface elevation (wse / elev), a depth, or flooded yes / no; or GeoJSON points with the same fields.';
+  $('calSweep').disabled = !(o.length && model);
+}
+$('obsImport').onclick = () => $('obsFile').click();
+$('obsFile').onchange = async () => {
+  const file = $('obsFile').files[0]; $('obsFile').value = ''; if (!file) return;
+  try { S.obs = parseObservations(await file.text(), { units: $('obsUnits').value }); if (!S.obs.length) throw new Error('no points with lat, lon and an observation'); drawObs(); obsNote(); if (run?.hmax && !run.playing && run.solver) scoreAndShow(); }
+  catch (e) { $('obsNote').textContent = 'Import failed: ' + e.message; }
+};
+$('obsClear').onclick = () => { S.obs = []; drawObs(); obsNote(); $('calScore').textContent = ''; $('calTable').textContent = ''; };
+/** Observation points on the map, coloured by how the last scored run did (green right, red missed, amber false alarm). */
+function drawObs(points = S.obs) {
+  const fc = { type: 'FeatureCollection', features: points.map(p => ({ type: 'Feature', properties: { call: p.call ?? '', err: p.error ?? 0, name: p.name }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) };
+  if (!map.getSource('obs')) {
+    if (!points.length) return;
+    map.addSource('obs', { type: 'geojson', data: fc });
+    map.addLayer({ id: 'obs', type: 'circle', source: 'obs', paint: { 'circle-radius': 6, 'circle-stroke-width': 2, 'circle-stroke-color': '#0c151b',
+      'circle-color': ['match', ['get', 'call'], 'right', '#5cd68f', 'missed', '#ff5d5d', 'false alarm', '#f0b44c', '#ffffff'] } });
+  } else map.getSource('obs').setData(fc);
+}
+/** Peak water surface near a point from the finished run: the highest wet 1 m pixel within r metres. */
+function scoreNow() {
+  if (!run?.hmax || !model) return null;
+  const fine = model.fine, f = model.f, d = run.F === 1 ? run.hmax : toFine(run.c, run.hmax, 1);
+  const at = (lon, lat, r) => {
+    const [ci, cj] = fine.lonlatToCell(lon, lat), i0 = Math.floor(ci), j0 = Math.floor(cj); if (i0 < 0 || j0 < 0 || i0 >= fine.nx || j0 >= fine.ny) return null;
+    const R = Math.ceil(r / fine.dx); let best = null, ground = f.z[j0 * fine.nx + i0];
+    for (let j = Math.max(0, j0 - R); j <= Math.min(fine.ny - 1, j0 + R); j++) for (let i = Math.max(0, i0 - R); i <= Math.min(fine.nx - 1, i0 + R); i++) {
+      if (Math.hypot(i - i0, j - j0) * fine.dx > r) continue; const k = j * fine.nx + i; if (f.bld[k] || !(d[k] > 0.01)) continue;
+      const w = f.z[k] + d[k]; if (best == null || w > best) best = w;
+    }
+    return { ground, wse: best };
+  };
+  return scoreRun(S.obs, at);
+}
+const ftm = (m) => `${m >= 0 ? '+' : '−'}${Math.abs(m / 0.3048).toFixed(2)} ft (${Math.abs(m * 100).toFixed(0)} cm)`;
+function scoreAndShow() {
+  const sc = scoreNow(); if (!sc) return null;
+  drawObs(sc.points);
+  const lines = [];
+  if (sc.n) lines.push(`<b>Levels and depths (${sc.n}):</b> bias ${ftm(sc.bias)}, mean error ${ftm(sc.mae).slice(1)}, RMSE ${ftm(sc.rmse).slice(1)}, ${Math.round(sc.within15 * 100)} % within 15 cm`);
+  if (sc.calls) lines.push(`<b>Flooded / dry:</b> ${sc.hits} flooded in both, ${sc.misses} missed, ${sc.falseAlarms} false alarms of ${sc.calls}`);
+  const worst = sc.points.filter(p => p.error != null).sort((a, b) => Math.abs(b.error) - Math.abs(a.error)).slice(0, 5);
+  if (worst.length) lines.push('Largest misses: ' + worst.map(p => `${p.name} ${ftm(p.error)}`).join(' · '));
+  $('calScore').innerHTML = `Run scored (${PARAMS.manning.label.split(' ×')[0]} ${cal().manning}×, infiltration ${cal().infil}×, clogging ${Math.round(cal().clog * 100)} %): ` + lines.join('<br>');
+  return sc;
+}
+function calCSV(sc) {
+  const n = (v, d = 3) => (v == null || !Number.isFinite(v) ? '' : String(+v.toFixed(d)));
+  return ['name,lon,lat,kind,observed_m,model_m,error_m,ground_m,model_depth_m,call', ...sc.points.map(p => [JSON.stringify(p.name), p.lon, p.lat, p.kind, n(p.wse ?? p.depth), n(p.model), n(p.error), n(p.ground), n(p.modelDepth), p.call ?? ''].join(','))].join('\n');
+}
+/** Run every combination of the three settings (in the speed mode unless unticked), score each, keep the best. */
+let sweepStop = false;
+$('calStop').onclick = () => { sweepStop = true; };
+$('calSweep').onclick = async () => {
+  if (!model || !S.obs.length) return;
+  const plan = sweepPlan(['manning', 'infil', 'clog'], Number($('calLevels').value)), dx0 = $('dxSel').value, sp0 = $('speed').value, rows = [];
+  if ($('calSpeed').checked) $('dxSel').value = '4s';
+  $('speed').value = 100; $('speed').dispatchEvent(new Event('input'));
+  sweepStop = false; $('calSweep').disabled = true; $('calStop').hidden = false;
+  const table = () => {
+    const best = rows.reduce((b, r) => (!b || r.score < b.score ? r : b), null);
+    $('calTable').innerHTML = `<table class="caltab"><tr><th>Run</th><th>n ×</th><th>infil ×</th><th>clog</th><th>RMSE</th><th>bias</th><th>calls</th><th>score</th></tr>` +
+      rows.map((r, i) => `<tr${r === best ? ' class="best"' : ''}><td>${i + 1}</td><td>${r.set.manning}</td><td>${r.set.infil}</td><td>${Math.round(r.set.clog * 100)} %</td><td>${r.rmse == null ? '–' : (r.rmse * 1000).toFixed(0) + ' mm'}</td><td>${r.bias == null ? '–' : (r.bias * 1000).toFixed(0) + ' mm'}</td><td>${r.calls ? `${r.calls - r.misses - r.falseAlarms}/${r.calls}` : '–'}</td><td>${r.score.toFixed(3)}</td></tr>`).join('') + '</table>';
+    return best;
+  };
+  try {
+    for (const [i, set] of plan.entries()) {
+      if (sweepStop) break;
+      $('calManning').value = set.manning; $('calInfil').value = set.infil; $('calClog').value = set.clog;
+      for (const id of ['calManning', 'calInfil', 'calClog']) $(id).dispatchEvent(new Event('input'));
+      $('calScore').textContent = `Sweep run ${i + 1} of ${plan.length}…`;
+      resetRun(); if (!run) break;
+      $('runBtn').onclick(); const err = await run.done; if (err) throw err;
+      const sc = scoreNow(); rows.push({ set, ...sc }); table();
+    }
+    const best = table();
+    if (best) {
+      $('calManning').value = best.set.manning; $('calInfil').value = best.set.infil; $('calClog').value = best.set.clog;
+      for (const id of ['calManning', 'calInfil', 'calClog']) $(id).dispatchEvent(new Event('input'));
+      $('calScore').innerHTML = `Best of ${rows.length} runs applied: n ${best.set.manning}×, infiltration ${best.set.infil}×, clogging ${Math.round(best.set.clog * 100)} %` +
+        (best.rmse != null ? `, RMSE ${(best.rmse * 1000).toFixed(0)} mm` : '') + (rows.length > 1 && Math.max(...rows.map(r => r.score)) - best.score < 0.01 ? '. The observations barely change across these settings (under 1 cm), so they do not pin them down: add marks where water moves, or timing' : '') + ($('calSpeed').checked ? '. Run it at 1 m to confirm.' : '.');
+    }
+  } catch (e) { $('calScore').textContent = 'Sweep stopped: ' + e.message; }
+  finally {
+    $('dxSel').value = dx0; $('speed').value = sp0; $('speed').dispatchEvent(new Event('input'));
+    $('calSweep').disabled = false; $('calStop').hidden = true; resetRun();
+  }
+};
+
 // ------------------------------------------------------------------ projects
 /** Everything needed to rebuild and rerun: area, every sidebar control, storm and drainage choices, map view. */
 function captureProject() {
@@ -1272,7 +1447,7 @@ function captureProject() {
   }
   return { version: 1, area: S.area, poly: S.poly, place: $('findNote').textContent.split('. Now')[0] || '', stormSrc, drainSrc, inputs,
     hist: stormSrc === 'hist' ? { event: $('histEvent').value, label: $('histEvent').selectedOptions[0]?.textContent ?? '' } : null,
-    view: { center: map.getCenter().toArray(), zoom: map.getZoom() }, infraUnits: $('infraUnits').value };
+    view: { center: map.getCenter().toArray(), zoom: map.getZoom() }, infraUnits: $('infraUnits').value, obs: S.obs };
 }
 function applyInputs(inputs) {
   for (const [id, v] of Object.entries(inputs ?? {})) {
@@ -1284,7 +1459,7 @@ function applyInputs(inputs) {
 }
 async function restoreProject(pj, layer) {
   stopRun(); model = null; logEl.textContent = '';
-  applyInputs(pj.inputs); infra.setLayer(layer);
+  applyInputs(pj.inputs); infra.setLayer(layer); S.obs = pj.obs ?? []; drawObs(); obsNote();
   setStormSource(pj.stormSrc ?? 'a14'); setDrainSource(pj.drainSrc ?? 'network');
   if (!pj.area) { log(`Opened ${pj.name}: no area saved yet`, 'warn'); return; }
   cancelPoly(); setArea(pj.area, pj.poly);
@@ -1336,10 +1511,12 @@ async function runFiles() {
     const h = maxFine[k]; if (h > peak) peak = h; if (h > 0.15) flooded += fine.dx ** 2; if (h > 0.05) wet += fine.dx ** 2;
   } else for (let k = 0; k < c.nx * c.ny; k++) { if (!c.mask[k] || (c.inside && !c.inside[k])) continue; const h = run.hmax[k]; if (h > peak) peak = h; if (h > 0.15) flooded += A; if (h > 0.05) wet += A; }
   const prj = utmPRJ(model.fine.zone), enc = new TextEncoder();
+  const calSc = S.obs.length ? scoreNow() : null;
   const summary = {
     project: projects.current?.name, savedUTC: new Date().toISOString(), finished: !run.playing && $('runBtn').textContent === 'Done',
     site: model.site, extent: S.area, polygon: S.poly, grid: { nx: c.nx, ny: c.ny, cellM: F, epsg: model.fine.epsg, mode: c.sg ? 'subgrid speed mode (1 m tables; max_depth.asc at 1 m, other grids per solver cell)' : 'standard' },
     storm: { label: stormLabel(run.storm), ...stormMeta(run.storm) }, drainage: plain(drainLabel()), greenInfrastructure: plain(giLabel()),
+    calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
     hazard: Object.fromEntries(Object.entries(STANDARDS).map(([k, st]) => [k, { name: st.name, note: st.note,
       areaM2: Object.fromEntries(run.haz.classAreas(k, A, (q) => c.mask[q] && (!c.inside || c.inside[q]), wetAreaOf()).map((a, i) => [st.classes[i].label, a])) }])),
@@ -1366,6 +1543,7 @@ async function runFiles() {
   grid('max_dv', hz.dv); grid('max_force', hz.force); grid('flood_duration_min', hz.duration.map(s => s / 60)); grid('arrival_min', hz.arrival.map(s => s / 60));
   if (run.inp) files.push({ path: 'network.inp', data: run.inp });
   if (run.watch) files.push({ path: 'barriers.csv', data: barrierCSV(run.watch.results()) });
+  if (calSc) files.push({ path: 'calibration.csv', data: calCSV(calSc) });
   if (run.swmmReport) files.push({ path: 'swmm_report.rpt', data: run.swmmReport });
   return files.map(f => ({ path: f.path, data: typeof f.data === 'string' ? enc.encode(f.data) : f.data }));
 }

@@ -101,8 +101,35 @@ a crest, set either as a height above the lidar ground under it (so it follows t
     which a 4 m cell connects to the street; that is the method's limit.
 - **Speed in the app** is bounded by the pipe-network exchange every 2 s on small coupled sites (South Street: 2.3×
   faster than 1 m); the gain grows with the area and without a pipe network.
-- **Not yet:** an observed water-level (tide / surge) boundary; use the 1 m run for those storms.
+- **Tide / surge.** The observed water-level boundary works here too: the edge face runs the same momentum equation
+  against the observed level (GPU suite: still water stays still; a 0.8 m rise fills to within 1 % of the tables).
 - `npm run test:subgrid` covers the tables; the GPU suite compares 4 m and 8 m with the 1 m run.
+
+**Watershed: upstream water** (Area → *Watershed*; `src/watershed.js`). Build checks, in the background, whether ground
+outside the area drains into it, from a 3DEP DEM (5 m, or 10 m for wide searches) around it: priority-flood filling,
+D8 flow directions, and every cell whose flow path reaches the area. The search widens until the catchment closes
+(up to ~15 km).
+- **Closed watershed:** *Run on the watershed* makes the model area the watershed polygon. Its edge is a ridge, so
+  nothing flows in and water leaves only where the terrain does: a closed system.
+- **A river from a large basin** (the catchment runs off any feasible search, as the Patapsco at Ellicott City): the
+  river's own flow needs an inflow hydrograph from a stream gauge (not built yet). The local watershed, the ground that
+  drains in without coming down the river, is offered instead (Ellicott City: ~9.5 km² of the Tiber–Hudson valleys).
+- Surface drainage only: pipes, and water routed around buildings, are not in the trace; in flat urban terrain the
+  line is approximate. `npm run test:watershed`.
+
+**Calibration** (section 6; `src/calibrate.js`). Import observations (CSV or GeoJSON points, feet or metres NAVD88):
+high-water marks (water surface elevation), observed depths, or flooded / dry reports (311 complaints, photos).
+- Every finished run is scored: a mark is compared with the highest modelled water surface within 3 m (marks sit on
+  walls and doors); a mark left dry scores its ground. Levels: bias, mean error, RMSE, share within 15 cm.
+  Reports: flooded in both, missed, false alarms. Points on the map turn green / red / amber.
+- Three settings, by hand or by sweep: roughness (Manning n ×), infiltration ×, and inlet clogging (share of each
+  grate's opening blocked by debris). The sweep runs every combination (2 or 3 values each: 8 or 27 runs, in the
+  4 m speed mode by default), ranks them and applies the best; confirm it at 1 m. The settings and observations are
+  saved with the project; each run folder gets `calibration.csv` and the scores in `summary.json`.
+- A test that hid known settings (n 1.6×, infiltration 0.25×, clogging 70 %) in synthetic marks on South Street was
+  recovered exactly, but levels there move under 1 cm across the whole range: on a sewered, impervious site peak
+  ponding is set by volume and topography, so marks there do not pin these settings down. The app says so when it
+  happens. `npm run test:calibrate`.
 
 **Projects** (header *Projects* / *Save*, Ctrl+S; `app/projects.js`, `/api/projects` in the server, loopback only).
 Each project is a folder in `Documents\FloodSim Projects` (override with `FLOODSIM_PROJECTS`):
@@ -376,6 +403,8 @@ node tests/run-infra-tests.mjs   # infrastructure layer: capacity, estimate roun
 node tests/run-barrier-tests.mjs # flood barriers: watertight faces, at-rest balance, weir overflow, deployment, books
 node tests/run-hazard-tests.mjs  # hazard classes (ARR 2019, FD2320), force per width, duration and arrival
 node tests/run-subgrid-tests.mjs # subgrid speed mode tables: storage, conveyance, curbs, porosity, level ↔ volume
+node tests/run-watershed-tests.mjs # watersheds: depression filling, D8, upstream trace, outlines, rivers from off the DEM
+node tests/run-calibrate-tests.mjs # calibration: observation import, scoring, sweep plan
 # GPU suite in your own browser: npm start, then open http://localhost:8766/tests/gpu-browser.html
 
 # GPU suite in headless Chromium (works with software WebGPU):
@@ -420,6 +449,8 @@ src/channels.js       OSM culverts → links; breaching road embankments on mapp
 src/barriers.js       flood walls, levees, deployable barriers → crest faces; overtopping and load watch
 src/hazard.js         hazard classes (ARR 2019 H1–H6, FD2320), force, d·v, duration, arrival per cell
 src/subgrid.js        subgrid speed mode: 1 m storage / conveyance tables per cell and face, 1 m depth output
+src/watershed.js      watersheds from 3DEP: priority flood, D8, upstream trace, local watershed past a river
+src/calibrate.js      observations (high-water marks, depths, reports), run scoring, parameter sweeps
 src/gi.js             green infrastructure layers (permeable pavement, rain gardens) and green-roof retention
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy

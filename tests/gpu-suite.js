@@ -3,7 +3,7 @@ import { GPUSolver } from '../src/solver-gpu.js';
 import { CPUSolver } from '../src/solver-cpu.js';
 import { damBreak, thackerPlanar } from '../src/analytic.js';
 import { cloudburst, dambreak, MMHR } from '../src/scenarios.js';
-import { buildSubgrid, fineDepth } from '../src/subgrid.js';
+import { buildSubgrid, fineDepth, cellVolume, CT } from '../src/subgrid.js';
 
 export async function runGpuSuite(device, log = console.log) {
   const results = {};
@@ -263,6 +263,24 @@ export async function runGpuSuite(device, log = console.log) {
       peakVolumeRatio: vs / vr, storedRef: R.mass.volume, storedSg: S2.mass.volume, outRef: R.mass.outflow, outSg: S2.mass.outflow, massRel: S2.mass.rel, steps: g.steps, stepsRef: ref.steps };
     results['subgrid' + F] = r;
     log(`subgrid ${F} m vs 1 m (320 m urban, 30 min): ${r.speedup.toFixed(1)}× faster (${msRef.toFixed(0)} → ${msSg.toFixed(0)} ms, ${r.stepsRef}/${r.steps} steps)  peak depth MAE ${(r.maeM * 100).toFixed(1)} cm, RMSE ${(r.rmseM * 100).toFixed(1)} cm  extent >15 cm CSI ${r.csi15.toFixed(2)}  peak volume ratio ${r.peakVolumeRatio.toFixed(2)}  stored ${r.storedSg.toFixed(0)}/${r.storedRef.toFixed(0)} m³, outflow ${r.outSg.toFixed(0)}/${r.outRef.toFixed(0)} m³  mass rel ${r.massRel.toExponential(1)}`);
+  }
+
+  // Subgrid water-level boundary: a 1 m sloping shore in 4 m cells, sea to the west; still water at the stage stays
+  // still, and a 0.8 m rise fills the basin to the volume the tables say lies between the two levels
+  {
+    const F = 4, fnx = 200, fny = 80, N = fnx * fny, z = new Float64Array(N);
+    for (let j = 0; j < fny; j++) for (let i = 0; i < fnx; i++) z[j * fnx + i] = 98 + 0.02 * (i + 0.5) + 0.3 * Math.sin((j + 0.5) / 4) + 0.15 * Math.sin(i * 1.7 + j);
+    const sg = buildSubgrid({ nx: fnx, ny: fny, z, bld: new Uint8Array(N), manning: new Float32Array(N).fill(0.02), infil: new Float32Array(N) }, F);
+    const { nx, ny } = sg, stageCells = []; for (let j = 0; j < ny; j++) stageCells.push(j * nx);
+    const g = new GPUSolver(device, { nx, ny, dx: F, z: sg.z, mask: sg.mask, manning: 0, infil: sg.infil, bc: { west: 'outflow', east: 'wall', south: 'wall', north: 'wall' }, stageCells, subgrid: sg });
+    const z0 = 99.5, tab = (lev) => { let v = 0; for (let K = 0; K < nx * ny; K++) v += cellVolume(sg.ct, K * CT, lev); return v * F * F; };
+    g.setStage(z0); g.setDepth((x, y, zz) => Math.max(0, z0 - zz)); // level z0 in every cell below it
+    await g.advance(300); let s = await g.readState(); const restOut = Math.abs(s.mass.outflow);
+    for (let t = 330; t <= 4800; t += 30) { g.setStage(z0 + 0.8 * Math.min(1, (t - 300) / 900)); await g.advance(t); }
+    s = await g.readState(); g.destroy();
+    const expected = tab(z0 + 0.8) - tab(z0), inflow = -s.mass.outflow;
+    results.subgridStage = { restOut, inflow, expected, rel: inflow / expected - 1, massRel: s.mass.rel };
+    log(`subgrid water-level boundary: at rest boundary flux ${restOut.toExponential(1)} m³;  +0.8 m: inflow ${inflow.toFixed(0)} of ${expected.toFixed(0)} m³ (${(100 * (inflow / expected - 1)).toFixed(1)}%, a seiche of ~1% remains)  mass rel ${s.mass.rel.toExponential(1)}`);
   }
 
   return results;

@@ -411,7 +411,8 @@ export function addTanks(net, volume) {
  */
 export function inletFlow(h, zs, Hn, nInlets, o = DESIGN_DEFAULTS) {
   if (!nInlets) return 0; // manhole lid: no opening (overflow is handled by the coupler)
-  const A = o.inletArea * nInlets, P = o.inletPerim * nInlets, eta = zs + Math.max(0, h);
+  const open = 1 - Math.min(0.95, o.clog ?? 0); // debris on the grates (calibration) closes this share of the opening
+  const A = o.inletArea * nInlets * open, P = o.inletPerim * nInlets * open, eta = zs + Math.max(0, h);
   if (Hn < zs) { // node below the street: free inflow
     if (h <= 0) return 0;
     const weir = o.Cw * P * Math.pow(h, 1.5) * Math.sqrt(2 * G), orifice = o.Co * A * Math.sqrt(2 * G * h);
