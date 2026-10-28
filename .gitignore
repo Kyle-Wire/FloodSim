@@ -1,0 +1,6 @@
+.cache/
+node_modules/
+# downloaded benchmark inputs (re-fetched by the benchmark scripts; Test7DEM.asc alone is over GitHub's 100 MB limit)
+benchmarks/ea/data/
+benchmarks/ea/source/
+benchmarks/gatec/davis/hecras-run/

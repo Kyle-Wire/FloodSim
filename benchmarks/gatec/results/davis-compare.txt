@@ -1,0 +1,28 @@
+
+FloodSim two-way inlets vs HEC-RAS diffusion wave
+  surface volume  peak 136,302 vs 128,777 m³ (+5.8%) at 6.0 vs 6.0 h · end 52,512 vs 31,469 m³ · NRMSE 10.3%
+  flooded >15 cm  peak 29.7 vs 29.2 ha (+1.8%) · >3 cm 101.0 vs 109.3 ha
+  max depth map   median |Δ| 2.8 cm, 90% 6.9 cm, bias -1.0 cm · extent >15 cm CSI 0.72
+  pump            peak 1.95 vs 1.92 m³/s · pumped 121,321 vs 144,178 m³ (-15.9%) · wet well peak 12.23 vs 12.16 m
+  pipe nodes      peak level median |Δ| 37 cm, 90% 136 cm, bias 16 cm · net into pipes 123,065 vs 144,328 m³
+
+FloodSim two-way inlets vs HEC-RAS SWE-ELM
+  surface volume  peak 136,302 vs 128,225 m³ (+6.3%) at 6.0 vs 6.0 h · end 52,512 vs 31,080 m³ · NRMSE 10.7%
+  flooded >15 cm  peak 29.7 vs 29.2 ha (+1.8%) · >3 cm 101.0 vs 107.8 ha
+  max depth map   median |Δ| 2.8 cm, 90% 6.8 cm, bias -0.9 cm · extent >15 cm CSI 0.72
+  pump            peak 1.95 vs 1.92 m³/s · pumped 121,321 vs 144,512 m³ (-16.0%) · wet well peak 12.23 vs 12.17 m
+  pipe nodes      peak level median |Δ| 37 cm, 90% 136 cm, bias 16 cm · net into pipes 123,065 vs 144,728 m³
+
+FloodSim inlets in only vs HEC-RAS diffusion wave
+  surface volume  peak 138,641 vs 128,777 m³ (+7.7%) at 6.0 vs 6.0 h · end 52,956 vs 31,469 m³ · NRMSE 12.0%
+  flooded >15 cm  peak 29.7 vs 29.2 ha (+1.7%) · >3 cm 101.2 vs 109.3 ha
+  max depth map   median |Δ| 3.7 cm, 90% 10.7 cm, bias -0.4 cm · extent >15 cm CSI 0.64
+  pump            peak 1.69 vs 1.92 m³/s · pumped 122,921 vs 144,178 m³ (-14.7%) · wet well peak 11.66 vs 12.16 m
+  pipe nodes      peak level median |Δ| 54 cm, 90% 139 cm, bias -19 cm · net into pipes 122,622 vs 144,328 m³
+
+HEC-RAS SWE-ELM vs HEC-RAS diffusion wave
+  surface volume  peak 128,225 vs 128,777 m³ (-0.4%) at 6.0 vs 6.0 h · end 31,080 vs 31,469 m³ · NRMSE 0.4%
+  flooded >15 cm  peak 29.2 vs 29.2 ha (+0.0%) · >3 cm 107.8 vs 109.3 ha
+  max depth map   median |Δ| 0.3 cm, 90% 1.2 cm, bias -0.0 cm · extent >15 cm CSI 0.95
+  pump            peak 1.92 vs 1.92 m³/s · pumped 144,512 vs 144,178 m³ (+0.2%) · wet well peak 12.17 vs 12.16 m
+  pipe nodes      peak level median |Δ| 0 cm, 90% 1 cm, bias 0 cm · net into pipes 144,728 vs 144,328 m³

@@ -1,0 +1,1245 @@
+{
+ "1": {
+  "grid": {
+   "nx": 70,
+   "ny": 10,
+   "dx": 10,
+   "x0": 0,
+   "y0": 0,
+   "cells": 700
+  },
+  "steps": 72949,
+  "wallSeconds": 36.601,
+  "massRel": 0.0000034290584112379696,
+  "inflow": 0,
+  "finalVolume": 10116.733477426533,
+  "checks": [
+   {
+    "label": "P1 level reaches 10.345 m",
+    "value": 3.6166666666666667,
+    "lo": 3.1,
+    "hi": 4,
+    "prec": 0.1,
+    "units": "h",
+    "pass": true
+   },
+   {
+    "label": "P1 level at 10 h (hold)",
+    "value": 10.35,
+    "lo": 10.345,
+    "hi": 10.352,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P1 level at 20 h",
+    "value": 10.253,
+    "lo": 10.25,
+    "hi": 10.262,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P2 level at 20 h",
+    "value": 10.253,
+    "lo": 10.25,
+    "hi": 10.262,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   }
+  ],
+  "envelope": {
+   "codes": 7,
+   "tol": 0.02,
+   "probes": [
+    {
+     "probe": "P1",
+     "samples": 20,
+     "inside": 1,
+     "medianDev": 0.0009999999999994458,
+     "p90Dev": 0.001900000000000901
+    },
+    {
+     "probe": "P2",
+     "samples": 20,
+     "inside": 1,
+     "medianDev": 0.0009999999999994458,
+     "p90Dev": 0.001900000000000901
+    }
+   ]
+  },
+  "passed": 4,
+  "total": 4
+ },
+ "2": {
+  "grid": {
+   "nx": 100,
+   "ny": 100,
+   "dx": 20,
+   "x0": 0,
+   "y0": 0,
+   "cells": 10000
+  },
+  "steps": 70202,
+  "wallSeconds": 32.41689999997616,
+  "massRel": -0.000012353483830015547,
+  "inflow": 97200,
+  "finalVolume": 97198.7987378379,
+  "checks": [
+   {
+    "label": "final volume (Table 4.3, full-SWE range)",
+    "value": 97198.7987378379,
+    "lo": 97162,
+    "hi": 97393,
+    "prec": 0,
+    "units": "m³",
+    "pass": true
+   },
+   {
+    "label": "P4 peak level",
+    "value": 9.7486,
+    "lo": 9.72,
+    "hi": 9.775,
+    "prec": 0.01,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P4 level at 24 h",
+    "value": 9.5385,
+    "lo": 9.535,
+    "hi": 9.55,
+    "prec": 0.01,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P3 peak level",
+    "value": 9.3411,
+    "lo": 9.33,
+    "hi": 9.35,
+    "prec": 0.01,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P3 level at 24 h",
+    "value": 9.2092,
+    "lo": 9.205,
+    "hi": 9.22,
+    "prec": 0.01,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P1 arrival",
+    "value": 3.25,
+    "lo": 2.5,
+    "hi": 3.7,
+    "prec": 0.25,
+    "units": "h",
+    "pass": true
+   },
+   {
+    "label": "P1 level at 48 h",
+    "value": 8.5878,
+    "lo": 8.575,
+    "hi": 8.595,
+    "prec": 0.01,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P5 arrival",
+    "value": 5.083333333333333,
+    "lo": 3.7,
+    "hi": 12,
+    "prec": 0.25,
+    "units": "h",
+    "pass": true
+   },
+   {
+    "label": "P5 level at 48 h",
+    "value": 8.2347,
+    "lo": 8.15,
+    "hi": 8.25,
+    "prec": 0.01,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P13–16 stay dry (max depth)",
+    "value": 0,
+    "lo": 0,
+    "hi": 0.01,
+    "prec": 0,
+    "units": "m",
+    "pass": true
+   }
+  ],
+  "envelope": {
+   "codes": 7,
+   "tol": 0.02,
+   "probes": [
+    {
+     "probe": "P1",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.00280000000000058,
+     "p90Dev": 0.00420000000000087
+    },
+    {
+     "probe": "P2",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.004800000000001248,
+     "p90Dev": 0.0051000000000005485
+    },
+    {
+     "probe": "P3",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.0011999999999989797,
+     "p90Dev": 0.001800000000001134
+    },
+    {
+     "probe": "P4",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.00280000000000058,
+     "p90Dev": 0.0030000000000001137
+    },
+    {
+     "probe": "P5",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.060100000000000264,
+     "p90Dev": 0.08480000000000001
+    },
+    {
+     "probe": "P6",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.004700000000001481,
+     "p90Dev": 0.016799999999999926
+    },
+    {
+     "probe": "P7",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.0012999999999987466,
+     "p90Dev": 0.002200000000000202
+    },
+    {
+     "probe": "P8",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.00280000000000058,
+     "p90Dev": 0.0029000000000003467
+    },
+    {
+     "probe": "P9",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0,
+     "p90Dev": 0
+    },
+    {
+     "probe": "P10",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.0051000000000005485,
+     "p90Dev": 0.007099999999999995
+    },
+    {
+     "probe": "P11",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.01410000000000089,
+     "p90Dev": 0.02059999999999995
+    },
+    {
+     "probe": "P12",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0.011100000000000776,
+     "p90Dev": 0.011100000000000776
+    },
+    {
+     "probe": "P13",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0,
+     "p90Dev": 0
+    },
+    {
+     "probe": "P14",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0,
+     "p90Dev": 0
+    },
+    {
+     "probe": "P15",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0,
+     "p90Dev": 0
+    },
+    {
+     "probe": "P16",
+     "samples": 288,
+     "inside": 1,
+     "medianDev": 0,
+     "p90Dev": 0
+    }
+   ]
+  },
+  "passed": 10,
+  "total": 10
+ },
+ "3": {
+  "grid": {
+   "nx": 60,
+   "ny": 20,
+   "dx": 5,
+   "x0": 0,
+   "y0": 0,
+   "cells": 1200
+  },
+  "steps": 1403,
+  "wallSeconds": 10.468699999928475,
+  "massRel": 2.6581690940327534e-7,
+  "inflow": 1310,
+  "finalVolume": 1310.0003297427065,
+  "checks": [
+   {
+    "label": "P1 arrival",
+    "value": 66,
+    "lo": 60,
+    "hi": 95,
+    "prec": 5,
+    "units": "s",
+    "pass": true
+   },
+   {
+    "label": "P1 level at 150 s",
+    "value": 9.9781,
+    "lo": 9.97,
+    "hi": 9.99,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P1 level at 600 s",
+    "value": 9.9864,
+    "lo": 9.975,
+    "hi": 9.99,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P1 peak velocity",
+    "value": 2.0792,
+    "lo": 1.65,
+    "hi": 2.2,
+    "prec": 0.05,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "P2 rise (+1 cm)",
+    "value": 158,
+    "lo": 145,
+    "hi": 200,
+    "prec": 5,
+    "units": "s",
+    "pass": true
+   },
+   {
+    "label": "P2 level at 600 s",
+    "value": 9.8099,
+    "lo": 9.805,
+    "hi": 9.828,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   }
+  ],
+  "envelope": null,
+  "passed": 6,
+  "total": 6
+ },
+ "4": {
+  "grid": {
+   "nx": 200,
+   "ny": 400,
+   "dx": 5,
+   "x0": 0,
+   "y0": 0,
+   "cells": 80000
+  },
+  "steps": 40048,
+  "wallSeconds": 53.981200000047686,
+  "massRel": -0.000005447841469032073,
+  "inflow": 285000,
+  "finalVolume": 284998.06582945737,
+  "checks": [
+   {
+    "label": "P1 arrival",
+    "value": 10,
+    "lo": 8,
+    "hi": 11,
+    "prec": 3,
+    "units": "min",
+    "pass": true
+   },
+   {
+    "label": "P1 peak depth",
+    "value": 0.3228,
+    "lo": 0.295,
+    "hi": 0.333,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P1 peak velocity",
+    "value": 0.3977,
+    "lo": 0.37,
+    "hi": 0.48,
+    "prec": 0.01,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "P3 arrival",
+    "value": 30.333333333333332,
+    "lo": 25,
+    "hi": 32,
+    "prec": 3,
+    "units": "min",
+    "pass": true
+   },
+   {
+    "label": "P3 peak depth",
+    "value": 0.2278,
+    "lo": 0.21,
+    "hi": 0.228,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P3 peak velocity",
+    "value": 0.1563,
+    "lo": 0.15,
+    "hi": 0.172,
+    "prec": 0.01,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "P5 arrival",
+    "value": 61,
+    "lo": 52,
+    "hi": 62,
+    "prec": 3,
+    "units": "min",
+    "pass": true
+   },
+   {
+    "label": "P5 peak depth",
+    "value": 0.1805,
+    "lo": 0.168,
+    "hi": 0.182,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P5 peak velocity",
+    "value": 0.106,
+    "lo": 0.095,
+    "hi": 0.118,
+    "prec": 0.01,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "P6 arrival",
+    "value": 65.66666666666667,
+    "lo": 54,
+    "hi": 66,
+    "prec": 3,
+    "units": "min",
+    "pass": true
+   },
+   {
+    "label": "P6 peak depth",
+    "value": 0.1761,
+    "lo": 0.164,
+    "hi": 0.178,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P6 peak velocity",
+    "value": 0.1027,
+    "lo": 0.096,
+    "hi": 0.119,
+    "prec": 0.01,
+    "units": "m/s",
+    "pass": true
+   }
+  ],
+  "envelope": {
+   "codes": 7,
+   "tol": 0.02,
+   "probes": [
+    {
+     "probe": "P1",
+     "samples": 5,
+     "inside": 1,
+     "medianDev": 0.007100000000000051,
+     "p90Dev": 0.008000000000000007
+    },
+    {
+     "probe": "P2",
+     "samples": 5,
+     "inside": 1,
+     "medianDev": 0.0030999999999999917,
+     "p90Dev": 0.003799999999999998
+    },
+    {
+     "probe": "P3",
+     "samples": 5,
+     "inside": 1,
+     "medianDev": 0.0014000000000000123,
+     "p90Dev": 0.0022999999999999965
+    },
+    {
+     "probe": "P4",
+     "samples": 5,
+     "inside": 1,
+     "medianDev": 0.0008999999999999841,
+     "p90Dev": 0.0030000000000000027
+    },
+    {
+     "probe": "P5",
+     "samples": 5,
+     "inside": 1,
+     "medianDev": 0.0006000000000000172,
+     "p90Dev": 0.015
+    },
+    {
+     "probe": "P6",
+     "samples": 5,
+     "inside": 1,
+     "medianDev": 0.0008999999999999841,
+     "p90Dev": 0.0012999999999999956
+    }
+   ]
+  },
+  "passed": 12,
+  "total": 12
+ },
+ "5": {
+  "grid": {
+   "nx": 256,
+   "ny": 226,
+   "dx": 50,
+   "x0": 232300,
+   "y0": 829950,
+   "cells": 7644
+  },
+  "steps": 64381,
+  "wallSeconds": 68.35170000004769,
+  "massRel": -0.0000059359641527201084,
+  "inflow": 9450000,
+  "finalVolume": 9449946.101292713,
+  "checks": [
+   {
+    "label": "P1 arrival",
+    "value": 0.43333333333333335,
+    "lo": 0.4,
+    "hi": 0.45,
+    "prec": 0.05,
+    "units": "h",
+    "pass": true
+   },
+   {
+    "label": "P1 peak level",
+    "value": 174.8376,
+    "lo": 174.6,
+    "hi": 175.05,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P1 level at 10 h",
+    "value": 172.3117,
+    "lo": 172.25,
+    "hi": 172.35,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P1 peak velocity",
+    "value": 2.2284,
+    "lo": 1.9,
+    "hi": 2.7,
+    "prec": 0.1,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "P3 arrival",
+    "value": 0.9333333333333333,
+    "lo": 0.85,
+    "hi": 0.95,
+    "prec": 0.05,
+    "units": "h",
+    "pass": true
+   },
+   {
+    "label": "P3 peak level",
+    "value": 155.9595,
+    "lo": 155.8,
+    "hi": 156,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P3 level at 20 h",
+    "value": 152.6143,
+    "lo": 152.6,
+    "hi": 152.75,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P3 peak velocity",
+    "value": 1.8681,
+    "lo": 1.8,
+    "hi": 2.45,
+    "prec": 0.1,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "P4 peak velocity",
+    "value": 1.9139,
+    "lo": 1.5,
+    "hi": 2.2,
+    "prec": 0.1,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "P5 level at 20 h",
+    "value": 148.6257,
+    "lo": 148.5,
+    "hi": 148.8,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P7 peak level",
+    "value": 155.7249,
+    "lo": 155.5,
+    "hi": 155.85,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P7 level at 16 h",
+    "value": 152.83488000000003,
+    "lo": 152.8,
+    "hi": 153,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P7 peak velocity",
+    "value": 1.5643,
+    "lo": 1.2,
+    "hi": 1.6,
+    "prec": 0.1,
+    "units": "m/s",
+    "pass": true
+   }
+  ],
+  "envelope": {
+   "codes": 7,
+   "tol": 0.1,
+   "probes": [
+    {
+     "probe": "P1",
+     "samples": 300,
+     "inside": 1,
+     "medianDev": 0.0030999999999892225,
+     "p90Dev": 0.01279999999999859
+    },
+    {
+     "probe": "P2",
+     "samples": 300,
+     "inside": 1,
+     "medianDev": 0.0017000000000000001,
+     "p90Dev": 0.037599999999997635
+    },
+    {
+     "probe": "P3",
+     "samples": 300,
+     "inside": 1,
+     "medianDev": 0.01700000000002433,
+     "p90Dev": 0.05819999999999936
+    },
+    {
+     "probe": "P4",
+     "samples": 300,
+     "inside": 1,
+     "medianDev": 0.005900000000025329,
+     "p90Dev": 0.03829999999999245
+    },
+    {
+     "probe": "P5",
+     "samples": 300,
+     "inside": 1,
+     "medianDev": 0.05469999999999686,
+     "p90Dev": 0.06569999999999254
+    },
+    {
+     "probe": "P6",
+     "samples": 300,
+     "inside": 1,
+     "medianDev": 0,
+     "p90Dev": 0.04749999999998522
+    },
+    {
+     "probe": "P7",
+     "samples": 300,
+     "inside": 1,
+     "medianDev": 0,
+     "p90Dev": 0.04609999999999559
+    }
+   ]
+  },
+  "passed": 13,
+  "total": 13
+ },
+ "7": {
+  "grid": {
+   "nx": 150,
+   "ny": 400,
+   "dx": 20,
+   "x0": 384000,
+   "y0": 237000,
+   "cells": 16780
+  },
+  "steps": 330357,
+  "wallSeconds": 845.5442000000477,
+  "massRel": -0.00003768540255109099,
+  "inflow": 0,
+  "finalVolume": 4461379.895028769,
+  "checks": [
+   {
+    "label": "M015 peak level",
+    "value": 14.7804,
+    "lo": 14.5,
+    "hi": 14.85,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "M015 level at 20 h",
+    "value": 12.9808,
+    "lo": 12.85,
+    "hi": 13.3,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "M025 peak level",
+    "value": 13.5604,
+    "lo": 13.22,
+    "hi": 13.55,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "M025 level at 20 h",
+    "value": 12.6212,
+    "lo": 12.4,
+    "hi": 12.75,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "M035 peak level",
+    "value": 12.5874,
+    "lo": 12.55,
+    "hi": 12.65,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "M035 level at 10 h",
+    "value": 12.3132,
+    "lo": 12.2,
+    "hi": 12.4,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "M045 peak level",
+    "value": 12.2682,
+    "lo": 12.02,
+    "hi": 12.3,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "M045 level at 10 h",
+    "value": 11.7324,
+    "lo": 11.45,
+    "hi": 11.6,
+    "prec": 0.05,
+    "units": "m",
+    "pass": false
+   },
+   {
+    "label": "M045 level at 30 h",
+    "value": 8.8363,
+    "lo": 8.6,
+    "hi": 8.85,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P2 (FP1) flooding starts",
+    "value": 6.733333333333333,
+    "lo": 5.8,
+    "hi": 7.5,
+    "prec": 0.25,
+    "units": "h",
+    "pass": true
+   },
+   {
+    "label": "P2 peak level",
+    "value": 13.3769,
+    "lo": 13.15,
+    "hi": 13.4,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P2 level at 40 h",
+    "value": 11.6938,
+    "lo": 11.57,
+    "hi": 11.68,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P6 (FP1) peak level (~13.20 ± 0.1, text)",
+    "value": 13.3559,
+    "lo": 13.1,
+    "hi": 13.3,
+    "prec": 0.05,
+    "units": "m",
+    "pass": false
+   },
+   {
+    "label": "P1 final level (~12.13, text)",
+    "value": 12.1842,
+    "lo": 12.08,
+    "hi": 12.18,
+    "prec": 0.02,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P8 (FP2) flooding starts",
+    "value": 10.05,
+    "lo": 9.3,
+    "hi": 10.5,
+    "prec": 0.25,
+    "units": "h",
+    "pass": true
+   },
+   {
+    "label": "P8 peak level",
+    "value": 12.8478,
+    "lo": 12.8,
+    "hi": 12.93,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P8 final level (~12.5, text)",
+    "value": 12.5136,
+    "lo": 12.42,
+    "hi": 12.56,
+    "prec": 0.02,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P11 (FP3) flooding starts",
+    "value": 8.35,
+    "lo": 5.8,
+    "hi": 8,
+    "prec": 0.25,
+    "units": "h",
+    "pass": false
+   },
+   {
+    "label": "P11 peak level",
+    "value": 12.6303,
+    "lo": 12.62,
+    "hi": 12.9,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P14 (FP3) flooding starts",
+    "value": 7.716666666666667,
+    "lo": 8,
+    "hi": 9,
+    "prec": 0.25,
+    "units": "h",
+    "pass": false
+   },
+   {
+    "label": "P14 peak level",
+    "value": 12.4501,
+    "lo": 12.48,
+    "hi": 12.62,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "P14 final level (~11.5 ± 0.05, text)",
+    "value": 11.4864,
+    "lo": 11.45,
+    "hi": 11.55,
+    "prec": 0.02,
+    "units": "m",
+    "pass": true
+   }
+  ],
+  "envelope": null,
+  "passed": 18,
+  "total": 22
+ },
+ "6a": {
+  "grid": {
+   "nx": 1010,
+   "ny": 56,
+   "dx": 0.1,
+   "x0": -8.575,
+   "y0": -2.825,
+   "cells": 36411
+  },
+  "steps": 7661,
+  "wallSeconds": 36.459400000095364,
+  "massRel": -4.323785651301454e-7,
+  "inflow": 0,
+  "finalVolume": 15.330064309319534,
+  "checks": [
+   {
+    "label": "G2 peak level after the jump (10–20 s)",
+    "value": 0.0532,
+    "lo": 0.12,
+    "hi": 0.17,
+    "prec": 0.005,
+    "units": "m",
+    "pass": false
+   },
+   {
+    "label": "G2 level at 30 s",
+    "value": 0.0902,
+    "lo": 0.05,
+    "hi": 0.1,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G2 level at 60 s",
+    "value": 0.0543,
+    "lo": 0.044,
+    "hi": 0.072,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G2 velocity, mean 3–9 s",
+    "value": 2.2339229508196716,
+    "lo": 2,
+    "hi": 2.3,
+    "prec": 0.05,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "G4 peak level",
+    "value": 0.1072,
+    "lo": 0.1,
+    "hi": 0.145,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G4 level at 20 s",
+    "value": 0.0631,
+    "lo": 0.075,
+    "hi": 0.095,
+    "prec": 0.005,
+    "units": "m",
+    "pass": false
+   },
+   {
+    "label": "G4 level at 60 s",
+    "value": 0.0524,
+    "lo": 0.043,
+    "hi": 0.068,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G4 peak velocity",
+    "value": 1.4861,
+    "lo": 1.27,
+    "hi": 1.57,
+    "prec": 0.05,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "G5 peak level",
+    "value": 0.0902,
+    "lo": 0.09,
+    "hi": 0.122,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G5 level at 30 s",
+    "value": 0.041,
+    "lo": 0.04,
+    "hi": 0.09,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G6 level at 12 s",
+    "value": 0.2791,
+    "lo": 0.265,
+    "hi": 0.28,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G6 level at 20 s",
+    "value": 0.2174,
+    "lo": 0.2,
+    "hi": 0.225,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G6 level at 30 s",
+    "value": 0.1716,
+    "lo": 0.155,
+    "hi": 0.175,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G6 level at 60 s",
+    "value": 0.0976,
+    "lo": 0.084,
+    "hi": 0.102,
+    "prec": 0.005,
+    "units": "m",
+    "pass": true
+   }
+  ],
+  "envelope": null,
+  "passed": 12,
+  "total": 14
+ },
+ "6b": {
+  "grid": {
+   "nx": 1010,
+   "ny": 56,
+   "dx": 2,
+   "x0": -171.5,
+   "y0": -56.5,
+   "cells": 36411
+  },
+  "steps": 16575,
+  "wallSeconds": 55.094900000095365,
+  "massRel": -0.000018093970083426624,
+  "inflow": 0,
+  "finalVolume": 134486.60101914406,
+  "checks": [
+   {
+    "label": "G2 peak level",
+    "value": 2.8427,
+    "lo": 2.8,
+    "hi": 3.25,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G2 level at 200 s",
+    "value": 1.9321,
+    "lo": 1.85,
+    "hi": 2.03,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G2 level at 400 s",
+    "value": 1.4937,
+    "lo": 1.45,
+    "hi": 1.55,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G2 level at 600 s",
+    "value": 1.2772,
+    "lo": 1.25,
+    "hi": 1.35,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G2 peak velocity",
+    "value": 5.3371,
+    "lo": 4.6,
+    "hi": 5.4,
+    "prec": 0.1,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "G4 peak level",
+    "value": 2.0963,
+    "lo": 2.05,
+    "hi": 2.53,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G4 peak velocity",
+    "value": 4.4376,
+    "lo": 3.9,
+    "hi": 4.9,
+    "prec": 0.1,
+    "units": "m/s",
+    "pass": true
+   },
+   {
+    "label": "G5 peak level",
+    "value": 1.9018,
+    "lo": 1.92,
+    "hi": 2.43,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G6 level at 60 s",
+    "value": 5.5478,
+    "lo": 5.3,
+    "hi": 5.55,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G6 level at 100 s",
+    "value": 4.3277,
+    "lo": 3.9,
+    "hi": 4.3,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G6 level at 200 s",
+    "value": 2.6494,
+    "lo": 2.35,
+    "hi": 2.6,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G6 level at 300 s",
+    "value": 1.8651,
+    "lo": 1.75,
+    "hi": 1.9,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   },
+   {
+    "label": "G6 level at 600 s",
+    "value": 1.2898,
+    "lo": 1.27,
+    "hi": 1.35,
+    "prec": 0.05,
+    "units": "m",
+    "pass": true
+   }
+  ],
+  "envelope": null,
+  "passed": 13,
+  "total": 13
+ }
+}

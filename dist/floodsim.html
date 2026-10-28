@@ -1,0 +1,1688 @@
+<title>FloodSim Solver Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-screen instrument. Voxel viewport left, control/readout rail right; stacks on phones. */
+:root {
+  --bg: #e7ecef; --surface: #f6f8f9; --ink: #13212b; --muted: #566874; --rule: #c6d0d6;
+  --accent: #0b6a88; --accent-ink: #ffffff; --viewport: #d5dfe4;
+  --good: #2b7d52; --warn: #a96d10; --crit: #a83434;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c151b; --surface: #121f27; --ink: #dbe5ea; --muted: #8499a4; --rule: #23343f;
+  --accent: #4fb4d6; --accent-ink: #06141b; --viewport: #081015;
+  --good: #5cc48c; --warn: #e2a849; --crit: #e46c6c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0c151b; --surface: #121f27; --ink: #dbe5ea; --muted: #8499a4; --rule: #23343f;
+  --accent: #4fb4d6; --accent-ink: #06141b; --viewport: #081015;
+  --good: #5cc48c; --warn: #e2a849; --crit: #e46c6c; color-scheme: dark; }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45; }
+.app {
+  height: 100%; box-sizing: border-box; display: grid; gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: auto minmax(0, 1fr);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px;
+}
+header { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 26px; letter-spacing: 0.02em; margin: 0; text-transform: uppercase; }
+h1 span { color: var(--accent); }
+.tag { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.engine { margin-left: auto; font-family: var(--mono); font-size: 11.5px; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.gpu { background: var(--good); } .dot.cpu { background: var(--warn); }
+
+.viewport { position: relative; background: var(--viewport); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; min-height: 0; }
+.viewport canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.viewport canvas:active { cursor: grabbing; }
+.hud { position: absolute; left: 12px; top: 10px; display: flex; gap: 18px; pointer-events: none; font-family: var(--mono); }
+.hud div { display: grid; }
+.hud b { font-family: var(--display); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.hud span { font-size: 20px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.hint { position: absolute; right: 12px; bottom: 10px; font-size: 11.5px; color: var(--muted); pointer-events: none; }
+.banner { position: absolute; left: 12px; bottom: 10px; right: 12px; font-size: 12.5px; color: var(--muted); max-width: 60ch; }
+
+.rail { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; overflow: auto; min-height: 0; display: flex; flex-direction: column; }
+.tabs { display: flex; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: var(--surface); z-index: 2; }
+.tabs button { flex: 1; background: none; border: 0; padding: 11px 8px 9px; font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.pane { padding: 14px 16px 20px; display: grid; gap: 18px; align-content: start; }
+section h2 { font-family: var(--display); font-weight: 600; font-size: 12.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.seg button { background: transparent; border: 0; border-left: 1px solid var(--rule); padding: 8px 4px; font: 500 13px var(--body); color: var(--ink); cursor: pointer; }
+.seg button:first-child { border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.desc { color: var(--muted); font-size: 13px; margin: 8px 0 0; text-wrap: pretty; }
+.field { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; margin-top: 10px; }
+.field label { font-size: 13px; }
+.field output { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.field input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { flex: 1; min-width: 84px; padding: 9px 10px; border-radius: 5px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 600 13px var(--body); cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:focus-visible, .seg button:focus-visible, .tabs button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin: 0; }
+.readouts div { display: grid; gap: 1px; min-width: 0; }
+.readouts dt { font-size: 11.5px; color: var(--muted); }
+.readouts dd { margin: 0; font-family: var(--mono); font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.legend { display: grid; gap: 4px; }
+.ramp { height: 10px; border-radius: 2px; }
+.ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.classes { display: grid; grid-template-columns: 14px 34px 1fr; gap: 3px 8px; font-size: 12px; align-items: center; }
+.classes i { width: 14px; height: 10px; border-radius: 2px; display: block; }
+.classes b { font-family: var(--mono); font-weight: 500; }
+.note { font-size: 12px; color: var(--muted); margin: 0; text-wrap: pretty; }
+.toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 10px; }
+.toggle input { accent-color: var(--accent); }
+
+/* verification */
+.lead { margin: 0; font-size: 13.5px; text-wrap: pretty; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th, td { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--display); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 11.5px; color: var(--muted); }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill { display: inline-block; font: 600 11px var(--body); padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; color: var(--good); }
+.chart { width: 100%; height: auto; display: block; }
+.chart text { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); }
+.chart .ttl { font-family: var(--body); font-size: 12px; fill: var(--ink); font-weight: 600; }
+
+@media (max-width: 820px) {
+  .app { display: flex; flex-direction: column; height: auto; min-height: 100%; }
+  .viewport { height: 58vh; min-height: 320px; flex: none; }
+  .rail { overflow: visible; }
+  .engine { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="app">
+  <header>
+    <h1>Flood<span>Sim</span> Solver Lab</h1>
+    <span class="tag">Phase 0 · 2D shallow water · MUSCL–HLLC, hydrostatic reconstruction</span>
+    <span class="engine" id="engine"><i class="dot" id="engineDot"></i><span id="engineText">Starting engine…</span></span>
+  </header>
+
+  <div class="viewport" id="viewport">
+    <canvas id="gl" aria-label="3D voxel view of the flood simulation"></canvas>
+    <div class="hud" aria-live="polite">
+      <div><b>Sim time</b><span id="hudTime">0:00</span></div>
+      <div><b id="hudMetricLabel">Max depth</b><span id="hudMetric">0.00 m</span></div>
+    </div>
+    <div class="hint">Drag to orbit · scroll or pinch to zoom · shift-drag to pan</div>
+  </div>
+
+  <aside class="rail">
+    <div class="tabs" role="tablist">
+      <button id="tabSim" role="tab" aria-selected="true" aria-controls="paneSim">Simulate</button>
+      <button id="tabVer" role="tab" aria-selected="false" aria-controls="paneVer">Verification</button>
+    </div>
+
+    <div class="pane" id="paneSim" role="tabpanel" aria-labelledby="tabSim">
+      <section>
+        <h2>Scenario</h2>
+        <div class="seg" id="scenarioSeg">
+          <button id="scCloud" aria-pressed="true" data-sc="cloudburst">Cloudburst</button>
+          <button id="scDam" aria-pressed="false" data-sc="dambreak">Dam break</button>
+          <button id="scThacker" aria-pressed="false" data-sc="thacker">Thacker bowl</button>
+        </div>
+        <p class="desc" id="scDesc"></p>
+        <div id="rainControls">
+          <div class="field"><label for="rain">Rain intensity</label><output id="rainOut" for="rain">80 mm/hr</output>
+            <input type="range" id="rain" min="10" max="200" step="5" value="80"></div>
+          <div class="field"><label for="dur">Storm duration</label><output id="durOut" for="dur">30 min</output>
+            <input type="range" id="dur" min="5" max="90" step="5" value="30"></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Run</h2>
+        <div class="row">
+          <button class="btn primary" id="play">Pause</button>
+          <button class="btn" id="reset">Reset</button>
+        </div>
+        <div class="field"><label for="speed">Speed</label><output id="speedOut" for="speed">60× real time</output>
+          <input type="range" id="speed" min="0" max="100" step="1" value="70"></div>
+      </section>
+
+      <section>
+        <h2>Readouts</h2>
+        <dl class="readouts">
+          <div><dt>Time step</dt><dd id="roDt">–</dd></div>
+          <div><dt>Solver steps</dt><dd id="roSteps">0</dd></div>
+          <div><dt id="roALabel">Rain so far</dt><dd id="roA">0 mm</dd></div>
+          <div><dt id="roBLabel">Inundated &gt; 0.15 m</dt><dd id="roB">0 m²</dd></div>
+          <div><dt>Water stored</dt><dd id="roVol">0 m³</dd></div>
+          <div><dt>Outflow</dt><dd id="roOut">0 m³</dd></div>
+          <div><dt>Mass balance error</dt><dd id="roMass">–</dd></div>
+          <div><dt>Speed achieved</dt><dd id="roRtf">–</dd></div>
+        </dl>
+      </section>
+
+      <section>
+        <h2>View</h2>
+        <div class="seg" id="modeSeg">
+          <button aria-pressed="true" data-mode="0">Depth</button>
+          <button aria-pressed="false" data-mode="1">Velocity</button>
+          <button aria-pressed="false" data-mode="2">Hazard</button>
+        </div>
+        <div class="field"><label for="exag">Vertical exaggeration</label><output id="exagOut" for="exag">2.0×</output>
+          <input type="range" id="exag" min="1" max="6" step="0.5" value="2"></div>
+        <label class="toggle"><input type="checkbox" id="maxView"> Show maximum depth reached</label>
+        <label class="toggle"><input type="checkbox" id="showBld" checked> Show buildings</label>
+        <div class="legend" id="legend" style="margin-top:12px"></div>
+      </section>
+      <p class="note">Planning-grade prototype. Roof runoff, pipe networks and inflow hydrographs arrive in later phases; rain on buildings currently leaves the model.</p>
+    </div>
+
+    <div class="pane" id="paneVer" role="tabpanel" aria-labelledby="tabVer" hidden>
+      <p class="lead" id="verLead"></p>
+      <section>
+        <h2>Test results</h2>
+        <div class="tbl-wrap"><table id="verTable"></table></div>
+      </section>
+      <section><h2>Dry-bed dam break at t = 6 s</h2><div id="chartRitter"></div></section>
+      <section><h2>Thacker bowl after one period</h2><div id="chartThacker"></div></section>
+      <p class="note" id="verNote"></p>
+    </div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="module">
+const { KERNELS_WGSL } = (() => {
+// WGSL compute kernels. A line-for-line port of solver-cpu.js.
+// One module; each pipeline uses layout:'auto', so it binds only what its entry point touches.
+const KERNELS_WGSL = /* wgsl */`
+struct Params {
+  nx: u32, ny: u32, NX: u32, NY: u32,
+  dx: f32, g: f32, hdry: f32, hfront: f32,
+  cfl: f32, rain: f32, tEnd: f32, dtDry: f32,
+  secondOrder: u32, limiter: u32, bcW: u32, bcE: u32,
+  bcS: u32, bcN: u32, nInlets: u32, stage: f32,
+};
+const GH: i32 = 2;
+override STAGE: u32 = 0u;
+
+@group(0) @binding(0) var<uniform> P: Params;
+@group(0) @binding(1) var<storage, read_write> U: array<vec4f>;   // h, hu, hv, -
+@group(0) @binding(2) var<storage, read_write> U0: array<vec4f>;  // stage-start copy
+@group(0) @binding(3) var<storage, read> S: array<vec4f>;         // z, manning n, mask, infiltration (m/s)
+@group(0) @binding(4) var<storage, read_write> W: array<vec4f>;   // primitives incl. ghosts: h, eta, u, v
+@group(0) @binding(5) var<storage, read_write> FX: array<f32>;    // 9 per x-face, stored at right cell
+@group(0) @binding(6) var<storage, read_write> FY: array<f32>;    // 9 per y-face, stored at upper cell
+@group(0) @binding(7) var<storage, read_write> A: array<vec4f>;   // max depth, infil cum (m), outflow cum (m3), clipped (m)
+@group(0) @binding(8) var<storage, read_write> DT: array<f32>;    // dt, t, kahan c, steps
+@group(0) @binding(9) var<storage, read_write> RED: atomic<u32>;  // max wave speed (float bits)
+@group(0) @binding(10) var<storage, read_write> OUT: array<vec2f>; // render: depth, speed
+@group(0) @binding(11) var<storage, read_write> TH: array<f32>;    // draining-time scale per donor cell (1 in ghosts)
+@group(0) @binding(12) var<storage, read> RF: array<f32>;         // rainfall multiplier per cell (roof routing; 1 by default)
+@group(0) @binding(13) var<storage, read> INC: array<u32>;        // drainage inlets: padded cell index
+@group(0) @binding(14) var<storage, read> INQ: array<f32>;        // inlet exchange rate, m3/s (+ = surface into network)
+@group(0) @binding(15) var<storage, read_write> INX: array<vec2f>; // volume actually exchanged since last read (m3), latest depth (m)
+@group(0) @binding(16) var<storage, read> STG: array<f32>;         // 1 on ghost cells that see the external water level (P.stage)
+
+fn lim(a: f32, b: f32) -> f32 {
+  if (a * b <= 0.0) { return 0.0; }
+  if (P.limiter == 1u) { return 2.0 * a * b / (a + b); }
+  return select(b, a, abs(a) < abs(b));
+}
+
+// Outward velocity at a free-outfall edge cell e (n = next cell inward): Manning velocity on the water-surface slope
+// toward the edge beyond OUT_SLOPE, capped at critical. A level or inward-sloping surface gives 0, so still water stays
+// still (the threshold keeps √slope from amplifying round-off into a drain).
+const OUT_SLOPE: f32 = 1e-4;
+fn outVel(e: i32, n: i32) -> f32 {
+  let he = U[e].x;
+  if (he <= P.hdry || U[n].x <= P.hdry || S[n].z < 0.5) { return 0.0; } // a dry inner cell (its bed) drives nothing
+  let s = ((U[n].x + S[n].x) - (he + S[e].x)) / P.dx - OUT_SLOPE;
+  if (s <= 0.0) { return 0.0; }
+  let crit = sqrt(P.g * he);
+  if (S[e].y <= 0.0) { return crit; }
+  return min(crit, pow(he, 2.0 / 3.0) * sqrt(s) / S[e].y);
+}
+
+// ---- primitives, with mirrored ghost cells (wall = reflect normal velocity, open = copy)
+@compute @workgroup_size(8, 8)
+fn prim(@builtin(global_invocation_id) gid: vec3u) {
+  let NX = i32(P.NX); let NY = i32(P.NY);
+  let i = i32(gid.x); let j = i32(gid.y);
+  if (i >= NX || j >= NY) { return; }
+  var si = i; var sj = j; var fu = 1.0; var fv = 1.0;
+  // walls mirror across the boundary face; open / outflow edges copy the edge cell into every ghost layer
+  if (i < GH) { si = select(GH, 2 * GH - 1 - i, P.bcW == 0u); } else if (i >= NX - GH) { si = select(NX - GH - 1, 2 * (NX - GH) - 1 - i, P.bcE == 0u); }
+  if (j < GH) { sj = select(GH, 2 * GH - 1 - j, P.bcS == 0u); } else if (j >= NY - GH) { sj = select(NY - GH - 1, 2 * (NY - GH) - 1 - j, P.bcN == 0u); }
+  let c = j * NX + i;
+  let q = U[sj * NX + si];
+  // bc: 0 wall (reflect), 1 open (transmissive), 2 outflow (free outfall: normal-depth velocity, see outVel)
+  if (i < GH && P.bcW == 0u) { fu = -1.0; }
+  if (i >= NX - GH && P.bcE == 0u) { fu = -1.0; }
+  if (j < GH && P.bcS == 0u) { fv = -1.0; }
+  if (j >= NY - GH && P.bcN == 0u) { fv = -1.0; }
+  var u = 0.0; var v = 0.0;
+  if (q.x > P.hdry) { u = q.y / q.x * fu; v = q.z / q.x * fv; }
+  let e = sj * NX + si;
+  if (i < GH && P.bcW == 2u) { u = -outVel(e, e + 1); }
+  if (i >= NX - GH && P.bcE == 2u) { u = outVel(e, e - 1); }
+  if (j < GH && P.bcS == 2u) { v = -outVel(e, e + NX); }
+  if (j >= NY - GH && P.bcN == 2u) { v = outVel(e, e - NX); }
+  // water-level boundary: ghost surface held at the observed stage (tide / surge), velocity zero-gradient
+  if (STG[c] > 0.5 && P.stage - S[c].x > P.hdry) {
+    let hs = P.stage - S[c].x;
+    if (q.x <= P.hdry) { u = 0.0; v = 0.0; } else { u = q.y / q.x; v = q.z / q.x; }
+    W[c] = vec4f(hs, P.stage, u, v);
+    return;
+  }
+  W[c] = vec4f(q.x, q.x + S[c].x, u, v);
+}
+
+// ---- MUSCL reconstruction of (h, eta, u_n, u_t) toward side sg along stride s
+fn recon(c: i32, s: i32, sg: f32, isX: bool) -> vec4f {
+  let wc = W[c]; let wa = W[c - s]; let wb = W[c + s];
+  let Ma = S[c - s].z > 0.5; let Mb = S[c + s].z > 0.5;
+  let qc = vec4f(wc.x, wc.y, select(wc.w, wc.z, isX), select(wc.z, wc.w, isX));
+  var fo = (P.secondOrder == 0u) || (wc.x < P.hfront);
+  if ((Ma && wa.x < P.hfront) || (Mb && wb.x < P.hfront)) { fo = true; }
+  if (fo) { return qc; }
+  var qa = vec4f(wa.x, wa.y, select(wa.w, wa.z, isX), select(wa.z, wa.w, isX));
+  var qb = vec4f(wb.x, wb.y, select(wb.w, wb.z, isX), select(wb.z, wb.w, isX));
+  if (!Ma) { qa = qc; }
+  if (!Mb) { qb = qc; }
+  let hf = 0.5 * sg;
+  return vec4f(qc.x + hf * lim(qc.x - qa.x, qb.x - qc.x),
+               qc.y + hf * lim(qc.y - qa.y, qb.y - qc.y),
+               qc.z + hf * lim(qc.z - qa.z, qb.z - qc.z),
+               qc.w + hf * lim(qc.w - qa.w, qb.w - qc.w));
+}
+
+// ---- HLLC (Toro) in the face-normal frame
+fn hllc(hL_: f32, uL_: f32, vL_: f32, hR_: f32, uR_: f32, vR_: f32) -> vec3f {
+  let g = P.g;
+  let wetL = hL_ > P.hdry; let wetR = hR_ > P.hdry;
+  if (!wetL && !wetR) { return vec3f(0.0); }
+  let hL = hL_; let hR = hR_;
+  let uL = select(0.0, uL_, wetL); let vL = select(0.0, vL_, wetL);
+  let uR = select(0.0, uR_, wetR); let vR = select(0.0, vR_, wetR);
+  let cL = sqrt(g * hL); let cR = sqrt(g * hR);
+  var SL: f32; var SR: f32;
+  if (!wetL) { SL = uR - 2.0 * cR; SR = uR + cR; }
+  else if (!wetR) { SL = uL - cL; SR = uL + 2.0 * cL; }
+  else {
+    let us = 0.5 * (uL + uR) + cL - cR;
+    let cs = 0.5 * (cL + cR) + 0.25 * (uL - uR);
+    SL = min(uL - cL, us - cs); SR = max(uR + cR, us + cs);
+  }
+  let FL0 = hL * uL; let FL1 = hL * uL * uL + 0.5 * g * hL * hL;
+  let FR0 = hR * uR; let FR1 = hR * uR * uR + 0.5 * g * hR * hR;
+  if (SL >= 0.0) { return vec3f(FL0, FL1, FL0 * vL); }
+  if (SR <= 0.0) { return vec3f(FR0, FR1, FR0 * vR); }
+  let den = SR - SL;
+  let H0 = (SR * FL0 - SL * FR0 + SL * SR * (hR - hL)) / den;
+  let H1 = (SR * FL1 - SL * FR1 + SL * SR * (hR * uR - hL * uL)) / den;
+  let dSM = hR * (uR - SR) - hL * (uL - SL);
+  var SM = 0.0;
+  if (abs(dSM) > 1e-30) { SM = (SL * hR * (uR - SR) - SR * hL * (uL - SL)) / dSM; }
+  return vec3f(H0, H1, H0 * select(vR, vL, SM >= 0.0));
+}
+
+// ---- face flux with hydrostatic reconstruction (Audusse et al. 2004)
+fn face(a: i32, b: i32, s: i32, isX: bool) -> array<f32, 9> {
+  var o: array<f32, 9>;
+  let Ma = S[a].z > 0.5; let Mb = S[b].z > 0.5;
+  if (!Ma && !Mb) { return o; }
+  var L = vec4f(0.0); var R = vec4f(0.0);
+  if (Ma) { L = recon(a, s, 1.0, isX); }
+  if (Mb) { R = recon(b, s, -1.0, isX); }
+  if (!Mb) { R = vec4f(L.x, L.y, -L.z, L.w); }
+  if (!Ma) { L = vec4f(R.x, R.y, -R.z, R.w); }
+  let zL = L.y - L.x; let zR = R.y - R.x;
+  let zs = max(zL, zR);
+  let hLs = max(0.0, L.y - zs); let hRs = max(0.0, R.y - zs);
+  let F = hllc(hLs, L.z, L.w, hRs, R.z, R.w);
+  o[0] = F.x; o[1] = F.y; o[2] = F.z;
+  o[3] = select(0.5 * P.g * (L.x * L.x - hLs * hLs), 0.0, !Ma);
+  o[4] = select(0.5 * P.g * (R.x * R.x - hRs * hRs), 0.0, !Mb);
+  o[5] = L.x; o[6] = zL; o[7] = R.x; o[8] = zR;
+  return o;
+}
+
+@compute @workgroup_size(8, 8)
+fn faceX(@builtin(global_invocation_id) gid: vec3u) {
+  if (gid.x > P.nx || gid.y >= P.ny) { return; }
+  let NX = i32(P.NX);
+  let b = (i32(gid.y) + GH) * NX + i32(gid.x) + GH;
+  let o = face(b - 1, b, 1, true);
+  for (var k = 0; k < 9; k++) { FX[b * 9 + k] = o[k]; }
+}
+
+@compute @workgroup_size(8, 8)
+fn faceY(@builtin(global_invocation_id) gid: vec3u) {
+  if (gid.x >= P.nx || gid.y > P.ny) { return; }
+  let NX = i32(P.NX);
+  let b = (i32(gid.y) + GH) * NX + i32(gid.x) + GH;
+  let o = face(b - NX, b, NX, false);
+  for (var k = 0; k < 9; k++) { FY[b * 9 + k] = o[k]; }
+}
+
+// ---- draining-time limiter: theta = min(1, cell volume / volume it would export this stage)
+@compute @workgroup_size(8, 8)
+fn theta(@builtin(global_invocation_id) gid: vec3u) {
+  if (gid.x >= P.nx || gid.y >= P.ny) { return; }
+  let NX = i32(P.NX);
+  let c = (i32(gid.y) + GH) * NX + i32(gid.x) + GH;
+  var t = 1.0;
+  if (S[c].z > 0.5) {
+    let fw = FX[c * 9]; let fe = FX[(c + 1) * 9]; let fs = FY[c * 9]; let fq = FY[(c + NX) * 9];
+    let outv = (max(fe, 0.0) - min(fw, 0.0) + max(fq, 0.0) - min(fs, 0.0)) * P.dx * DT[0];
+    let vol = U[c].x * P.dx * P.dx;
+    if (outv > vol) { t = vol / outv; }
+  }
+  TH[c] = t;
+}
+fn fx3(f: i32, l: i32, r: i32) -> vec3f { let F = vec3f(FX[f], FX[f + 1], FX[f + 2]); return F * TH[select(r, l, F.x > 0.0)]; }
+fn fy3(f: i32, l: i32, r: i32) -> vec3f { let F = vec3f(FY[f], FY[f + 1], FY[f + 2]); return F * TH[select(r, l, F.x > 0.0)]; }
+
+// ---- conservative update: STAGE 0 = Euler / RK stage 1, STAGE 1 = RK stage 2 (Heun average)
+@compute @workgroup_size(8, 8)
+fn update(@builtin(global_invocation_id) gid: vec3u) {
+  if (gid.x >= P.nx || gid.y >= P.ny) { return; }
+  let NX = i32(P.NX); let NY = i32(P.NY);
+  let i = i32(gid.x) + GH; let j = i32(gid.y) + GH;
+  let c = j * NX + i;
+  if (S[c].z < 0.5) { return; }
+  let dt = DT[0];
+  if (dt <= 0.0) { return; }
+  let w = c * 9; let e = (c + 1) * 9; let sI = c * 9; let nI = (c + NX) * 9;
+  let inv = 1.0 / P.dx;
+  let hW = FX[w + 7]; let zW = FX[w + 8]; let hE = FX[e + 5]; let zE = FX[e + 6];
+  let hS = FY[sI + 7]; let zS = FY[sI + 8]; let hN = FY[nI + 5]; let zN = FY[nI + 6];
+  let Fw = fx3(w, c - 1, c); let Fe = fx3(e, c, c + 1); let Fs = fy3(sI, c - NX, c); let Fn = fy3(nI, c, c + NX);
+  let dh = -inv * (Fe.x - Fw.x + Fn.x - Fs.x);
+  let dhu = -inv * ((Fe.y + FX[e + 3]) - (Fw.y + FX[w + 4]) + 0.5 * P.g * (hW + hE) * (zE - zW) + Fn.z - Fs.z);
+  let dhv = -inv * ((Fn.y + FY[nI + 3]) - (Fs.y + FY[sI + 4]) + 0.5 * P.g * (hS + hN) * (zN - zS) + Fe.z - Fw.z);
+  var q = U[c];
+  if (STAGE == 0u) {
+    U0[c] = q;
+    q = vec4f(q.x + dt * dh, q.y + dt * dhu, q.z + dt * dhv, 0.0);
+  } else {
+    q = 0.5 * (U0[c] + q + dt * vec4f(dh, dhu, dhv, 0.0));
+  }
+  var a = A[c];
+  if (q.x < 0.0) { a.w += -q.x; q.x = 0.0; }
+  if (q.x <= P.hdry) { q.y = 0.0; q.z = 0.0; }
+  var qo = 0.0;
+  if (i == GH) { qo -= Fw.x; }
+  if (i == NX - GH - 1) { qo += Fe.x; }
+  if (j == GH) { qo -= Fs.x; }
+  if (j == NY - GH - 1) { qo += Fn.x; }
+  a.z += qo * select(1.0, 0.5, P.secondOrder == 1u) * dt * P.dx;
+  U[c] = q; A[c] = a;
+}
+
+// ---- semi-implicit friction, rainfall, infiltration, max depth
+@compute @workgroup_size(8, 8)
+fn sources(@builtin(global_invocation_id) gid: vec3u) {
+  if (gid.x >= P.nx || gid.y >= P.ny) { return; }
+  let NX = i32(P.NX);
+  let c = (i32(gid.y) + GH) * NX + i32(gid.x) + GH;
+  let s = S[c];
+  if (s.z < 0.5) { return; }
+  let dt = DT[0];
+  if (dt <= 0.0) { return; }
+  var q = U[c]; var a = A[c];
+  let d = q.x;
+  if (d > P.hdry && s.y > 0.0) {
+    let u = q.y / d; let v = q.z / d;
+    let k = 1.0 + dt * P.g * s.y * s.y * sqrt(u * u + v * v) / pow(d, 4.0 / 3.0);
+    q.y = q.y / k; q.z = q.z / k;
+  }
+  let r = P.rain * RF[c] * dt;
+  let inf = min(s.w * dt, d + r);
+  q.x = d + r - inf; a.y += inf;
+  if (q.x <= P.hdry) { q.y = 0.0; q.z = 0.0; }
+  a.x = max(a.x, q.x);
+  U[c] = q; A[c] = a;
+}
+
+// ---- 1D-2D exchange at drainage inlets (sparse, one thread per inlet; inlets never share a cell)
+@compute @workgroup_size(64)
+fn exchange(@builtin(global_invocation_id) gid: vec3u) {
+  let m = gid.x;
+  if (m >= P.nInlets) { return; }
+  let c = i32(INC[m]);
+  var q = U[c];
+  let dt = DT[0];
+  var x = INX[m];
+  if (dt > 0.0) {
+    let A = P.dx * P.dx;
+    let dd = min(INQ[m] * dt / A, max(q.x, 0.0)); // never take more water than the cell holds
+    q.x = q.x - dd;
+    if (q.x <= P.hdry) { q.y = 0.0; q.z = 0.0; }
+    U[c] = q;
+    x.x = x.x + dd * A;
+  }
+  x.y = q.x;
+  INX[m] = x;
+}
+
+// ---- CFL time step: workgroup max, then global atomic max on float bits (positive floats sort as u32)
+var<workgroup> wmax: atomic<u32>;
+@compute @workgroup_size(8, 8)
+fn dtReduce(@builtin(global_invocation_id) gid: vec3u, @builtin(local_invocation_index) li: u32) {
+  if (li == 0u) { atomicStore(&wmax, 0u); }
+  workgroupBarrier();
+  if (gid.x < P.nx && gid.y < P.ny) {
+    let c = (i32(gid.y) + GH) * i32(P.NX) + i32(gid.x) + GH;
+    let q = U[c];
+    if (S[c].z > 0.5 && q.x > P.hdry) {
+      let sp = abs(q.y / q.x) + abs(q.z / q.x) + 2.0 * sqrt(P.g * q.x); // lambda_x + lambda_y
+      atomicMax(&wmax, bitcast<u32>(sp));
+    }
+  }
+  workgroupBarrier();
+  if (li == 0u) { atomicMax(&RED, atomicLoad(&wmax)); }
+}
+
+@compute @workgroup_size(1)
+fn dtFinal() {
+  let smax = bitcast<f32>(atomicLoad(&RED));
+  atomicStore(&RED, 0u);
+  let t = DT[1];
+  let rem = P.tEnd - t;
+  var dt = 0.0;
+  if (rem > 0.0) {
+    let cand = select(P.dtDry, P.cfl * P.dx / smax, smax > 0.0);
+    if (cand >= rem) { dt = rem; DT[1] = P.tEnd; DT[2] = 0.0; }
+    else {
+      dt = cand;
+      let y = dt - DT[2]; let tn = t + y; DT[2] = (tn - t) - y; DT[1] = tn;
+    }
+    DT[3] = DT[3] + 1.0;
+  }
+  DT[0] = dt;
+}
+
+// ---- pack depth and speed for rendering (interior cells, row-major)
+@compute @workgroup_size(8, 8)
+fn pack(@builtin(global_invocation_id) gid: vec3u) {
+  if (gid.x >= P.nx || gid.y >= P.ny) { return; }
+  let c = (i32(gid.y) + GH) * i32(P.NX) + i32(gid.x) + GH;
+  let q = U[c];
+  var sp = 0.0;
+  if (q.x > P.hdry) { sp = sqrt(q.y * q.y + q.z * q.z) / q.x; }
+  OUT[gid.y * P.nx + gid.x] = vec2f(q.x, sp);
+}
+`;
+
+return { KERNELS_WGSL };
+})();
+
+const { CPUSolver } = (() => {
+// FloodSim CPU reference solver
+// 2D shallow water equations, finite volume, structured grid.
+//   - MUSCL reconstruction of h, eta = h + z, u, v (minmod or van Leer)
+//   - Hydrostatic reconstruction (Audusse et al. 2004) for well-balancing and wet/dry
+//   - HLLC approximate Riemann solver (Toro 2001)
+//   - SSP-RK2 (Heun) time stepping, CFL-limited
+//   - Draining-time flux limiter: a cell never exports more water than it holds (positivity, exact mass)
+//   - Semi-implicit point-wise Manning friction
+//   - Rainfall and infiltration source terms with full mass accounting
+// This file is the ground truth the WGSL kernels are verified against.
+
+const GH = 2; // ghost layers on each side (MUSCL needs two)
+
+function minmod(a, b) {
+  if (a * b <= 0) return 0;
+  return Math.abs(a) < Math.abs(b) ? a : b;
+}
+function vanleer(a, b) {
+  const p = a * b;
+  return p <= 0 ? 0 : (2 * p) / (a + b);
+}
+
+class CPUSolver {
+  /**
+   * @param {object} o
+   *  nx, ny       interior cells
+   *  dx           cell size (m), square cells
+   *  z            Float64Array(nx*ny) bed elevation, row-major (j*nx+i)
+   *  manning      number or Float64Array(nx*ny)
+   *  mask         optional Uint8Array(nx*ny), 0 = wall/building cell
+   *  bc           {west,east,south,north}: 'wall' | 'open' (transmissive) | 'outflow' (free outfall: normal-depth velocity on the water-surface slope, ≤ critical)
+   *  secondOrder  default true
+   *  limiter      'minmod' | 'vanleer'
+   *  cfl          default 0.48 (2nd order) / 0.9 (1st), applied to lambda_x + lambda_y
+   *  hdry         depth below which a cell is dry (m), default 1e-6
+   *  hfront       depth below which reconstruction drops to first order, default 1e-3
+   */
+  constructor(o) {
+    this.nx = o.nx; this.ny = o.ny; this.dx = o.dx;
+    this.NX = o.nx + 2 * GH; this.NY = o.ny + 2 * GH;
+    const N = this.NX * this.NY;
+    this.g = o.g ?? 9.81;
+    this.secondOrder = o.secondOrder ?? true;
+    // 2D positivity: dt*(lx+ly)/dx <= 1/2 (second order) or 1 (first order)
+    this.cfl = o.cfl ?? (this.secondOrder ? 0.48 : 0.9);
+    this.hdry = o.hdry ?? 1e-6;
+    this.hfront = o.hfront ?? 1e-3;
+    this.dtDry = o.dtDry ?? 1.0;       // time step used while the whole domain is dry (s)
+    this.lim = (o.limiter === 'vanleer') ? vanleer : minmod;
+    this.bc = Object.assign({ west: 'wall', east: 'wall', south: 'wall', north: 'wall' }, o.bc || {});
+
+    this.h = new Float64Array(N); this.hu = new Float64Array(N); this.hv = new Float64Array(N);
+    this.z = new Float64Array(N); this.n = new Float64Array(N); this.M = new Uint8Array(N);
+    this.rainRate = 0;                 // m/s, uniform (or set rainField)
+    this.rainField = null;             // optional Float64Array(N) multiplier
+    this.infil = new Float64Array(N);  // infiltration capacity, m/s
+
+    // primitive + stage buffers
+    this.Hp = new Float64Array(N); this.Ep = new Float64Array(N);
+    this.Up = new Float64Array(N); this.Vp = new Float64Array(N);
+    this.h0 = new Float64Array(N); this.hu0 = new Float64Array(N); this.hv0 = new Float64Array(N);
+    this.dh = new Float64Array(N); this.dhu = new Float64Array(N); this.dhv = new Float64Array(N);
+    // face arrays: x-faces indexed by right cell, y-faces by upper cell. 9 values each.
+    this.FX = new Float64Array(N * 9); this.FY = new Float64Array(N * 9);
+    this.maxDepth = new Float64Array(N);
+    this.TH = new Float64Array(N);    // draining-time flux scale per donor cell
+
+    const nIn = (i, j) => (j + GH) * this.NX + (i + GH);
+    this.idx = nIn;
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const c = nIn(i, j), k = j * this.nx + i;
+      this.z[c] = o.z[k];
+      this.n[c] = typeof o.manning === 'number' ? o.manning : (o.manning ? o.manning[k] : 0);
+      this.M[c] = o.mask ? o.mask[k] : 1;
+    }
+    this.t = 0; this.steps = 0;
+    this.vol = { rain: 0, infil: 0, outflow: 0, clipped: 0, initial: 0 };
+    this._fillGhostStatic();
+  }
+
+  setDepth(fn) { // fn(x, y, z) -> h, x/y at cell centers
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const c = this.idx(i, j);
+      this.h[c] = this.M[c] ? Math.max(0, fn((i + 0.5) * this.dx, (j + 0.5) * this.dx, this.z[c])) : 0;
+    }
+    this.vol.initial = this.volume();
+  }
+  setVelocity(fn) { // fn(x,y) -> [u,v]
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const c = this.idx(i, j); const [u, v] = fn((i + 0.5) * this.dx, (j + 0.5) * this.dx);
+      this.hu[c] = this.h[c] * u; this.hv[c] = this.h[c] * v;
+    }
+  }
+
+  volume() {
+    let s = 0;
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const c = this.idx(i, j); if (this.M[c]) s += this.h[c];
+    }
+    return s * this.dx * this.dx;
+  }
+
+  // ---------- ghost cells ----------
+  _fillGhostStatic() { // bed, mask, manning into ghosts (zero-gradient)
+    const { NX, NY } = this;
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+      if (i >= GH && i < NX - GH && j >= GH && j < NY - GH) continue;
+      const ii = Math.min(Math.max(i, GH), NX - GH - 1), jj = Math.min(Math.max(j, GH), NY - GH - 1);
+      const c = j * NX + i, s = jj * NX + ii;
+      this.z[c] = this.z[s]; this.n[c] = this.n[s]; this.M[c] = 1;
+    }
+  }
+  _fillGhost(h, hu, hv) {
+    const { NX, NY, bc, z, n, M, g: grav, dx, hdry } = this;
+    const put = (c, s, su, sv) => { h[c] = h[s]; hu[c] = su * hu[s]; hv[c] = sv * hv[s]; };
+    // free outfall: outward velocity = Manning velocity on the water-surface slope toward the edge (beyond 1e-4, so
+    // round-off cannot start a drain), capped at critical
+    const outVel = (e, i) => {
+      const he = h[e]; if (he <= hdry || h[i] <= hdry || !M[i]) return 0; // a dry inner cell (its bed) drives nothing
+      const s = ((h[i] + z[i]) - (he + z[e])) / dx - 1e-4; if (s <= 0) return 0;
+      const crit = Math.sqrt(grav * he); return n[e] > 0 ? Math.min(crit, Math.pow(he, 2 / 3) * Math.sqrt(s) / n[e]) : crit;
+    };
+    // walls mirror across the boundary face; open / outflow edges copy the edge cell into every ghost layer
+    for (let j = GH; j < NY - GH; j++) for (let g = 0; g < GH; g++) {
+      let c = j * NX + (GH - 1 - g), s = j * NX + (bc.west === 'wall' ? GH + g : GH);
+      put(c, s, bc.west === 'wall' ? -1 : 1, 1); if (bc.west === 'outflow') hu[c] = -h[c] * outVel(s, s + 1);
+      c = j * NX + (NX - GH + g); s = j * NX + (bc.east === 'wall' ? NX - GH - 1 - g : NX - GH - 1);
+      put(c, s, bc.east === 'wall' ? -1 : 1, 1); if (bc.east === 'outflow') hu[c] = h[c] * outVel(s, s - 1);
+    }
+    for (let i = 0; i < NX; i++) for (let g = 0; g < GH; g++) {
+      let c = (GH - 1 - g) * NX + i, s = (bc.south === 'wall' ? GH + g : GH) * NX + i;
+      put(c, s, 1, bc.south === 'wall' ? -1 : 1); if (bc.south === 'outflow') hv[c] = -h[c] * outVel(s, s + NX);
+      c = (NY - GH + g) * NX + i; s = (bc.north === 'wall' ? NY - GH - 1 - g : NY - GH - 1) * NX + i;
+      put(c, s, 1, bc.north === 'wall' ? -1 : 1); if (bc.north === 'outflow') hv[c] = h[c] * outVel(s, s - NX);
+    }
+  }
+
+  // ---------- spatial operator L(U) ----------
+  _prims(h, hu, hv) {
+    const { Hp, Ep, Up, Vp, z, hdry } = this; const N = h.length;
+    for (let c = 0; c < N; c++) {
+      const d = h[c]; Hp[c] = d; Ep[c] = d + z[c];
+      if (d > hdry) { Up[c] = hu[c] / d; Vp[c] = hv[c] / d; } else { Up[c] = 0; Vp[c] = 0; }
+    }
+  }
+
+  // reconstruct cell c toward side sg (+1/-1) along stride s; writes into out[o..o+3] = h, eta, un, ut
+  _recon(c, s, sg, isX, out, o) {
+    const { Hp, Ep, Up, Vp, M, hfront, lim } = this;
+    const un = isX ? Up : Vp, ut = isX ? Vp : Up;
+    let fo = !this.secondOrder || Hp[c] < hfront;
+    const a = c - s, b = c + s;
+    const Ma = M[a], Mb = M[b];
+    if (!fo && ((Ma && Hp[a] < hfront) || (Mb && Hp[b] < hfront))) fo = true;
+    if (fo) { out[o] = Hp[c]; out[o + 1] = Ep[c]; out[o + 2] = un[c]; out[o + 3] = ut[c]; return; }
+    const half = 0.5 * sg;
+    const sl = (q) => { const qc = q[c]; const qm = Ma ? q[a] : qc; const qp = Mb ? q[b] : qc; return lim(qc - qm, qp - qc); };
+    out[o] = Hp[c] + half * sl(Hp);
+    out[o + 1] = Ep[c] + half * sl(Ep);
+    out[o + 2] = un[c] + half * sl(un);
+    out[o + 3] = ut[c] + half * sl(ut);
+  }
+
+  // face between cell a (left/below) and b (right/above); writes 9 values to F at offset f
+  //  [F0 mass, F1 normal mom, F2 tangential mom, corrL, corrR, hL, zL, hR, zR]
+  _face(a, b, s, isX, F, f) {
+    const { M, g } = this; const r = this._r || (this._r = new Float64Array(8));
+    const Ma = M[a], Mb = M[b];
+    if (!Ma && !Mb) { for (let k = 0; k < 9; k++) F[f + k] = 0; return; }
+    if (Ma) this._recon(a, s, +1, isX, r, 0);
+    if (Mb) this._recon(b, s, -1, isX, r, 4);
+    if (!Mb) { r[4] = r[0]; r[5] = r[1]; r[6] = -r[2]; r[7] = r[3]; } // reflective wall
+    if (!Ma) { r[0] = r[4]; r[1] = r[5]; r[2] = -r[6]; r[3] = r[7]; }
+    const hL = r[0], zL = r[1] - r[0], uL = r[2], vL = r[3];
+    const hR = r[4], zR = r[5] - r[4], uR = r[6], vR = r[7];
+    const zs = Math.max(zL, zR);
+    const hLs = Math.max(0, r[1] - zs), hRs = Math.max(0, r[5] - zs);
+    hllc(hLs, uL, vL, hRs, uR, vR, g, this.hdry, F, f);
+    F[f + 3] = 0.5 * g * (hL * hL - hLs * hLs);
+    F[f + 4] = 0.5 * g * (hR * hR - hRs * hRs);
+    F[f + 5] = hL; F[f + 6] = zL; F[f + 7] = hR; F[f + 8] = zR;
+    if (!Mb) { F[f + 4] = 0; } if (!Ma) { F[f + 3] = 0; }
+  }
+
+  // computes dU into dh/dhu/dhv; returns boundary outflow rate (m^3/s)
+  _L(h, hu, hv, dt) {
+    const { NX, NY, FX, FY, M, dx, g, dh, dhu, dhv, bc } = this;
+    this._fillGhost(h, hu, hv);
+    this._prims(h, hu, hv);
+    // x faces: face (i-1,i) stored at cell i, for i in [GH, NX-GH], j interior
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i <= NX - GH; i++) {
+      const b = j * NX + i; this._face(b - 1, b, 1, true, FX, b * 9);
+    }
+    // y faces: face (j-1,j) stored at cell j
+    for (let j = GH; j <= NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
+      const b = j * NX + i; this._face(b - NX, b, NX, false, FY, b * 9);
+    }
+    // draining-time limiter: scale each face's flux by its donor cell's theta = min(1, volume / outgoing volume)
+    const TH = this.TH; TH.fill(1);
+    const area = dx * dx;
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
+      const c = j * NX + i; if (!M[c]) continue;
+      const fw = FX[c * 9], fe = FX[(c + 1) * 9], fs = FY[c * 9], fn = FY[(c + NX) * 9];
+      const out = ((fe > 0 ? fe : 0) - (fw < 0 ? fw : 0) + (fn > 0 ? fn : 0) - (fs < 0 ? fs : 0)) * dx * dt;
+      if (out > h[c] * area) TH[c] = h[c] * area / out;
+    }
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i <= NX - GH; i++) {
+      const b = j * NX + i, f = b * 9, t = TH[FX[f] > 0 ? b - 1 : b];
+      if (t < 1) { FX[f] *= t; FX[f + 1] *= t; FX[f + 2] *= t; }
+    }
+    for (let j = GH; j <= NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
+      const b = j * NX + i, f = b * 9, t = TH[FY[f] > 0 ? b - NX : b];
+      if (t < 1) { FY[f] *= t; FY[f + 1] *= t; FY[f + 2] *= t; }
+    }
+    let qout = 0;
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
+      const c = j * NX + i;
+      if (!M[c]) { dh[c] = dhu[c] = dhv[c] = 0; continue; }
+      const w = c * 9, e = (c + 1) * 9, sth = c * 9, nth = (c + NX) * 9;
+      // x direction: normal = hu (F1), tangential = hv (F2)
+      const hW = FX[w + 7], zW = FX[w + 8], hE = FX[e + 5], zE = FX[e + 6];
+      // y direction: normal = hv, tangential = hu
+      const hS = FY[sth + 7], zS = FY[sth + 8], hN = FY[nth + 5], zN = FY[nth + 6];
+      const inv = 1 / dx;
+      dh[c] = -inv * (FX[e] - FX[w] + FY[nth] - FY[sth]);
+      dhu[c] = -inv * ((FX[e + 1] + FX[e + 3]) - (FX[w + 1] + FX[w + 4]) + 0.5 * g * (hW + hE) * (zE - zW)
+        + FY[nth + 2] - FY[sth + 2]);
+      dhv[c] = -inv * ((FY[nth + 1] + FY[nth + 3]) - (FY[sth + 1] + FY[sth + 4]) + 0.5 * g * (hS + hN) * (zN - zS)
+        + FX[e + 2] - FX[w + 2]);
+    }
+    // boundary mass fluxes (only open boundaries carry flow)
+    for (let j = GH; j < NY - GH; j++) {
+      qout -= FX[(j * NX + GH) * 9] * dx;
+      qout += FX[(j * NX + NX - GH) * 9] * dx;
+    }
+    for (let i = GH; i < NX - GH; i++) {
+      qout -= FY[(GH * NX + i) * 9] * dx;
+      qout += FY[((NY - GH) * NX + i) * 9] * dx;
+    }
+    return qout;
+  }
+
+  computeDt() {
+    const { NX, NY, h, hu, hv, M, g, hdry } = this;
+    let smax = 0;
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
+      const c = j * NX + i; const d = h[c];
+      if (!M[c] || d <= hdry) continue;
+      const cel = Math.sqrt(g * d);
+      const s = Math.abs(hu[c] / d) + Math.abs(hv[c] / d) + 2 * cel; // lambda_x + lambda_y
+      if (s > smax) smax = s;
+    }
+    return smax > 0 ? this.cfl * this.dx / smax : Infinity;
+  }
+
+  _fix(h, hu, hv) {
+    const { NX, NY, M, hdry } = this; let clipped = 0;
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
+      const c = j * NX + i; if (!M[c]) continue;
+      if (h[c] < 0) { clipped -= h[c]; h[c] = 0; }
+      if (h[c] <= hdry) { hu[c] = 0; hv[c] = 0; }
+    }
+    this.vol.clipped += clipped * this.dx * this.dx;
+  }
+
+  step(dtMax = Infinity) {
+    const dtc = this.computeDt();
+    // fully dry domain: cap the step so rainfall is applied gradually (matches GPU dtDry)
+    let dt = Math.min(isFinite(dtc) ? dtc : this.dtDry, dtMax);
+    const { h, hu, hv, h0, hu0, hv0, dh, dhu, dhv, NX, NY, M } = this;
+    const A = this.dx * this.dx;
+    const interior = (fn) => { for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) { const c = j * NX + i; if (M[c]) fn(c); } };
+    if (this.secondOrder) {
+      h0.set(h); hu0.set(hu); hv0.set(hv);
+      const q1 = this._L(h, hu, hv, dt);
+      interior(c => { h[c] += dt * dh[c]; hu[c] += dt * dhu[c]; hv[c] += dt * dhv[c]; });
+      this._fix(h, hu, hv);
+      const q2 = this._L(h, hu, hv, dt);
+      interior(c => {
+        h[c] = 0.5 * (h0[c] + h[c] + dt * dh[c]);
+        hu[c] = 0.5 * (hu0[c] + hu[c] + dt * dhu[c]);
+        hv[c] = 0.5 * (hv0[c] + hv[c] + dt * dhv[c]);
+      });
+      this._fix(h, hu, hv);
+      this.vol.outflow += dt * 0.5 * (q1 + q2);
+    } else {
+      const q = this._L(h, hu, hv, dt);
+      interior(c => { h[c] += dt * dh[c]; hu[c] += dt * dhu[c]; hv[c] += dt * dhv[c]; });
+      this._fix(h, hu, hv);
+      this.vol.outflow += dt * q;
+    }
+    // semi-implicit friction + rain/infiltration
+    const { g, n, hdry, infil, rainField } = this; const r0 = this.rainRate;
+    let rv = 0, iv = 0;
+    interior(c => {
+      const d = h[c];
+      if (d > hdry && n[c] > 0) {
+        const u = hu[c] / d, v = hv[c] / d;
+        const k = 1 + dt * g * n[c] * n[c] * Math.sqrt(u * u + v * v) / Math.pow(d, 4 / 3);
+        hu[c] /= k; hv[c] /= k;
+      }
+      const r = r0 * (rainField ? rainField[c] : 1) * dt;
+      const inf = Math.min(infil[c] * dt, d + r);
+      h[c] = d + r - inf; rv += r; iv += inf;
+      if (h[c] <= hdry) { hu[c] = 0; hv[c] = 0; }
+      if (h[c] > this.maxDepth[c]) this.maxDepth[c] = h[c];
+    });
+    this.vol.rain += rv * A; this.vol.infil += iv * A;
+    this.t += dt; this.steps++;
+    return dt;
+  }
+
+  run(tEnd, onStep) {
+    while (this.t < tEnd - 1e-12) { const dt = this.step(tEnd - this.t); if (onStep) onStep(this, dt); }
+  }
+
+  massBalance() {
+    const v = this.volume(), V = this.vol;
+    const expected = V.initial + V.rain - V.infil - V.outflow;
+    return { volume: v, expected, error: v - expected, rel: (v - expected) / Math.max(1e-30, Math.max(Math.abs(expected), V.initial + V.rain)), clipped: V.clipped };
+  }
+
+  // interior field accessors
+  field(name) {
+    const src = this[name], out = new Float64Array(this.nx * this.ny);
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) out[j * this.nx + i] = src[this.idx(i, j)];
+    return out;
+  }
+}
+
+// HLLC flux in the face-normal frame. Writes F0..F2 at F[f..f+2].
+function hllc(hL, uL, vL, hR, uR, vR, g, hdry, F, f) {
+  const wetL = hL > hdry, wetR = hR > hdry;
+  if (!wetL && !wetR) { F[f] = 0; F[f + 1] = 0; F[f + 2] = 0; return; }
+  if (!wetL) { uL = 0; vL = 0; } if (!wetR) { uR = 0; vR = 0; }
+  const cL = Math.sqrt(g * hL), cR = Math.sqrt(g * hR);
+  let SL, SR;
+  if (!wetL) { SL = uR - 2 * cR; SR = uR + cR; }
+  else if (!wetR) { SL = uL - cL; SR = uL + 2 * cL; }
+  else {
+    const us = 0.5 * (uL + uR) + cL - cR;
+    const cs = 0.5 * (cL + cR) + 0.25 * (uL - uR);
+    SL = Math.min(uL - cL, us - cs); SR = Math.max(uR + cR, us + cs);
+  }
+  const FL0 = hL * uL, FL1 = hL * uL * uL + 0.5 * g * hL * hL;
+  const FR0 = hR * uR, FR1 = hR * uR * uR + 0.5 * g * hR * hR;
+  if (SL >= 0) { F[f] = FL0; F[f + 1] = FL1; F[f + 2] = FL0 * vL; return; }
+  if (SR <= 0) { F[f] = FR0; F[f + 1] = FR1; F[f + 2] = FR0 * vR; return; }
+  const den = SR - SL;
+  const H0 = (SR * FL0 - SL * FR0 + SL * SR * (hR - hL)) / den;
+  const H1 = (SR * FL1 - SL * FR1 + SL * SR * (hR * uR - hL * uL)) / den;
+  const dSM = hR * (uR - SR) - hL * (uL - SL);
+  const SM = Math.abs(dSM) > 1e-300 ? (SL * hR * (uR - SR) - SR * hL * (uL - SL)) / dSM : 0;
+  F[f] = H0; F[f + 1] = H1; F[f + 2] = H0 * (SM >= 0 ? vL : vR);
+}
+
+return { CPUSolver };
+})();
+
+const { damBreak, thackerPlanar } = (() => {
+// Analytical solutions used for verification.
+
+// Dam break (Stoker wet bed if hR > 0, Ritter dry bed if hR == 0).
+// Returns h(x, t) for a dam at x0, initially at rest.
+function damBreak(hL, hR, x0, g = 9.81) {
+  const cL = Math.sqrt(g * hL);
+  let hm = 0, um = 0, S = 0;
+  if (hR > 0) {
+    const f = (h) => 2 * (cL - Math.sqrt(g * h)) - (h - hR) * Math.sqrt(g * (h + hR) / (2 * h * hR));
+    let lo = hR, hi = hL;
+    for (let k = 0; k < 200; k++) { const m = 0.5 * (lo + hi); if (f(m) > 0) lo = m; else hi = m; }
+    hm = 0.5 * (lo + hi); um = 2 * (cL - Math.sqrt(g * hm)); S = hm * um / (hm - hR);
+  }
+  return (x, t) => {
+    if (t <= 0) return x < x0 ? hL : hR;
+    const xi = (x - x0) / t;
+    if (xi <= -cL) return hL;
+    if (hR <= 0) {
+      if (xi < 2 * cL) { const q = 2 * cL - xi; return q * q / (9 * g); }
+      return 0;
+    }
+    const cm = Math.sqrt(g * hm);
+    if (xi < um - cm) { const q = 2 * cL - xi; return q * q / (9 * g); }
+    if (xi < S) return hm;
+    return hR;
+  };
+}
+
+// Thacker (1981) planar surface oscillating in a paraboloid (SWASHES 4.2.2).
+function thackerPlanar({ L = 4, a = 1, h0 = 0.1, eta = 0.5, g = 9.81 } = {}) {
+  const w = Math.sqrt(2 * g * h0) / a;
+  const bed = (x, y) => { const X = x - L / 2, Y = y - L / 2; return -h0 * (1 - (X * X + Y * Y) / (a * a)); };
+  const depth = (x, y, t) => {
+    const X = x - L / 2, Y = y - L / 2;
+    const s = (eta * h0 / (a * a)) * (2 * X * Math.cos(w * t) + 2 * Y * Math.sin(w * t) - eta);
+    return Math.max(0, s - bed(x, y));
+  };
+  const vel = (t) => [-eta * w * Math.sin(w * t), eta * w * Math.cos(w * t)];
+  return { omega: w, period: 2 * Math.PI / w, bed, depth, vel, L };
+}
+
+return { damBreak, thackerPlanar };
+})();
+
+const { GPUSolver } = (() => {
+// FloodSim WebGPU solver host. Same physics and API shape as CPUSolver, async where the GPU is involved.
+
+
+const GH = 2;
+const BC = { wall: 0, open: 1, outflow: 2 };
+
+class GPUSolver {
+  /** Same options as CPUSolver, plus device. Bed elevations are stored relative to their minimum (fp32 headroom). */
+  constructor(device, o) {
+    this.device = device;
+    this.nx = o.nx; this.ny = o.ny; this.dx = o.dx;
+    this.NX = o.nx + 2 * GH; this.NY = o.ny + 2 * GH;
+    this.g = o.g ?? 9.81;
+    this.cfl = o.cfl ?? ((o.secondOrder ?? true) ? 0.48 : 0.9);
+    this.hdry = o.hdry ?? 1e-5; this.hfront = o.hfront ?? 1e-3;
+    this.secondOrder = o.secondOrder ?? true;
+    this.limiter = o.limiter === 'vanleer' ? 1 : 0;
+    this.bc = Object.assign({ west: 'wall', east: 'wall', south: 'wall', north: 'wall' }, o.bc || {});
+    this.dtDry = o.dtDry ?? 1.0;
+    this.rainRate = 0;
+    const N = this.NX * this.NY; this.N = N;
+
+    // host-side padded arrays
+    let zmin = Infinity; for (let k = 0; k < o.z.length; k++) if (o.z[k] < zmin) zmin = o.z[k];
+    this.zref = zmin;
+    this.Sh = new Float32Array(N * 4); // z, n, mask, infil
+    this.Uh = new Float32Array(N * 4);
+    this.zh = new Float64Array(N);
+    this.RFh = new Float32Array(N).fill(1); // optional o.rainField: per-cell rain multiplier (roof routing)
+    let active = 0, rainCells = 0;
+    for (let j = 0; j < this.NY; j++) for (let i = 0; i < this.NX; i++) {
+      const ii = Math.min(Math.max(i - GH, 0), this.nx - 1), jj = Math.min(Math.max(j - GH, 0), this.ny - 1);
+      const k = jj * this.nx + ii, c = j * this.NX + i;
+      const interior = i >= GH && i < this.NX - GH && j >= GH && j < this.NY - GH;
+      const m = interior ? (o.mask ? o.mask[k] : 1) : 1;
+      this.zh[c] = o.z[k] - zmin;
+      this.Sh[c * 4] = this.zh[c];
+      this.Sh[c * 4 + 1] = typeof o.manning === 'number' ? o.manning : (o.manning ? o.manning[k] : 0);
+      this.Sh[c * 4 + 2] = m;
+      this.Sh[c * 4 + 3] = o.infil ? (typeof o.infil === 'number' ? o.infil : o.infil[k]) : 0;
+      if (interior && o.rainField) this.RFh[c] = o.rainField[k];
+      if (interior && m) { active++; rainCells += this.RFh[c]; }
+    }
+    // drainage inlets (o.inlets: interior cell indices k = j*nx+i, unique)
+    const ink = o.inlets ? Array.from(o.inlets) : [];
+    this.nInlets = ink.length;
+    this.INCh = new Uint32Array(Math.max(4, ink.length)); ink.forEach((k, m) => { this.INCh[m] = this.idx(k % this.nx, (k / this.nx) | 0); });
+    this.activeArea = active * this.dx * this.dx;
+    this.rainArea = rainCells * this.dx * this.dx; // effective area receiving rain, incl. routed roof area
+    this.t = 0; this.steps = 0;
+    this.vol = { rain: 0, initial: 0, exchanged: 0 };
+    // water-level boundary (o.stageCells: interior edge cells k whose outward ghosts see the external stage)
+    this.STGh = new Float32Array(N); this.stage = -1e9;
+    for (const k of o.stageCells || []) {
+      const i = k % this.nx, j = (k / this.nx) | 0;
+      for (let g2 = 1; g2 <= GH; g2++) {
+        if (i === 0) this.STGh[this.idx(-g2, j)] = 1; if (i === this.nx - 1) this.STGh[this.idx(this.nx - 1 + g2, j)] = 1;
+        if (j === 0) this.STGh[this.idx(i, -g2)] = 1; if (j === this.ny - 1) this.STGh[this.idx(i, this.ny - 1 + g2)] = 1;
+      }
+    }
+    this._build();
+  }
+
+  idx(i, j) { return (j + GH) * this.NX + (i + GH); }
+
+  _build() {
+    const d = this.device, N = this.N;
+    d.pushErrorScope('validation');
+    const SB = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST;
+    const mk = (size, usage = SB) => d.createBuffer({ size: Math.max(16, size), usage });
+    this.buf = {
+      params: mk(80, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST),
+      U: mk(N * 16), U0: mk(N * 16), S: mk(N * 16), W: mk(N * 16),
+      FX: mk(N * 36), FY: mk(N * 36), A: mk(N * 16), DT: mk(16), RED: mk(4),
+      OUT: mk(this.nx * this.ny * 8), TH: mk(N * 4), RF: mk(N * 4),
+      INC: mk(this.INCh.byteLength), INQ: mk(this.INCh.length * 4), INX: mk(this.INCh.length * 8), STG: mk(N * 4),
+    };
+    this.read = {
+      DT: mk(16, GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST),
+      OUT: mk(this.nx * this.ny * 8, GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST),
+      INX: mk(this.INCh.length * 8, GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST),
+    };
+    d.queue.writeBuffer(this.buf.S, 0, this.Sh);
+    d.queue.writeBuffer(this.buf.U, 0, this.Uh);
+    d.queue.writeBuffer(this.buf.TH, 0, new Float32Array(N).fill(1));
+    d.queue.writeBuffer(this.buf.RF, 0, this.RFh);
+    d.queue.writeBuffer(this.buf.INC, 0, this.INCh);
+    d.queue.writeBuffer(this.buf.STG, 0, this.STGh);
+    this._writeParams(0);
+
+    const mod = d.createShaderModule({ code: KERNELS_WGSL });
+    this.module = mod;
+    const B = [this.buf.params, this.buf.U, this.buf.U0, this.buf.S, this.buf.W, this.buf.FX, this.buf.FY, this.buf.A, this.buf.DT, this.buf.RED, this.buf.OUT, this.buf.TH, this.buf.RF, this.buf.INC, this.buf.INQ, this.buf.INX, this.buf.STG];
+    const uses = {
+      prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5], faceY: [0, 3, 4, 6],
+      update: [0, 1, 2, 3, 5, 6, 7, 8, 11], theta: [0, 1, 3, 5, 6, 8, 11], sources: [0, 1, 3, 7, 8, 12],
+      dtReduce: [0, 1, 3, 9], dtFinal: [0, 8, 9], pack: [0, 1, 10], exchange: [0, 1, 8, 13, 14, 15],
+    };
+    const make = (entry, binds, constants) => {
+      const pipeline = d.createComputePipeline({ layout: 'auto', compute: { module: mod, entryPoint: entry, constants } });
+      const bg = d.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: binds.map(b => ({ binding: b, resource: { buffer: B[b] } })) });
+      return { pipeline, bg };
+    };
+    this.k = {
+      prim: make('prim', uses.prim), faceX: make('faceX', uses.faceX), faceY: make('faceY', uses.faceY),
+      theta: make('theta', uses.theta),
+      update0: make('update', uses.update, { STAGE: 0 }), update1: make('update', uses.update, { STAGE: 1 }),
+      sources: make('sources', uses.sources), dtReduce: make('dtReduce', uses.dtReduce),
+      dtFinal: make('dtFinal', uses.dtFinal), pack: make('pack', uses.pack),
+      exchange: make('exchange', uses.exchange),
+    };
+    // resolves when the pipelines are known good; rejects with the WGSL/validation error otherwise
+    this.ready = d.popErrorScope().then((e) => { if (e) throw new Error('GPU pipeline error: ' + e.message); });
+  }
+
+  _writeParams(tEnd) {
+    const ab = new ArrayBuffer(80), u = new Uint32Array(ab), f = new Float32Array(ab);
+    u[0] = this.nx; u[1] = this.ny; u[2] = this.NX; u[3] = this.NY;
+    f[4] = this.dx; f[5] = this.g; f[6] = this.hdry; f[7] = this.hfront;
+    f[8] = this.cfl; f[9] = this.rainRate; f[10] = tEnd; f[11] = this.dtDry;
+    u[12] = this.secondOrder ? 1 : 0; u[13] = this.limiter;
+    u[18] = this.nInlets; f[19] = this.stage - this.zref; u[14] = BC[this.bc.west]; u[15] = BC[this.bc.east]; u[16] = BC[this.bc.south]; u[17] = BC[this.bc.north];
+    this.device.queue.writeBuffer(this.buf.params, 0, ab);
+  }
+
+  setDepth(fn) {
+    let v = 0;
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const c = this.idx(i, j);
+      const h = this.Sh[c * 4 + 2] ? Math.max(0, fn((i + 0.5) * this.dx, (j + 0.5) * this.dx, this.zh[c] + this.zref)) : 0;
+      this.Uh[c * 4] = h; v += Math.fround(h);
+    }
+    this.vol.initial = v * this.dx * this.dx;
+    this.device.queue.writeBuffer(this.buf.U, 0, this.Uh);
+  }
+  setVelocity(fn) {
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const c = this.idx(i, j); const [u, v] = fn((i + 0.5) * this.dx, (j + 0.5) * this.dx);
+      this.Uh[c * 4 + 1] = this.Uh[c * 4] * u; this.Uh[c * 4 + 2] = this.Uh[c * 4] * v;
+    }
+    this.device.queue.writeBuffer(this.buf.U, 0, this.Uh);
+  }
+
+  _dispatch(pass, kk, x, y = 1) { pass.setPipeline(kk.pipeline); pass.setBindGroup(0, kk.bg); pass.dispatchWorkgroups(x, y); }
+
+  encodeSteps(pass, K) {
+    const w = n => Math.ceil(n / 8), { nx, ny, NX, NY, k } = this;
+    for (let s = 0; s < K; s++) {
+      this._dispatch(pass, k.dtReduce, w(nx), w(ny));
+      this._dispatch(pass, k.dtFinal, 1);
+      const stages = this.secondOrder ? [k.update0, k.update1] : [k.update0];
+      for (const up of stages) {
+        this._dispatch(pass, k.prim, w(NX), w(NY));
+        this._dispatch(pass, k.faceX, w(nx + 1), w(ny));
+        this._dispatch(pass, k.faceY, w(nx), w(ny + 1));
+        this._dispatch(pass, k.theta, w(nx), w(ny));
+        this._dispatch(pass, up, w(nx), w(ny));
+      }
+      this._dispatch(pass, k.sources, w(nx), w(ny));
+      if (this.nInlets) this._dispatch(pass, k.exchange, Math.ceil(this.nInlets / 64));
+    }
+  }
+
+  /** External water level (m, absolute) on the stage-boundary cells; takes effect from the next submit. */
+  setStage(z) { this.stage = z; }
+
+  /** Exchange rates per inlet (m³/s, + = surface into network), held until the next call. */
+  setInletRates(q) { this.device.queue.writeBuffer(this.buf.INQ, 0, q instanceof Float32Array ? q : Float32Array.from(q)); }
+
+  /** Volume exchanged per inlet since the last call (m³) and current inlet depths (m); resets the accumulators. */
+  async readInlets() {
+    const M = this.nInlets, enc = this.device.createCommandEncoder();
+    enc.copyBufferToBuffer(this.buf.INX, 0, this.read.INX, 0, M * 8);
+    enc.clearBuffer(this.buf.INX, 0, M * 8);
+    this.device.queue.submit([enc.finish()]);
+    await this.read.INX.mapAsync(GPUMapMode.READ, 0, M * 8);
+    const a = new Float32Array(this.read.INX.getMappedRange(0, M * 8).slice(0)); this.read.INX.unmap();
+    const vol = new Float64Array(M), h = new Float32Array(M);
+    for (let m = 0; m < M; m++) { vol[m] = a[2 * m]; h[m] = a[2 * m + 1]; this.vol.exchanged += a[2 * m]; }
+    return { vol, h };
+  }
+
+  async _readDT() {
+    await this.read.DT.mapAsync(GPUMapMode.READ);
+    const d = new Float32Array(this.read.DT.getMappedRange().slice(0)); this.read.DT.unmap();
+    this.lastDt = d[0]; this.t = d[1]; this.steps = d[3];
+    return d;
+  }
+
+  /** Advance to tTarget (blocking loop of batched submits). */
+  async advance(tTarget, K = 64) {
+    const t0 = this.t, goal = Math.fround(tTarget);
+    this._writeParams(tTarget);
+    await this.ready;
+    let stalls = 0;
+    while (this.t < goal) {
+      const tPrev = this.t;
+      const enc = this.device.createCommandEncoder(); const pass = enc.beginComputePass();
+      this.encodeSteps(pass, K); pass.end();
+      enc.copyBufferToBuffer(this.buf.DT, 0, this.read.DT, 0, 16);
+      this.device.queue.submit([enc.finish()]);
+      await this._readDT();
+      if (this.t <= tPrev && ++stalls > 3) throw new Error('GPU solver made no progress (device error?)');
+    }
+    this.vol.rain += this.rainRate * (this.t - t0) * this.rainArea;
+  }
+
+  /** One render frame: advance up to tEnd using at most K steps, then return packed depth/speed (null if !readOut). */
+  async frame(tEnd, K, readOut = true) {
+    const t0 = this.t;
+    this._writeParams(tEnd);
+    const enc = this.device.createCommandEncoder(); const pass = enc.beginComputePass();
+    this.encodeSteps(pass, K);
+    if (readOut) this._dispatch(pass, this.k.pack, Math.ceil(this.nx / 8), Math.ceil(this.ny / 8));
+    pass.end();
+    enc.copyBufferToBuffer(this.buf.DT, 0, this.read.DT, 0, 16);
+    if (readOut) enc.copyBufferToBuffer(this.buf.OUT, 0, this.read.OUT, 0, this.nx * this.ny * 8);
+    this.device.queue.submit([enc.finish()]);
+    await this._readDT();
+    let out = null;
+    if (readOut) { await this.read.OUT.mapAsync(GPUMapMode.READ); out = new Float32Array(this.read.OUT.getMappedRange().slice(0)); this.read.OUT.unmap(); }
+    this.vol.rain += this.rainRate * (this.t - t0) * this.rainArea;
+    return out;
+  }
+
+  async _readBuffer(src, size) {
+    const st = this.device.createBuffer({ size, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+    const enc = this.device.createCommandEncoder(); enc.copyBufferToBuffer(src, 0, st, 0, size);
+    this.device.queue.submit([enc.finish()]);
+    await st.mapAsync(GPUMapMode.READ); const a = new Float32Array(st.getMappedRange().slice(0)); st.unmap(); st.destroy();
+    return a;
+  }
+
+  /** Interior fields as Float64Arrays: h, hu, hv, maxDepth, plus mass accounting. */
+  async readState() {
+    const U = await this._readBuffer(this.buf.U, this.N * 16), Ab = await this._readBuffer(this.buf.A, this.N * 16);
+    let pending = 0; if (this.nInlets) { const X = await this._readBuffer(this.buf.INX, this.nInlets * 8); for (let m = 0; m < this.nInlets; m++) pending += X[2 * m]; }
+    const exchanged = this.vol.exchanged + pending;
+    const n = this.nx * this.ny, h = new Float64Array(n), hu = new Float64Array(n), hv = new Float64Array(n), hmax = new Float64Array(n);
+    let vol = 0, inf = 0, out = 0, clip = 0;
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const c = this.idx(i, j), k = j * this.nx + i;
+      h[k] = U[c * 4]; hu[k] = U[c * 4 + 1]; hv[k] = U[c * 4 + 2]; hmax[k] = Ab[c * 4];
+      if (this.Sh[c * 4 + 2]) { vol += h[k]; inf += Ab[c * 4 + 1]; out += Ab[c * 4 + 2]; clip += Ab[c * 4 + 3]; }
+    }
+    const A = this.dx * this.dx;
+    const volume = vol * A, infil = inf * A, expected = this.vol.initial + this.vol.rain - infil - out - exchanged;
+    return {
+      h, hu, hv, hmax,
+      mass: { volume, rain: this.vol.rain, infil, outflow: out, exchanged, clipped: clip * A, expected, rel: (volume - expected) / Math.max(1e-30, Math.max(Math.abs(expected), this.vol.initial + this.vol.rain)), relExClip: (volume - expected - clip * A) / Math.max(1e-30, Math.max(Math.abs(expected), this.vol.initial + this.vol.rain)) },
+    };
+  }
+
+  destroy() { for (const b of Object.values(this.buf)) b.destroy(); for (const b of Object.values(this.read)) b.destroy(); }
+}
+
+return { GPUSolver };
+})();
+
+const { rng, MMHR, cloudburst, dambreak, thacker, SCENARIOS } = (() => {
+// Scenario generators shared by the app and the test suites. Units: metres, seconds.
+
+
+function rng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+const MMHR = 1 / 1000 / 3600;
+
+// classes: 0 street, 1 lawn, 2 park, 3 channel bed, 4 building, 5 sand, 6 meadow
+function cloudburst(n) {
+  const L = 320, nx = n, ny = n, dx = L / n, N = nx * ny;
+  const z = new Float64Array(N), mask = new Uint8Array(N).fill(1), man = new Float64Array(N), inf = new Float64Array(N);
+  const bld = new Float32Array(N), cls = new Uint8Array(N);
+  const rnd = rng(11), sw = 10, streets = [40, 120, 200, 280];
+  const creekY = (x) => 160 + 34 * Math.sin(x / 58 + 0.6);
+  const edges = [0, ...streets, L];
+  const rects = [];
+  let parkBlock = null;
+  for (let bi = 0; bi < edges.length - 1; bi++) for (let bj = 0; bj < edges.length - 1; bj++) {
+    const x0 = edges[bi] + (bi ? sw / 2 + 3 : 3), x1 = edges[bi + 1] - (bi + 1 < edges.length - 1 ? sw / 2 + 3 : 3);
+    const y0 = edges[bj] + (bj ? sw / 2 + 3 : 3), y1 = edges[bj + 1] - (bj + 1 < edges.length - 1 ? sw / 2 + 3 : 3);
+    if (bi === 1 && bj === 3) { parkBlock = [x0, x1, y0, y1]; continue; }
+    const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+    for (const [lx0, lx1] of [[x0, mx - 2], [mx + 2, x1]]) for (const [ly0, ly1] of [[y0, my - 2], [my + 2, y1]]) {
+      const cx = (lx0 + lx1) / 2, cy = (ly0 + ly1) / 2;
+      if (Math.abs(cy - creekY(cx)) < 22) continue;
+      const ix = 1 + rnd() * 4, iy = 1 + rnd() * 4;
+      rects.push([lx0 + ix, lx1 - ix * 0.6, ly0 + iy, ly1 - iy * 0.6, 4 + Math.round(rnd() * 4) * 2.5]);
+    }
+  }
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const k = j * nx + i, x = (i + 0.5) * dx, y = (j + 0.5) * dx;
+    const smooth = 12 - 0.012 * x + 0.000035 * (y - 160) ** 2;
+    let zz = smooth + 0.5 * Math.sin(x / 37 + 1.3) * Math.sin(y / 29 + 0.4) + 0.25 * Math.sin(x / 13 + 2) * Math.cos(y / 17);
+    let c = 1, nn = 0.035, f = 12 * MMHR;
+    if (parkBlock && x > parkBlock[0] && x < parkBlock[1] && y > parkBlock[2] && y < parkBlock[3]) { c = 2; nn = 0.05; f = 25 * MMHR; }
+    if (streets.some(s => Math.abs(x - s) < sw / 2 || Math.abs(y - s) < sw / 2)) { zz -= 0.15; c = 0; nn = 0.016; f = 0; }
+    const yc = creekY(x), d = Math.abs(y - yc);
+    if (d < 7) {
+      const bed = 12 - 0.012 * x + 0.000035 * (yc - 160) ** 2 - 1.6;
+      zz = Math.min(zz, bed + (zz - bed) * (d / 7) ** 2); c = 3; nn = 0.03; f = 4 * MMHR;
+    }
+    for (const r of rects) if (x > r[0] && x < r[1] && y > r[2] && y < r[3]) { mask[k] = 0; bld[k] = r[4]; c = 4; break; }
+    z[k] = zz; man[k] = nn; inf[k] = f; cls[k] = c;
+  }
+  return {
+    nx, ny, dx, z, mask, manning: man, infil: inf, bld, cls, bc: { east: 'open' }, rain: true,
+    init: (s) => s.setDepth(() => 0), speed: 60, exag: 2, hmin: 0.01,
+    desc: 'A 320 m urban catchment draining east: streets set 15 cm below their lots, a meandering creek, buildings as walls, and a park that soaks up more rain. Rain falls on every open cell.',
+  };
+}
+
+function dambreak(n) {
+  const ny = n, nx = 2 * n, Lx = 480, dx = Lx / nx, N = nx * ny;
+  const z = new Float64Array(N), mask = new Uint8Array(N).fill(1), man = new Float64Array(N).fill(0.03);
+  const bld = new Float32Array(N), cls = new Uint8Array(N).fill(6), rnd = rng(5);
+  const rects = [];
+  for (let bx = 236; bx < 400; bx += 26) for (let by = 30; by < 214; by += 22) {
+    if (Math.abs(by + 5 - 120) < 12) continue;
+    if (rnd() < 0.18) continue;
+    rects.push([bx, bx + 12 + rnd() * 4, by, by + 9 + rnd() * 3, 4 + Math.round(rnd() * 3) * 2.5]);
+  }
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const k = j * nx + i, x = (i + 0.5) * dx, y = (j + 0.5) * dx;
+    z[k] = 6 - 0.006 * x + 0.00028 * (y - 120) ** 2 + 0.15 * Math.sin(x / 23) * Math.sin(y / 19);
+    if (x < 70) cls[k] = 3;
+    if (Math.abs(y - 120) < 6 && x > 200) { cls[k] = 0; man[k] = 0.016; }
+    for (const r of rects) if (x > r[0] && x < r[1] && y > r[2] && y < r[3]) { mask[k] = 0; bld[k] = r[4]; cls[k] = 4; break; }
+  }
+  return {
+    nx, ny, dx, z, mask, manning: man, infil: null, bld, cls, bc: { east: 'open' }, rain: false,
+    init: (s) => s.setDepth((x, y, zz) => (x < 70 ? 13.5 - zz : 0)), speed: 4, exag: 1.5, hmin: 0.02, tMax: 600,
+    desc: 'An 8 m reservoir released instantly into a valley with a small town 160 m downstream. Tests shock capturing, wet/dry fronts, and flow around buildings.',
+  };
+}
+
+function thacker(n) {
+  const T = thackerPlanar(), nx = n, ny = n, dx = T.L / n, N = nx * ny;
+  const z = new Float64Array(N), cls = new Uint8Array(N).fill(5);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = T.bed((i + 0.5) * dx, (j + 0.5) * dx);
+  return {
+    nx, ny, dx, z, mask: null, manning: 0, infil: null, bld: new Float32Array(N), cls, bc: {}, rain: false, analytic: T,
+    init: (s) => { s.setDepth((x, y) => T.depth(x, y, 0)); s.setVelocity(() => T.vel(0)); }, speed: 1, exag: 3, hmin: 0.001, hfront: 1e-4, camPhi: 0.6, camR: 1.1,
+    desc: `Thacker's planar surface sloshing in a frictionless paraboloid, period ${T.period.toFixed(2)} s. It has an exact solution with a moving shoreline, so the error readout is a live check.`,
+  };
+}
+const SCENARIOS = { cloudburst, dambreak, thacker };
+
+return { rng, MMHR, cloudburst, dambreak, thacker, SCENARIOS };
+})();
+
+const RESULTS = {"cpu":{"stoker":{"levels":[{"nx":100,"L1rel":0.0062604426872120865,"massRel":-7.579122514774402e-16,"steps":79},{"nx":200,"L1rel":0.00342318997688386,"massRel":1.2631870857957337e-16,"steps":157},{"nx":400,"L1rel":0.0016022597659729521,"massRel":1.2631870857957337e-15,"steps":314},{"nx":800,"L1rel":0.0007948879528255233,"massRel":-1.2631870857957337e-15,"steps":627}],"observedOrder":[0.8709233164750801,1.0952332965726659,1.011284645321648],"profile":[[0.125,1,1],[0.375,1,1],[0.625,1,1],[0.875,1,1],[1.125,1,1],[1.375,1,1],[1.625,1,1],[1.875,1,1],[2.125,1,1],[2.375,1,1],[2.625,1,1],[2.875,1,1],[3.125,1,1],[3.375,1,1],[3.625,1,1],[3.875,1,1],[4.125,1,1],[4.375,1,1],[4.625,1,1],[4.875,1,1],[5.125,1,1],[5.375,1,1],[5.625,1,1],[5.875,1,1],[6.125,1,1],[6.375,1,1],[6.625,1,1],[6.875,1,1],[7.125,1,1],[7.375,1,1],[7.625,1,1],[7.875,1,1],[8.125,1,1],[8.375,1,1],[8.625,1,1],[8.875,1,1],[9.125,1,1],[9.375,1,1],[9.625,1,1],[9.875,1,1],[10.125,1,1],[10.375,1,1],[10.625,1,1],[10.875,1,1],[11.125,1,1],[11.375,1,1],[11.625,1,1],[11.875,1,1],[12.125,1,1],[12.375,1,1],[12.625,1,1],[12.875,1,1],[13.125,1,1],[13.375,1,1],[13.625,1,1],[13.875,1,1],[14.125,1,1],[14.375,1,1],[14.625,1,1],[14.875,1,1],[15.125,1,1],[15.375,1,1],[15.625,1,1],[15.875,1,1],[16.125,1,1],[16.375,1,1],[16.625,1,1],[16.875,1,1],[17.125,1,1],[17.375,1,1],[17.625,1,1],[17.875,1,1],[18.125,1,1],[18.375,1,1],[18.625,1,1],[18.875,1,1],[19.125,1,1],[19.375,1,1],[19.625,1,1],[19.875,1,1],[20.125,1,1],[20.375,1,1],[20.625,1,1],[20.875,1,1],[21.125,1,1],[21.375,1,1],[21.625,1,1],[21.875,1,1],[22.125,1,1],[22.375,1,1],[22.625,1,1],[22.875,1,1],[23.125,1,1],[23.375,1,1],[23.625,1,1],[23.875,1,1],[24.125,1,1],[24.375,1,1],[24.625,1,1],[24.875,1,1],[25.125,1,1],[25.375,1,1],[25.625,1,1],[25.875,1,1],[26.125,1,1],[26.375,0.999999,1],[26.625,0.999998,1],[26.875,0.999997,1],[27.125,0.999993,1],[27.375,0.999987,1],[27.625,0.999975,1],[27.875,0.999953,1],[28.125,0.999913,1],[28.375,0.999845,1],[28.625,0.999728,1],[28.875,0.999535,1],[29.125,0.999227,1],[29.375,0.998746,1],[29.625,0.998024,1],[29.875,0.996972,1],[30.125,0.995495,1],[30.375,0.993493,1],[30.625,0.990877,1],[30.875,0.987579,1],[31.125,0.983563,1],[31.375,0.978832,0.994065],[31.625,0.973426,0.985242],[31.875,0.967413,0.976459],[32.125,0.960879,0.967715],[32.375,0.953919,0.95901],[32.625,0.94662,0.950344],[32.875,0.93906,0.941718],[33.125,0.931303,0.933132],[33.375,0.923399,0.924584],[33.625,0.915382,0.916076],[33.875,0.907278,0.907607],[34.125,0.899103,0.899178],[34.375,0.890865,0.890788],[34.625,0.882613,0.882437],[34.875,0.874418,0.874125],[35.125,0.866293,0.865853],[35.375,0.858216,0.85762],[35.625,0.850216,0.849427],[35.875,0.842279,0.841273],[36.125,0.834397,0.833158],[36.375,0.826614,0.825082],[36.625,0.818902,0.817046],[36.875,0.811242,0.809049],[37.125,0.803739,0.801092],[37.375,0.796344,0.793174],[37.625,0.788999,0.785295],[37.875,0.78196,0.777455],[38.125,0.775039,0.769655],[38.375,0.768264,0.761894],[38.625,0.762101,0.754172],[38.875,0.755934,0.74649],[39.125,0.750442,0.738847],[39.375,0.745612,0.731244],[39.625,0.740911,0.72692],[39.875,0.73732,0.72692],[40.125,0.734372,0.72692],[40.375,0.731636,0.72692],[40.625,0.729958,0.72692],[40.875,0.728796,0.72692],[41.125,0.727703,0.72692],[41.375,0.727174,0.72692],[41.625,0.726976,0.72692],[41.875,0.726759,0.72692],[42.125,0.726608,0.72692],[42.375,0.72658,0.72692],[42.625,0.726608,0.72692],[42.875,0.726629,0.72692],[43.125,0.726643,0.72692],[43.375,0.726649,0.72692],[43.625,0.726665,0.72692],[43.875,0.726698,0.72692],[44.125,0.726732,0.72692],[44.375,0.726751,0.72692],[44.625,0.726755,0.72692],[44.875,0.726761,0.72692],[45.125,0.726778,0.72692],[45.375,0.726801,0.72692],[45.625,0.726817,0.72692],[45.875,0.726824,0.72692],[46.125,0.726826,0.72692],[46.375,0.726834,0.72692],[46.625,0.726847,0.72692],[46.875,0.726858,0.72692],[47.125,0.726861,0.72692],[47.375,0.726861,0.72692],[47.625,0.726863,0.72692],[47.875,0.72687,0.72692],[48.125,0.726877,0.72692],[48.375,0.726882,0.72692],[48.625,0.726883,0.72692],[48.875,0.726883,0.72692],[49.125,0.726886,0.72692],[49.375,0.726889,0.72692],[49.625,0.72689,0.72692],[49.875,0.726891,0.72692],[50.125,0.726892,0.72692],[50.375,0.726894,0.72692],[50.625,0.726897,0.72692],[50.875,0.7269,0.72692],[51.125,0.726901,0.72692],[51.375,0.7269,0.72692],[51.625,0.7269,0.72692],[51.875,0.7269,0.72692],[52.125,0.726899,0.72692],[52.375,0.726899,0.72692],[52.625,0.726899,0.72692],[52.875,0.7269,0.72692],[53.125,0.726901,0.72692],[53.375,0.726903,0.72692],[53.625,0.726903,0.72692],[53.875,0.726902,0.72692],[54.125,0.7269,0.72692],[54.375,0.726898,0.72692],[54.625,0.726896,0.72692],[54.875,0.726897,0.72692],[55.125,0.726898,0.72692],[55.375,0.7269,0.72692],[55.625,0.726901,0.72692],[55.875,0.7269,0.72692],[56.125,0.726898,0.72692],[56.375,0.726896,0.72692],[56.625,0.726893,0.72692],[56.875,0.726891,0.72692],[57.125,0.72689,0.72692],[57.375,0.72689,0.72692],[57.625,0.72689,0.72692],[57.875,0.726891,0.72692],[58.125,0.726891,0.72692],[58.375,0.72689,0.72692],[58.625,0.726888,0.72692],[58.875,0.726883,0.72692],[59.125,0.726879,0.72692],[59.375,0.726875,0.72692],[59.625,0.726875,0.72692],[59.875,0.726876,0.72692],[60.125,0.726878,0.72692],[60.375,0.726878,0.72692],[60.625,0.726875,0.72692],[60.875,0.72687,0.72692],[61.125,0.726864,0.72692],[61.375,0.72686,0.72692],[61.625,0.726858,0.72692],[61.875,0.726855,0.72692],[62.125,0.726852,0.72692],[62.375,0.726852,0.72692],[62.625,0.726851,0.72692],[62.875,0.726846,0.72692],[63.125,0.72684,0.72692],[63.375,0.726838,0.72692],[63.625,0.726831,0.72692],[63.875,0.726817,0.72692],[64.125,0.726801,0.72692],[64.375,0.726805,0.72692],[64.625,0.726809,0.72692],[64.875,0.72679,0.72692],[65.125,0.726762,0.72692],[65.375,0.726788,0.72692],[65.625,0.726748,0.72692],[65.875,0.726615,0.72692],[66.125,0.726491,0.72692],[66.375,0.726241,0.72692],[66.625,0.725131,0.72692],[66.875,0.722528,0.72692],[67.125,0.715642,0.72692],[67.375,0.697662,0.72692],[67.625,0.656634,0.72692],[67.875,0.583249,0.5],[68.125,0.52518,0.5],[68.375,0.506636,0.5],[68.625,0.50168,0.5],[68.875,0.500421,0.5],[69.125,0.500105,0.5],[69.375,0.500026,0.5],[69.625,0.500007,0.5],[69.875,0.500002,0.5],[70.125,0.5,0.5],[70.375,0.5,0.5],[70.625,0.5,0.5],[70.875,0.5,0.5],[71.125,0.5,0.5],[71.375,0.5,0.5],[71.625,0.5,0.5],[71.875,0.5,0.5],[72.125,0.5,0.5],[72.375,0.5,0.5],[72.625,0.5,0.5],[72.875,0.5,0.5],[73.125,0.5,0.5],[73.375,0.5,0.5],[73.625,0.5,0.5],[73.875,0.5,0.5],[74.125,0.5,0.5],[74.375,0.5,0.5],[74.625,0.5,0.5],[74.875,0.5,0.5],[75.125,0.5,0.5],[75.375,0.5,0.5],[75.625,0.5,0.5],[75.875,0.5,0.5],[76.125,0.5,0.5],[76.375,0.5,0.5],[76.625,0.5,0.5],[76.875,0.5,0.5],[77.125,0.5,0.5],[77.375,0.5,0.5],[77.625,0.5,0.5],[77.875,0.5,0.5],[78.125,0.5,0.5],[78.375,0.5,0.5],[78.625,0.5,0.5],[78.875,0.5,0.5],[79.125,0.5,0.5],[79.375,0.5,0.5],[79.625,0.5,0.5],[79.875,0.5,0.5],[80.125,0.5,0.5],[80.375,0.5,0.5],[80.625,0.5,0.5],[80.875,0.5,0.5],[81.125,0.5,0.5],[81.375,0.5,0.5],[81.625,0.5,0.5],[81.875,0.5,0.5],[82.125,0.5,0.5],[82.375,0.5,0.5],[82.625,0.5,0.5],[82.875,0.5,0.5],[83.125,0.5,0.5],[83.375,0.5,0.5],[83.625,0.5,0.5],[83.875,0.5,0.5],[84.125,0.5,0.5],[84.375,0.5,0.5],[84.625,0.5,0.5],[84.875,0.5,0.5],[85.125,0.5,0.5],[85.375,0.5,0.5],[85.625,0.5,0.5],[85.875,0.5,0.5],[86.125,0.5,0.5],[86.375,0.5,0.5],[86.625,0.5,0.5],[86.875,0.5,0.5],[87.125,0.5,0.5],[87.375,0.5,0.5],[87.625,0.5,0.5],[87.875,0.5,0.5],[88.125,0.5,0.5],[88.375,0.5,0.5],[88.625,0.5,0.5],[88.875,0.5,0.5],[89.125,0.5,0.5],[89.375,0.5,0.5],[89.625,0.5,0.5],[89.875,0.5,0.5],[90.125,0.5,0.5],[90.375,0.5,0.5],[90.625,0.5,0.5],[90.875,0.5,0.5],[91.125,0.5,0.5],[91.375,0.5,0.5],[91.625,0.5,0.5],[91.875,0.5,0.5],[92.125,0.5,0.5],[92.375,0.5,0.5],[92.625,0.5,0.5],[92.875,0.5,0.5],[93.125,0.5,0.5],[93.375,0.5,0.5],[93.625,0.5,0.5],[93.875,0.5,0.5],[94.125,0.5,0.5],[94.375,0.5,0.5],[94.625,0.5,0.5],[94.875,0.5,0.5],[95.125,0.5,0.5],[95.375,0.5,0.5],[95.625,0.5,0.5],[95.875,0.5,0.5],[96.125,0.5,0.5],[96.375,0.5,0.5],[96.625,0.5,0.5],[96.875,0.5,0.5],[97.125,0.5,0.5],[97.375,0.5,0.5],[97.625,0.5,0.5],[97.875,0.5,0.5],[98.125,0.5,0.5],[98.375,0.5,0.5],[98.625,0.5,0.5],[98.875,0.5,0.5],[99.125,0.5,0.5],[99.375,0.5,0.5],[99.625,0.5,0.5],[99.875,0.5,0.5]],"firstOrderL1":0.004286172087145714},"ritter":{"levels":[{"nx":100,"L1rel":0.010270397688706405,"massRel":-7.579122514774402e-16,"steps":80},{"nx":200,"L1rel":0.00510752902575929,"massRel":3.789561257387201e-16,"steps":158},{"nx":400,"L1rel":0.0025299433434008587,"massRel":2.2737367544323206e-15,"steps":315},{"nx":800,"L1rel":0.001266382875938215,"massRel":-1.8947806286936005e-15,"steps":629}],"observedOrder":[1.0077946437080492,1.013520420753993,0.9983914244108131],"profile":[[0.125,1,1],[0.375,1,1],[0.625,1,1],[0.875,1,1],[1.125,1,1],[1.375,1,1],[1.625,1,1],[1.875,1,1],[2.125,1,1],[2.375,1,1],[2.625,1,1],[2.875,1,1],[3.125,1,1],[3.375,1,1],[3.625,1,1],[3.875,1,1],[4.125,1,1],[4.375,1,1],[4.625,1,1],[4.875,1,1],[5.125,1,1],[5.375,1,1],[5.625,1,1],[5.875,1,1],[6.125,1,1],[6.375,1,1],[6.625,1,1],[6.875,1,1],[7.125,1,1],[7.375,1,1],[7.625,1,1],[7.875,1,1],[8.125,1,1],[8.375,1,1],[8.625,1,1],[8.875,1,1],[9.125,1,1],[9.375,1,1],[9.625,1,1],[9.875,1,1],[10.125,1,1],[10.375,1,1],[10.625,1,1],[10.875,1,1],[11.125,1,1],[11.375,1,1],[11.625,1,1],[11.875,1,1],[12.125,1,1],[12.375,1,1],[12.625,1,1],[12.875,1,1],[13.125,1,1],[13.375,1,1],[13.625,1,1],[13.875,1,1],[14.125,1,1],[14.375,1,1],[14.625,1,1],[14.875,1,1],[15.125,1,1],[15.375,1,1],[15.625,1,1],[15.875,1,1],[16.125,1,1],[16.375,1,1],[16.625,1,1],[16.875,1,1],[17.125,1,1],[17.375,1,1],[17.625,1,1],[17.875,1,1],[18.125,1,1],[18.375,1,1],[18.625,1,1],[18.875,1,1],[19.125,1,1],[19.375,1,1],[19.625,1,1],[19.875,1,1],[20.125,1,1],[20.375,1,1],[20.625,1,1],[20.875,1,1],[21.125,1,1],[21.375,1,1],[21.625,1,1],[21.875,1,1],[22.125,1,1],[22.375,1,1],[22.625,1,1],[22.875,1,1],[23.125,1,1],[23.375,1,1],[23.625,1,1],[23.875,1,1],[24.125,1,1],[24.375,1,1],[24.625,1,1],[24.875,1,1],[25.125,1,1],[25.375,1,1],[25.625,1,1],[25.875,1,1],[26.125,1,1],[26.375,0.999999,1],[26.625,0.999998,1],[26.875,0.999996,1],[27.125,0.999992,1],[27.375,0.999984,1],[27.625,0.99997,1],[27.875,0.999944,1],[28.125,0.999898,1],[28.375,0.999819,1],[28.625,0.999685,1],[28.875,0.999466,1],[29.125,0.999118,1],[29.375,0.998581,1],[29.625,0.997781,1],[29.875,0.996628,1],[30.125,0.995024,1],[30.375,0.992874,1],[30.625,0.990091,1],[30.875,0.986618,1],[31.125,0.98243,1],[31.375,0.977541,0.994065],[31.625,0.971998,0.985242],[31.875,0.965879,0.976459],[32.125,0.959273,0.967715],[32.375,0.952274,0.95901],[32.625,0.944969,0.950344],[32.875,0.937435,0.941718],[33.125,0.929733,0.933132],[33.375,0.921912,0.924584],[33.625,0.914008,0.916076],[33.875,0.906048,0.907607],[34.125,0.898051,0.899178],[34.375,0.890032,0.890788],[34.625,0.882,0.882437],[34.875,0.873961,0.874125],[35.125,0.865927,0.865853],[35.375,0.857906,0.85762],[35.625,0.849902,0.849427],[35.875,0.841916,0.841273],[36.125,0.833952,0.833158],[36.375,0.826011,0.825082],[36.625,0.818095,0.817046],[36.875,0.810206,0.809049],[37.125,0.802345,0.801092],[37.375,0.794513,0.793174],[37.625,0.786711,0.785295],[37.875,0.77894,0.777455],[38.125,0.771201,0.769655],[38.375,0.763494,0.761894],[38.625,0.75582,0.754172],[38.875,0.74818,0.74649],[39.125,0.740574,0.738847],[39.375,0.733002,0.731244],[39.625,0.725466,0.723679],[39.875,0.717965,0.716154],[40.125,0.7105,0.708669],[40.375,0.703071,0.701223],[40.625,0.695679,0.693816],[40.875,0.688323,0.686448],[41.125,0.681004,0.67912],[41.375,0.673722,0.671831],[41.625,0.666478,0.664581],[41.875,0.659271,0.657371],[42.125,0.652102,0.6502],[42.375,0.644971,0.643068],[42.625,0.637878,0.635976],[42.875,0.630823,0.628923],[43.125,0.623807,0.621909],[43.375,0.616828,0.614935],[43.625,0.609889,0.608],[43.875,0.602988,0.601104],[44.125,0.596125,0.594248],[44.375,0.589302,0.587431],[44.625,0.582517,0.580653],[44.875,0.575771,0.573915],[45.125,0.569064,0.567215],[45.375,0.562396,0.560556],[45.625,0.555766,0.553935],[45.875,0.549176,0.547354],[46.125,0.542625,0.540813],[46.375,0.536112,0.53431],[46.625,0.529639,0.527847],[46.875,0.523204,0.521423],[47.125,0.516809,0.515039],[47.375,0.510452,0.508694],[47.625,0.504134,0.502388],[47.875,0.497855,0.496121],[48.125,0.491614,0.489894],[48.375,0.485412,0.483707],[48.625,0.479248,0.477558],[48.875,0.473122,0.471449],[49.125,0.467034,0.465379],[49.375,0.460982,0.459349],[49.625,0.454967,0.453357],[49.875,0.448987,0.447406],[50.125,0.443036,0.441493],[50.375,0.437118,0.43562],[50.625,0.431246,0.429786],[50.875,0.425419,0.423992],[51.125,0.419635,0.418236],[51.375,0.413892,0.41252],[51.625,0.408192,0.406844],[51.875,0.402534,0.401207],[52.125,0.396919,0.395609],[52.375,0.391344,0.39005],[52.625,0.385811,0.384531],[52.875,0.380318,0.379051],[53.125,0.37487,0.373611],[53.375,0.369462,0.368209],[53.625,0.364095,0.362847],[53.875,0.358766,0.357525],[54.125,0.353482,0.352242],[54.375,0.348239,0.346998],[54.625,0.343039,0.341793],[54.875,0.337876,0.336628],[55.125,0.332754,0.331502],[55.375,0.327672,0.326415],[55.625,0.322633,0.321368],[55.875,0.317637,0.31636],[56.125,0.31268,0.311391],[56.375,0.307762,0.306462],[56.625,0.302883,0.301572],[56.875,0.298046,0.296721],[57.125,0.293251,0.29191],[57.375,0.288497,0.287138],[57.625,0.283783,0.282405],[57.875,0.279107,0.277712],[58.125,0.27447,0.273058],[58.375,0.269874,0.268443],[58.625,0.265319,0.263868],[58.875,0.260806,0.259332],[59.125,0.256333,0.254835],[59.375,0.251897,0.250378],[59.625,0.247501,0.245959],[59.875,0.243143,0.241581],[60.125,0.238826,0.237241],[60.375,0.23455,0.232941],[60.625,0.230315,0.22868],[60.875,0.226117,0.224459],[61.125,0.221958,0.220277],[61.375,0.217837,0.216134],[61.625,0.213755,0.212031],[61.875,0.209712,0.207967],[62.125,0.205709,0.203942],[62.375,0.201746,0.199956],[62.625,0.197822,0.19601],[62.875,0.193936,0.192103],[63.125,0.190087,0.188236],[63.375,0.186276,0.184408],[63.625,0.182504,0.180619],[63.875,0.178771,0.176869],[64.125,0.175076,0.173159],[64.375,0.17142,0.169488],[64.625,0.167803,0.165857],[64.875,0.164223,0.162265],[65.125,0.160681,0.158712],[65.375,0.157176,0.155198],[65.625,0.153709,0.151724],[65.875,0.15028,0.148289],[66.125,0.146888,0.144894],[66.375,0.143534,0.141538],[66.625,0.140217,0.138221],[66.875,0.136939,0.134943],[67.125,0.133698,0.131705],[67.375,0.130495,0.128506],[67.625,0.127328,0.125346],[67.875,0.124198,0.122226],[68.125,0.121105,0.119145],[68.375,0.118048,0.116104],[68.625,0.115028,0.113101],[68.875,0.112046,0.110138],[69.125,0.1091,0.107215],[69.375,0.106192,0.10433],[69.625,0.10332,0.101485],[69.875,0.100486,0.09868],[70.125,0.097688,0.095913],[70.375,0.094926,0.093186],[70.625,0.0922,0.090499],[70.875,0.08951,0.087851],[71.125,0.086856,0.085242],[71.375,0.084239,0.082672],[71.625,0.081658,0.080141],[71.875,0.079115,0.07765],[72.125,0.076608,0.075199],[72.375,0.074139,0.072786],[72.625,0.071706,0.070413],[72.875,0.069309,0.06808],[73.125,0.066949,0.065785],[73.375,0.064624,0.06353],[73.625,0.062335,0.061315],[73.875,0.060083,0.059138],[74.125,0.057867,0.057001],[74.375,0.055689,0.054903],[74.625,0.053548,0.052845],[74.875,0.051444,0.050826],[75.125,0.049377,0.048846],[75.375,0.047348,0.046906],[75.625,0.045354,0.045004],[75.875,0.043398,0.043143],[76.125,0.041477,0.04132],[76.375,0.039592,0.039537],[76.625,0.037742,0.037793],[76.875,0.035929,0.036089],[77.125,0.034153,0.034424],[77.375,0.032412,0.032798],[77.625,0.030708,0.031211],[77.875,0.029039,0.029664],[78.125,0.02741,0.028156],[78.375,0.025821,0.026688],[78.625,0.024279,0.025259],[78.875,0.022787,0.023869],[79.125,0.021351,0.022518],[79.375,0.019967,0.021207],[79.625,0.018622,0.019935],[79.875,0.017287,0.018703],[80.125,0.015921,0.01751],[80.375,0.014458,0.016356],[80.625,0.012798,0.015241],[80.875,0.010836,0.014166],[81.125,0.008501,0.01313],[81.375,0.005853,0.012133],[81.625,0.003597,0.011176],[81.875,0.002102,0.010258],[82.125,0.001305,0.00938],[82.375,0.001024,0.00854],[82.625,0.000872,0.00774],[82.875,0.000721,0.00698],[83.125,0.000587,0.006259],[83.375,0.000469,0.005577],[83.625,0.000369,0.004934],[83.875,0.000285,0.004331],[84.125,0.000216,0.003767],[84.375,0.00016,0.003242],[84.625,0.000117,0.002757],[84.875,0.000083,0.002311],[85.125,0.000057,0.001904],[85.375,0.000038,0.001537],[85.625,0.000025,0.001209],[85.875,0.000015,0.00092],[86.125,0.000008,0.000671],[86.375,0.000004,0.000461],[86.625,0.000001,0.00029],[86.875,0,0.000159],[87.125,0,0.000067],[87.375,0,0.000014],[87.625,0,0],[87.875,0,0],[88.125,0,0],[88.375,0,0],[88.625,0,0],[88.875,0,0],[89.125,0,0],[89.375,0,0],[89.625,0,0],[89.875,0,0],[90.125,0,0],[90.375,0,0],[90.625,0,0],[90.875,0,0],[91.125,0,0],[91.375,0,0],[91.625,0,0],[91.875,0,0],[92.125,0,0],[92.375,0,0],[92.625,0,0],[92.875,0,0],[93.125,0,0],[93.375,0,0],[93.625,0,0],[93.875,0,0],[94.125,0,0],[94.375,0,0],[94.625,0,0],[94.875,0,0],[95.125,0,0],[95.375,0,0],[95.625,0,0],[95.875,0,0],[96.125,0,0],[96.375,0,0],[96.625,0,0],[96.875,0,0],[97.125,0,0],[97.375,0,0],[97.625,0,0],[97.875,0,0],[98.125,0,0],[98.375,0,0],[98.625,0,0],[98.875,0,0],[99.125,0,0],[99.375,0,0],[99.625,0,0],[99.875,0,0]]},"lakeSubmerged":{"maxVel":1.9546324203176227e-14,"maxEtaDev":3.3306690738754696e-16,"dryCells":0,"steps":1306},"lakeIsland":{"maxVel":1.696378142983134e-14,"maxEtaDev":3.3306690738754696e-16,"dryCells":88,"steps":1306},"thacker":{"levels":[{"nx":50,"checkpoints":[{"t":1.1214253663665934,"L1rel":0.04106052679245754},{"t":2.242850732733187,"L1rel":0.061605628597643874},{"t":3.36427609909978,"L1rel":0.07683903487937982},{"t":4.485701465466374,"L1rel":0.0812025456705473}],"massRel":3.5348501636209946e-16,"steps":333},{"nx":100,"checkpoints":[{"t":1.1214253663665934,"L1rel":0.0153503683818456},{"t":2.242850732733187,"L1rel":0.023653439306049615},{"t":3.36427609909978,"L1rel":0.025451164307412726},{"t":4.485701465466374,"L1rel":0.024984280431368685}],"massRel":-4.7708228097443254e-15,"steps":671},{"nx":200,"checkpoints":[{"t":1.1214253663665934,"L1rel":0.0064499227757311706},{"t":2.242850732733187,"L1rel":0.008895478272919227},{"t":3.36427609909978,"L1rel":0.008704510916327558},{"t":4.485701465466374,"L1rel":0.008862406387528433}],"massRel":-3.0038128471034744e-15,"steps":1344}],"period":4.485701465466374,"profile":[[0.02,0.29208,0.29208,0.29208],[0.06,0.2764,0.2764,0.2764],[0.1,0.26104,0.26104,0.26104],[0.14,0.246,0.246,0.246],[0.18,0.23128,0.23128,0.23128],[0.22,0.21688,0.21688,0.21688],[0.26,0.2028,0.2028,0.2028],[0.3,0.18904,0.18904,0.18904],[0.34,0.1756,0.1756,0.1756],[0.38,0.16248,0.16248,0.16248],[0.42,0.14968,0.14968,0.14968],[0.46,0.1372,0.1372,0.1372],[0.5,0.12504,0.12504,0.12504],[0.54,0.113201,0.1132,0.1132],[0.58,0.10171,0.10168,0.10168],[0.62,0.090509,0.09048,0.09048],[0.66,0.079623,0.0796,0.0796],[0.7,0.069051,0.06904,0.06904],[0.74,0.058803,0.0588,0.0588],[0.78,0.048881,0.04888,0.04888],[0.82,0.039281,0.03928,0.03928],[0.86,0.030001,0.03,0.03],[0.9,0.021041,0.02104,0.02104],[0.94,0.012401,0.0124,0.0124],[0.98,0.004081,0.00408,0.00408],[1.02,-0.003916,-0.00392,-0.00392],[1.06,-0.011595,-0.0116,-0.0116],[1.1,-0.018953,-0.01896,-0.01896],[1.14,-0.025993,-0.026,-0.026],[1.18,-0.032713,-0.03272,-0.03272],[1.22,-0.039112,-0.03912,-0.03912],[1.26,-0.045194,-0.0452,-0.0452],[1.3,-0.05095,-0.05096,-0.05096],[1.34,-0.056383,-0.0564,-0.0564],[1.38,-0.061512,-0.06152,-0.06152],[1.42,-0.066319,-0.06632,-0.06632],[1.46,-0.070798,-0.0708,-0.0708],[1.5,-0.074935,-0.07496,-0.07496],[1.54,-0.07582,-0.071,-0.0788],[1.58,-0.068576,-0.067,-0.08232],[1.62,-0.06317,-0.063,-0.08552],[1.66,-0.058698,-0.059,-0.0884],[1.7,-0.054344,-0.055,-0.09096],[1.74,-0.050145,-0.051,-0.0932],[1.78,-0.046066,-0.047,-0.09512],[1.82,-0.042062,-0.043,-0.09672],[1.86,-0.03811,-0.039,-0.098],[1.9,-0.034186,-0.035,-0.09896],[1.94,-0.030259,-0.031,-0.0996],[1.98,-0.026317,-0.027,-0.09992],[2.02,-0.022346,-0.023,-0.09992],[2.06,-0.018379,-0.019,-0.0996],[2.1,-0.014418,-0.015,-0.09896],[2.14,-0.010455,-0.011,-0.098],[2.18,-0.006491,-0.007,-0.09672],[2.22,-0.002528,-0.003,-0.09512],[2.26,0.001431,0.001,-0.0932],[2.3,0.005386,0.005,-0.09096],[2.34,0.009337,0.009,-0.0884],[2.38,0.013285,0.013,-0.08552],[2.42,0.017229,0.017,-0.08232],[2.46,0.021167,0.021,-0.0788],[2.5,0.025097,0.025,-0.07496],[2.54,0.029022,0.029,-0.0708],[2.58,0.03294,0.033,-0.06632],[2.62,0.036855,0.037,-0.06152],[2.66,0.040767,0.041,-0.0564],[2.7,0.044678,0.045,-0.05096],[2.74,0.048586,0.049,-0.0452],[2.78,0.052492,0.053,-0.03912],[2.82,0.056393,0.057,-0.03272],[2.86,0.060288,0.061,-0.026],[2.9,0.064176,0.065,-0.01896],[2.94,0.06805,0.069,-0.0116],[2.98,0.071917,0.073,-0.00392],[3.02,0.075773,0.077,0.00408],[3.06,0.079625,0.081,0.0124],[3.1,0.083479,0.085,0.02104],[3.14,0.087341,0.089,0.03],[3.18,0.091207,0.093,0.03928],[3.22,0.095054,0.097,0.04888],[3.26,0.098867,0.101,0.0588],[3.3,0.102653,0.105,0.06904],[3.34,0.1065,0.109,0.0796],[3.38,0.111009,0.113,0.09048],[3.42,0.116754,0.117,0.10168],[3.46,0.119337,0.121,0.1132],[3.5,0.12504,0.12504,0.12504],[3.54,0.1372,0.1372,0.1372],[3.58,0.14968,0.14968,0.14968],[3.62,0.16248,0.16248,0.16248],[3.66,0.1756,0.1756,0.1756],[3.7,0.18904,0.18904,0.18904],[3.74,0.2028,0.2028,0.2028],[3.78,0.21688,0.21688,0.21688],[3.82,0.23128,0.23128,0.23128],[3.86,0.246,0.246,0.246],[3.9,0.26104,0.26104,0.26104],[3.94,0.2764,0.2764,0.2764],[3.98,0.29208,0.29208,0.29208]]},"rainMass":{"rain":1121.3333333333387,"infil":169.0697960662623,"outflow":728.1048271296337,"stored":224.15871013743845,"rel":-3.751260103180535e-15,"clipped":0,"steps":8850},"urban":{"rel":-4.506592278905973e-15,"clipped":0,"rain":2825.4000000000133,"outflow":789.5954040952688,"stored":1861.2285959047308,"steps":1917},"valleyDam":{"rel":-1.360522036499206e-16,"clipped":0,"rain":0,"outflow":33664.28582872836,"stored":73294.0348597829,"steps":852}},"gpu":{"stoker":{"L1rel":0.0016022350240586561,"maxDiffVsCPU":0.0000011718133001714648,"massRel":1.9470850626627604e-8,"steps":314,"cpuSteps":314},"ritter":{"L1rel":0.002531403649908993,"maxDiffVsCPU":9.159865553831636e-7,"massRel":9.368984592583729e-8,"steps":315,"cpuSteps":315},"lakeSubmerged":{"maxVel":0.000009004536189432785,"maxEtaDev":1.950920278659396e-7,"steps":1306},"lakeIsland":{"maxVel":0.000013253217403951256,"maxEtaDev":1.756448000378441e-7,"steps":1306},"thackerMass":1.585453440312372e-9,"thacker":{"nx":100,"checkpoints":[{"t":1.1214253663665934,"L1rel":0.015379208592479926},{"t":2.242850732733187,"L1rel":0.02373230062647681},{"t":3.36427609909978,"L1rel":0.025571464697904122},{"t":4.485701465466374,"L1rel":0.02494156625623759}]},"rainMass":{"rel":-2.3766464793964358e-7,"clipped":0,"relExClip":-2.3766464793964358e-7,"rain":1121.3333333333333,"infil":112.13335171341896,"outflow":248.9384557204321,"stored":760.2612593981903,"maxDiffVsCPU":0.000005228995334577262,"maxDepthDiffVsCPU":0.0000013319422533298632,"cpuRain":1121.3333333333387,"cpuOutflow":248.93747828822293,"cpuStored":760.2625217117783},"urban":{"rel":-3.6140980060309214e-7,"clipped":0,"outflow":789.5950245331632,"cpuOutflow":789.5954040952687,"maxDiffVsCPU":0.00026944966589317887,"steps":1917},"valleyDam":{"rel":1.0685249474234308e-8,"clipped":0,"outflow":33664.28857421875,"cpuOutflow":33664.28582872835,"maxDiffVsCPU":0.0000013169891760426294,"steps":852}}};
+
+// FloodSim Solver Lab — app shell: scenarios, engine selection, voxel renderer, readouts, verification.
+// Expects in scope: CPUSolver, GPUSolver, SCENARIOS, rng, MMHR, RESULTS ({cpu, gpu}), THREE.
+const $ = (id) => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const state = {
+  scenario: 'cloudburst', playing: !reduceMotion, mode: 0, exag: 2, maxView: false, showBld: true,
+  rainMMhr: 80, durMin: 30, speedSlider: 70,
+};
+let device = null, engine = 'cpu';
+
+// ---------------------------------------------------------------- utilities
+const fmtTime = (t) => { if (t < 60) return t.toFixed(t < 10 ? 2 : 1) + ' s'; const m = Math.floor(t / 60), s = Math.floor(t % 60); return `${m}:${String(s).padStart(2, '0')}`; };
+const fmtVol = (v) => v >= 1e4 ? `${(v / 1000).toFixed(1)}k m³` : `${v.toFixed(v < 10 ? 2 : 0)} m³`;
+const fmtArea = (a) => a >= 1e4 ? `${(a / 1e4).toFixed(2)} ha` : `${Math.round(a).toLocaleString()} m²`;
+
+const RES = { cloudburst: [160, 80], dambreak: [96, 48], thacker: [120, 60] };
+
+// ---------------------------------------------------------------- engines
+class CpuRunner {
+  constructor(sc) {
+    this.s = new CPUSolver({ nx: sc.nx, ny: sc.ny, dx: sc.dx, z: sc.z, mask: sc.mask, manning: sc.manning, bc: sc.bc, hdry: 1e-5, hfront: sc.hfront ?? 1e-3 });
+    if (sc.infil) for (let j = 0; j < sc.ny; j++) for (let i = 0; i < sc.nx; i++) this.s.infil[this.s.idx(i, j)] = sc.infil[j * sc.nx + i];
+    this.nx = sc.nx; this.ny = sc.ny; this.out = new Float32Array(sc.nx * sc.ny * 2); this.lastDt = 0;
+    let a = 0; for (let k = 0; k < sc.nx * sc.ny; k++) a += sc.mask ? sc.mask[k] : 1; this.activeArea = a * sc.dx * sc.dx;
+  }
+  get t() { return this.s.t; } get steps() { return this.s.steps; }
+  set rainRate(v) { this.s.rainRate = v; }
+  get rainVolume() { return this.s.vol.rain; }
+  setDepth(f) { this.s.setDepth(f); } setVelocity(f) { this.s.setVelocity(f); }
+  async frame(tEnd, K) {
+    const t0 = performance.now(); let n = 0;
+    while (this.s.t < tEnd - 1e-9 && n < K && performance.now() - t0 < 14) { this.lastDt = this.s.step(tEnd - this.s.t); n++; }
+    const { s, out } = this;
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
+      const c = s.idx(i, j), k = j * this.nx + i, h = s.h[c];
+      out[2 * k] = h; out[2 * k + 1] = h > s.hdry ? Math.hypot(s.hu[c], s.hv[c]) / h : 0;
+    }
+    return out;
+  }
+  async readState() {
+    const m = this.s.massBalance();
+    return { hmax: this.s.field('maxDepth'), mass: { volume: m.volume, outflow: this.s.vol.outflow, rel: m.rel } };
+  }
+  destroy() {}
+}
+class GpuRunner {
+  constructor(sc) {
+    this.g = new GPUSolver(device, { nx: sc.nx, ny: sc.ny, dx: sc.dx, z: sc.z, mask: sc.mask, manning: sc.manning, infil: sc.infil, bc: sc.bc, hfront: sc.hfront ?? 1e-3 });
+    this.activeArea = this.g.activeArea; this.lastDt = 0;
+  }
+  get t() { return this.g.t; } get steps() { return this.g.steps; }
+  set rainRate(v) { this.g.rainRate = v; }
+  get rainVolume() { return this.g.vol.rain; }
+  setDepth(f) { this.g.setDepth(f); } setVelocity(f) { this.g.setVelocity(f); }
+  async frame(tEnd, K) { const o = await this.g.frame(tEnd, K); this.lastDt = this.g.lastDt || this.lastDt; return o; }
+  async readState() { const s = await this.g.readState(); return { hmax: s.hmax, mass: s.mass }; }
+  destroy() { this.g.destroy(); }
+}
+
+async function initEngine() {
+  try {
+    if (navigator.gpu) {
+      const a = await navigator.gpu.requestAdapter();
+      if (a) {
+        device = await a.requestDevice();
+        engine = 'gpu';
+        device.lost.then((info) => { if (info.reason !== 'destroyed') { engine = 'cpu'; device = null; setEngineBadge('WebGPU device lost, switched to CPU'); loadScenario(state.scenario); } });
+        const arch = a.info && (a.info.architecture || a.info.vendor);
+        setEngineBadge(`WebGPU${arch ? ' · ' + arch : ''}`);
+        return;
+      }
+    }
+  } catch (e) { /* fall through to CPU */ }
+  engine = 'cpu'; setEngineBadge('CPU fallback · WebGPU unavailable in this browser');
+}
+function setEngineBadge(text) { $('engineText').textContent = text; $('engineDot').className = 'dot ' + engine; }
+
+// ---------------------------------------------------------------- renderer
+const canvas = $('gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 20000);
+scene.add(new THREE.HemisphereLight(0xe4eef2, 0x41503f, 0.78));
+const sun = new THREE.DirectionalLight(0xffffff, 0.72); sun.position.set(-0.6, 1, 0.35); scene.add(sun);
+
+const terrainMat = new THREE.MeshLambertMaterial({ vertexColors: false });
+const unitBox = new THREE.BoxGeometry(1, 1, 1); unitBox.translate(0, 0.5, 0);
+let terrain = null, water = null, waterGeo = null;
+const waterMat = new THREE.ShaderMaterial({
+  uniforms: { uExag: { value: 2 }, uMin: { value: 0.01 }, uCell: { value: 1 }, uMode: { value: 0 } },
+  vertexShader: `
+    attribute vec3 iOff; attribute float iD; attribute float iS;
+    uniform float uExag; uniform float uMin; uniform float uCell;
+    varying vec3 vN; varying float vD; varying float vS;
+    void main() {
+      vD = iD; vS = iS;
+      float h = iD > uMin ? iD * uExag : 0.0;
+      vec3 p = vec3(position.x * uCell + iOff.x, iOff.y + (position.y + 0.5) * h, position.z * uCell + iOff.z);
+      vN = normal;
+      gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+    }`,
+  fragmentShader: `
+    uniform float uMin; uniform int uMode;
+    varying vec3 vN; varying float vD; varying float vS;
+    vec3 ramp4(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+      if (t < 1.0) return mix(a, b, t); if (t < 2.0) return mix(b, c, t - 1.0); return mix(c, d, clamp(t - 2.0, 0.0, 1.0));
+    }
+    float seg(float x, float x1, float x2, float x3) {
+      if (x < x1) return x / x1; if (x < x2) return 1.0 + (x - x1) / (x2 - x1); return 2.0 + (x - x2) / (x3 - x2);
+    }
+    int hazard(float d, float v) {
+      float dv = d * v;
+      if (dv <= 0.3 && d <= 0.3 && v <= 2.0) return 1;
+      if (dv <= 0.6 && d <= 0.5 && v <= 2.0) return 2;
+      if (dv <= 0.6 && d <= 1.2 && v <= 2.0) return 3;
+      if (dv <= 1.0 && d <= 2.0 && v <= 2.0) return 4;
+      if (dv <= 4.0 && d <= 4.0 && v <= 4.0) return 5;
+      return 6;
+    }
+    void main() {
+      if (vD <= uMin) discard;
+      vec3 col;
+      if (uMode == 0) {
+        col = ramp4(seg(vD, 0.3, 1.0, 2.0), vec3(0.75,0.94,0.97), vec3(0.36,0.77,0.89), vec3(0.12,0.50,0.77), vec3(0.04,0.23,0.55));
+      } else if (uMode == 1) {
+        col = ramp4(seg(vS, 1.0, 3.0, 6.0), vec3(0.80,0.92,0.96), vec3(0.44,0.72,0.88), vec3(0.95,0.70,0.24), vec3(0.88,0.33,0.18));
+      } else {
+        int hz = hazard(vD, vS);
+        col = hz == 1 ? vec3(0.55,0.80,0.90) : hz == 2 ? vec3(0.96,0.86,0.36) : hz == 3 ? vec3(0.96,0.66,0.25)
+            : hz == 4 ? vec3(0.91,0.45,0.20) : hz == 5 ? vec3(0.78,0.20,0.20) : vec3(0.45,0.10,0.35);
+      }
+      vec3 n = normalize(vN);
+      float l = 0.58 + 0.42 * max(dot(n, normalize(vec3(-0.5, 1.0, 0.35))), 0.0);
+      if (uMode == 0 && n.y > 0.5) col = mix(col, vec3(1.0), 0.55 * smoothstep(1.5, 5.0, vS));
+      gl_FragColor = vec4(col * l, 1.0);
+    }`,
+});
+
+const CLASS_RGB = [[0.36, 0.39, 0.42], [0.47, 0.60, 0.40], [0.38, 0.55, 0.32], [0.56, 0.49, 0.38], [0.80, 0.81, 0.82], [0.82, 0.75, 0.60], [0.55, 0.62, 0.43]];
+let sc = null, zmin = 0, zmax = 1, Lx = 1, Ly = 1;
+
+function buildScene() {
+  if (terrain) { scene.remove(terrain); terrain.dispose?.(); }
+  if (water) { scene.remove(water); waterGeo.dispose(); }
+  const { nx, ny, dx } = sc, N = nx * ny;
+  zmin = Infinity; zmax = -Infinity; for (let k = 0; k < N; k++) { zmin = Math.min(zmin, sc.z[k]); zmax = Math.max(zmax, sc.z[k]); }
+  Lx = nx * dx; Ly = ny * dx;
+  terrain = new THREE.InstancedMesh(unitBox, terrainMat, N);
+  const col = new THREE.Color(), rnd = rng(3);
+  for (let k = 0; k < N; k++) {
+    const c = CLASS_RGB[sc.cls[k]], tint = 0.9 + 0.2 * (sc.z[k] - zmin) / Math.max(1e-6, zmax - zmin);
+    const jitter = sc.cls[k] === 4 ? 0.92 + 0.12 * rnd() : 1;
+    col.setRGB(c[0] * tint * jitter, c[1] * tint * jitter, c[2] * tint * jitter);
+    terrain.setColorAt(k, col);
+  }
+  scene.add(terrain);
+  waterGeo = new THREE.InstancedBufferGeometry();
+  waterGeo.index = unitBox.index;
+  const pos = unitBox.attributes.position.clone(); // re-center vertically for the shader
+  for (let v = 0; v < pos.count; v++) pos.setY(v, pos.getY(v) - 0.5);
+  waterGeo.setAttribute('position', pos);
+  waterGeo.setAttribute('normal', unitBox.attributes.normal);
+  waterGeo.instanceCount = N;
+  waterGeo.setAttribute('iOff', new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3));
+  const iD = new THREE.InstancedBufferAttribute(new Float32Array(N), 1); iD.setUsage(THREE.DynamicDrawUsage);
+  const iS = new THREE.InstancedBufferAttribute(new Float32Array(N), 1); iS.setUsage(THREE.DynamicDrawUsage);
+  waterGeo.setAttribute('iD', iD); waterGeo.setAttribute('iS', iS);
+  water = new THREE.Mesh(waterGeo, waterMat); water.frustumCulled = false;
+  scene.add(water);
+  layout();
+  frameCamera();
+}
+
+function layout() { // positions depend on vertical exaggeration and building toggle
+  const { nx, ny, dx } = sc, N = nx * ny, e = state.exag, base = Math.max(1.5, 0.08 * (zmax - zmin + 1)) * e;
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
+  const off = waterGeo.attributes.iOff.array;
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const k = j * nx + i, X = (i + 0.5) * dx - Lx / 2, Z = (ny - j - 0.5) * dx - Ly / 2;
+    const ground = (sc.z[k] - zmin) * e;
+    const top = ground + (state.showBld ? sc.bld[k] : 0); // buildings at true height for context
+    p.set(X, -base, Z); s.set(dx, top + base, dx); m.compose(p, q, s); terrain.setMatrixAt(k, m);
+    off[3 * k] = X; off[3 * k + 1] = ground; off[3 * k + 2] = Z;
+  }
+  terrain.instanceMatrix.needsUpdate = true; if (terrain.instanceColor) terrain.instanceColor.needsUpdate = true;
+  waterGeo.attributes.iOff.needsUpdate = true;
+  waterMat.uniforms.uExag.value = e; waterMat.uniforms.uCell.value = dx * 0.999; waterMat.uniforms.uMin.value = sc.hmin;
+}
+
+// orbit camera
+const orbit = { theta: -0.75, phi: 0.92, r: 400, target: new THREE.Vector3() };
+function frameCamera() {
+  const asp = camera.aspect || 1; // portrait screens need more distance to fit the domain's width
+  orbit.r = Math.max(Lx, Ly) * (sc.camR ?? 1.3) * (asp < 1 ? Math.min(2.2, 1 / asp) : 1); orbit.theta = -0.6; orbit.phi = sc.camPhi ?? 0.78;
+  orbit.target.set(0, (zmax - zmin) * state.exag * 0.3, 0); applyCamera();
+}
+function applyCamera() {
+  const { theta, phi, r, target } = orbit;
+  camera.position.set(target.x + r * Math.sin(phi) * Math.sin(theta), target.y + r * Math.cos(phi), target.z + r * Math.sin(phi) * Math.cos(theta));
+  camera.near = r / 500; camera.far = r * 20; camera.updateProjectionMatrix();
+  camera.lookAt(target);
+}
+const pointers = new Map(); let pinch0 = 0, r0 = 0;
+canvas.addEventListener('pointerdown', (e) => { canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, shift: e.shiftKey || e.button === 2 }); if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); r0 = orbit.r; } });
+canvas.addEventListener('pointermove', (e) => {
+  const p = pointers.get(e.pointerId); if (!p) return;
+  const dxp = e.clientX - p.x, dyp = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 > 0) orbit.r = Math.max(Lx * 0.08, Math.min(Lx * 5, r0 * pinch0 / d)); }
+  else if (p.shift) {
+    const k = orbit.r / canvas.clientHeight; const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0); const fwd = new THREE.Vector3(Math.sin(orbit.theta), 0, Math.cos(orbit.theta));
+    orbit.target.addScaledVector(right, -dxp * k).addScaledVector(fwd, -dyp * k);
+  } else { orbit.theta -= dxp * 0.006; orbit.phi = Math.max(0.12, Math.min(1.5, orbit.phi - dyp * 0.005)); }
+  applyCamera();
+});
+const endPtr = (e) => { pointers.delete(e.pointerId); pinch0 = 0; };
+canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); orbit.r = Math.max(Lx * 0.08, Math.min(Lx * 5, orbit.r * Math.exp(e.deltaY * 0.0012))); applyCamera(); }, { passive: false });
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe($('viewport'));
+
+// ---------------------------------------------------------------- simulation loop
+let runner = null, busy = false, lastWall = 0, rtf = 0, lastRead = 0, hmax = null, lastOut = null, generation = 0;
+const speedFromSlider = (v) => { const base = SCENARIOS_SPEED(); return +(base * Math.pow(10, (v - 70) / 30)).toPrecision(2); };
+function SCENARIOS_SPEED() { return sc ? sc.speed : 1; }
+
+function loadScenario(name) {
+  generation++;
+  if (runner) { runner.destroy(); runner = null; }
+  state.scenario = name;
+  const [hi, lo] = RES[name];
+  sc = SCENARIOS[name](engine === 'gpu' ? hi : lo);
+  state.exag = sc.exag; $('exag').value = sc.exag; $('exagOut').value = sc.exag.toFixed(1) + '×';
+  runner = engine === 'gpu' ? new GpuRunner(sc) : new CpuRunner(sc);
+  if (engine === 'gpu') runner.g.ready.catch((err) => { console.error(err); engine = 'cpu'; setEngineBadge('WebGPU pipeline failed, switched to CPU'); loadScenario(state.scenario); });
+  sc.init(runner);
+  hmax = null; lastOut = null; rtf = 0; lastRead = 0;
+  for (const b of $('scenarioSeg').children) b.setAttribute('aria-pressed', String(b.dataset.sc === name));
+  $('scDesc').textContent = sc.desc + (engine === 'cpu' ? ' Running at half resolution on the CPU.' : '');
+  $('rainControls').hidden = !sc.rain;
+  $('roALabel').textContent = sc.rain ? 'Rain so far' : sc.analytic ? 'Error vs exact solution' : 'Peak velocity';
+  $('roBLabel').textContent = sc.analytic ? 'Periods completed' : 'Inundated > 0.15 m';
+  resize();
+  buildScene();
+  updateSpeedLabel();
+  lastWall = performance.now();
+}
+
+async function simTick() {
+  if (!runner || busy) return;
+  busy = true; const gen = generation;
+  try {
+    const now = performance.now(), wall = Math.min(0.1, (now - lastWall) / 1000); lastWall = now;
+    const speed = speedFromSlider(state.speedSlider);
+    let tEnd = runner.t + (state.playing ? speed * wall : 0);
+    if (sc.rain) {
+      const stormEnd = state.durMin * 60;
+      if (runner.t < stormEnd - 1e-6) { runner.rainRate = state.rainMMhr * MMHR; tEnd = Math.min(tEnd, stormEnd); } else runner.rainRate = 0;
+    }
+    if (sc.tMax) tEnd = Math.min(tEnd, sc.tMax);
+    const need = tEnd - runner.t;
+    const K = need <= 0 ? 0 : Math.max(1, Math.min(engine === 'gpu' ? 64 : 400, runner.lastDt > 0 ? Math.ceil(need / runner.lastDt) + 1 : 4));
+    const t0 = runner.t;
+    const out = await runner.frame(tEnd, K);
+    if (gen !== generation) return;
+    lastOut = out;
+    if (wall > 0 && state.playing) rtf = rtf ? 0.9 * rtf + 0.1 * ((runner.t - t0) / wall) : (runner.t - t0) / wall;
+    pushWater(out);
+    if (now - lastRead > 800) { lastRead = now; const s = await runner.readState(); if (gen !== generation) return; hmax = s.hmax; readouts(out, s); if (state.maxView) pushWater(out); }
+    $('hudTime').textContent = fmtTime(runner.t);
+  } catch (err) {
+    console.error(err);
+    if (engine === 'gpu') { engine = 'cpu'; setEngineBadge('WebGPU error, switched to CPU'); loadScenario(state.scenario); }
+  } finally { busy = false; }
+}
+
+function pushWater(out) {
+  const N = sc.nx * sc.ny, D = waterGeo.attributes.iD.array, S = waterGeo.attributes.iS.array;
+  let mx = 0;
+  for (let k = 0; k < N; k++) {
+    const h = out[2 * k]; S[k] = out[2 * k + 1];
+    D[k] = state.maxView && hmax ? hmax[k] : h;
+    if (h > mx && (!sc.mask || sc.mask[k])) mx = h;
+  }
+  waterGeo.attributes.iD.needsUpdate = true; waterGeo.attributes.iS.needsUpdate = true;
+  $('hudMetric').textContent = mx.toFixed(2) + ' m';
+}
+
+function readouts(out, s) {
+  const N = sc.nx * sc.ny, A = sc.dx * sc.dx;
+  $('roDt').textContent = runner.lastDt ? (runner.lastDt < 0.1 ? (runner.lastDt * 1000).toFixed(1) + ' ms' : runner.lastDt.toFixed(2) + ' s') : '–';
+  $('roSteps').textContent = Math.round(runner.steps).toLocaleString();
+  if (sc.rain) $('roA').textContent = (runner.rainVolume / runner.activeArea * 1000).toFixed(1) + ' mm';
+  else if (sc.analytic) {
+    const T = sc.analytic; let e = 0, n = 0;
+    for (let j = 0; j < sc.ny; j++) for (let i = 0; i < sc.nx; i++) { const he = T.depth((i + 0.5) * sc.dx, (j + 0.5) * sc.dx, runner.t); e += Math.abs(out[2 * (j * sc.nx + i)] - he); n += he; }
+    $('roA').textContent = (100 * e / n).toFixed(2) + ' % (L1)';
+  } else { let v = 0; for (let k = 0; k < N; k++) v = Math.max(v, out[2 * k + 1]); $('roA').textContent = v.toFixed(2) + ' m/s'; }
+  if (sc.analytic) $('roB').textContent = (runner.t / sc.analytic.period).toFixed(2);
+  else { let a = 0; for (let k = 0; k < N; k++) if (out[2 * k] > 0.15) a += A; $('roB').textContent = fmtArea(a); }
+  $('roVol').textContent = fmtVol(s.mass.volume);
+  $('roOut').textContent = fmtVol(Math.max(0, s.mass.outflow));
+  $('roMass').textContent = Number.isFinite(s.mass.rel) ? (Math.abs(s.mass.rel) < 1e-12 ? '< 1e-12' : s.mass.rel.toExponential(1)) : '–';
+  $('roRtf').textContent = state.playing && rtf ? (rtf >= 10 ? Math.round(rtf) : rtf.toFixed(1)) + '× real time' : 'paused';
+}
+
+function syncClear() {
+  const v = getComputedStyle(document.documentElement).getPropertyValue('--viewport').trim();
+  if (v) renderer.setClearColor(new THREE.Color(v), 1);
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncClear);
+new MutationObserver(syncClear).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+function loop() { simTick(); renderer.render(scene, camera); requestAnimationFrame(loop); }
+
+// ---------------------------------------------------------------- controls
+function updateSpeedLabel() { $('speedOut').value = speedFromSlider(state.speedSlider) + '× real time'; }
+$('scenarioSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) loadScenario(b.dataset.sc); });
+$('modeSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return; state.mode = +b.dataset.mode; waterMat.uniforms.uMode.value = state.mode;
+  for (const x of $('modeSeg').children) x.setAttribute('aria-pressed', String(x === b)); drawLegend();
+});
+$('play').addEventListener('click', () => { state.playing = !state.playing; $('play').textContent = state.playing ? 'Pause' : 'Play'; lastWall = performance.now(); });
+$('reset').addEventListener('click', () => loadScenario(state.scenario));
+$('speed').addEventListener('input', (e) => { state.speedSlider = +e.target.value; updateSpeedLabel(); });
+$('rain').addEventListener('input', (e) => { state.rainMMhr = +e.target.value; $('rainOut').value = state.rainMMhr + ' mm/hr'; });
+$('dur').addEventListener('input', (e) => { state.durMin = +e.target.value; $('durOut').value = state.durMin + ' min'; });
+$('exag').addEventListener('input', (e) => { state.exag = +e.target.value; $('exagOut').value = state.exag.toFixed(1) + '×'; layout(); });
+$('maxView').addEventListener('change', (e) => { state.maxView = e.target.checked; if (lastOut) pushWater(lastOut); });
+$('showBld').addEventListener('change', (e) => { state.showBld = e.target.checked; layout(); });
+for (const [tab, pane, other, otherPane] of [['tabSim', 'paneSim', 'tabVer', 'paneVer'], ['tabVer', 'paneVer', 'tabSim', 'paneSim']]) {
+  $(tab).addEventListener('click', () => { $(tab).setAttribute('aria-selected', 'true'); $(other).setAttribute('aria-selected', 'false'); $(pane).hidden = false; $(otherPane).hidden = true; });
+}
+$('play').textContent = state.playing ? 'Pause' : 'Play';
+
+function drawLegend() {
+  const L = $('legend');
+  const css = (c) => `rgb(${c.map(v => Math.round(v * 255)).join(',')})`;
+  if (state.mode === 2) {
+    const rows = [['H1', [0.55, 0.80, 0.90], 'Generally safe for people, vehicles and buildings'], ['H2', [0.96, 0.86, 0.36], 'Unsafe for small vehicles'],
+      ['H3', [0.96, 0.66, 0.25], 'Unsafe for vehicles, children and the elderly'], ['H4', [0.91, 0.45, 0.20], 'Unsafe for vehicles and people'],
+      ['H5', [0.78, 0.20, 0.20], 'Unsafe for all; buildings need special design'], ['H6', [0.45, 0.10, 0.35], 'Unsafe for all; all buildings vulnerable']];
+    L.innerHTML = `<div class="classes">${rows.map(r => `<i style="background:${css(r[1])}"></i><b>${r[0]}</b><span>${r[2]}</span>`).join('')}</div><p class="note">Depth × velocity hazard classes after Australian Rainfall and Runoff (2019), approximate thresholds.</p>`;
+    return;
+  }
+  const [stops, ticks, unit] = state.mode === 0
+    ? [[[0.75, 0.94, 0.97], [0.36, 0.77, 0.89], [0.12, 0.50, 0.77], [0.04, 0.23, 0.55]], ['0', '0.3', '1.0', '≥ 2 m'], 'Water depth']
+    : [[[0.80, 0.92, 0.96], [0.44, 0.72, 0.88], [0.95, 0.70, 0.24], [0.88, 0.33, 0.18]], ['0', '1', '3', '≥ 6 m/s'], 'Flow velocity'];
+  L.innerHTML = `<span class="note">${unit}</span><div class="ramp" style="background:linear-gradient(to right, ${stops.map((c, i) => `${css(c)} ${(i * 100 / 3).toFixed(1)}%`).join(',')})"></div><div class="ticks">${ticks.map(t => `<span>${t}</span>`).join('')}</div>`;
+}
+
+// ---------------------------------------------------------------- verification tab
+function buildVerification() {
+  const C = RESULTS.cpu, G = RESULTS.gpu, e = (v) => v.toExponential(1);
+  const ord = (a, b) => Math.log2(a / b).toFixed(1);
+  const th = C.thacker.levels.map(l => l.checkpoints[3].L1rel);
+  const rows = [
+    ['Wet-bed dam break (Stoker)', 'Shock and rarefaction, 400 cells, L1 depth error', e(C.stoker.levels[2].L1rel), e(G.stoker.L1rel), `Converges, order ${C.stoker.observedOrder[2].toFixed(1)}`],
+    ['Dry-bed dam break (Ritter)', 'Wetting front on a dry bed, L1 depth error', e(C.ritter.levels[2].L1rel), e(G.ritter.L1rel), `Converges, order ${C.ritter.observedOrder[2].toFixed(1)}`],
+    ['Lake at rest, submerged bump', 'Still water must stay still: max velocity, m/s', e(C.lakeSubmerged.maxVel), e(G.lakeSubmerged.maxVel), 'Well-balanced'],
+    ['Lake at rest, emergent island', 'Same, with a dry island (wet/dry fronts)', e(C.lakeIsland.maxVel), e(G.lakeIsland.maxVel), 'Well-balanced'],
+    ['Thacker paraboloid', 'Moving shoreline, 100 cells, L1 error after one period', e(th[1]), e(G.thacker.checkpoints[3].L1rel), `Converges, order ${ord(th[1], th[2])}`],
+    ['Rain-on-grid mass balance', '20 min storm, buildings, infiltration, open outlet: relative error', e(C.rainMass.rel), e(G.rainMass.rel), `0 m³ clipped`],
+    ['Urban cloudburst (app scenario)', '15 min at 150 mm/hr over curbs, creek banks and buildings: relative mass error', e(C.urban.rel), e(G.urban.rel), '0 m³ clipped'],
+    ['Valley dam break (app scenario)', '8 m reservoir released for 120 s: relative mass error', e(C.valleyDam.rel), e(G.valleyDam.rel), 'Mass conserved'],
+    ['WebGPU vs CPU reference', 'Same rain case: max depth difference, m', '–', e(G.rainMass.maxDiffVsCPU), 'Agrees'],
+  ];
+  $('verTable').innerHTML = `<thead><tr><th>Test</th><th>CPU fp64</th><th>GPU fp32</th><th>Result</th></tr></thead><tbody>${rows.map(r => `<tr><td><strong>${r[0]}</strong><br><span class="note">${r[1]}</span></td><td class="num">${r[2]}</td><td class="num">${r[3]}</td><td><span class="pill">${r[4]}</span></td></tr>`).join('')}</tbody>`;
+  $('verLead').textContent = `All ${rows.length} checks pass. The scheme holds still water still to machine precision, conserves mass in a full rain-on-grid run, converges toward exact solutions as the grid refines, and the WebGPU kernels reproduce the CPU reference to within ${(G.rainMass.maxDiffVsCPU * 1e6).toFixed(0)} µm of depth.`;
+  $('verNote').textContent = 'Reference solutions: Stoker (1957), Ritter (1892) and Thacker (1981), as specified in the SWASHES benchmark library (Delestre et al. 2013). GPU column ran on a software WebGPU adapter; lake-at-rest GPU cases place the bed near 100 m elevation to stress fp32. First-order convergence is expected for problems with shocks.';
+  $('chartRitter').innerHTML = profileChart(C.ritter.profile.map(p => [p[0], p[1], p[2]]), { x0: 0, x1: 100, y0: 0, y1: 1.05, xl: 'Distance (m)', yl: 'Depth (m)', every: 6 });
+  $('chartThacker').innerHTML = profileChart(C.thacker.profile.filter(p => p[0] > 0.6 && p[0] < 3.4).map(p => [p[0], p[1], p[2], p[3]]), { x0: 0.6, x1: 3.4, y0: -0.1, y1: 0.12, xl: 'Distance along centerline (m)', yl: 'Elevation (m)', every: 2, bed: true });
+}
+function profileChart(pts, o) {
+  const W = 320, H = 190, l = 40, r = 10, t = 12, b = 34;
+  const X = (x) => l + (x - o.x0) / (o.x1 - o.x0) * (W - l - r), Y = (y) => H - b - (y - o.y0) / (o.y1 - o.y0) * (H - t - b);
+  const ticks = (a, c, n) => Array.from({ length: n + 1 }, (_, i) => a + (c - a) * i / n);
+  const xt = ticks(o.x0, o.x1, 4), yt = ticks(o.y0, o.y1, 4);
+  const grid = xt.map(x => `<line x1="${X(x)}" x2="${X(x)}" y1="${t}" y2="${H - b}" stroke="var(--rule)"/><text x="${X(x)}" y="${H - b + 14}" text-anchor="middle">${+x.toFixed(2)}</text>`).join('')
+    + yt.map(y => `<line x1="${l}" x2="${W - r}" y1="${Y(y)}" y2="${Y(y)}" stroke="var(--rule)"/><text x="${l - 5}" y="${Y(y) + 3}" text-anchor="end">${+y.toFixed(2)}</text>`).join('');
+  const exact = pts.filter(p => !o.bed || p[2] > p[3] + 1e-6 || true);
+  const exactPath = o.bed
+    ? segments(pts.map(p => [p[0], p[2] > p[3] + 1e-5 ? p[2] : null])).map(s => `<path d="${s.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="var(--accent)" stroke-width="1.8"/>`).join('')
+    : `<path d="${exact.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[2]).toFixed(1)).join('')}" fill="none" stroke="var(--accent)" stroke-width="1.8"/>`;
+  const bedPath = o.bed ? `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[3]).toFixed(1)).join('')}" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="3 3"/>` : '';
+  const dots = pts.filter((p, i) => i % o.every === 0 && (!o.bed || p[1] > p[3] + 1e-5)).map(p => `<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="1.8" fill="var(--ink)"/>`).join('');
+  const key = `<g transform="translate(${W - r - 150},${t + 6})"><line x1="0" x2="16" y1="0" y2="0" stroke="var(--accent)" stroke-width="1.8"/><text x="20" y="3">exact</text><circle cx="62" cy="0" r="2" fill="var(--ink)"/><text x="68" y="3">model</text>${o.bed ? '<line x1="104" x2="118" y1="0" y2="0" stroke="var(--muted)" stroke-dasharray="3 3"/><text x="121" y="3">bed</text>' : ''}</g>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.yl} versus ${o.xl}: model against exact solution">${grid}${bedPath}${exactPath}${dots}${key}<text x="${(l + W - r) / 2}" y="${H - 4}" text-anchor="middle">${o.xl}</text><text transform="translate(11 ${(t + H - b) / 2}) rotate(-90)" text-anchor="middle">${o.yl}</text></svg>`;
+}
+function segments(arr) { const out = []; let cur = []; for (const p of arr) { if (p[1] === null) { if (cur.length) out.push(cur); cur = []; } else cur.push(p); } if (cur.length) out.push(cur); return out; }
+
+// ---------------------------------------------------------------- boot
+(async () => {
+  syncClear(); drawLegend(); buildVerification();
+  await initEngine();
+  loadScenario('cloudburst');
+  resize();
+  requestAnimationFrame(loop);
+})();
+
+</script>

@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>FloodSim GPU tests</title>
+<pre id="log"></pre>
+<script type="module">
+import { runGpuSuite } from './gpu-suite.js';
+const out = document.getElementById('log');
+const log = (...a) => { const s = a.join(' '); out.textContent += s + '\n'; console.log(s); };
+window.__done = (async () => {
+  const adapter = await navigator.gpu?.requestAdapter();
+  if (!adapter) { log('No WebGPU adapter'); return { error: 'no adapter' }; }
+  const device = await adapter.requestDevice({ requiredLimits: { maxStorageBuffersPerShaderStage: Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10) } });
+  log(`storage buffers per stage: ${device.limits.maxStorageBuffersPerShaderStage}`);
+  device.onuncapturederror = e => log('GPU error: ' + e.error.message);
+  log('adapter: ' + (adapter.info?.architecture || '?'));
+  return await runGpuSuite(device, log);
+})();
+</script>

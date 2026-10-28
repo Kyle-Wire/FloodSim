@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><title>Gate C Davis runner</title>
+<style>body { font: 13px/1.5 ui-monospace, monospace; background: #0d1117; color: #c9d1d9; margin: 16px; } pre { white-space: pre-wrap; }</style>
+<pre id="log">Gate C: HEC-RAS Davis storm sewer, FloodSim run.
+</pre>
+<script type="module">
+import { runDavis } from './davis-run.mjs';
+const out = document.getElementById('log'), log = (s) => { out.textContent += s + '\n'; console.log(s); };
+window.__done = (async () => {
+  const adapter = await navigator.gpu?.requestAdapter(); if (!adapter) { log('No WebGPU adapter'); return { error: 'no adapter' }; }
+  const device = await adapter.requestDevice({ requiredLimits: { maxStorageBuffersPerShaderStage: Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10) } });
+  device.onuncapturederror = (e) => log('GPU error: ' + e.error.message);
+  const variant = new URLSearchParams(location.search).get('model') ?? ''; // e.g. c5 → model-c5.json
+  const model = await (await fetch(variant ? `model-${variant}.json` : 'model.json')).json();
+  // downstream channel level from the HEC-RAS run when it exists (the pump discharges into it)
+  const ref = await fetch('../results/gatec-davis-hecras-dwe.json').then(r => (r.ok ? r.json() : null)).catch(() => null);
+  const dsStage = ref?.pump?.tailwater ? ref.t.map((t, i) => [t, ref.pump.tailwater[i]]) : undefined; // the level the pump discharges against
+  log(`grid ${model.grid.nx}×${model.grid.ny} @ ${model.grid.dx.toFixed(2)} m; downstream channel level ${dsStage ? 'from HEC-RAS' : 'fixed (no HEC-RAS result yet)'}`);
+  const twoWay = new URLSearchParams(location.search).has('twoway'); // two-way inlet exchange with pressurised manholes
+  log(`inlet exchange: ${twoWay ? 'two-way (pressurised manholes)' : 'into the pipes only, overflow at the rim'}`);
+  const r = await runDavis(device, model, { dsStage, twoWay, log });
+  r.twoWay = twoWay;
+  r.dsStageSource = dsStage ? 'HEC-RAS' : 'fixed';
+  const res = await fetch(`/api/bench-results?name=gatec-davis-floodsim${twoWay ? '-2way' : ''}${variant ? '-' + variant : ''}`, { method: 'POST', headers: { 'x-floodsim': '1' }, body: JSON.stringify(r) });
+  log(`done in ${r.wallSeconds.toFixed(0)} s, ${r.steps} steps · surface mass ${r.mass.surface.rel.toExponential(2)} · SWMM ${r.mass.swmm.errorPct}% · into pipes ${r.mass.coupler.toNetwork.toFixed(0)} m³ · saved ${res.ok}`);
+  return { wall: r.wallSeconds, surfaceRel: r.mass.surface.rel, swmm: r.mass.swmm, coupler: r.mass.coupler };
+})();
+</script>

@@ -1,0 +1,163 @@
+// FloodSim dev server: static files from the repo root, plus a cached proxy for the open-data services.
+//   node server/server.mjs [port]      → http://localhost:8766/app/map.html
+// POST /api/fetch {url, method?, body?, contentType?} → upstream response, cached on disk by request hash.
+// Only allowlisted hosts are proxied; responses are cached in .cache/ so re-running an area is offline-fast.
+// /api/projects…: project folders on this computer (loopback only), under FLOODSIM_PROJECTS or Documents\FloodSim Projects.
+import { createServer } from 'node:http';
+import { readFile, writeFile, mkdir, stat, readdir } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { homedir } from 'node:os';
+import { createHash } from 'node:crypto';
+import { extname, join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = fileURLToPath(new URL('..', import.meta.url));
+const cacheDir = join(root, '.cache');
+const port = Number(process.env.PORT || process.argv[2] || 8766);
+
+const ALLOW = new Set([
+  'elevation.nationalmap.gov',      // USGS 3DEP DEM (ImageServer)
+  'overpass-api.de',                // OpenStreetMap buildings, roads, waterways
+  'overpass.kumi.systems',          // Overpass mirrors
+  'overpass.private.coffee',
+  'www.mrlc.gov',                   // NLCD land cover (WMS/WCS)
+  'sdmdataaccess.sc.egov.usda.gov', // SSURGO Soil Data Access
+  'hdsc.nws.noaa.gov',              // NOAA Atlas 14 precipitation frequency
+  'mesonet.agron.iastate.edu',      // IEM: historic rainfall (IEMRE, ASOS 1-minute)
+  'www.nhc.noaa.gov',               // NHC HURDAT2 hurricane tracks
+  'api.tidesandcurrents.noaa.gov',  // NOAA CO-OPS tide gauges
+  'services.arcgis.com',            // city utility layers (e.g. Philadelphia Water inlets, combined-sewer area)
+  'mapservices.pasda.psu.edu',      // PASDA (Pennsylvania) utility layers
+  'geocoding.geo.census.gov',       // US Census address geocoder
+  'nominatim.openstreetmap.org',    // place-name search fallback (OSM; light, cached use only)
+  'epsg.io',                        // coordinate-system definitions for imported GIS files
+]);
+const UA = 'FloodSim/0.1 (urban flood research prototype)';
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.md': 'text/markdown', '.wasm': 'application/wasm',
+};
+
+/** Loopback, link-local and private-network hosts are never proxied (a linked URL must be public). */
+const PRIVATE = /^(localhost|.*\.local|.*\.internal|0\.0\.0\.0|127\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|169\.254\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|\[?::1\]?|\[?f[cd][0-9a-f:]*\]?|\[?fe80:.*\]?)$/i;
+
+async function proxy(req, res) {
+  // the app always sends this header; a cross-site page cannot without a CORS preflight, which is never granted
+  if (req.headers['x-floodsim'] !== '1') return send(res, 403, 'missing x-floodsim header');
+  let body = '';
+  for await (const chunk of req) body += chunk;
+  const q = JSON.parse(body || '{}');
+  let u;
+  try { u = new URL(q.url); } catch { return send(res, 400, 'bad url'); }
+  const host = u.hostname.toLowerCase();
+  // built-in sources are allowlisted; links a user pastes (q.linked) may point at any public https host, GET only
+  const linkedOK = q.linked === true && (q.method ?? 'GET') === 'GET' && !PRIVATE.test(host);
+  if (u.protocol !== 'https:' || !(ALLOW.has(host) || linkedOK)) return send(res, 403, 'host not allowed: ' + u.hostname);
+  const method = q.method || 'GET';
+  const key = createHash('sha1').update(method + ' ' + u.href + '\n' + (q.body || '')).digest('hex');
+  const file = join(cacheDir, key);
+  try {
+    const [data, meta] = await Promise.all([readFile(file), readFile(file + '.json', 'utf8')]);
+    res.writeHead(200, { 'content-type': JSON.parse(meta).type, 'x-cache': 'hit' });
+    return res.end(data);
+  } catch { /* miss */ }
+  // public data services are often briefly overloaded: retry 429 / 5xx / network errors twice with backoff
+  let r, data, lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt) await new Promise(ok => setTimeout(ok, 1500 * attempt));
+    try {
+      r = await fetch(u, { method, body: q.body, headers: { 'user-agent': UA, ...(q.contentType ? { 'content-type': q.contentType } : {}) }, signal: AbortSignal.timeout(90e3) });
+      data = Buffer.from(await r.arrayBuffer());
+      if (r.status !== 429 && r.status < 500) break;
+    } catch (e) { lastErr = e; r = null; }
+  }
+  if (!r) return send(res, 502, 'upstream error: ' + (lastErr?.message ?? 'unreachable'));
+  const type = r.headers.get('content-type') || 'application/octet-stream';
+  if (r.ok) {
+    await mkdir(cacheDir, { recursive: true });
+    await Promise.all([writeFile(file, data), writeFile(file + '.json', JSON.stringify({ url: u.href, type }))]);
+  }
+  res.writeHead(r.status, { 'content-type': type, 'x-cache': 'miss' });
+  res.end(data);
+}
+
+async function serveStatic(req, res) {
+  let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  if (p === '/') { res.writeHead(302, { location: '/app/map.html' }); return res.end(); } // redirect, so relative script paths resolve
+  const file = normalize(join(root, p));
+  if (!file.startsWith(normalize(root)) || file.includes('.cache')) return send(res, 403, 'forbidden');
+  try {
+    if ((await stat(file)).isDirectory()) return send(res, 404, 'not found');
+    res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
+    res.end(await readFile(file));
+  } catch { send(res, 404, 'not found'); }
+}
+
+// ------------------------------------------------------------------ projects
+const projectsDir = process.env.FLOODSIM_PROJECTS || join(homedir(), 'Documents', 'FloodSim Projects');
+const LOCAL = /^(::1|127\.0\.0\.1|::ffff:127\.0\.0\.1)$/;
+const FOLDER = /^[\w\-()&,' ]{1,80}$/, SEG = /^[\w\-.]{1,80}$/;
+/** Absolute path of a file inside a project folder, or null if the names are not plain (no '..', no separators). */
+function projectPath(folder, path = '') {
+  if (!FOLDER.test(folder ?? '') || /^[ .]|[ .]$/.test(folder)) return null;
+  const segs = path ? path.split('/') : [];
+  if (segs.length > 4 || segs.some(s => !SEG.test(s) || /^\.+$/.test(s))) return null;
+  return join(projectsDir, folder, ...segs);
+}
+async function projects(req, res, p) {
+  if (req.headers['x-floodsim'] !== '1') return send(res, 403, 'missing x-floodsim header');
+  if (!LOCAL.test(req.socket.remoteAddress ?? '')) return send(res, 403, 'local only');
+  const q = new URL(req.url, 'http://x').searchParams;
+  if (p === '/api/projects' && req.method === 'GET') { // list, newest first
+    await mkdir(projectsDir, { recursive: true });
+    const list = [];
+    for (const d of await readdir(projectsDir, { withFileTypes: true })) {
+      if (!d.isDirectory() || !FOLDER.test(d.name)) continue;
+      try {
+        const pj = JSON.parse(await readFile(join(projectsDir, d.name, 'project.json'), 'utf8'));
+        const runs = await readdir(join(projectsDir, d.name, 'runs')).catch(() => []);
+        list.push({ folder: d.name, name: pj.name ?? d.name, saved: pj.saved ?? null, place: pj.place ?? '', runs: runs.length });
+      } catch { /* not a project */ }
+    }
+    list.sort((a, b) => String(b.saved).localeCompare(String(a.saved)));
+    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); return res.end(JSON.stringify({ dir: projectsDir, projects: list }));
+  }
+  const file = !q.get('folder') && p === '/api/projects/reveal' ? projectsDir : projectPath(q.get('folder'), q.get('path') ?? '');
+  if (!file) return send(res, 400, 'bad project or file name');
+  if (p === '/api/projects/file' && req.method === 'GET') {
+    let data; try { data = await readFile(file); } catch { return send(res, 404, 'not found'); }
+    res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' }); return res.end(data);
+  }
+  if (p === '/api/projects/file' && req.method === 'POST') {
+    const chunks = []; for await (const c of req) chunks.push(c);
+    await mkdir(join(file, '..'), { recursive: true }); await writeFile(file, Buffer.concat(chunks)); return send(res, 200, 'saved');
+  }
+  if (p === '/api/projects/reveal' && req.method === 'POST') { // open the folder in Explorer / Finder
+    await mkdir(file, { recursive: true });
+    const [cmd, args] = process.platform === 'win32' ? ['explorer.exe', [file]] : process.platform === 'darwin' ? ['open', [file]] : ['xdg-open', [file]];
+    spawn(cmd, args, { detached: true, stdio: 'ignore' }).unref(); return send(res, 200, 'opened');
+  }
+  return send(res, 404, 'not found');
+}
+
+function send(res, code, msg) { res.writeHead(code, { 'content-type': 'text/plain' }); res.end(msg); }
+
+/** POST /api/bench-results?name=test1 (JSON body) → benchmarks/ea/results/test1.json (gatec-* → benchmarks/gatec/results). Names are [a-z0-9-] only. */
+async function saveBench(req, res) {
+  if (req.headers['x-floodsim'] !== '1') return send(res, 403, 'missing x-floodsim header');
+  const name = new URL(req.url, 'http://x').searchParams.get('name') ?? '';
+  if (!/^(::1|127\.0\.0\.1|::ffff:127\.0\.0\.1)$/.test(req.socket.remoteAddress ?? '')) return send(res, 403, 'local only');
+  if (!/^[a-z0-9-]{1,40}$/.test(name)) return send(res, 400, 'bad name');
+  let body = ''; for await (const chunk of req) body += chunk;
+  JSON.parse(body); // must be JSON
+  const dir = join(root, 'benchmarks', name.startsWith('gatec-') ? 'gatec' : 'ea', 'results'); await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, name + '.json'), body); send(res, 200, 'saved');
+}
+
+createServer((req, res) => {
+  const p = req.url.split('?')[0];
+  (req.method === 'POST' && p === '/api/fetch' ? proxy(req, res) : req.method === 'POST' && p === '/api/bench-results' ? saveBench(req, res)
+    : p.startsWith('/api/projects') ? projects(req, res, p) : serveStatic(req, res))
+    .catch((e) => { console.error(e); if (!res.headersSent) send(res, 500, String(e.message)); });
+}).listen(port, () => console.log(`FloodSim at http://localhost:${port}/app/map.html
+Projects in ${projectsDir}`));

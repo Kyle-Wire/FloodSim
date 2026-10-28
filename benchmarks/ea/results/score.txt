@@ -1,0 +1,90 @@
+
+Test 1  (70×10 @ 10 m, 72949 steps, 36.6 s, mass rel 3.4e-6)  4/4 inside the report's spread
+  in   P1 level reaches 10.345 m                  3.617 h   [3.1–4 ±0.1]
+  in   P1 level at 10 h (hold)                    10.350 m   [10.345–10.352 ±0.005]
+  in   P1 level at 20 h                           10.253 m   [10.25–10.262 ±0.005]
+  in   P2 level at 20 h                           10.253 m   [10.25–10.262 ±0.005]
+  vs 7 codes (level where wet, else depth; ±0.02 m): P1 100% in, median |Δ| 0.1 cm · P2 100% in, median |Δ| 0.1 cm
+
+Test 2  (100×100 @ 20 m, 70202 steps, 32.4 s, mass rel -1.2e-5)  10/10 inside the report's spread
+  in   final volume (Table 4.3, full-SWE range)   97199 m³   [97162–97393 ±0]
+  in   P4 peak level                              9.749 m   [9.72–9.775 ±0.01]
+  in   P4 level at 24 h                           9.539 m   [9.535–9.55 ±0.01]
+  in   P3 peak level                              9.341 m   [9.33–9.35 ±0.01]
+  in   P3 level at 24 h                           9.209 m   [9.205–9.22 ±0.01]
+  in   P1 arrival                                 3.250 h   [2.5–3.7 ±0.25]
+  in   P1 level at 48 h                           8.588 m   [8.575–8.595 ±0.01]
+  in   P5 arrival                                 5.083 h   [3.7–12 ±0.25]
+  in   P5 level at 48 h                           8.235 m   [8.15–8.25 ±0.01]
+  in   P13–16 stay dry (max depth)                0.000 m   [0–0.01 ±0]
+  vs 7 codes (level where wet, else depth; ±0.02 m): P1 100% in, median |Δ| 0.3 cm · P2 100% in, median |Δ| 0.5 cm · P3 100% in, median |Δ| 0.1 cm · P4 100% in, median |Δ| 0.3 cm · P5 100% in, median |Δ| 6.0 cm · P6 100% in, median |Δ| 0.5 cm · P7 100% in, median |Δ| 0.1 cm · P8 100% in, median |Δ| 0.3 cm · P9 100% in, median |Δ| 0.0 cm · P10 100% in, median |Δ| 0.5 cm · P11 100% in, median |Δ| 1.4 cm · P12 100% in, median |Δ| 1.1 cm · P13 100% in, median |Δ| 0.0 cm · P14 100% in, median |Δ| 0.0 cm · P15 100% in, median |Δ| 0.0 cm · P16 100% in, median |Δ| 0.0 cm
+
+Test 3  (60×20 @ 5 m, 1403 steps, 10.5 s, mass rel 2.7e-7)  6/6 inside the report's spread
+  in   P1 arrival                                 66.000 s   [60–95 ±5]
+  in   P1 level at 150 s                          9.978 m   [9.97–9.99 ±0.005]
+  in   P1 level at 600 s                          9.986 m   [9.975–9.99 ±0.005]
+  in   P1 peak velocity                           2.079 m/s   [1.65–2.2 ±0.05]
+  in   P2 rise (+1 cm)                            158.000 s   [145–200 ±5]
+  in   P2 level at 600 s                          9.810 m   [9.805–9.828 ±0.005]
+
+Test 4  (200×400 @ 5 m, 40048 steps, 35.4 s, mass rel -1.2e-4)  12/12 inside the report's spread
+  in   P1 arrival                                 10.000 min   [8–11 ±3]
+  in   P1 peak depth                              0.323 m   [0.295–0.333 ±0.005]
+  in   P1 peak velocity                           0.398 m/s   [0.37–0.48 ±0.01]
+  in   P3 arrival                                 30.333 min   [25–32 ±3]
+  in   P3 peak depth                              0.228 m   [0.21–0.228 ±0.005]
+  in   P3 peak velocity                           0.156 m/s   [0.15–0.172 ±0.01]
+  in   P5 arrival                                 61.000 min   [52–62 ±3]
+  in   P5 peak depth                              0.180 m   [0.168–0.182 ±0.005]
+  in   P5 peak velocity                           0.106 m/s   [0.095–0.118 ±0.01]
+  in   P6 arrival                                 65.667 min   [54–66 ±3]
+  in   P6 peak depth                              0.176 m   [0.164–0.178 ±0.005]
+  in   P6 peak velocity                           0.103 m/s   [0.096–0.119 ±0.01]
+  vs 7 codes (level where wet, else depth; ±0.02 m): P1 100% in, median |Δ| 0.7 cm · P2 100% in, median |Δ| 0.3 cm · P3 100% in, median |Δ| 0.1 cm · P4 100% in, median |Δ| 0.1 cm · P5 100% in, median |Δ| 0.1 cm · P6 100% in, median |Δ| 0.1 cm
+
+Test 5  (256×226 @ 50 m, 64381 steps, 68.4 s, mass rel -5.9e-6)  13/13 inside the report's spread
+  in   P1 arrival                                 0.433 h   [0.4–0.45 ±0.05]
+  in   P1 peak level                              174.838 m   [174.6–175.05 ±0.05]
+  in   P1 level at 10 h                           172.312 m   [172.25–172.35 ±0.05]
+  in   P1 peak velocity                           2.228 m/s   [1.9–2.7 ±0.1]
+  in   P3 arrival                                 0.933 h   [0.85–0.95 ±0.05]
+  in   P3 peak level                              155.959 m   [155.8–156 ±0.05]
+  in   P3 level at 20 h                           152.614 m   [152.6–152.75 ±0.05]
+  in   P3 peak velocity                           1.868 m/s   [1.8–2.45 ±0.1]
+  in   P4 peak velocity                           1.914 m/s   [1.5–2.2 ±0.1]
+  in   P5 level at 20 h                           148.626 m   [148.5–148.8 ±0.05]
+  in   P7 peak level                              155.725 m   [155.5–155.85 ±0.05]
+  in   P7 level at 16 h                           152.835 m   [152.8–153 ±0.05]
+  in   P7 peak velocity                           1.564 m/s   [1.2–1.6 ±0.1]
+  vs 7 codes (level where wet, else depth; ±0.1 m): P1 100% in, median |Δ| 0.3 cm · P2 100% in, median |Δ| 0.2 cm · P3 100% in, median |Δ| 1.7 cm · P4 100% in, median |Δ| 0.6 cm · P5 100% in, median |Δ| 5.5 cm · P6 100% in, median |Δ| 0.0 cm · P7 100% in, median |Δ| 0.0 cm
+
+Test 6a  (1010×56 @ 0.1 m, 7661 steps, 36.5 s, mass rel -4.3e-7)  12/14 inside the report's spread
+  OUT  G2 peak level after the jump (10–20 s)     0.053 m   [0.12–0.17 ±0.005]
+  in   G2 level at 30 s                           0.090 m   [0.05–0.1 ±0.005]
+  in   G2 level at 60 s                           0.054 m   [0.044–0.072 ±0.005]
+  in   G2 velocity, mean 3–9 s                    2.234 m/s   [2–2.3 ±0.05]
+  in   G4 peak level                              0.107 m   [0.1–0.145 ±0.005]
+  OUT  G4 level at 20 s                           0.063 m   [0.075–0.095 ±0.005]
+  in   G4 level at 60 s                           0.052 m   [0.043–0.068 ±0.005]
+  in   G4 peak velocity                           1.486 m/s   [1.27–1.57 ±0.05]
+  in   G5 peak level                              0.090 m   [0.09–0.122 ±0.005]
+  in   G5 level at 30 s                           0.041 m   [0.04–0.09 ±0.005]
+  in   G6 level at 12 s                           0.279 m   [0.265–0.28 ±0.005]
+  in   G6 level at 20 s                           0.217 m   [0.2–0.225 ±0.005]
+  in   G6 level at 30 s                           0.172 m   [0.155–0.175 ±0.005]
+  in   G6 level at 60 s                           0.098 m   [0.084–0.102 ±0.005]
+
+Test 6b  (1010×56 @ 2 m, 16575 steps, 55.1 s, mass rel -1.8e-5)  13/13 inside the report's spread
+  in   G2 peak level                              2.843 m   [2.8–3.25 ±0.05]
+  in   G2 level at 200 s                          1.932 m   [1.85–2.03 ±0.05]
+  in   G2 level at 400 s                          1.494 m   [1.45–1.55 ±0.05]
+  in   G2 level at 600 s                          1.277 m   [1.25–1.35 ±0.05]
+  in   G2 peak velocity                           5.337 m/s   [4.6–5.4 ±0.1]
+  in   G4 peak level                              2.096 m   [2.05–2.53 ±0.05]
+  in   G4 peak velocity                           4.438 m/s   [3.9–4.9 ±0.1]
+  in   G5 peak level                              1.902 m   [1.92–2.43 ±0.05]
+  in   G6 level at 60 s                           5.548 m   [5.3–5.55 ±0.05]
+  in   G6 level at 100 s                          4.328 m   [3.9–4.3 ±0.05]
+  in   G6 level at 200 s                          2.649 m   [2.35–2.6 ±0.05]
+  in   G6 level at 300 s                          1.865 m   [1.75–1.9 ±0.05]
+  in   G6 level at 600 s                          1.290 m   [1.27–1.35 ±0.05]

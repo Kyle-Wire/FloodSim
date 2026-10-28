@@ -1,0 +1,106 @@
+// User-linked data: any public ArcGIS REST layer (FeatureServer/MapServer …/<id>) or GeoJSON URL. Build fetches the
+// features inside the model area and works out what the attribute fields mean (pipe size, shape, inverts, status),
+// with units guessed from names and values; the guesses are shown to the user and can be overridden.
+
+const isArcGIS = (u) => /\/(FeatureServer|MapServer)\/\d+\/?$/i.test(u.split('?')[0]);
+
+/** What a link points to: name, geometry kind, fields, and (for ArcGIS) the record limit. Throws a readable error. */
+export async function describeSource(url, fetcher) {
+  url = url.trim();
+  if (!/^https:\/\//i.test(url)) throw new Error('Use an https:// link to an ArcGIS layer (…/FeatureServer/0) or a GeoJSON file');
+  if (isArcGIS(url)) {
+    const j = await (await fetcher(url.replace(/\/?$/, '') + '?f=json')).json();
+    if (j.error) throw new Error(j.error.message || 'ArcGIS error');
+    if (!j.geometryType) throw new Error('That is a service, not a layer: add the layer number, e.g. …/MapServer/1');
+    const kind = /Point/i.test(j.geometryType) ? 'point' : /Polyline/i.test(j.geometryType) ? 'line' : 'polygon';
+    return { type: 'arcgis', url: url.replace(/\/?$/, ''), name: j.name, kind, fields: (j.fields || []).map(f => f.name), maxRecords: j.maxRecordCount || 1000 };
+  }
+  const gj = await (await fetcher(url)).json();
+  if (gj.type !== 'FeatureCollection') throw new Error('Not a GeoJSON FeatureCollection');
+  const g = gj.features.find(f => f.geometry)?.geometry?.type || '';
+  const kind = /Point/.test(g) ? 'point' : /LineString/.test(g) ? 'line' : 'polygon';
+  return { type: 'geojson', url, name: gj.name || url.split('/').pop(), kind, fields: Object.keys(gj.features[0]?.properties || {}), data: gj };
+}
+
+/** Features inside a lon/lat box as {kind, coords ([lon,lat] or [[lon,lat],…] per part), props}. */
+export async function fetchFeatures(src, [w, s, e, n], fetcher) {
+  const out = [];
+  if (src.type === 'arcgis') {
+    const step = Math.min(1000, src.maxRecords || 1000);
+    for (let offset = 0; ; offset += step) {
+      const q = `${src.url}/query?where=1%3D1&geometry=${w},${s},${e},${n}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects` +
+        `&outFields=*&returnGeometry=true&outSR=4326&resultOffset=${offset}&resultRecordCount=${step}&f=json`;
+      const j = await (await fetcher(q)).json();
+      if (j.error) throw new Error(`${src.name}: ${j.error.message}`);
+      for (const f of j.features || []) {
+        const gm = f.geometry; if (!gm) continue;
+        if (gm.x != null) out.push({ kind: 'point', coords: [gm.x, gm.y], props: f.attributes });
+        else if (gm.paths) for (const p of gm.paths) out.push({ kind: 'line', coords: p, props: f.attributes });
+      }
+      if (!j.exceededTransferLimit && (j.features || []).length < step) break;
+    }
+    return out;
+  }
+  const inBox = ([x, y]) => x >= w && x <= e && y >= s && y <= n;
+  for (const f of src.data.features) {
+    const g = f.geometry; if (!g) continue;
+    if (g.type === 'Point' && inBox(g.coordinates)) out.push({ kind: 'point', coords: g.coordinates, props: f.properties || {} });
+    if (g.type === 'MultiPoint') for (const c of g.coordinates) if (inBox(c)) out.push({ kind: 'point', coords: c, props: f.properties || {} });
+    if (g.type === 'LineString' && g.coordinates.some(inBox)) out.push({ kind: 'line', coords: g.coordinates, props: f.properties || {} });
+    if (g.type === 'MultiLineString') for (const l of g.coordinates) if (l.some(inBox)) out.push({ kind: 'line', coords: l, props: f.properties || {} });
+  }
+  return out;
+}
+
+// ------------------------------------------------------------------ field detection for pipe layers
+
+const FIELD_PATTERNS = {
+  size: /^(dia|diam|diameter|dia_?hgt|diameter_?in|pipe_?dia(meter)?|pipe_?size|size|height|hgt|rise)$|dia(meter)?|pipesize/i,
+  width: /^(width|wid|span|pipe_?width)$/i,
+  shape: /shape|x_?sec|xsec|cross_?sec|sec_?shp|pipe_?type/i,
+  upInvert: /(^|_)(us|up|upstr(eam)?|start|from|beg(in)?)_?(inv(ert)?|ie|elev)|inv(ert)?_?(up|us|start|from)|^upinv|^usinv|^inv_?up/i,
+  dnInvert: /(^|_)(ds|dn|down|downstr(eam)?|end|to)_?(inv(ert)?|ie|elev)|inv(ert)?_?(dn|ds|down|end|to)|^dninv|^dsinv|^inv_?dn/i,
+  status: /aband|status|active|lifecycle|in_?service/i,
+};
+const DEAD = /^(y|yes|true|1|abandoned|removed|inactive|retired|proposed|out of service)$/i;
+
+/** Guess which fields hold pipe size, shape, inverts and status, and the units of size. */
+export function detectPipeFields(fields, sample) {
+  const pick = (re, avoid = []) => fields.find(f => re.test(f) && !avoid.includes(f)) ?? null;
+  const m = {};
+  m.upInvert = pick(FIELD_PATTERNS.upInvert); m.dnInvert = pick(FIELD_PATTERNS.dnInvert, [m.upInvert]);
+  m.size = pick(FIELD_PATTERNS.size, [m.upInvert, m.dnInvert]); m.width = pick(FIELD_PATTERNS.width, [m.size]);
+  m.shape = pick(FIELD_PATTERNS.shape, [m.size]); m.status = pick(FIELD_PATTERNS.status);
+  const vals = m.size ? sample.map(p => Number(p[m.size])).filter(v => v > 0).sort((a, b) => a - b) : [];
+  const med = vals.length ? vals[vals.length >> 1] : 0;
+  m.sizeUnits = /mm/i.test(m.size || '') ? 'mm' : /_in|inch/i.test(m.size || '') ? 'in' : /_ft|feet/i.test(m.size || '') ? 'ft' :
+    med > 100 ? 'mm' : med >= 4 ? 'in' : 'm';
+  return m;
+}
+
+const UNIT = { in: 0.0254, mm: 0.001, ft: 0.3048, m: 1 };
+
+/**
+ * Pipe records in SI from linked line features: {line: [[lon,lat],…], h (m), w (m) or null, shape: 'CIRCULAR'|'RECT_CLOSED',
+ * barrels, upInv, dnInv (raw, units resolved later against the DEM), props}. Abandoned / proposed pipes are dropped.
+ */
+export function pipeRecords(features, m) {
+  const u = UNIT[m.sizeUnits] ?? 1, out = [];
+  for (const f of features) {
+    if (f.kind !== 'line' || f.coords.length < 2) continue;
+    const p = f.props;
+    if (m.status && DEAD.test(String(p[m.status] ?? '').trim())) continue;
+    // sizes beyond 6 m tall / 12 m wide are placeholders (999, 9999 …) in real layers: treat them as unknown
+    const hv = Number(p[m.size]) * u, wv = m.width ? Number(p[m.width]) * u : 0;
+    const h = hv > 0 && hv <= 6 ? hv : null, w = wv > 0 && wv <= 12 ? wv : null;
+    const shp = String(m.shape ? p[m.shape] ?? '' : '');
+    const box = /box|rect|square|rcb/i.test(shp) || /rcb|box/i.test(String(p.MATL ?? p.MATERIAL ?? ''));
+    const barrels = /double|twin|dual/i.test(shp) ? 2 : /triple/i.test(shp) ? 3 : 1;
+    out.push({ line: f.coords, h, w: box ? (w ?? h) : null, shape: box ? 'RECT_CLOSED' : 'CIRCULAR', barrels,
+      upInv: m.upInvert ? Number(p[m.upInvert]) : null, dnInv: m.dnInvert ? Number(p[m.dnInvert]) : null });
+  }
+  return out;
+}
+
+/** Point features as {lon, lat} (inlets, outfalls). */
+export const pointRecords = (features) => features.filter(f => f.kind === 'point').map(f => ({ lon: f.coords[0], lat: f.coords[1] }));

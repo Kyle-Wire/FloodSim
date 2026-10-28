@@ -1,0 +1,37 @@
+<!doctype html><meta charset="utf-8"><title>FloodSim Gate B runner</title>
+<style>body { font: 13px/1.5 ui-monospace, monospace; background: #0d1117; color: #c9d1d9; margin: 16px; } pre { white-space: pre-wrap; }</style>
+<pre id="log">Gate B: EA 2D benchmarks on the FloodSim GPU solver. ?tests=1,2,3,4,5,6a,6b,7 [&tEnd=s]
+</pre>
+<script type="module">
+import { GPUSolver } from '../../src/solver-gpu.js';
+import { runCase } from './lib.mjs';
+import { CASES } from './cases.mjs';
+import { loadSWMM } from '../../src/swmm.js';
+const out = document.getElementById('log');
+const log = (s) => { out.textContent += s + '\n'; console.log(s); };
+const L = {
+  text: async (p) => { const r = await fetch('data/' + p); if (!r.ok) throw new Error(`${p}: ${r.status}`); return r.text(); },
+  bin: async (p) => { const r = await fetch('data/' + p); if (!r.ok) throw new Error(`${p}: ${r.status}`); return r.arrayBuffer(); },
+};
+window.__done = (async () => {
+  const adapter = await navigator.gpu?.requestAdapter();
+  if (!adapter) { log('No WebGPU adapter'); return { error: 'no adapter' }; }
+  const device = await adapter.requestDevice({ requiredLimits: { maxStorageBuffersPerShaderStage: Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10) } });
+  device.onuncapturederror = (e) => log('GPU error: ' + e.error.message);
+  const ids = (new URLSearchParams(location.search).get('tests') ?? Object.keys(CASES).join(',')).split(',');
+  const summary = {};
+  for (const id of ids) {
+    try {
+      const c = await CASES[id](L, { loadSWMM });
+      const tEnd = Number(new URLSearchParams(location.search).get('tEnd')); if (tEnd) c.tEnd = tEnd; // shorter trial runs
+      log(`Test ${id}: ${c.nx}×${c.ny} @ ${c.dx} m, ${c.tEnd} s${c.info ? ' · ' + JSON.stringify(c.info) : ''}`);
+      const r = await runCase(device, GPUSolver, c, log);
+      r.adapter = adapter.info?.architecture ?? '?'; r.test = id; r.date = new Date().toISOString();
+      const res = await fetch(`/api/bench-results?name=test${id}`, { method: 'POST', headers: { 'x-floodsim': '1' }, body: JSON.stringify(r) });
+      summary[id] = { steps: r.steps, wall: +r.wallSeconds.toFixed(1), massRel: r.mass.rel, finalVolume: Math.round(r.finalVolume), inflow: Math.round(r.mass.inflowVolume), saved: res.ok };
+      log(`  done: ${r.steps} steps in ${r.wallSeconds.toFixed(1)} s · mass rel ${r.mass.rel.toExponential(2)} · final volume ${r.finalVolume.toFixed(0)} m³ · saved ${res.ok}`);
+    } catch (e) { log(`Test ${id} failed: ${e.message}`); summary[id] = { error: e.message }; }
+  }
+  return summary;
+})();
+</script>
