@@ -4,7 +4,8 @@
 //   pipe     (line)    → a linked-pipe record for realNetwork (tier 1): D, W, shape, inverts (m NAVD88), Manning n
 //   culvert  (line)    → a surface-to-surface culvert link (inlet/barrel control), like a mapped OSM culvert
 //   manhole  (point)   → structure: its invert fills in missing pipe inverts at that end
-//   inlet    (point)   → catch basin: joins the nearest pipe within 30 m (or a synthetic manhole when no pipes are drawn)
+//   inlet    (point)   → catch basin: joins the nearest pipe within 30 m (or a synthetic manhole when no pipes are drawn);
+//                        `blocked` (0–1) is the share of its grates covered by debris (1 = sealed: no inflow)
 //   outfall  (point)   → where the network discharges; `boundary` = the pipe carries on off-site (normal-depth outlet)
 //   storage  (polygon) → underground storage: plan area × depth × void ratio = capacity; a SWMM storage unit joined
 //                         to the nearest manhole by a connection pipe, so it fills and drains with the network
@@ -30,9 +31,9 @@ export const STORAGE_SYSTEMS = {
 // standard US sizes (18 in pipe, 36 in culvert, 5 ft deep storage, 12 in connection), stored in metres
 export const DEFAULTS = {
   pipe: { D: 0.4572, shape: 'CIRCULAR', n: 0.013 },
-  culvert: { D: 0.9144, n: 0.015 },
+  culvert: { D: 0.9144, n: 0.015, blocked: 0 },
   manhole: {},
-  inlet: { grates: 1 },
+  inlet: { grates: 1, blocked: 0 },
   outfall: { boundary: false },
   storage: { system: 'chambers', voids: 0.55, depth: 1.524, connD: 0.3048 },
   // 3 ft wall, 4 ft berm with a 10 ft top and 3:1 sides, 2 ft deployable barrier up from the start
@@ -105,12 +106,15 @@ export function layerInputs(fc) {
   const pt = (f) => ({ lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1] });
   return {
     pipes,
-    inlets: byType('inlet').flatMap(f => Array.from({ length: Math.max(1, f.properties.grates | 0) }, () => pt(f))),
+    // one point per grate; `open` is the share of the grate not blocked by debris (it scales the inlet's opening)
+    inlets: byType('inlet').flatMap(f => Array.from({ length: Math.max(1, f.properties.grates | 0) }, () => ({ ...pt(f), open: 1 - Math.min(1, Math.max(0, Number(f.properties.blocked) || 0)) }))),
     outfalls: byType('outfall').map(f => ({ ...pt(f), boundary: !!f.properties.boundary, invert: num(f.properties.invert) })),
     culverts: byType('culvert').map(f => {
       const p = f.properties, inv = [num(p.upInv), num(p.dnInv)].filter(v => v != null);
-      return { line: f.geometry.coordinates, kind: 'drawn', D: p.D > 0 ? p.D : DEFAULTS.culvert.D, n: p.n ?? DEFAULTS.culvert.n, inv: inv.length ? Math.max(...inv) : null, drawn: true };
-    }),
+      // debris in the barrel: the same flow area as a smaller clear pipe (fully blocked passes nothing)
+      const open = 1 - Math.min(1, Math.max(0, Number(p.blocked) || 0)), D = (p.D > 0 ? p.D : DEFAULTS.culvert.D) * Math.sqrt(open);
+      return { line: f.geometry.coordinates, kind: 'drawn', D, n: p.n ?? DEFAULTS.culvert.n, inv: inv.length ? Math.max(...inv) : null, drawn: true, blocked: 1 - open };
+    }).filter(c => c.D > 0), // a fully blocked culvert passes nothing
     storage: byType('storage').map(f => ({ id: f.id, ring: f.geometry.coordinates[0], ...f.properties, ...storageCapacity(f.properties, f.geometry.coordinates[0]) })),
     barriers: F.filter(f => BARRIERS.has(f.properties.type)).map(f => ({ id: f.id, line: f.geometry.coordinates, ...f.properties })),
   };

@@ -370,13 +370,7 @@ fn updateAt(x: u32, y: u32) {
   var a = A[c];
   if (q.x < 0.0) { a.w += -(q.x - q.w); q.x = 0.0; q.w = 0.0; }
   if (q.x <= P.hdry) { q.y = 0.0; q.z = 0.0; }
-  var qo = 0.0;
-  if (i == GH) { qo -= Fw.x; }
-  if (i == NX - GH - 1) { qo += Fe.x; }
-  if (j == GH) { qo -= Fs.x; }
-  if (j == NY - GH - 1) { qo += Fn.x; }
-  a.z += qo * select(1.0, 0.5, P.secondOrder == 1u) * dt * P.dx;
-  U[c] = q; A[c] = a;
+  U[c] = q; A[c] = a; // boundary outflow is booked per edge face by edgeOut (compensated)
 }
 
 // ---- semi-implicit friction, rainfall, infiltration, max depth
@@ -638,12 +632,6 @@ fn sgUpdateAt(x: u32, y: u32) {
   var q = kadd(U[c], -dt / P.dx * (Fe - Fw + Fn - Fs));
   var a = A[c];
   if (q.x < 0.0) { a.w += -(q.x - q.w); q.x = 0.0; q.w = 0.0; }
-  var qo = 0.0;
-  if (i == GH) { qo -= Fw; }
-  if (i == NX - GH - 1) { qo += Fe; }
-  if (j == GH) { qo -= Fs; }
-  if (j == NY - GH - 1) { qo += Fn; }
-  a.z += qo * dt * P.dx;
   U[c] = q; A[c] = a;
 }
 @compute @workgroup_size(8, 8)
@@ -714,6 +702,33 @@ fn sgExchange(@builtin(global_invocation_id) gid: vec3u) {
   }
   x.y = max(0.0, sgLevel(c, q.x) - SGC[u32(c) * SG_CT]);
   INX[m] = x;
+}
+
+// ---- boundary outflow, per edge face, after theta and before the update (as the barrier books): the flux the update
+// applies across the domain edge, summed with a Kahan residual. A plain fp32 total per edge cell lost ~1e-5 of the
+// volume when a river carried hundreds of m³/s out through a few cells between reads. One thread per edge face: the
+// west and east columns, then the south and north rows (corners count once per side). Faces of tiles the step skipped
+// can hold stale fluxes, but then neither the edge cell nor its ghost holds water, so those are skipped.
+@group(0) @binding(30) var<storage, read_write> EO: array<vec2f>; // per edge face: outflow (m³, − = inflow), Kahan residual
+@compute @workgroup_size(64)
+fn edgeOut(@builtin(global_invocation_id) gid: vec3u) {
+  let m = gid.x; let nx = P.nx; let ny = P.ny;
+  if (m >= 2u * (nx + ny)) { return; }
+  let dt = DT[0];
+  if (dt <= 0.0) { return; }
+  let NX = i32(P.NX);
+  var c = 0; var g = 0; var f = 0.0; var sgn = 1.0;
+  if (m < 2u * ny) {
+    let j = i32(m % ny) + GH; let east = m >= ny;
+    if (east) { c = j * NX + i32(nx) - 1 + GH; g = c + 1; f = FX[g * 9]; } else { c = j * NX + GH; g = c - 1; f = FX[c * 9]; sgn = -1.0; }
+  } else {
+    let k = m - 2u * ny; let i = i32(k % nx) + GH; let north = k >= nx;
+    if (north) { c = (i32(ny) - 1 + GH) * NX + i; g = c + NX; f = FY[g * 9]; } else { c = GH * NX + i; g = c - NX; f = FY[c * 9]; sgn = -1.0; }
+  }
+  if (W[c].x <= 0.0 && W[g].x <= 0.0) { return; }
+  f = f * TH[select(c, g, (f > 0.0) == (sgn < 0.0))]; // the donor: the edge cell for outflow, the ghost for inflow
+  let v = sgn * f * P.dx * dt * select(1.0, 0.5, P.secondOrder == 1u);
+  var e = EO[m]; let y = v - e.y; let t = e.x + y; e.y = (t - e.x) - y; e.x = t; EO[m] = e;
 }
 
 // ---- restart the per-cell running totals (infiltration, outflow, clipping) and keep max depth; encoded right after the

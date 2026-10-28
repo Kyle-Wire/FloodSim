@@ -31,6 +31,9 @@ const ALLOW = new Set([
   'geocoding.geo.census.gov',       // US Census address geocoder
   'nominatim.openstreetmap.org',    // place-name search fallback (OSM; light, cached use only)
   'epsg.io',                        // coordinate-system definitions for imported GIS files
+  'api.waterdata.usgs.gov',         // USGS Water Data APIs: Short-Term Network high-water marks (stnservices)
+  'waterservices.usgs.gov',         // USGS NWIS: stream gauges, instantaneous flows
+  'nwis.waterdata.usgs.gov',        // USGS NWIS: annual peak flows
 ]);
 const UA = 'FloodSim/0.1 (urban flood research prototype)';
 const MIME = {

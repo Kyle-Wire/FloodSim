@@ -67,6 +67,16 @@ const fc = (features) => ({ type: 'FeatureCollection', features });
   check('placed outfall is the network end (free outfall, no continuation)', outs.length === 1 && net.stats.offsiteOutlets === 0 && /FREE/.test(text) && Math.abs(outs[0].invert - 7.0) < 1e-9,
     `${outs.length} outfall at ${outs[0]?.invert.toFixed(2)} m`);
   check('per-pipe Manning n reaches the .inp', /\b0\.011\b/.test(text) && net.stats.grates === 2);
+  { // debris: a half-blocked two-grate basin counts as one grate of opening; a fully blocked one exchanges nothing
+    const LB = fc([...L.features.filter(x => x.properties.type !== 'inlet'), feature('inlet', { type: 'Point', coordinates: ll(70, 104) }, { grates: 2, blocked: 0.5 }),
+      feature('inlet', { type: 'Point', coordinates: ll(130, 104) }, { grates: 1, blocked: 1 }), feature('culvert', { type: 'LineString', coordinates: [ll(50, 150), ll(60, 150)] }, { D: 1.0, blocked: 0.75 }),
+      feature('culvert', { type: 'LineString', coordinates: [ll(50, 160), ll(60, 160)] }, { D: 1.0, blocked: 1 })]);
+    const ib = layerInputs(LB), nb = realNetwork(g, f, ib.pipes, sim, { realInlets: ib.inlets, outfalls: ib.outfalls });
+    const open = nb.inlets.reduce((s, x) => s + x.grates, 0), sealed = nb.inlets.filter(x => x.grates === 0 && x.real === false).length;
+    check('blocked catch basins take water through their open share only', near(open, 1, 1e-9) && ib.inlets.length === 3, `${open} grates of opening from 3 grates`);
+    check('a blocked culvert flows as a smaller barrel; a fully blocked one is left out', ib.culverts.length === 1 && near(ib.culverts[0].D, 0.5, 1e-9), `D ${ib.culverts[0]?.D}`);
+    void sealed;
+  }
 
   // ---- storage: capacity from the footprint, joined to the nearest manhole, a SWMM storage unit that fills and drains
   const box = [ll(95, 110), ll(115, 110), ll(115, 130), ll(95, 130), ll(95, 110)];

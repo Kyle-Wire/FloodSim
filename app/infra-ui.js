@@ -56,7 +56,8 @@ export function initInfra(map, { onChange, estimate, groundAt, fetcher, ready })
     map.addLayer({ id: 'infra-culvert', type: 'line', source: 'infra', filter: T('culvert'), layout: { 'line-cap': 'butt' },
       paint: { 'line-color': selW(FILL.culvert, '#ffffff'), 'line-width': selW(4, 6), 'line-dasharray': [1.5, 1] } });
     map.addLayer({ id: 'infra-points', type: 'circle', source: 'infra', filter: ['==', ['geometry-type'], 'Point'],
-      paint: { 'circle-radius': ['match', ['get', 'type'], 'outfall', 6, 'manhole', 4.5, 4], 'circle-color': ['match', ['get', 'type'], 'outfall', FILL.outfall, 'inlet', FILL.inlet, FILL.manhole],
+      paint: { 'circle-radius': ['match', ['get', 'type'], 'outfall', 6, 'manhole', 4.5, 4],
+        'circle-color': ['match', ['get', 'type'], 'outfall', FILL.outfall, 'inlet', ['step', ['coalesce', ['get', 'blocked'], 0], FILL.inlet, 0.01, '#c98a2b', 0.99, '#6b4423'], FILL.manhole],
         'circle-stroke-color': selW('#0c151b', '#ffffff'), 'circle-stroke-width': selW(1.5, 3) } });
     map.addLayer({ id: 'infra-draft-line', type: 'line', source: 'infra-draft', paint: { 'line-color': '#ffffff', 'line-width': 2, 'line-dasharray': [2, 1.5] } });
     map.addLayer({ id: 'infra-draft-pts', type: 'circle', source: 'infra-draft', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 3, 'circle-color': '#ffffff' } });
@@ -185,9 +186,10 @@ export function initInfra(map, { onChange, estimate, groundAt, fetcher, ready })
   const SPEC = {
     pipe: [['D', 'Diameter / rise', 'size'], ['shape', 'Shape', 'select', [['CIRCULAR', 'Circular'], ['RECT_CLOSED', 'Box']]], ['W', 'Box span', 'size', { when: p => p.shape === 'RECT_CLOSED' }],
       ['upInv', 'Upstream invert', 'elev'], ['dnInv', 'Downstream invert', 'elev'], ['n', 'Manning’s n', 'num'], ['barrels', 'Barrels', 'int']],
-    culvert: [['D', 'Diameter', 'size'], ['upInv', 'Upstream invert', 'elev'], ['dnInv', 'Downstream invert', 'elev'], ['n', 'Manning’s n', 'num']],
+    culvert: [['D', 'Diameter', 'size'], ['upInv', 'Upstream invert', 'elev'], ['dnInv', 'Downstream invert', 'elev'], ['n', 'Manning’s n', 'num'],
+      ['blocked', 'Blocked by debris', 'select', [[0, 'Clear'], [0.25, '25 % blocked'], [0.5, '50 % blocked'], [0.75, '75 % blocked'], [1, 'Fully blocked']]]],
     manhole: [['invert', 'Invert', 'elev'], ['rim', 'Rim', 'elev']],
-    inlet: [['grates', 'Grates', 'int']],
+    inlet: [['grates', 'Grates', 'int'], ['blocked', 'Blocked by debris', 'select', [[0, 'Clear'], [0.25, '25 % blocked'], [0.5, '50 % blocked'], [0.75, '75 % blocked'], [1, 'Fully blocked']]]],
     outfall: [['invert', 'Invert', 'elev'], ['boundary', 'Pipe continues off-site (normal-depth outlet)', 'bool']],
     storage: [['system', 'System', 'select', Object.entries(STORAGE_SYSTEMS).map(([k, s]) => [k, `${s.name} (${Math.round(s.voids * 100)}% voids)`])],
       ['voids', 'Void ratio', 'num'], ['depth', 'Storage depth', 'elev'], ['bottom', 'Floor elevation', 'elev'], ['connD', 'Connection pipe', 'size']],
@@ -206,7 +208,7 @@ export function initInfra(map, { onChange, estimate, groundAt, fetcher, ready })
     const p = f ? f.properties : defaults[type];
     const rows = SPEC[type].filter(([, , , x]) => !x?.when || x.when(p)).map(([k, label, kind, x]) => {
       const id = 'ip-' + k;
-      if (kind === 'select') return `<label class="ifield"><span>${label}</span><select id="${id}" data-k="${k}" data-kind="select">${x.map(([v, t]) => `<option value="${v}"${p[k] === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>`;
+      if (kind === 'select') return `<label class="ifield"><span>${label}</span><select id="${id}" data-k="${k}" data-kind="select">${x.map(([v, t]) => `<option value="${v}"${String(p[k] ?? x[0][0]) === String(v) ? ' selected' : ''}>${t}</option>`).join('')}</select></label>`;
       if (kind === 'text') return `<label class="ifield"><span>${label}</span><input id="${id}" data-k="${k}" data-kind="text" value="${(p[k] ?? '').replace(/"/g, '&quot;')}" placeholder="optional"></label>`;
       if (kind === 'bool') return `<label class="ifield check"><input type="checkbox" id="${id}" data-k="${k}" data-kind="bool"${p[k] ? ' checked' : ''}><span>${label}</span></label>`;
       const v = CONVERT.has(kind) ? fmtIn(kind, p[k]) : p[k] ?? '';
@@ -225,6 +227,7 @@ export function initInfra(map, { onChange, estimate, groundAt, fetcher, ready })
       else if (attached) info.push('<span class="warn">Not connected: no manhole within 150 m (draw or estimate pipes first)</span>');
     }
     if (BARRIERS.has(type) && f) info.push(...barrierInfo(f));
+    if ((type === 'inlet' || type === 'culvert') && f && p.blocked > 0) info.push(`<span class="warn">${p.blocked >= 1 ? 'Fully blocked: takes no water' : `${Math.round(p.blocked * 100)} % blocked: ${type === 'inlet' ? 'its grates take water through the open share only' : 'flows like a smaller clear barrel'}`}</span>`);
     box.innerHTML = `<h3>${f ? NAMES[type] : 'New ' + NAMES[type].toLowerCase() + ' defaults'}${f?.properties.source ? ` <i>${f.properties.source}</i>` : ''}</h3>${rows.join('')}` +
       (info.length ? `<p class="iinfo">${info.join('<br>')}</p>` : '') + (f ? '<div class="row"><button class="btn" id="ipDelete" type="button">Delete</button></div>' : '');
     for (const el of box.querySelectorAll('[data-k]')) el.addEventListener('change', () => setProp(f, type, el));
@@ -234,7 +237,7 @@ export function initInfra(map, { onChange, estimate, groundAt, fetcher, ready })
     const p = f ? f.properties : defaults[type], k = el.dataset.k, kind = el.dataset.kind;
     if (kind === 'bool') p[k] = el.checked;
     else if (kind === 'text') p[k] = el.value.trim() || null;
-    else if (kind === 'select') { p[k] = el.value; if (k === 'system') p.voids = STORAGE_SYSTEMS[el.value].voids; }
+    else if (kind === 'select') { p[k] = /^[\d.]+$/.test(el.value) ? Number(el.value) : el.value; if (k === 'system') p.voids = STORAGE_SYSTEMS[el.value].voids; }
     else {
       const raw = el.value.trim(), v = Number(raw);
       if (raw === '') p[k] = null; else if (!Number.isFinite(v)) return;
@@ -279,6 +282,7 @@ export function initInfra(map, { onChange, estimate, groundAt, fetcher, ready })
       c.pipe && `${pl(c.pipe, 'pipe')} (${fmt('len', s.pipeLen)} ${unit('len')})`, c.manhole && pl(c.manhole, 'manhole'), c.inlet && pl(c.inlet, 'catch basin'),
       c.outfall && pl(c.outfall, 'outfall'), c.culvert && pl(c.culvert, 'culvert'),
       c.storage && `${pl(c.storage, 'storage unit')}` + (s.storage ? ` holding <b>${fmt('vol', s.storage)} ${unit('vol')}</b> (${Math.round(s.storage * GAL).toLocaleString()} gal)` : ''),
+      (() => { const b = fc.features.filter(f => (f.properties.type === 'inlet' || f.properties.type === 'culvert') && f.properties.blocked > 0).length; return b ? `${b} blocked by debris` : ''; })(),
       c.wall + c.berm + c.barrier && [c.wall && pl(c.wall, 'flood wall'), c.berm && pl(c.berm, 'levee'), c.barrier && pl(c.barrier, 'deployable barrier')].filter(Boolean).join(', ') + ` (${fmt('len', s.barrierLen)} ${unit('len')} of barrier)`,
     ].filter(Boolean);
     $('infraSummary').innerHTML = s.total

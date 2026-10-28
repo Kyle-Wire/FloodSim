@@ -37,6 +37,9 @@ the layer is stored as lon/lat GeoJSON in metres.
   linked pipes). Catch basins and outfalls in the layer replace utility ones. A manhole invert fills a missing pipe
   invert at that end. A placed outfall ends the network there, or continues off-site if marked so.
 - **Culverts** become surface-to-surface links with their own inverts and roughness.
+- **Blocked by debris.** Catch basins and culverts take a blockage (clear, 25 / 50 / 75 %, fully blocked). A blocked
+  grate takes water through its open share only (a fully blocked one is a sealed lid); a blocked culvert flows as a
+  clear barrel of the same open area (a fully blocked one passes nothing). Blocked features are drawn brown.
 - **Storage.** Capacity is footprint × depth × void ratio, with presets for vault, chambers, pipe gallery, crates and
   stone. Each unit becomes a SWMM storage unit joined to the nearest manhole by a connection pipe, so it fills when the
   network surcharges and drains back afterwards. `npm run test:infra` covers this, including a SWMM run.
@@ -112,10 +115,24 @@ D8 flow directions, and every cell whose flow path reaches the area. The search 
 - **Closed watershed:** *Run on the watershed* makes the model area the watershed polygon. Its edge is a ridge, so
   nothing flows in and water leaves only where the terrain does: a closed system.
 - **A river from a large basin** (the catchment runs off any feasible search, as the Patapsco at Ellicott City): the
-  river's own flow needs an inflow hydrograph from a stream gauge (not built yet). The local watershed, the ground that
-  drains in without coming down the river, is offered instead (Ellicott City: ~9.5 km² of the Tiber–Hudson valleys).
+  river's own flow comes in from a USGS stream gauge (below). The local watershed, the ground that drains in without
+  coming down the river, is offered as the model area (Ellicott City: ~9.5 km² of the Tiber–Hudson valleys).
 - Surface drainage only: pipes, and water routed around buildings, are not in the trace; in flat urban terrain the
   line is approximate. `npm run test:watershed`.
+
+**Upstream river inflow from USGS gauges** (Storm → *Upstream river inflow*; `src/inflow.js`). After a build, every
+mapped river or stream crossing into the area (OSM waterways run downstream) is listed with the USGS discharge gauges
+within ~15 km. A gauge on the same river whose datum sits above the river where it enters is picked as upstream
+(rivers bend, so direction is no guide; at Ellicott City this picks the Patapsco at Hollofield, not the downstream
+Catonsville and Elkridge gauges).
+- **Historic storm:** the gauge's recorded 15-minute flows (NWIS instantaneous values, about 2007 on).
+- **Design storm:** a hydrograph peaking at the gauge's 2- to 100-year flow, log-Pearson III with the station skew on its
+  annual peaks (the Bulletin 17B moments; 17C's EMA and regional skew are not applied, so these are planning numbers;
+  Hollofield: Q100 ≈ 58,800 cfs from 69 peaks), NRCS gamma shape, peaking at the rain's peak plus a lag you set.
+- The flow enters on the channel's lowest cells at the crossing, through the solver's exchange cells, so the mass
+  books include it. Flows are used as measured (no drainage-area scaling between gauge and crossing).
+- Check: Ellicott City in the speed mode with the Patapsco's 10-year flow: 1.35 million m³ through the model in 90
+  minutes, surface mass error 1.6e-6 of the water that entered. `npm run test:inflow` (`--live` fits Hollofield).
 
 **Calibration** (section 6; `src/calibrate.js`). Import observations (CSV or GeoJSON points, feet or metres NAVD88):
 high-water marks (water surface elevation), observed depths, or flooded / dry reports (311 complaints, photos).
@@ -130,6 +147,11 @@ high-water marks (water surface elevation), observed depths, or flooded / dry re
   recovered exactly, but levels there move under 1 cm across the whole range: on a sewered, impervious site peak
   ponding is set by volume and topography, so marks there do not pin these settings down. The app says so when it
   happens. `npm run test:calibrate`.
+- **USGS high-water marks** (*USGS high-water marks*): the Short-Term Network's surveyed marks in and around the area
+  (`api.waterdata.usgs.gov/stnservices`, state from the Census geocoder), grouped by event. NAVD88 marks become water
+  levels; marks on local control points keep their height above ground as depths. Coverage is mostly large river and
+  coastal floods (Pennsylvania: Lee 2011, Ida 2021, Sandy 2012, historic Ohio River floods); street flash floods rarely
+  have any, so they help most for river and surge replays.
 
 **Projects** (header *Projects* / *Save*, Ctrl+S; `app/projects.js`, `/api/projects` in the server, loopback only).
 Each project is a folder in `Documents\FloodSim Projects` (override with `FLOODSIM_PROJECTS`):
@@ -355,6 +377,10 @@ One scheme, written twice: a fp64 CPU reference (`src/solver-cpu.js`) and WGSL c
   exchange water every step for hours does not accumulate. A read copies the depths and totals and restarts the
   totals in one GPU submission, so a save during a run cannot lose or double-count the steps queued around it (before
   this, saving mid-run could leave a mass error of a few 1e-5)
+- Boundary outflow is booked per edge face with a Kahan residual (as the inlet books). A plain fp32 total per edge
+  cell lost ~1e-5 of the volume when a river carried hundreds of m³/s out through a few cells between reads.
+- The mass error is relative to all the water that came in (initial + rain + net inflow through the edge or exchange
+  cells), as HEC-RAS reports volume error against starting plus inflow volume.
 - GPU batches are sized from the mean length of the last batch's steps. (They used the last step, which is zero when a
   batch ends on its target time, so every batch queued the maximum ~260 steps, mostly empty; fixing it made the 1 m
   South Street run 2.5× faster.)
@@ -405,6 +431,7 @@ node tests/run-hazard-tests.mjs  # hazard classes (ARR 2019, FD2320), force per 
 node tests/run-subgrid-tests.mjs # subgrid speed mode tables: storage, conveyance, curbs, porosity, level ↔ volume
 node tests/run-watershed-tests.mjs # watersheds: depression filling, D8, upstream trace, outlines, rivers from off the DEM
 node tests/run-calibrate-tests.mjs # calibration: observation import, scoring, sweep plan
+node tests/run-inflow-tests.mjs   # river inflow: LP3, hydrographs, river entries, inflow books, STN marks (--live: a real gauge)
 # GPU suite in your own browser: npm start, then open http://localhost:8766/tests/gpu-browser.html
 
 # GPU suite in headless Chromium (works with software WebGPU):
@@ -450,7 +477,8 @@ src/barriers.js       flood walls, levees, deployable barriers → crest faces; 
 src/hazard.js         hazard classes (ARR 2019 H1–H6, FD2320), force, d·v, duration, arrival per cell
 src/subgrid.js        subgrid speed mode: 1 m storage / conveyance tables per cell and face, 1 m depth output
 src/watershed.js      watersheds from 3DEP: priority flood, D8, upstream trace, local watershed past a river
-src/calibrate.js      observations (high-water marks, depths, reports), run scoring, parameter sweeps
+src/calibrate.js      observations (high-water marks, depths, reports, USGS STN), run scoring, parameter sweeps
+src/inflow.js         upstream river inflow: USGS gauges, recorded and design (LP3) hydrographs, entry cells
 src/gi.js             green infrastructure layers (permeable pavement, rain gardens) and green-roof retention
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy

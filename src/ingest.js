@@ -111,7 +111,7 @@ export async function fetchOSM([w, s, e, n], fetcher) {
       if (rings.length) buildings.push({ rings, height: bldHeight(t), id: el.id });
     } else if (t.highway && el.geometry && ROAD_WIDTH[t.highway] && !t.bridge && !t.tunnel && t.covered !== 'yes') {
       roads.push({ line: ring(el.geometry), width: Number.parseFloat(t.width) || ROAD_WIDTH[t.highway], kind: t.highway });
-    } else if (t.waterway && el.geometry && !t.tunnel) waterways.push({ line: ring(el.geometry), kind: t.waterway });
+    } else if (t.waterway && el.geometry && !t.tunnel) waterways.push({ line: ring(el.geometry), kind: t.waterway, name: t.name });
     else if (t.waterway && el.geometry && /culvert|yes/.test(t.tunnel) && el.geometry.length > 1) culverts.push({ line: ring(el.geometry), kind: t.waterway, tags: { diameter: t.diameter, width: t.width } });
   }
   return { buildings, roads, waterways, culverts };

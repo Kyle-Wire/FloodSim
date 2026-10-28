@@ -92,6 +92,7 @@ export function synthNetwork(fine, f, osm, pf, sim, opts = {}) {
     const perEdge = new Map(), off = [];
     for (const g of o.realInlets) {
       const p = toCells(fine, [[g.lon, g.lat]])[0]; if (!inside(p)) continue;
+      p.open = g.open ?? 1; // share of the grate not blocked by debris
       let best = null; const bi = Math.floor(p[0] / BK), bj = Math.floor(p[1] / BK);
       for (let j = bj - 1; j <= bj + 1; j++) for (let i = bi - 1; i <= bi + 1; i++) for (const ei of buckets.get(bkey(i, j)) || []) {
         const [u, v] = edges[ei], a = V[u].p, b = V[v].p, ex = b[0] - a[0], ey = b[1] - a[1], L2 = ex * ex + ey * ey || 1e-12;
@@ -171,6 +172,7 @@ export function synthNetwork(fine, f, osm, pf, sim, opts = {}) {
   for (const n of nodes) {
     const gutter = lowest(n.p, 3);
     n.inletFine = real ? n.grates.map(g => lowest(g, Math.max(1, Math.round(1 / dx)))) : [gutter];
+    n.grateOpen = real ? n.grates.map(g => g.open ?? 1) : [1];
     n.fineCell = n.inletFine[0] ?? gutter; n.gutter = gutter;
     n.ground = n.inletFine.length ? Math.min(...n.inletFine.map(k => f.z[k])) : f.z[gutter];
   }
@@ -288,7 +290,8 @@ export function exchangePoints(outNodes, W, sim, real) {
   outNodes.forEach((n, i) => {
     if (n.outfall) return;
     n.inletCount = 0;
-    const pts = n.inletFine.length ? n.inletFine.map(fk => [fk, 1]) : [[n.gutter, 0]];
+    // each grate counts by its open share (debris); a fully blocked grate exchanges nothing, like a lid
+    const pts = n.inletFine.length ? n.inletFine.map((fk, q) => [fk, n.grateOpen?.[q] ?? 1]) : [[n.gutter, 0]];
     for (const [fk, g] of pts) {
       let sc = (((fk / W) | 0) / sim.F | 0) * sim.nx + ((fk % W) / sim.F | 0);
       if (!sim.mask[sc]) sc = openNeighbour(sim, sc); // a grate on a wall cell (coarse grid, footprint overlap) moves to the lowest open neighbour

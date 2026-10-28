@@ -111,6 +111,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
   if (realInlets) {
     for (const g of o.realInlets) {
       const p = toCells(fine, [[g.lon, g.lat]])[0]; if (p[0] < 0 || p[1] < 0 || p[0] >= W || p[1] >= H) continue;
+      p.open = g.open ?? 1; // share of the grate not blocked by debris
       const best = nearestPipe(p);
       if (!best || best.d * dx > 30) { unconnected++; continue; }
       nodes[splitAt(best, 10)].grates.push(p);
@@ -126,7 +127,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     }
     return bk >= 0 ? bk : Math.min(H - 1, Math.max(0, cj)) * W + Math.min(W - 1, Math.max(0, ci));
   };
-  for (const n of nodes) { n.gutter = lowest(n.p, Math.max(1, Math.round(2 / dx))); n.ground = f.z[n.gutter]; n.inletFine = n.grates.map(g => lowest(g, Math.max(1, Math.round(1 / dx)))); }
+  for (const n of nodes) { n.gutter = lowest(n.p, Math.max(1, Math.round(2 / dx))); n.ground = f.z[n.gutter]; n.inletFine = n.grates.map(g => lowest(g, Math.max(1, Math.round(1 / dx)))); n.grateOpen = n.grates.map(g => g.open ?? 1); }
 
   // ---- 2. inverts from the layer, if plausible (try metres, then feet)
   let invUnits = null;
@@ -203,7 +204,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     const sink = into[i].length > 0 && outOf[i].length === 0;
     const inv = Math.min(...[...into[i].map(k => raw[k].invDn), ...outOf[i].map(k => raw[k].invUp)]);
     return { name: (sink ? 'O' : 'J') + i, p: n.p, ground: n.ground, invert: inv, depth: Math.max(0.5, n.ground - inv), outfall: sink,
-      toStream: false, realOutfall: sink && !n.edge, inletFine: sink ? [] : n.inletFine, gutter: n.gutter, fineCell: n.gutter, area: 0, CA: 0, edge: n.edge };
+      toStream: false, realOutfall: sink && !n.edge, inletFine: sink ? [] : n.inletFine, grateOpen: sink ? [] : n.grateOpen, gutter: n.gutter, fineCell: n.gutter, area: 0, CA: 0, edge: n.edge };
   });
   const outPipes = raw.map((q, k) => ({ name: 'C' + k, from: q.a, to: q.b, L: Math.max(1, q.L), D: q.D, W: q.shape === 'RECT_CLOSED' ? q.Wd : 0, shape: q.shape,
     barrels: q.barrels, n: q.r.n, Q: 0, S: Math.max(1e-4, (q.invUp - q.invDn) / q.L), inOffset: q.invUp - outNodes[q.a].invert, outOffset: q.invDn - outNodes[q.b].invert,

@@ -137,6 +137,8 @@ section h2 em { font-style: normal; font-family: var(--mono); letter-spacing: 0;
 .legend { display: grid; gap: 4px; margin-top: 10px; }
 .vlabel { margin: 8px 0 4px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .vseg button { padding-left: 2px; padding-right: 2px; min-width: 0; }
+.inrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin: 6px 0 10px; padding-left: 8px; border-left: 2px solid var(--accent); }
+.inrow b { font-size: 12.5px; } .inrow select, .inrow input { max-width: 100%; }
 .caltab { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 6px; } .caltab td, .caltab th { padding: 2px 4px; text-align: right; border-bottom: 1px solid var(--rule); }
 .caltab th { color: var(--muted); font-weight: 600; } .caltab tr.best td { color: var(--good); font-weight: 600; } .caltab td:first-child, .caltab th:first-child { text-align: left; }
 .ramp { height: 10px; border-radius: 2px; }
@@ -341,6 +343,11 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <div class="field"><label for="tail">Keep running after the storm</label><output id="tailOut"></output><input type="range" id="tail" min="0" max="180" step="5" value="30"></div>
       <div class="field"><label for="roof">Roof runoff routed to ground</label><output id="roofOut"></output><input type="range" id="roof" min="0" max="100" step="5" value="100"></div>
       <p class="note">Storm settings lock once a run starts; Reset to change them. Roof rain goes to the open cells around each building, except the share whose downspouts connect to the sewer (Drainage).</p>
+      <div id="inflowBox" hidden>
+        <p class="vlabel">Upstream river inflow (USGS gauges)</p>
+        <div id="inflowList"></div>
+        <p class="note" id="inflowNote"></p>
+      </div>
     </section>
 
     <section id="drainSec">
@@ -429,6 +436,8 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <select id="obsUnits" aria-label="Units of the observations"><option value="ft">feet NAVD88</option><option value="m">metres NAVD88</option></select>
         <button class="btn" id="obsClear" type="button">Clear</button></div>
       <input type="file" id="obsFile" hidden accept=".csv,.txt,.geojson,.json">
+      <div class="row" style="margin-top:4px"><button class="btn" id="hwmBtn" type="button" disabled title="Surveyed high-water marks from the USGS Short-Term Network near this area">USGS high-water marks</button>
+        <select id="hwmEvent" aria-label="Flood event" hidden></select></div>
       <p class="note" id="obsNote">CSV with lat, lon and a water surface elevation (wse / elev), a depth, or flooded yes / no; or GeoJSON points with the same fields.</p>
       <div class="field"><label for="calManning">Roughness (Manning n) ×</label><output id="calManningOut"></output><input type="range" id="calManning" min="0.6" max="1.6" step="0.05" value="1"></div>
       <div class="field"><label for="calInfil">Infiltration ×</label><output id="calInfilOut"></output><input type="range" id="calInfil" min="0.25" max="2" step="0.05" value="1"></div>

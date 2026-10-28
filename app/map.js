@@ -1,7 +1,7 @@
 // FloodSim map app: draw an area → fetch open data → build a 1 m model → run the GPU solver → live 2D depth on a
 // satellite basemap → export a 3D package. Expects the global `maplibregl` and the dev server's /api/fetch proxy.
 import { GPUSolver } from '../src/solver-gpu.js';
-import { gridFromLonLatBox, fromUTM, polygonCells } from '../src/geo.js';
+import { gridFromLonLatBox, fromUTM, polygonCells, insideRing } from '../src/geo.js';
 import { fetchDEM, fetchOSM, fetchNLCD, fetchSoils, NLCD_COLORS, NLCD_NAMES, toCells } from '../src/ingest.js';
 import { buildFine, coarsen, hillshade, roofConnections, roofRouting, MANNING_ROAD } from '../src/terrain.js';
 import { downscaleDepth, volumeRatio } from '../src/downscale.js';
@@ -23,7 +23,8 @@ import { initProjects } from './projects.js';
 import { buildBarriers, BarrierWatch } from '../src/barriers.js';
 import { buildSubgrid, fineDepth, CT as SG_CT, FT as SG_FT } from '../src/subgrid.js';
 import { watershed } from '../src/watershed.js';
-import { parseObservations, scoreRun, sweepPlan, PARAMS } from '../src/calibrate.js';
+import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/calibrate.js';
+import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, InflowLinks, CFS } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
 
 const $ = (id) => document.getElementById(id);
@@ -432,6 +433,7 @@ $('buildBtn').onclick = async () => {
   if (!S.area) return;
   stopRun(); model = null; logEl.textContent = '';
   for (const id of ['buildBtn', 'runBtn', 'resetBtn', 'exportBtn']) $(id).disabled = true;
+  inflow.entries = []; $('inflowBox').hidden = true; $('hwmEvent').hidden = true; $('hwmBtn').disabled = true; // site-specific: found again after the build
   const fine = gridFromLonLatBox(...S.area, 1), bounds = fine.lonlatBounds(0.0004);
   try {
     const lDem = log('3DEP bare-earth DEM at 1 m');
@@ -486,7 +488,7 @@ swmmReady.then(updateDrainUI);
     if (!device) log('WebGPU is required to run the solver', 'err');
     resetRun();
     if (!ws.last) checkWatershed({ quiet: true }); // does anything drain in from outside? (background, after the build)
-    obsNote();
+    obsNote(); $('hwmBtn').disabled = false; setupInflow().catch((e) => { $('inflowNote').textContent = 'River inflow unavailable: ' + e.message; });
   } catch (e) {
     console.error(e); log('Build failed: ' + e.message, 'err');
   } finally { $('buildBtn').disabled = false; }
@@ -524,6 +526,7 @@ function setTiers() {
   const hsg = [...new Set(soils.map(s => s.hsg || 'none'))];
   const rows = [
     ['Terrain', `USGS 3DEP, ${native ? 'native 1 m lidar' : `${dem.sourceRes?.toFixed(0) ?? '?'} m source resampled to 1 m`}<span class="pill ${native ? 'good' : 'warn'}">${native ? 'tier 1' : 'tier 2'}</span>`],
+    ...(inflow.entries.length ? [['River inflow', run?.inflowReady?.length ? run.inflowReady.map(e => e.label).join('; ') : `${inflow.entries.length} river ${inflow.entries.length > 1 ? 'entries' : 'entry'}; set a gauge under Storm`]] : []),
     ['Solver grid', F === 1 ? '1 m, same as DEM' : isSubgrid() ? `${F} m subgrid speed mode: each cell and face carries 1 m storage and conveyance tables, buildings as porosity, depths at 1 m<span class="pill warn">opt-in</span>`
       : `${F} m; depths downscaled to the 1 m DEM by water-surface projection`],
     ['Buildings', `${osm.buildings.length.toLocaleString()} OSM footprints as walls, ${osm.buildings.filter(b => b.height).length} with heights`],
@@ -925,7 +928,11 @@ function ensureSolver() {
   run.culverts = run.culv.length ? new CulvertLinks(run.culv, c.z, { cellArea: F * F }) : null;
   run.watch = run.bars.faces.length ? new BarrierWatch(run.bars, c.z, F) : null;
   const lv0 = run.watch?.levels(0), crest = run.watch ? run.bars.faces.map((q, m) => ({ i: q.i, j: q.j, axis: q.axis, z: lv0[m], C: q.C, ground: q.ground })) : undefined;
-  const cells = [...(coupled ? run.net.inlets.map(g => g.cell) : []), ...(run.culverts?.cells ?? [])], inletCells = cells.length ? cells : undefined;
+  const base = [...(coupled ? run.net.inlets.map(g => g.cell) : []), ...(run.culverts?.cells ?? [])], used = new Set(base);
+  const inflows = (run.inflowReady ?? []).map(e => ({ ...e, cells: entryCells(c, e.at, { used }) })).filter(e => e.cells.length);
+  inflows.forEach(e => e.cells.forEach(k => used.add(k)));
+  run.inflow = inflows.length ? new InflowLinks(inflows) : null;
+  const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
   run.solver = new GPUSolver(device, {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask: c.mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
     sink: c.inside?.map(v => 1 - v), gi: run.gi ?? undefined, crest, rainField: run.roofEarly ? run.roofEarly.rainField : c.rainField,
@@ -941,15 +948,16 @@ function ensureSolver() {
     run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay });
     $('netReadouts').hidden = false;
   }
-  const members = [run.coupler, run.culverts].filter(Boolean);
-  run.exchanger = members.length > 1 || run.culverts ? new LinkHub(run.solver, members, 2) : run.coupler; // every 2 s
+  const members = [run.coupler, run.culverts, run.inflow].filter(Boolean);
+  run.exchanger = members.length > 1 || run.culverts || run.inflow ? new LinkHub(run.solver, members, 2) : run.coupler; // every 2 s
   for (const id of ['drainSrc', 'networkCtl', 'lumpedCtl']) $(id).classList.add('locked');
   setTiers();
   run.hmax = new Float32Array(c.nx * c.ny); run.smax = new Float32Array(c.nx * c.ny);
   run.haz = new HazardTracker(c.nx * c.ny);
 }
-$('runBtn').onclick = () => {
+$('runBtn').onclick = async () => {
   if (!run) resetRun(); if (!run) return;
+  if (!run.solver) { const r = run; try { r.inflowReady = await prepareInflow(); } catch (e) { log('River inflow: ' + e.message, 'warn'); r.inflowReady = []; } if (run !== r || r.solver) return; }
   try { ensureSolver(); } catch (e) { log(e.message, 'err'); return; }
   run.playing = !run.playing;
   $('runBtn').textContent = run.playing ? 'Pause' : 'Run';
@@ -1012,7 +1020,7 @@ async function loop(gen) {
         // SWMM's external outflow is the outfalls plus any water sent back up through inlets (negative lateral flow)
         const c = run.netMass, m = run.mass, outfalls = c.externalOutflow * 1000 - run.coupler.totals.latOut;
         const rain = m.rain + run.coupler.totals.roofToSewer; // rain on the surface + rain piped straight from roofs
-        run.netMass.combinedRel = (rain - m.infil - m.outflow - outfalls - m.volume - c.finalStored * 1000) / rain;
+        run.netMass.combinedRel = (rain + (run.inflow?.totals.volume ?? 0) - m.infil - m.outflow - outfalls - m.volume - c.finalStored * 1000) / rain; // + river inflow
       }
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
       if (S.obs.length) scoreAndShow();
@@ -1035,7 +1043,7 @@ async function readMassNow() {
   const st = await run.solver.readState(); run.mass = st.mass;
   if (run.culverts) { // water a culvert took upstream and has not yet delivered downstream counts as stored
     const m = run.mass, inTransit = run.culverts.pending.reduce((a, p) => a + p.vol, 0);
-    m.culvertInTransit = inTransit; m.volume += inTransit; m.rel = (m.volume - m.expected) / Math.max(1e-30, Math.max(Math.abs(m.expected), run.solver.vol.initial + m.rain));
+    m.culvertInTransit = inTransit; m.volume += inTransit; m.rel = (m.volume - m.expected) / Math.max(1e-30, Math.abs(m.expected), run.solver.vol.initial + m.rain + Math.max(0, -m.exchanged) + Math.max(0, -m.outflow));
   }
   const zs = run.c.sg ? run.c.z : null; // subgrid: the solver reports the peak level; keep depth at the lowest point
   for (let k = 0; k < st.hmax.length; k++) { const h = zs ? st.hmax[k] - zs[k] : st.hmax[k]; if (h > run.hmax[k]) run.hmax[k] = h; }
@@ -1338,6 +1346,92 @@ Files
 `;
 
 // ------------------------------------------------------------------ start
+// ------------------------------------------------------------------ upstream river inflow
+/**
+ * Rivers entering the model area (OSM waterways crossing its edge) and the USGS gauges near them. Each entry gets a gauge
+ * (matched by river name, upstream first) and a flow: the recorded hydrograph for a historic storm, or a hydrograph
+ * peaking at the gauge's T-year flood (log-Pearson III on its annual peaks) for a design storm.
+ */
+const inflow = { entries: [], gauges: [], peaks: new Map() };
+async function setupInflow() {
+  const fine = model.fine, ringC = model.poly ? model.poly.map(([lo, la]) => fine.lonlatToCell(lo, la)) : null;
+  const inside = (i, j) => i >= 0 && j >= 0 && i < fine.nx && j < fine.ny && (!ringC || insideRing(i, j, ringC));
+  inflow.entries = riverEntries(fine, model.osm.waterways, inside);
+  $('inflowBox').hidden = !inflow.entries.length; if (!inflow.entries.length) return;
+  $('inflowNote').textContent = 'Finding USGS stream gauges…';
+  const [w, s, e, n] = fine.lonlatBounds(0.15); // ~15 km around the area
+  inflow.gauges = await findGauges([w, s, e, n], fetcher);
+  const ll = (p) => fromUTM(fine.x0 + p[0] * fine.dx, fine.y1 - p[1] * fine.dx, fine.zone);
+  $('inflowList').innerHTML = inflow.entries.map((en, i) => {
+    const at = ll(en.at), key = (en.name || '').toUpperCase().replace(/\s+(RIVER|CREEK|RUN|BRANCH|STREAM)$/, '');
+    const zEntry = model.f.z[Math.min(fine.ny - 1, en.at[1] | 0) * fine.nx + Math.min(fine.nx - 1, en.at[0] | 0)];
+    // upstream on the same river = a gauge datum above the river where it enters (rivers bend, so direction says little)
+    const ranked = inflow.gauges.map(g => {
+      const dx = (g.lon - at[0]) * 111320 * Math.cos(at[1] * Math.PI / 180), dy = (g.lat - at[1]) * 111320, d = Math.hypot(dx, dy);
+      return { ...g, d, up: g.altM != null && g.altM > zEntry + 0.3, match: !!key && g.name.toUpperCase().includes(key) };
+    }).sort((a, b) => (b.match - a.match) || (b.up - a.up) || (a.d - b.d));
+    en.ranked = ranked;
+    const pick = ranked.find(g => g.match && g.up) ?? ranked.find(g => g.match);
+    return `<div class="inrow"><b>${en.name || 'Unnamed ' + en.kind} enters the area</b>
+      <select id="inGauge${i}" aria-label="Gauge"><option value="">No inflow</option>${ranked.slice(0, 12).map(g => `<option value="${g.site}"${g === pick ? ' selected' : ''}>${g.name} (${g.areaMi2 ? g.areaMi2.toLocaleString() + ' mi², ' : ''}${(g.d / 1000).toFixed(1)} km ${g.up ? 'upstream' : g.altM != null ? 'downstream' : 'away'})</option>`).join('')}</select>
+      <select id="inFlow${i}" aria-label="Flow"><option value="event">Recorded flows (historic storms)</option>${[2, 10, 25, 50, 100].map(T => `<option value="${T}"${T === 10 ? ' selected' : ''}>Design: ${T}-yr peak flow</option>`).join('')}</select>
+      <label class="field" style="margin:0"><span>River peak after the rain peak (h)</span><input id="inLag${i}" type="number" step="0.5" value="0" style="width:5em"></label></div>`;
+  }).join('');
+  for (let i = 0; i < inflow.entries.length; i++) for (const id of ['inGauge', 'inFlow', 'inLag']) $(id + i).onchange = () => { if (model && (!run || !run.solver)) resetRun(); inflowNoteUpdate(); };
+  inflowNoteUpdate();
+}
+function inflowNoteUpdate() {
+  const on = inflow.entries.filter((_, i) => $('inGauge' + i)?.value).length;
+  $('inflowNote').textContent = !inflow.gauges.length ? 'No USGS discharge gauges within ~15 km: the river enters dry unless you give it a flow.'
+    : `${on} of ${inflow.entries.length} river ${inflow.entries.length > 1 ? 'entries' : 'entry'} with a gauge inflow. A gauge counts the whole basin above it; flows are used as measured (no drainage-area scaling). Recorded flows need a historic storm (15-minute data since about 2007).`;
+}
+/** Each entry's flow as a function of model time (s), fetched before the run starts. */
+async function prepareInflow() {
+  const out = [], st = currentStorm();
+  for (let i = 0; i < inflow.entries.length; i++) {
+    const site = $('inGauge' + i)?.value; if (!site) continue;
+    const en = inflow.entries[i], g = en.ranked.find(x => x.site === site), mode = $('inFlow' + i).value, lag = Number($('inLag' + i).value) * 3600;
+    let flow, label;
+    if (mode === 'event') {
+      if (!st?.t0) throw new Error(`recorded flows need a historic storm (pick one under Storm, or a design peak for ${g.name})`);
+      const series = await gaugeFlows(site, st.t0 - 3600e3, st.t0 + (tStop() + 3600) * 1000, fetcher);
+      if (!series.length) throw new Error(`${g.name} has no 15-minute flows for this storm`);
+      flow = recordedHydrograph(series, st.t0); label = `${g.name}, recorded (peak ${(Math.max(...series.map(p => p.q)) / CFS).toLocaleString(undefined, { maximumFractionDigits: 0 })} cfs)`;
+    } else {
+      if (!inflow.peaks.has(site)) inflow.peaks.set(site, await annualPeaks(site, fetcher));
+      const peaks = inflow.peaks.get(site), q = lp3(peaks, Number(mode)); if (!q) throw new Error(`${g.name}: too few annual peaks for a frequency estimate`);
+      const peakAt = st.intensity.indexOf(Math.max(...st.intensity)) * st.blockMin * 60 + st.blockMin * 30; // middle of the rain's peak block
+      flow = designHydrograph(q, Math.max(600, peakAt + lag)); label = `${g.name}, ${mode}-yr peak ${(q / CFS).toLocaleString(undefined, { maximumFractionDigits: 0 })} cfs (log-Pearson III on ${peaks.length} annual peaks)`;
+    }
+    out.push({ at: en.at, flow, label, site, name: en.name });
+  }
+  if (out.length) log('River inflow: ' + out.map(e => e.label).join('; '), 'ok', 'USGS NWIS');
+  return out;
+}
+
+// ------------------------------------------------------------------ USGS high-water marks
+$('hwmBtn').onclick = async () => {
+  if (!model) return;
+  const note = $('obsNote'); note.textContent = 'Looking up USGS high-water marks…';
+  try {
+    const [lon, lat] = model.site;
+    const g = await (await fetcher(`https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=${lon}&y=${lat}&benchmark=Public_AR_Current&vintage=Current_Current&layers=States&format=json`)).json();
+    const stAbbr = g.result?.geographies?.States?.[0]?.STUSAB; if (!stAbbr) throw new Error('state not found for this site');
+    const r = await fetcher(`https://api.waterdata.usgs.gov/stnservices/hwms/filteredhwms/?states=${stAbbr}`); if (!r.ok) throw new Error('STN service ' + r.status);
+    const marks = fromSTN(await r.json(), model.fine.lonlatBounds(0.002)), byEvent = new Map();
+    for (const m of marks) { const k = m.source; if (!byEvent.has(k)) byEvent.set(k, []); byEvent.get(k).push(m); }
+    if (!byEvent.size) { note.textContent = `No USGS high-water marks with a usable datum in this area (${stAbbr} has marks mostly from large river and coastal floods).`; $('hwmEvent').hidden = true; return; }
+    const sel = $('hwmEvent'); sel.hidden = false;
+    sel.innerHTML = '<option value="">Pick an event…</option>' + [...byEvent].sort((a, b) => b[1].length - a[1].length).map(([k, v]) => `<option value="${k}">${k.replace('USGS STN, ', '')}: ${v.length} marks</option>`).join('');
+    sel.onchange = () => {
+      const v = byEvent.get(sel.value); if (!v) return;
+      S.obs = v; drawObs(); obsNote(); if (run?.hmax && !run.playing && run.solver) scoreAndShow();
+      note.textContent += ` From ${sel.value}. Load the same storm under Storm → historic to replay it.`;
+    };
+    note.textContent = `${marks.length} USGS high-water marks in or near the area, from ${byEvent.size} event${byEvent.size > 1 ? 's' : ''}: pick one to use them as observations.`;
+  } catch (e) { note.textContent = 'High-water marks unavailable: ' + e.message; }
+};
+
 // ------------------------------------------------------------------ calibration
 const cal = () => ({ manning: Number($('calManning').value), infil: Number($('calInfil').value), clog: Number($('calClog').value) });
 for (const [id, f] of [['calManning', v => `${Number(v).toFixed(2)}×`], ['calInfil', v => `${Number(v).toFixed(2)}×`], ['calClog', v => `${Math.round(v * 100)} %`]]) {

@@ -79,3 +79,18 @@ export function sweepPlan(chosen, levels = 3, max = 27) {
   for (const ax of axes) sets = sets.flatMap(s => ax.map(([k, v]) => ({ ...s, [k]: v })));
   return sets.slice(0, max);
 }
+
+/**
+ * USGS Short-Term Network high-water marks (api.waterdata.usgs.gov/stnservices) inside a lon/lat box → observations.
+ * NAVD88 elevations become water levels; a mark on any other datum (mostly local control points) keeps its height above
+ * ground as a depth when it has one; the rest are left out. Every mark is a flooded point.
+ */
+export function fromSTN(records, [w, s, e, n]) {
+  return records.filter(h => h.longitude >= w && h.longitude <= e && h.latitude >= s && h.latitude <= n).flatMap(h => {
+    const base = { name: String(h.label || h.site_number || `HWM ${h.id}`), lon: h.longitude, lat: h.latitude, flooded: true,
+      source: `USGS STN, ${h.event_name}`, quality: h.hwm_quality_name ?? '', environment: h.environment ?? '' };
+    if (/NAVD\s*88/i.test(h.vertical_datum_name ?? '') && Number.isFinite(h.elev_ft)) return [{ ...base, wse: h.elev_ft * FT }];
+    if (h.height_above_ground > 0) return [{ ...base, depth: h.height_above_ground * FT }];
+    return [];
+  });
+}

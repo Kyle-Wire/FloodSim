@@ -132,7 +132,7 @@ export class GPUSolver {
       TA: mk(24, GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
       GI: mk(N * 16), GS: mk(N * 8),
       CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 32),
-      SGC: mk(this.sg ? N * CT * 4 : 16), SGF: mk(this.sg ? 2 * N * FT * 4 : 16),
+      SGC: mk(this.sg ? N * CT * 4 : 16), SGF: mk(this.sg ? 2 * N * FT * 4 : 16), EO: mk(2 * (this.nx + this.ny) * 8),
     };
     this.read = {
       DT: mk(16, GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST),
@@ -158,9 +158,9 @@ export class GPUSolver {
     const mod = d.createShaderModule({ code: KERNELS_WGSL });
     this.module = mod;
     const B = [this.buf.params, this.buf.U, this.buf.U0, this.buf.S, this.buf.W, this.buf.FX, this.buf.FY, this.buf.A, this.buf.DT, this.buf.RED, this.buf.OUT, this.buf.TH, this.buf.RF, this.buf.INC, this.buf.INQ, this.buf.INX, this.buf.STG,
-      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF];
+      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO];
     const uses = {
-      prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27], resetTotals: [0, 7],
+      prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
       sgPrim: [0, 1, 4, 16, 28], sgFluxX: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgFluxY: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgUpdate: [0, 1, 3, 5, 6, 7, 8, 11],
       sgHazard: [0, 1, 3, 5, 6, 7, 8, 27, 28], sgDt: [0, 1, 9, 28], sgPack: [0, 1, 5, 6, 10, 28], sgExchange: [0, 1, 8, 13, 14, 15, 28],
       update: [0, 1, 2, 3, 5, 6, 7, 8, 11], theta: [0, 1, 3, 5, 6, 8, 11], sources: [0, 1, 3, 7, 8, 12, 22, 23],
@@ -180,7 +180,7 @@ export class GPUSolver {
       sources: make('sources', uses.sources), dtReduce: make('dtReduce', uses.dtReduce),
       dtFinal: make('dtFinal', uses.dtFinal), pack: make('pack', uses.pack),
       exchange: make('exchange', uses.exchange), barrier0: make('barrier', uses.barrier, { STAGE: 0 }), barrier1: make('barrier', uses.barrier, { STAGE: 1 }),
-      hazard: make('hazard', uses.hazard), resetTotals: make('resetTotals', uses.resetTotals),
+      hazard: make('hazard', uses.hazard), resetTotals: make('resetTotals', uses.resetTotals), edgeOut: make('edgeOut', uses.edgeOut),
     };
     if (this.tiled) Object.assign(this.k, {
       tileClear: make('tileClear', uses.tileClear), tileWet: make('tileWet', uses.tileWet),
@@ -256,12 +256,14 @@ export class GPUSolver {
         if (this.tiled) {
           this._indirect(pass, k.faceXT, 2); this._indirect(pass, k.faceYT, 2); this._indirect(pass, k.thetaT, 2);
           if (this.nBar) this._dispatch(pass, st ? k.barrier1 : k.barrier0, Math.ceil(this.nBar / 64));
+          this._dispatch(pass, k.edgeOut, Math.ceil(2 * (this.nx + this.ny) / 64));
           this._indirect(pass, st ? k.updateT1 : k.updateT0, 1);
         } else {
           this._dispatch(pass, k.faceX, w(nx + 1), w(ny));
           this._dispatch(pass, k.faceY, w(nx), w(ny + 1));
           this._dispatch(pass, k.theta, w(nx), w(ny));
           if (this.nBar) this._dispatch(pass, st ? k.barrier1 : k.barrier0, Math.ceil(this.nBar / 64));
+          this._dispatch(pass, k.edgeOut, Math.ceil(2 * (this.nx + this.ny) / 64));
           this._dispatch(pass, st ? k.update1 : k.update0, w(nx), w(ny));
         }
       }
@@ -282,6 +284,7 @@ export class GPUSolver {
       if (this.tiled) { this._indirect(pass, k.sgFluxXT, 2); this._indirect(pass, k.sgFluxYT, 2); this._indirect(pass, k.thetaT, 2); }
       else { this._dispatch(pass, k.sgFluxX, w(nx + 1), w(ny)); this._dispatch(pass, k.sgFluxY, w(nx), w(ny + 1)); this._dispatch(pass, k.theta, w(nx), w(ny)); }
       if (this.nBar) this._dispatch(pass, k.barrier0, Math.ceil(this.nBar / 64));
+      this._dispatch(pass, k.edgeOut, Math.ceil(2 * (nx + ny) / 64));
       if (this.tiled) { this._indirect(pass, k.sgUpdateT, 1); this._indirect(pass, k.sgSourcesT, 1); this._indirect(pass, k.sgHazardT, 1); }
       else { this._dispatch(pass, k.sgUpdate, w(nx), w(ny)); this._dispatch(pass, k.sgSources, w(nx), w(ny)); this._dispatch(pass, k.sgHazard, w(nx), w(ny)); }
       if (this.nInlets) this._dispatch(pass, k.sgExchange, Math.ceil(this.nInlets / 64));
@@ -412,9 +415,10 @@ export class GPUSolver {
   }
 
   /** Copy several buffers in one submission (then run `after(pass)` in the same submission); → Float32Arrays. */
-  async _snapshot(parts, after) {
+  async _snapshot(parts, after, afterCopy) {
     const d = this.device, st = parts.map(([, size]) => d.createBuffer({ size, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST }));
     const enc = d.createCommandEncoder(); parts.forEach(([src, size], n) => enc.copyBufferToBuffer(src, 0, st[n], 0, size));
+    if (afterCopy) afterCopy(enc);
     if (after) { const pass = enc.beginComputePass(); after(pass); pass.end(); }
     d.queue.submit([enc.finish()]);
     const out = await Promise.all(st.map(async (b) => { await b.mapAsync(GPUMapMode.READ); const a = new Float32Array(b.getMappedRange().slice(0)); b.unmap(); b.destroy(); return a; }));
@@ -433,8 +437,10 @@ export class GPUSolver {
   async readState() {
     // one submission: copy depths, totals, pending inlet exchange and GI stores, then restart the totals on the GPU, so
     // the snapshot is from one moment and steps queued by a concurrent frame are neither lost nor counted twice
-    const parts = [[this.buf.U, this.N * 16], [this.buf.A, this.N * 16], ...(this.nInlets ? [[this.buf.INX, this.nInlets * 16]] : []), ...(this.hasGI ? [[this.buf.GS, this.N * 8]] : [])];
-    const [U, Ab, X, G] = await this._snapshot(parts, (pass) => this._dispatch(pass, this.k.resetTotals, Math.ceil(this.NX / 8), Math.ceil(this.NY / 8)));
+    const nE = 2 * (this.nx + this.ny);
+    const parts = [[this.buf.U, this.N * 16], [this.buf.A, this.N * 16], [this.buf.EO, nE * 8], ...(this.nInlets ? [[this.buf.INX, this.nInlets * 16]] : []), ...(this.hasGI ? [[this.buf.GS, this.N * 8]] : [])];
+    const [U, Ab, E, X, G] = await this._snapshot(parts, (pass) => this._dispatch(pass, this.k.resetTotals, Math.ceil(this.NX / 8), Math.ceil(this.NY / 8)), (enc) => enc.clearBuffer(this.buf.EO, 0, nE * 8));
+    for (let m = 0; m < nE; m++) (this.acc ??= { inf: 0, out: 0, clip: 0 }).out += E[2 * m] - E[2 * m + 1]; // edge outflow, compensated
     let pending = 0; if (this.nInlets) for (let m = 0; m < this.nInlets; m++) pending += X[4 * m] - X[4 * m + 2];
     const exchanged = this.vol.exchanged + pending;
     let giStored = 0; if (this.hasGI) { const GG = this.nInlets ? G : X; for (let c = 0; c < this.N; c++) giStored += GG[2 * c]; giStored *= this.dx * this.dx; }
@@ -454,9 +460,11 @@ export class GPUSolver {
     }
     const inf = acc.inf / A, out = acc.out, clip = acc.clip / A;
     const volume = vol * A, infil = inf * A, expected = this.vol.initial + this.vol.rain - infil - out - exchanged;
+    // relative to all the water that came in: initial, rain, and net inflow through exchange cells (a river) or the edge (a tide)
+    const scale = Math.max(1e-30, Math.abs(expected), this.vol.initial + this.vol.rain + Math.max(0, -exchanged) + Math.max(0, -out));
     return {
       h, hu, hv, hmax,
-      mass: { volume, rain: this.vol.rain, infil, giStored, outflow: out, exchanged, clipped: clip * A, expected, rel: (volume - expected) / Math.max(1e-30, Math.max(Math.abs(expected), this.vol.initial + this.vol.rain)), relExClip: (volume - expected - clip * A) / Math.max(1e-30, Math.max(Math.abs(expected), this.vol.initial + this.vol.rain)) },
+      mass: { volume, rain: this.vol.rain, infil, giStored, outflow: out, exchanged, clipped: clip * A, expected, rel: (volume - expected) / scale, relExClip: (volume - expected - clip * A) / scale },
     };
   }
 
