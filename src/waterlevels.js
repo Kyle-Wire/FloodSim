@@ -140,7 +140,8 @@ export function startDepths(c, water, sources, { maxSpread = 300 } = {}) {
   sources.forEach((s, m) => s.cells.forEach(k => { if (id[k] < 0) return; claimed.add(id[k]); if (dist[k] > 0) { dist[k] = 0; owner[k] = m; q.push(k); } }));
   const step = (k, fn) => { const i = k % nx, j = (k / nx) | 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (!di && !dj) continue; const a = i + di, b = j + dj; if (a >= 0 && b >= 0 && a < nx && b < ny) fn(b * nx + a, di && dj ? Math.SQRT2 : 1); } };
   while (q.length) { const nq = []; for (const k of q) step(k, (p, w) => { if (id[p] >= 0 && id[p] === id[k] && dist[k] + w < dist[p]) { dist[p] = dist[k] + w; owner[p] = owner[k]; nq.push(p); } }); q = nq; }
-  for (let k = 0; k < N; k++) if (owner[k] >= 0) { const s = sources[owner[k]]; level[k] = s.level ?? z[k] + Math.max(0, s.rise); }
+  const zs = c.zSurf ?? z; // a rise is above the lidar water surface (not a carved channel bed)
+  for (let k = 0; k < N; k++) if (owner[k] >= 0) { const s = sources[owner[k]]; level[k] = s.level ?? zs[k] + Math.max(0, s.rise); }
   // spread onto land below the level, from the nearest water outward (each land cell takes its first-reached level)
   let front = []; for (let k = 0; k < N; k++) if (!Number.isNaN(level[k])) front.push(k);
   for (let r = 0; r < maxSpread && front.length; r++) {

@@ -40,6 +40,7 @@ import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHyd
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
 import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd } from '../src/waterlevels.js';
 import * as FEMA from '../src/fema.js';
+import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetry.js';
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
  * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
@@ -1013,6 +1014,7 @@ function resetRun() {
     if (model.f.roofs?.size) { c.bldId = coarseIds(model.f, F); c.roofs = model.f.roofs; } // new buildings' roofs (site design)
     c.rainField = sgRain(c, roofRouting(c.mask, c.nx, c.ny, roofF, c.roofs ? { ids: c.bldId, roofs: c.roofs } : null).rainField, roofF);
   } else { c = coarsen(model.f, F, roofF); if (cal().manning !== 1) c.manning = c.manning.map(v => v * cal().manning); }
+  if (model.bathy) bathyCells(c, F);
   // infiltration: Green-Ampt from the soil survey (c.infil becomes K; the run carries ψΔθ and the water-table storage)
   const wt = $('wtDepth').value.trim() === '' ? null : Math.max(0.05, Number($('wtDepth').value));
   const ga = $('infilModel').value === 'ga' && model.f.ga ? gaCells(model.f, c.nx, c.ny, F, c.mask, { Se: emu?.se ?? WETNESS[$('wetness').value], wtOverride: wt, perCellArea: !!c.sg }) : null;
@@ -1163,7 +1165,8 @@ function ensureSolver() {
   const pool = new Map(); for (const pd of run.sw.pools) for (const K of pd.cells) pool.set(K, Math.max(pool.get(K) ?? 0, pd.pool - c.z[K])); // wet ponds start at their permanent pool
   const at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
   const w = run.warm; // the baseflow warm-up's end state (depths and velocities), else the start levels
-  run.solver.setDepth((x, y) => Math.max(w ? w.h[at(x, y)] : start ? start.depth[at(x, y)] : 0, pool.get(at(x, y)) ?? 0));
+  const bf = c.bathyFill; // an estimated channel starts full to the lidar surface
+  run.solver.setDepth((x, y) => Math.max(w ? w.h[at(x, y)] : start ? start.depth[at(x, y)] : 0, pool.get(at(x, y)) ?? 0, bf ? bf[at(x, y)] : 0));
   if (w) run.solver.setVelocity((x, y) => { const k = at(x, y), h = w.h[k]; return h > 1e-4 && !pool.has(k) ? [w.hu[k] / h, w.hv[k] / h] : [0, 0]; });
   run.storm = currentStorm(); lockStorm(true);
   if (coupled) {
@@ -1219,7 +1222,7 @@ async function warmUp(r) {
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2 });
   try {
     const start = startWater(c, F), at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
-    s.setDepth((x, y) => (start ? start.depth[at(x, y)] : 0));
+    s.setDepth((x, y) => Math.max(start ? start.depth[at(x, y)] : 0, c.bathyFill ? c.bathyFill[at(x, y)] : 0));
     const links = new InflowLinks(entries), hub = new LinkHub(s, [links], 2);
     while (s.t < T - 1e-6) { if (run !== r) return; await s.advance(Math.min(T, hub.tNext)); if (s.t >= hub.tNext - 1e-6) await hub.exchange(); }
     const st = await s.readState();
@@ -1342,7 +1345,7 @@ function forcingRecord(r) {
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
     drainage: { src: drainSrc, ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
-    area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value },
+    area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume) } : {}) },
     commit: appCommit,
   };
 }
@@ -2056,6 +2059,42 @@ async function levelSources(prep, c, F) {
   return { water, sources, notes };
 }
 /** Starting depths for the run (null = start dry): the gauge sources, plus the tide level at t = 0 on tidal water at the edge. */
+/**
+ * Estimated channel bathymetry (src/bathymetry.js) carved into the existing-conditions ground below the flattened lidar
+ * water surface, or the lidar surface put back. Rivers entering the model carry their NLDI drainage area; streams that
+ * start inside it use D8 accumulation on the DEM. Rebuilds the scenario and the run inputs.
+ */
+function applyBathymetry() {
+  if (!model) return;
+  const fine = model.fine, base = model.base, mode = $('bathySel').value, nx = fine.nx, ny = fine.ny, t0 = performance.now();
+  model.zLidar ??= base.z.slice(); base.z.set(model.zLidar); model.bathy = null;
+  if (mode !== 'off') {
+    const seeds = [];
+    for (const w of (model.osm.waterways || []).filter(w => /river|stream|canal/.test(w.kind))) {
+      const pts = toCells(fine, w.line);
+      for (let s = 0; s + 1 < pts.length; s++) { const [ax, ay] = pts[s], [bx, by] = pts[s + 1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) * 2));
+        for (let t = 0; t <= n; t++) { const i = Math.floor(ax + (bx - ax) * t / n), j = Math.floor(ay + (by - ay) * t / n); if (i >= 0 && j >= 0 && i < nx && j < ny) seeds.push(j * nx + i); } }
+    }
+    const water = flatWater(model.zLidar, nx, ny, seeds);
+    model.acc ??= accumulation(model.zLidar, nx, ny);
+    const r = carveChannels(model.zLidar, nx, ny, fine.dx, water, { entries: inflow.entries.filter(en => en.areaKm2).map(en => ({ x: en.at[0], y: en.at[1], areaKm2: en.areaKm2 })), curve: CURVES[mode], acc: model.acc });
+    for (let k = 0; k < r.dz.length; k++) if (r.dz[k]) base.z[k] = model.zLidar[k] - r.dz[k];
+    model.bathy = { curve: mode, dz: r.dz, comps: r.comps, volume: r.volume };
+    const big = [...r.comps].sort((a, b) => b.areaKm2 - a.areaKm2)[0];
+    $('bathyNote').textContent = r.comps.length ? `${r.comps.length} channel${r.comps.length > 1 ? 's' : ''} carved below the lidar water surface: ${fmtVol(r.volume)} of channel (starts full).` +
+      (big ? ` Largest: ${(big.areaKm2 / 2.589988).toFixed(big.areaKm2 < 26 ? 2 : 0)} mi² drainage, bankfull ${(big.W / 0.3048).toFixed(0)} ft wide × ${(big.D / 0.3048).toFixed(1)} ft deep, banks ${(big.bank / 0.3048).toFixed(1)} ft above the water → ${(big.dc / 0.3048).toFixed(1)} ft below it at the centre.` : '') +
+      ` ${CURVES[mode].label} curve (Bieger et al. 2015): an estimate; use surveyed sections where you have them.` : 'No flattened river surface found to carve.';
+    log(`Channel bathymetry estimated (${CURVES[mode].label}): ${fmtVol(r.volume)} below the lidar water surface, ${((performance.now() - t0) / 1000).toFixed(1)} s`, 'ok', 'Bieger et al. 2015 regional curves; NLDI drainage areas');
+  } else $('bathyNote').textContent = '';
+  groundCache.clear(); applyScenario(); drawDesign(); resetRun();
+}
+$('bathySel').onchange = () => { if (model) applyBathymetry(); };
+/** The carved depth on the solver grid (mean over each cell's 1 m pixels) and the lidar surface above the bed. */
+function bathyCells(c, F) {
+  const fine = model.fine, W = fine.nx, fill = new Float64Array(c.nx * c.ny);
+  for (let J = 0; J < c.ny; J++) for (let I = 0; I < c.nx; I++) { let s = 0; for (let j = J * F; j < (J + 1) * F; j++) for (let i = I * F; i < (I + 1) * F; i++) s += model.bathy.dz[j * W + i]; fill[J * c.nx + I] = s / (F * F); }
+  c.bathyFill = fill; c.zSurf = c.z.map((v, k) => v + fill[k]);
+}
 function startWater(c, F, stageCells) {
   if ($('startWater').value !== 'gauge') return null;
   const ls = run.levelSrc, st = currentStorm(), tide = stageAt(st, 0), sources = [...(ls?.sources ?? [])];
@@ -2076,7 +2115,7 @@ async function setupInflow() {
   const inside = (i, j) => i >= 0 && j >= 0 && i < fine.nx && j < fine.ny && (!ringC || insideRing(i, j, ringC));
   inflow.entries = riverEntries(fine, model.osm.waterways, inside);
   $('inflowBox').hidden = !inflow.entries.length;
-  if (!inflow.entries.length) { inflow.gauges = []; inflow.levels = await findLevelGauges(fine.lonlatBounds(0.02), fetcher).catch(() => []); startNoteUpdate(); return; }
+  if (!inflow.entries.length) { inflow.gauges = []; inflow.levels = await findLevelGauges(fine.lonlatBounds(0.02), fetcher).catch(() => []); startNoteUpdate(); if ($('bathySel').value !== 'off') applyBathymetry(); return; }
   $('inflowNote').textContent = 'Finding USGS stream gauges…';
   const [w, s, e, n] = fine.lonlatBounds(0.15); // ~15 km around the area
   [inflow.gauges, inflow.levels] = await Promise.all([findGauges([w, s, e, n], fetcher), findLevelGauges([w, s, e, n], fetcher).catch(() => [])]);
@@ -2104,6 +2143,7 @@ async function setupInflow() {
   inflow.entries.forEach((en, i) => { // the drainage area where each river enters (USGS NLDI), in the background
     const [lo, la] = ll(en.at); en.area = basinAreaKm2(lo, la, fetcher).then((a) => { en.areaKm2 = a.areaKm2; areaNote(i); return a; }).catch((e) => { en.areaErr = e.message; areaNote(i); return null; });
   });
+  Promise.allSettled(inflow.entries.map(en => en.area)).then(() => { if ($('bathySel').value !== 'off') applyBathymetry(); });
 }
 /** The entry's drainage area against its gauge's, and the factor its flow is scaled by. → { k, text } */
 function entryScale(i) {

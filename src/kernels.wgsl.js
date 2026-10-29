@@ -826,6 +826,7 @@ fn lineFlux(@builtin(global_invocation_id) gid: vec3u) {
 // pore water, deposits take theirs), it erodes and deposits toward the equilibrium of Egashira et al. (1997), resists
 // with the quadratic rheology of O'Brien & Julien (1988), and saturated steep soil fails (infinite slope) into it.
 const SED_POR: f32 = 0.4; // bed porosity
+const SED_LA: f32 = 0.01; // thinnest active (surface) layer, m: armouring works in a layer about two coarse grains thick
 const SED_CMAX: f32 = 0.1; // suspended solids by volume at most (≈ 265 g/L: hyperconcentrated flow)
 const DEB_CMAX: f32 = 0.5; // in the debris-flow mode
 const SED_BEDCAP: f32 = 0.5; // bedload (bulk bed volume) at most this share of the water flux across the face
@@ -836,7 +837,9 @@ fn sedCmax() -> f32 { return select(SED_CMAX, DEB_CMAX, DEBRIS); }
 fn sedSizes(k: i32) -> vec4f { let sc = SCR[k]; return vec4f(2e-6, 3e-5, sc.z, sc.w); }
 fn sedWs(d: f32) -> f32 { return max(1e-4, 1.65 * P.g * d * d / (18.0e-6 + sqrt(0.75 * 1.65 * P.g * d * d * d))); }
 fn vsum(v: vec4f) -> f32 { return v.x + v.y + v.z + v.w; }
-fn sedConc(k: i32) -> vec4f { let h = U[k].x - U[k].w; return select(vec4f(0.0), SDI[4 * k] / h, h > P.hdry); }
+fn sedConc(k: i32) -> vec4f { let h = U[k].x - U[k].w; return select(vec4f(0.0), SDI[5 * k] / h, h > P.hdry); }
+// the active layer's thickness: two of the coarsest grains present (gravel when it is more than 5 % of the store), at least SED_LA
+fn sedLa(e: vec4f, sz: vec4f) -> f32 { return max(SED_LA, 2.0 * select(sz.z, sz.w, e.w > 0.05 * vsum(e))); }
 // advection, once per RK stage with that stage's (theta-limited) water fluxes and weight, before the update (U is the
 // stage-start state): solids move with the water at the upstream cell's concentration; ghost cells bring clean water
 fn sedFace(f0: f32, l: i32, r: i32) -> vec4f { let F = f0 * TH[select(r, l, f0 > 0.0)]; return F * select(sedConc(r), sedConc(l), F > 0.0); }
@@ -844,7 +847,7 @@ fn sedFace(f0: f32, l: i32, r: i32) -> vec4f { let F = f0 * TH[select(r, l, f0 >
 fn sedAdvect(@builtin(global_invocation_id) gid: vec3u) {
   if (gid.x >= P.nx || gid.y >= P.ny) { return; }
   let NX = i32(P.NX); let i = i32(gid.x) + GH; let j = i32(gid.y) + GH; let c = j * NX + i;
-  var s = SDI[4 * c]; var o = SDI[4 * c + 2]; let dt = DT[0];
+  var s = SDI[5 * c]; var o = SDI[5 * c + 2]; let dt = DT[0];
   if (dt > 0.0) {
     let w = dt / P.dx * select(1.0, 0.5, P.secondOrder == 1u);
     let fw = sedFace(FX[c * 9], c - 1, c); let fe = sedFace(FX[(c + 1) * 9], c, c + 1);
@@ -854,7 +857,7 @@ fn sedAdvect(@builtin(global_invocation_id) gid: vec3u) {
     if (i == GH) { out -= fw; } if (i == NX - GH - 1) { out += fe; } if (j == GH) { out -= fs; } if (j == i32(P.NY) - GH - 1) { out += fq; }
     o += w * out;
   }
-  SDO[4 * c] = s; SDO[4 * c + 1] = SDI[4 * c + 1]; SDO[4 * c + 2] = o; SDO[4 * c + 3] = SDI[4 * c + 3];
+  SDO[5 * c] = s; SDO[5 * c + 1] = SDI[5 * c + 1]; SDO[5 * c + 2] = o; SDO[5 * c + 3] = SDI[5 * c + 3]; SDO[5 * c + 4] = SDI[5 * c + 4];
 }
 // shear on the soil in a cell (Pa), with the skin roughness
 fn sedTau(k: i32) -> f32 {
@@ -868,10 +871,10 @@ fn sedTau(k: i32) -> f32 {
 // its flow crossing this face, no more than a quarter of its store per step, and no more than half the water crossing
 fn bedFace(f0: f32, l: i32, r: i32, isY: bool, dt: f32) -> vec2f {
   if (f0 == 0.0) { return vec2f(0.0); }
-  let d = select(r, l, f0 > 0.0); let e = SE0[2 * d] + SDI[4 * d + 1]; let tot = vsum(e);
-  if (tot <= 0.0 || e.z + e.w <= 0.0) { return vec2f(0.0); }
+  let d = select(r, l, f0 > 0.0); let e = SE0[2 * d] + SDI[5 * d + 1]; let a = SDI[5 * d + 4]; let tot = vsum(e);
+  if (tot <= 0.0 || e.z + e.w <= 0.0 || a.z + a.w <= 0.0) { return vec2f(0.0); } // the bed's surface sets what moves
   let tau = sedTau(d); let q = U[d]; let sp = sqrt(q.y * q.y + q.z * q.z); if (tau <= 0.0 || sp <= 0.0) { return vec2f(0.0); }
-  let sz = sedSizes(d); let Fs = e.z / tot; let Fg = e.w / tot;
+  let sz = sedSizes(d); let Fs = a.z / vsum(a); let Fg = a.w / vsum(a);
   let Dsm = exp((Fs * log(sz.z) + Fg * log(sz.w)) / (Fs + Fg));
   let trm = (0.021 + 0.015 * exp(-20.0 * Fs)) * 1650.0 * P.g * Dsm; let us3 = pow(tau / 1000.0, 1.5);
   var qb = vec2f(0.0);
@@ -912,8 +915,8 @@ fn bedShift(c: i32, i: i32, j: i32, b: f32) {
 fn sedSource(@builtin(global_invocation_id) gid: vec3u) {
   if (gid.x >= P.nx || gid.y >= P.ny) { return; }
   let NX = i32(P.NX); let i = i32(gid.x) + GH; let j = i32(gid.y) + GH; let c = j * NX + i;
-  var s = SDI[4 * c]; let de = SDI[4 * c + 1]; var o = SDI[4 * c + 2]; var x = SDI[4 * c + 3]; let dt = DT[0];
-  if (dt <= 0.0 || S[c].z < 0.5) { SDO[4 * c] = s; SDO[4 * c + 1] = de; SDO[4 * c + 2] = o; SDO[4 * c + 3] = x; return; }
+  var s = SDI[5 * c]; let de = SDI[5 * c + 1]; var o = SDI[5 * c + 2]; var x = SDI[5 * c + 3]; var al = SDI[5 * c + 4]; let dt = DT[0];
+  if (dt <= 0.0 || S[c].z < 0.5) { SDO[5 * c] = s; SDO[5 * c + 1] = de; SDO[5 * c + 2] = o; SDO[5 * c + 3] = x; SDO[5 * c + 4] = al; return; }
   let e = SE0[2 * c] + de;
   let bw = bedFace(FX[c * 9], c - 1, c, false, dt); let be = bedFace(FX[(c + 1) * 9], c, c + 1, false, dt);
   let bs = bedFace(FY[c * 9], c - NX, c, true, dt); let bq = bedFace(FY[(c + NX) * 9], c, c + NX, true, dt);
@@ -934,10 +937,13 @@ fn sedSource(@builtin(global_invocation_id) gid: vec3u) {
   // never takes the solids' volume as water
   if (DEBRIS && vsum(s) >= (1.0 - SED_POR) * h) { dep = s; }
   var ero = vec4f(0.0); let tot = vsum(e); let avail = max(vec4f(0.0), e - vec4f(0.0, 0.0, bo));
+  // armouring (Hirano active layer): the flow takes grains from the bed's surface layer, in its proportions; bedload out
+  // leaves from it first. alF: the surface's fractions (the store's while the layer is empty)
+  al = max(vec4f(0.0), al - vec4f(0.0, 0.0, bo)); let alT = vsum(al); let alF = select(e / max(tot, 1e-12), al / max(alT, 1e-12), alT > 0.0);
   let sp = SDP[c]; let tc = select(1.0, sp.x, sp.x < 1e8 && sp.x > 0.0);
   if (h >= HZ_VCUT && sp.y > 0.0 && tot > 0.0) {
     let tau = sedTau(c);
-    if (tau > tc) { ero = 0.2e-6 * inverseSqrt(tc) * (tau - tc) * dt * e / tot * select(vec4f(0.0), vec4f(1.0), vec4f(sqrt(tau / 1000.0)) > ws); }
+    if (tau > tc) { ero = 0.2e-6 * inverseSqrt(tc) * (tau - tc) * dt * alF * select(vec4f(0.0), vec4f(1.0), vec4f(sqrt(tau / 1000.0)) > ws); }
   }
   let u = select(vec2f(0.0), q.yz / q.x, h > P.hdry); let spd = length(u);
   if (DEBRIS && h >= 0.01 && spd > 0.0 && C >= DEB_C) {
@@ -946,7 +952,7 @@ fn sedSource(@builtin(global_invocation_id) gid: vec3u) {
     // tan θe = (σ/ρ − 1)C·tan φ / ((σ/ρ − 1)C + 1); erosion only on steep ground, unsorted
     let tS = flowSlope(c, u); let G = 1.65 * C; let tE = G * sp.w / (G + 1.0);
     let ie = spd * tan(atan(tS) - atan(tE)) * dt;
-    if (ie > 0.0 && tS >= DEB_SLOPE && tot > 0.0) { ero += ie * e / tot; }
+    if (ie > 0.0 && tS >= DEB_SLOPE && tot > 0.0) { ero += ie * e / tot; } // a debris flow scours unsorted
     if (ie < 0.0) { dep = max(dep, min(s, -ie * (1.0 - SED_POR) * s / max(1e-12, vsum(s)))); }
   }
   ero = min(ero, avail);
@@ -954,6 +960,13 @@ fn sedSource(@builtin(global_invocation_id) gid: vec3u) {
   if (er > room) { ero *= room / er; }
   let nde = de + max(-e, dep / (1.0 - SED_POR) - ero + vec4f(0.0, 0.0, dzb)); // the store never below zero
   s = s - dep + ero * (1.0 - SED_POR);
+  // the surface layer: loses what eroded, gains deposits and bedload in; then back to its thickness La: a lowered bed
+  // exposes the substrate (its mix), a raised one buries the surface's excess into the substrate
+  let en = SE0[2 * c] + nde; let La = min(sedLa(en, sz), vsum(en));
+  al = max(vec4f(0.0), al - ero) + dep / (1.0 - SED_POR) + vec4f(0.0, 0.0, max(vec2f(0.0), dzb + bo));
+  al = min(al, en); let aT = vsum(al);
+  if (aT < La) { let sub = max(vec4f(0.0), en - al); let sT = vsum(sub); if (sT > 0.0) { al += sub * min(1.0, (La - aT) / sT); } }
+  else if (aT > La && aT > 0.0) { al *= La / aT; }
   if (DEBRIS) {
     // the mixture: entrained bed brings its pore water, deposits trap theirs; then the rheology's resistance, implicit
     // the pore water booked is what the mixture depth actually gained less the solids it gained (a nearly dry cell's
@@ -968,7 +981,7 @@ fn sedSource(@builtin(global_invocation_id) gid: vec3u) {
     }
     U[c] = q;
   }
-  SDO[4 * c] = s; SDO[4 * c + 1] = nde; SDO[4 * c + 2] = o; SDO[4 * c + 3] = x;
+  SDO[5 * c] = s; SDO[5 * c + 1] = nde; SDO[5 * c + 2] = o; SDO[5 * c + 3] = x; SDO[5 * c + 4] = al;
   bedShift(c, i, j, vsum(nde));
 }
 // shallow landslides (debris mode), once per step after sedSource: infinite-slope factor of safety on the cell's
@@ -979,8 +992,8 @@ fn sedSource(@builtin(global_invocation_id) gid: vec3u) {
 fn slopeFail(@builtin(global_invocation_id) gid: vec3u) {
   if (gid.x >= P.nx || gid.y >= P.ny) { return; }
   let NX = i32(P.NX); let i = i32(gid.x) + GH; let j = i32(gid.y) + GH; let c = j * NX + i;
-  var s = SDI[4 * c]; var de = SDI[4 * c + 1]; let o = SDI[4 * c + 2]; var x = SDI[4 * c + 3];
-  let e = SE0[2 * c] + de; let tot = vsum(e); let soil = SE0[2 * c + 1];
+  var s = SDI[5 * c]; var de = SDI[5 * c + 1]; let o = SDI[5 * c + 2]; var x = SDI[5 * c + 3]; var al = SDI[5 * c + 4];
+  let e = SE0[2 * c] + de; let tot = vsum(e); let soil = SE0[2 * c + 1]; var failed = false;
   if (DT[0] > 0.0 && S[c].z > 0.5 && x.y < 0.0 && tot > 0.0 && soil.z > 0.0) {
     let zx = max(abs(S[c + 1].x - S[c].x), abs(S[c].x - S[c - 1].x)) / P.dx; let zy = max(abs(S[c + NX].x - S[c].x), abs(S[c].x - S[c - NX].x)) / P.dx;
     let t = length(vec2f(zx, zy));
@@ -992,14 +1005,16 @@ fn slopeFail(@builtin(global_invocation_id) gid: vec3u) {
         let fs = (sp.z + (gam * z * cs * cs - u) * sp.w) / (gam * z * sn * cs);
         if (fs < 1.0) {
           let d = min(z, tot); let take = e * (d / tot);
-          de -= take; s += take * (1.0 - SED_POR); x.x += SED_POR * d; x.y = DT[1];
+          de -= take; s += take * (1.0 - SED_POR); x.x += SED_POR * d; x.y = DT[1]; failed = true;
           var q = U[c]; q.x += d; U[c] = q;
           bedShift(c, i, j, vsum(de));
         }
       }
     }
   }
-  SDO[4 * c] = s; SDO[4 * c + 1] = de; SDO[4 * c + 2] = o; SDO[4 * c + 3] = x;
+  // a failure strips the surface with the soil: what is left is mixed again
+  let en = SE0[2 * c] + de; let eT = vsum(en); al = min(al, en); if (eT > 0.0 && (failed || vsum(al) <= 0.0)) { al = en * min(1.0, sedLa(en, sedSizes(c)) / eT); }
+  SDO[5 * c] = s; SDO[5 * c + 1] = de; SDO[5 * c + 2] = o; SDO[5 * c + 3] = x; SDO[5 * c + 4] = al;
 }
 
 // ---- bank collapse probability (src/banks.js), every step: the Culmann wedge through the toe, searched over 8 plane

@@ -89,12 +89,16 @@ export class GPUSolver {
     // gravel, m of bed), dSand, dGravel (m), tauSoil, nSkin, and for o.debris cohesion (Pa), tanPhi, soilDepth (m),
     // thetaE; with o.scour; not in the subgrid mode). o.debris: the debris-flow mode (mixture flow, slope failures).
     this.sed = !!o.sediment && !this.sg; this.debris = this.sed && !!o.debris;
-    this.SDh = new Float32Array(this.sed ? N * 16 : 4); this.SDPh = new Float32Array(this.sed ? N * 4 : 4); this.SE0h = new Float32Array(this.sed ? N * 8 : 4);
-    if (this.sed) for (let c = 0; c < N; c++) { this.SE0h[8 * c + 4] = this.Sh[4 * c]; this.SDh[16 * c + 13] = -1; } // every cell's initial bed, ghosts too
+    // SDh: 5 vec4 per cell: suspended, store change, out, (pore, failure time, bedload out), active (surface) layer
+    this.SDh = new Float32Array(this.sed ? N * 20 : 4); this.SDPh = new Float32Array(this.sed ? N * 4 : 4); this.SE0h = new Float32Array(this.sed ? N * 8 : 4);
+    if (this.sed) for (let c = 0; c < N; c++) { this.SE0h[8 * c + 4] = this.Sh[4 * c]; this.SDh[20 * c + 13] = -1; } // every cell's initial bed, ghosts too
     if (this.sed) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
       const k = j * this.nx + i, c = this.idx(i, j), sd = o.sediment;
       this.TCh[4 * c + 2] = sd.dSand?.[k] ?? 0.15e-3; this.TCh[4 * c + 3] = sd.dGravel?.[k] ?? 8e-3;
       for (let m = 0; m < 4; m++) this.SE0h[8 * c + m] = sd.erodible[4 * k + m];
+      // the active (surface) layer starts as the top La of a well-mixed store (kernel sedLa)
+      { const e = [0, 1, 2, 3].map(m => sd.erodible[4 * k + m]), tot = e.reduce((p, q) => p + q, 0), La = Math.max(0.01, 2 * (e[3] > 0.05 * tot ? this.TCh[4 * c + 3] : this.TCh[4 * c + 2]));
+        if (tot > 0) for (let m = 0; m < 4; m++) this.SDh[20 * c + 16 + m] = e[m] * Math.min(1, La / tot); }
       this.SE0h[8 * c + 5] = sd.soilDepth?.[k] ?? 1.5; this.SE0h[8 * c + 6] = sd.thetaE?.[k] ?? 0.4;
       this.SDPh.set([sd.tauSoil?.[k] ?? this.TCh[4 * c], sd.nSkin?.[k] ?? this.TCh[4 * c + 1], sd.cohesion?.[k] ?? 2000, sd.tanPhi?.[k] ?? 0.58], 4 * c);
     }
@@ -172,7 +176,7 @@ export class GPUSolver {
       TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 8), TC: mk(8),
       TA: mk(24, GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
       GI: mk(N * 16), GS: mk(N * 16), GAP: mk(N * 16),
-      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 64), LF: mk(this.LFh.byteLength), CL: mk(this.LFh.length * 16), UDC: mk(this.UDCh.byteLength), UDX: mk(this.UDCh.length * 4), SCR: mk(N * 16), SDA: mk(this.sed ? N * 64 : 16), SDB: mk(this.sed ? N * 64 : 16), SDP: mk(this.sed ? N * 16 : 16), SE0: mk(this.sed ? N * 32 : 16), BK: mk(this.BKh.byteLength), BR: mk(this.BRh.byteLength),
+      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 64), LF: mk(this.LFh.byteLength), CL: mk(this.LFh.length * 16), UDC: mk(this.UDCh.byteLength), UDX: mk(this.UDCh.length * 4), SCR: mk(N * 16), SDA: mk(this.sed ? N * 80 : 16), SDB: mk(this.sed ? N * 80 : 16), SDP: mk(this.sed ? N * 16 : 16), SE0: mk(this.sed ? N * 32 : 16), BK: mk(this.BKh.byteLength), BR: mk(this.BRh.byteLength),
       SGC: mk(this.sg ? N * CT * 4 : 16), SGF: mk(this.sg ? 2 * N * FT * 4 : 16), EO: mk(2 * (this.nx + this.ny) * 8),
     };
     this.read = {
@@ -258,7 +262,7 @@ export class GPUSolver {
         return [{ pipeline, bg: bg(this.buf.SDA, this.buf.SDB) }, { pipeline, bg: bg(this.buf.SDB, this.buf.SDA) }];
       };
       this.k.sedAdvect = pp('sedAdvect', [0, 1, 5, 6, 8, 11, 33, 34]); this.k.sedSource = pp('sedSource', [0, 1, 3, 5, 6, 8, 32, 33, 34, 35, 36]); this.sedPar = 0;
-      if (this.debris) this.k.slopeFail = pp('slopeFail', [0, 1, 3, 8, 23, 33, 34, 35, 36]);
+      if (this.debris) this.k.slopeFail = pp('slopeFail', [0, 1, 3, 8, 23, 32, 33, 34, 35, 36]);
     }
     if (this.nBank) this.k.bankFS = make('bankFS', [1, 3, 8, 37, 38]);
     // resolves when the pipelines are known good; rejects with the WGSL/validation error otherwise
@@ -346,19 +350,22 @@ export class GPUSolver {
    *  suspended, store and carried out (m³) in `classes`. Solids are conserved per class: Σ suspended
    *  + (1 − porosity)·Σ store change + out = 0 (from a clean start). */
   async readSediment() {
-    const a = await this._readBuffer(this.sedPar ? this.buf.SDB : this.buf.SDA, this.N * 64), n = this.nx * this.ny, A = this.dx * this.dx;
-    const o = { suspended: new Float32Array(n), bed: new Float32Array(n), erodible: new Float32Array(n), size: new Float32Array(n), failed: new Float32Array(n), out: 0, pore: 0,
+    const a = await this._readBuffer(this.sedPar ? this.buf.SDB : this.buf.SDA, this.N * 80), n = this.nx * this.ny, A = this.dx * this.dx;
+    const o = { suspended: new Float32Array(n), bed: new Float32Array(n), erodible: new Float32Array(n), size: new Float32Array(n), storeSize: new Float32Array(n), surfaceGravel: new Float32Array(n), storeGravel: new Float32Array(n), failed: new Float32Array(n), out: 0, pore: 0,
       classes: ['clay', 'silt', 'sand', 'gravel'].map(name => ({ name, suspended: 0, store: 0, change: 0, out: 0 })), totals: { suspended: 0, eroded: 0, deposited: 0, failures: 0 } };
     for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
-      const k = j * this.nx + i, c = this.idx(i, j), q = 16 * c, d = [2e-6, 3e-5, this.TCh[4 * c + 2], this.TCh[4 * c + 3]];
-      let st = 0, ld = 0, db = 0;
+      const k = j * this.nx + i, c = this.idx(i, j), q = 20 * c, d = [2e-6, 3e-5, this.TCh[4 * c + 2], this.TCh[4 * c + 3]];
+      let st = 0, ld = 0, db = 0, at = 0, la = 0;
       for (let m = 0; m < 4; m++) {
         const cl = o.classes[m], e = this.SE0h[8 * c + m] + a[q + 4 + m]; o.suspended[k] += a[q + m]; st += e; db += a[q + 4 + m];
         const out = a[q + 8 + m] + (m >= 2 ? a[q + 12 + m] : 0); // in suspension, plus sand and gravel as bedload
         cl.suspended += a[q + m] * A; cl.store += e * A; cl.change += a[q + 4 + m] * A; cl.out += out * A; o.out += out * A;
         if (e > 0) ld += e * Math.log(d[m]);
+        const al = a[q + 16 + m]; if (al > 0) { at += al; la += al * Math.log(d[m]); }
       }
-      o.erodible[k] = st; o.bed[k] = db; o.size[k] = st > 0 ? Math.exp(ld / st) : 0; o.failed[k] = a[q + 13]; o.pore += a[q + 12] * A;
+      // size: the bed's surface (the active layer: an armour shows here), storeSize: the whole erodible store
+      o.erodible[k] = st; o.bed[k] = db; o.storeSize[k] = st > 0 ? Math.exp(ld / st) : 0; o.size[k] = at > 0 ? Math.exp(la / at) : o.storeSize[k];
+      o.storeGravel[k] = st > 0 ? (this.SE0h[8 * c + 3] + a[q + 7]) / st : 0; o.surfaceGravel[k] = at > 0 ? a[q + 19] / at : o.storeGravel[k]; o.failed[k] = a[q + 13]; o.pore += a[q + 12] * A;
       if (a[q + 13] >= 0) o.totals.failures++;
       o.totals.suspended += o.suspended[k] * A; if (o.bed[k] < 0) o.totals.eroded -= o.bed[k] * A; else o.totals.deposited += o.bed[k] * A;
     }
@@ -381,7 +388,7 @@ export class GPUSolver {
   setSediment(fn) {
     let solids = 0;
     for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
-      const v = fn((i + 0.5) * this.dx, (j + 0.5) * this.dx), q = 16 * this.idx(i, j); this.SDh.set(typeof v === 'number' ? [v, 0, 0, 0] : v, q);
+      const v = fn((i + 0.5) * this.dx, (j + 0.5) * this.dx), q = 20 * this.idx(i, j); this.SDh.set(typeof v === 'number' ? [v, 0, 0, 0] : v, q);
       solids += this.SDh[q] + this.SDh[q + 1] + this.SDh[q + 2] + this.SDh[q + 3];
     }
     if (this.debris) this.vol.initial -= solids * this.dx * this.dx; // the debris mode's depth is the mixture's: the books are of its water
@@ -588,7 +595,7 @@ export class GPUSolver {
     // the snapshot is from one moment and steps queued by a concurrent frame are neither lost nor counted twice
     const nE = 2 * (this.nx + this.ny);
     const parts = [[this.buf.U, this.N * 16], [this.buf.A, this.N * 16], [this.buf.EO, nE * 8], ...(this.nInlets ? [[this.buf.INX, this.nInlets * 16]] : []), ...(this.hasGI ? [[this.buf.GS, this.N * 16]] : []),
-      ...(this.debris ? [[this.sedPar ? this.buf.SDB : this.buf.SDA, this.N * 64]] : [])];
+      ...(this.debris ? [[this.sedPar ? this.buf.SDB : this.buf.SDA, this.N * 80]] : [])];
     const snap = await this._snapshot(parts, (pass) => this._dispatch(pass, this.k.resetTotals, Math.ceil(this.NX / 8), Math.ceil(this.NY / 8)), (enc) => enc.clearBuffer(this.buf.EO, 0, nE * 8));
     const [U, Ab, E, X, G] = snap, SD = this.debris ? snap.at(-1) : null;
     for (let m = 0; m < nE; m++) (this.acc ??= { inf: 0, out: 0, clip: 0 }).out += E[2 * m] - E[2 * m + 1]; // edge outflow, compensated
@@ -613,7 +620,7 @@ export class GPUSolver {
     // carried out with it (in suspension; bedload never was in the flow), plus the pore water the bed gave the flow (net of
     // what deposits took back)
     let solids = 0, solidsOut = 0, pore = 0;
-    if (SD) for (let c = 0; c < this.N; c++) { const q = 16 * c; solids += SD[q] + SD[q + 1] + SD[q + 2] + SD[q + 3]; solidsOut += SD[q + 8] + SD[q + 9] + SD[q + 10] + SD[q + 11]; pore += SD[q + 12]; }
+    if (SD) for (let c = 0; c < this.N; c++) { const q = 20 * c; solids += SD[q] + SD[q + 1] + SD[q + 2] + SD[q + 3]; solidsOut += SD[q + 8] + SD[q + 9] + SD[q + 10] + SD[q + 11]; pore += SD[q + 12]; }
     const inf = acc.inf / A, out = acc.out - solidsOut * A, clip = acc.clip / A;
     const volume = (vol - solids) * A, infil = inf * A, expected = this.vol.initial + this.vol.rain - infil - out - exchanged + pore * A;
     // relative to all the water that came in: initial, rain, and net inflow through exchange cells (a river) or the edge (a tide)

@@ -336,8 +336,9 @@ export async function runGpuSuite(device, log = console.log) {
       const sd = await g.readSediment(), st = await g.readState(); g.destroy();
       let lo = 0, coarser = 0, scoured = 0; const d0 = bedSize(mix, 0.3e-3);
       for (let k = 0; k < N; k++) { lo = Math.min(lo, sd.bed[k]); if (sd.bed[k] < -0.001) { scoured++; if (sd.size[k] > d0 * 1.01) coarser++; } }
+      let ss = 0, sv = 0, n2 = 0; for (let k = 0; k < N; k++) if (sd.bed[k] < -0.001) { ss += Math.log(sd.size[k]); sv += Math.log(sd.storeSize[k]); n2++; } // surface vs whole store, geometric means
       const bal = Math.max(...sd.classes.map(cl => Math.abs(cl.suspended + 0.6 * cl.change + cl.out) / Math.max(1e-9, 0.6 * sd.totals.eroded)));
-      runs[name] = { eroded: sd.totals.eroded, out: sd.out, solidsRel: bal, scourCm: -lo * 100, coarsened: scoured ? coarser / scoured : 0, waterMass: st.mass.rel };
+      runs[name] = { eroded: sd.totals.eroded, out: sd.out, solidsRel: bal, scourCm: -lo * 100, coarsened: scoured ? coarser / scoured : 0, waterMass: st.mass.rel, surfaceMm: n2 ? Math.exp(ss / n2) * 1000 : NaN, storeMm: n2 ? Math.exp(sv / n2) * 1000 : NaN };
     }
     // debris flow: a 20° gully 80 m long onto a flat fan, 1 m of gravelly sandy soil, a 2 m slurry at 40 % solids released at the top
     const nx = 80, ny = 24, dx = 2, N = nx * ny, z = new Float64Array(N), er = new Float32Array(N * 4);
@@ -355,6 +356,24 @@ export async function runGpuSuite(device, log = console.log) {
     results.sediment = { settleErr, settleSum, ...runs };
     log(`sediment, 4 classes: settling vs exact ${(settleErr * 100).toFixed(3)} % (solids ${settleSum.toExponential(1)})  dam break loam / sand+gravel: eroded ${runs.loam.eroded.toFixed(2)} / ${runs['sand+gravel'].eroded.toFixed(1)} m³, scour ${runs.loam.scourCm.toFixed(2)} / ${runs['sand+gravel'].scourCm.toFixed(1)} cm, scoured beds coarser ${(runs.loam.coarsened * 100).toFixed(0)} / ${(runs['sand+gravel'].coarsened * 100).toFixed(0)} %, solids balance per class ${runs.loam.solidsRel.toExponential(1)} / ${runs['sand+gravel'].solidsRel.toExponential(1)}, water mass ${runs.loam.waterMass.toExponential(1)} / ${runs['sand+gravel'].waterMass.toExponential(1)}`);
     log(`debris flow: gully eroded ${gully.toFixed(1)} m³, fan deposit ${fan.toFixed(1)} m³, peak concentration ${(cMax * 100).toFixed(0)} %, solids balance ${debBal.toExponential(1)}, water (mixture books) ${st.mass.rel.toExponential(1)}, pore water released ${sd.pore.toFixed(1)} m³`);
+  }
+  // Armouring: a steep steady clear-water flow (≈ 20 Pa: sand winnowed into suspension, 8 mm gravel too heavy to suspend)
+  // over a 0.3 m sand–gravel bed for an hour. Just below the clear-water inflow (sand-starved) the surface layer loses sand
+  // and gains gravel share; the store beneath, mixed through its 0.3 m, hardly changes (without the active layer the two
+  // would be the same)
+  {
+    const S = 0.01, nx = 100, ny = 12, dx = 2, N = nx * ny, z = new Float64Array(N), mix = [0.02, 0.08, 0.6, 0.3], er = new Float32Array(N * 4);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const k = j * nx + i; z[k] = S * (nx - i) * dx + (j === 0 || j === ny - 1 ? 3 : 0); for (let m = 0; m < 4; m++) er[4 * k + m] = (i > 4 ? 0.3 : 0) * mix[m]; }
+    const fill = (v) => new Float32Array(N).fill(v), inlets = []; for (let j = 1; j < ny - 1; j++) inlets.push(j * nx + 1);
+    const g = new GPUSolver(device, { nx, ny, dx, z, manning: 0.03, inlets, bc: { east: 'outflow', west: 'wall', north: 'wall', south: 'wall' }, scour: { tauC: fill(0.05), n: fill(0.03) },
+      sediment: { erodible: er, dSand: fill(0.3e-3), dGravel: fill(8e-3), tauSoil: fill(0.05), nSkin: fill(0.016) } });
+    g.setDepth(() => 0); g.setInletRates(inlets.map(() => -0.28)); // 0.14 m²/s
+    const mean = (sd) => { let a = 0, b = 0, n = 0; for (let j = 2; j < ny - 2; j++) for (let i = 6; i < 20; i++) { const k = j * nx + i; a += sd.surfaceGravel[k]; b += sd.storeGravel[k]; n++; } return [a / n, b / n]; };
+    await g.advance(1800); const [s30] = mean(await g.readSediment()); await g.advance(3600);
+    const sd = await g.readSediment(), [s60, b60] = mean(sd); g.destroy();
+    const bal = Math.max(...sd.classes.map(cl => Math.abs(cl.suspended + 0.6 * cl.change + cl.out) / Math.max(1e-9, 0.6 * sd.totals.eroded)));
+    results.armour = { surfaceGravel30: s30, surfaceGravel60: s60, storeGravel60: b60, eroded: sd.totals.eroded, solidsRel: bal };
+    log(`armouring (steady ~20 Pa over 0.3 m sand+gravel, 1 h): surface gravel share ${(s30 * 100).toFixed(1)} % at 30 min, ${(s60 * 100).toFixed(1)} % at 60 min vs ${(b60 * 100).toFixed(1)} % in the store beneath (30 % at the start), solids balance per class ${bal.toExponential(1)}`);
   }
 
   // Bank stability every step: a full channel drains through its open end; the banks' water table lags (T = 20 min),
