@@ -119,7 +119,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
     if (!s) { box.innerHTML = '<p class="note">Existing conditions has no design. Draw a feature or press New to start a proposed scenario.</p>'; return; }
     const v = { ...SETTINGS, ...s.settings };
     box.innerHTML = SET_SPEC.map(([k, label, kind, ph]) => `<label class="ifield"><span>${label}${CONVERT.has(kind) ? ` <i>${unit(kind)}</i>` : ''}</span><input data-sk="${k}" data-kind="${kind}" inputmode="decimal" value="${CONVERT.has(kind) ? fmtIn(kind, s.settings[k] ?? (k === 'bfe' ? null : v[k])) : s.settings[k] ?? v[k]}" placeholder="${ph ?? ''}"></label>`).join('') +
-      '<p class="note">No FEMA flood zones in the app yet: give the BFE from the FIRM (or per building). Defaults: 1 ft freeboard, 3:1 fill and 2:1 cut. Confirm against the local code.</p>';
+      '<p class="note">BFE: per building, else this setting, else FEMA\'s NFHL at the footprint (zone AE: interpolated between the FIRM\'s BFE lines and cross-sections; AH / VE: the zone\'s BFE; AO: ground + depth; A zones have none). Defaults: 1 ft freeboard, 3:1 fill and 2:1 cut. Confirm against the FIRM and the local code.</p>';
     for (const el of box.querySelectorAll('[data-sk]')) el.addEventListener('change', () => {
       const raw = el.value.trim(), x = Number(raw), k = el.dataset.sk;
       if (raw === '') delete s.settings[k]; else if (Number.isFinite(x)) s.settings[k] = CONVERT.has(el.dataset.kind) ? x * u()[el.dataset.kind][1] : x; else return;
@@ -326,6 +326,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
       if (Number.isFinite(r.ffe)) {
         out.push(`<b>FFE ${fmt('elev', r.ffe)} ${unit('elev')}</b> NAVD88 (${r.mode === 'locked' ? 'saved in the scenario' : r.mode === 'balance' ? 'balanced cut and fill' : r.mode === 'fixed' ? 'fixed' : 'auto: ' + r.governs})`);
         out.push(`HAG ${fmt('elev', r.hag)} ${unit('elev')} · minimum ${fmt('elev', r.ffeMin)} ${unit('elev')} (${r.governs})`);
+        if (r.femaZone) out.push(`FEMA zone <b>${r.femaZone}</b>${r.femaSfha ? ' (1 % annual chance floodplain)' : ''}${r.bfe != null ? ` · BFE ${fmt('elev', r.bfe)} ${unit('elev')} from ${r.bfeSource === 'FEMA' ? `the NFHL, ${r.femaBfeHow}` : r.bfeSource === 'building' ? 'this building' : 'the scenario setting'}` : ''}`);
         if (r.pad != null) out.push(`Pad (finished grade at the foundation) ${fmt('elev', r.pad)} ${unit('elev')}`);
       }
       if (p.roof === 'network' && roofLinks.has(f.id)) out.push(`Roof drains ${esc(roofLinks.get(f.id))}`);

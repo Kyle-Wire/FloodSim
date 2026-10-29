@@ -127,3 +127,35 @@ export class InflowLinks {
     return this.q;
   }
 }
+
+// ------------------------------------------------------------------ ungauged area between a gauge and the model
+
+/** Area (km²) of a GeoJSON Polygon / MultiPolygon in lon/lat (equal-area on a local scale per ring; holes subtract). */
+export function polygonAreaKm2(g) {
+  const polys = g?.type === 'Polygon' ? [g.coordinates] : g?.type === 'MultiPolygon' ? g.coordinates : [];
+  let a = 0;
+  for (const poly of polys) poly.forEach((ring, r) => {
+    const lat0 = ring.reduce((s, p) => s + p[1], 0) / ring.length, kx = 111.32 * Math.cos(lat0 * Math.PI / 180), ky = 110.574;
+    let s = 0; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) s += (ring[j][0] * kx) * (ring[i][1] * ky) - (ring[i][0] * kx) * (ring[j][1] * ky);
+    a += (r === 0 ? 1 : -1) * Math.abs(s) / 2;
+  });
+  return a;
+}
+const NLDI = 'https://api.water.usgs.gov/nldi/linked-data';
+/** Drainage area (km²) above a point from USGS NLDI: the NHDPlus reach nearest it, and that reach's whole upstream basin. */
+export async function basinAreaKm2(lon, lat, fetcher) {
+  const r = await fetcher(`${NLDI}/comid/position?f=json&coords=POINT(${lon.toFixed(6)} ${lat.toFixed(6)})`); if (!r.ok) throw new Error(`NLDI ${r.status}`);
+  const comid = (await r.json()).features?.[0]?.properties?.comid; if (!comid) throw new Error('no NHDPlus reach near the entry');
+  const b = await fetcher(`${NLDI}/comid/${comid}/basin?f=json&simplified=true`); if (!b.ok) throw new Error(`NLDI basin ${b.status}`);
+  const g = (await b.json()).features?.[0]?.geometry, a = polygonAreaKm2(g); if (!(a > 0)) throw new Error('empty basin');
+  return { areaKm2: a, comid };
+}
+/**
+ * Drainage-area ratio transfer of a gauge's flow to an ungauged point: Q = Q_gauge · (A / A_gauge)^b. USGS practice uses
+ * it within a ratio of about 0.5–1.5 (outside it the estimate degrades); b ≈ 0.6–0.8 for peaks in most regional
+ * studies, 1 for mean flows. → { k, ratio, ok }
+ */
+export function areaRatioScale(aKm2, gaugeKm2, b = 0.8) {
+  const ratio = aKm2 / gaugeKm2; if (!(ratio > 0) || !Number.isFinite(ratio)) return { k: 1, ratio: NaN, ok: false };
+  return { k: ratio ** b, ratio, ok: ratio >= 0.5 && ratio <= 1.5 };
+}

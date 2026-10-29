@@ -225,5 +225,7 @@ export function initCompare(map, api) {
     /** A run finished or was loaded: refresh the lists (and the comparison if the drawer is open). */
     refresh() { if (!$('cmpDrawer').hidden) fillPickers().then(compute); else fillPickers(); },
     clear() { cmp = null; draw(); $('cmpOut').innerHTML = ''; },
+    /** The return-period sweep's detention check so far (for the report): { rows, ponds }. */
+    sweep: () => sweepTables(),
   };
 }

@@ -6,6 +6,7 @@
 import * as R from '../src/report.js';
 import * as C from '../src/compare.js';
 import { zip } from '../src/export.js';
+import * as FEMA from '../src/fema.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -17,7 +18,7 @@ export function initReport(map, api) {
   const us = () => api.units() === 'us';
   // display units: length, elevation, flow, volume, spread
   const U = () => (us() ? { len: 'ft', L: (m) => m / FT, q: 'cfs', Q: (v) => v / CF, vol: 'ft³', V: (v) => v / CF, dpL: 2, dpQ: 2 } : { len: 'm', L: (m) => m, q: 'm³/s', Q: (v) => v, vol: 'm³', V: (v) => v, dpL: 2, dpQ: 3 });
-  const settings = () => ({ freeboard: (Number($('repFb').value) || (us() ? 1 : 0.3)) * (us() ? FT : 1), spread: (Number($('repSpread').value) || (us() ? 8 : 2.4)) * (us() ? FT : 1) });
+  const settings = () => ({ freeboard: (Number($('repFb').value) || (us() ? 1 : 0.3)) * (us() ? FT : 1), spread: (Number($('repSpread').value) || (us() ? 8 : 2.4)) * (us() ? FT : 1), bfeFreeboard: api.bfeFreeboard?.() ?? 0.3048 });
 
   // ---------------------------------------------------------------- runs
   async function listRuns() {
@@ -116,6 +117,37 @@ export function initReport(map, api) {
         figures: figs, tables: [{ name: 'pond_summary', title: 'Peak stage, freeboard to the spillway, peak outflow', cols: [['pond', 'pond'], ['run', 'run'], ['peakStage', `peak_stage_${u.len}`, 2], ['freeboard', `freeboard_${u.len}`, 2], ['peakQ', `peak_outflow_${u.q}`, u.dpQ], ['tPeak', 'time_of_peak_min', 0], ['volume', `volume_out_${u.vol}`, 0]], rows }, ...tables] });
     }
 
+    // 2b. the detention check over the design storms (Compare → Return-period sweep, this session)
+    {
+      const sw = api.sweep?.() ?? { rows: [], ponds: [] }, figs = [];
+      const lines = [...new Map(sw.rows.map(r => [r.line.id, r.line.name ?? `Line ${r.line.id}`])).entries()];
+      for (const [id, name] of lines) {
+        const rs = sw.rows.filter(r => r.line.id === id).sort((x, y) => x.ari - y.ari);
+        figs.push({ name: `detention_${slug(name)}`, svg: R.lineChart([{ name: 'Pre', role: 'before', pts: rs.map(r => [r.ari, u.Q(r.pre)]) }, { name: 'Post', role: 'after', pts: rs.map(r => [r.ari, u.Q(r.post)]) }],
+          { title: `${name}: peak outflow by return period`, xLabel: 'return period, yr', yLabel: `peak, ${u.q}`, zeroY: true, theme, ...size }) });
+      }
+      if (sw.rows.length || sw.ponds.length) out.push({ id: 'sweep', title: 'Detention check over the design storms', note: 'From Compare → Return-period sweep (this session): existing and proposed at each design storm with the same settings. The check: post-development peak ≤ pre-development peak at each control line.',
+        figures: figs, tables: [
+          { name: 'detention_check', title: 'Pre vs post peak outflow', cols: [['ari', 'return_period_yr', 0], ['name', 'line'], ['pre', `pre_peak_${u.q}`, u.dpQ], ['post', `post_peak_${u.q}`, u.dpQ], ['check', 'check']],
+            rows: sw.rows.map(r => ({ ari: r.ari, name: r.line.name ?? r.line.id, pre: u.Q(r.pre), post: u.Q(r.post), check: r.pass == null ? '–' : r.pass ? 'post ≤ pre' : `✕ +${fmtNum((r.ratio - 1) * 100, 0)} %` })) },
+          ...(sw.ponds.length ? [{ name: 'detention_ponds', title: 'Pond outlets by design storm', cols: [['ari', 'return_period_yr', 0], ['name', 'outlet'], ['peakStage', `peak_stage_${u.len}`, 2], ['freeboard', `freeboard_${u.len}`, 2], ['peakQ', `peak_outflow_${u.q}`, u.dpQ]],
+            rows: sw.ponds.map(o => ({ ari: o.ari, name: o.name ?? o.id, peakStage: u.L(o.peakStage), freeboard: o.freeboard == null ? NaN : u.L(o.freeboard), peakQ: u.Q(o.peakQ) })) }] : [])] });
+    }
+
+    // 2c. FEMA flood zones: the model area by zone, and each new building's zone, BFE and floor against it
+    {
+      const fe = api.fema?.(), ctx = api.ctx();
+      if (fe && ctx) {
+        const A2 = ctx.geo.dx ** 2, areas = FEMA.zoneAreas(fe.grids, A2), req = settings().bfeFreeboard;
+        const rows = Object.entries(areas).sort((p, q) => q[1] - p[1]).map(([c, a]) => ({ zone: FEMA.ZONE_INFO[c]?.label ?? c, area: us() ? a / 4046.8564224 : a / 1e4, share: 100 * a / (ctx.geo.nx * ctx.geo.ny * A2) }));
+        const bl = (B.newBuildings ?? []).map(b => { const at = FEMA.atCells(fe.grids, b.cells ?? b.ring ?? []), fb = at.bfe != null ? b.ffe - at.bfe : NaN;
+          return { building: b.name ?? `New ${b.id}`, zone: at.zone ?? '–', bfe: at.bfe == null ? NaN : u.L(at.bfe), ffe: u.L(b.ffe), above: u.L(fb), check: !at.sfha ? 'outside the 1 % floodplain' : at.bfe == null ? '! no BFE published' : fb >= req - 1e-6 ? 'ok' : fb >= 0 ? '! under the freeboard' : '✕ below the BFE' }; });
+        out.push({ id: 'fema', title: 'FEMA flood zones', note: `FEMA National Flood Hazard Layer (${fe.data.datum}). BFE in zone AE interpolated between the FIRM's BFE lines and cross-sections (inverse distance between the two nearest of different elevation); AH / VE: the zone's BFE; AO: ground + depth; A zones publish none. Check the effective FIRM and any LOMR before relying on it. Required freeboard above the BFE: ${fmtNum(u.L(req), 1)} ${u.len}.`, figures: [],
+          tables: [{ name: 'fema_zones', title: 'Model area by flood zone', cols: [['zone', 'zone'], ['area', us() ? 'area_ac' : 'area_ha', 2], ['share', 'share_pct', 0]], rows },
+            ...(bl.length ? [{ name: 'fema_buildings', title: 'New buildings: floor against the BFE', cols: [['building', 'building'], ['zone', 'zone'], ['bfe', `bfe_${u.len}`, 2], ['ffe', `ffe_${u.len}`, 2], ['above', `ffe_above_bfe_${u.len}`, 2], ['check', 'check']], rows: bl }] : [])] });
+      }
+    }
+
     // 3. storm sewer HGL
     if (B.network && B.hgl) {
       const net = B.network, nodes = net.nodes.map((n, i) => i).filter(i => !net.nodes[i].outfall && !net.nodes[i].offsite && !net.nodes[i].storage);
@@ -138,6 +170,7 @@ export function initReport(map, api) {
       const pipes = net.pipes.map((p, k) => ({ pipe: `${net.nodes[p.from].name} → ${net.nodes[p.to].name}`, D: u.L(p.D), maxQ: u.Q(B.hgl.pipes[k]?.maxQ ?? NaN), ratio: B.hgl.pipes[k]?.maxRatio ?? NaN, maxV: u.L(B.hgl.pipes[k]?.maxV ?? NaN) })).sort((x, y) => y.ratio - x.ratio);
       out.push({ id: 'hgl', title: 'Storm sewer hydraulic grade line', note: `Max HGL at each manhole over the run (SWMM node head, every 2 s exchange). Checks: HGL above the rim floods (✕); freeboard to the rim under ${fmtNum(u.L(s.freeboard), 2)} ${u.len} (!); HGL above the crown of the pipe leaving the manhole is surcharged.`,
         figures: figs, pick: { nodes: nodes.map(i => ({ i, name: net.nodes[i].name })), sel: hglFrom },
+        nodesMap: nodes.map(i => ({ i, ll: net.nodes[i].ll, check: rows.find(r => r.node === net.nodes[i].name)?.check ?? 'ok', sel: i === hglFrom })),
         tables: [{ name: 'hgl_manholes', title: 'Manholes, least freeboard first', cols: [['node', 'manhole'], ['rim', `rim_${u.len}`, 2], ...(A ? [['hglBefore', `max_hgl_before_${u.len}`, 2]] : []), ['hgl', `max_hgl_${u.len}`, 2], ['freeboard', `freeboard_${u.len}`, 2], ['floodVol', `flooded_${u.vol}`, 0], ['check', 'check']], rows },
           { name: 'hgl_pipes', title: 'Pipes, fullest first', cols: [['pipe', 'pipe'], ['D', `diameter_${u.len}`, 2], ['maxQ', `max_flow_${u.q}`, u.dpQ], ['ratio', 'max_depth_over_D', 2], ['maxV', `max_velocity_${u.len}_per_s`, 2]], rows: pipes }] });
     }
@@ -152,6 +185,7 @@ export function initReport(map, api) {
         series.push({ name: A ? 'ground after' : 'ground', role: 'ground', fillBelow: true, pts: sb.map(x => [u.L(x.s), u.L(x.ground)]) });
         if (sa) series.push({ name: 'WSE before', role: 'before', pts: sa.map(x => [u.L(x.s), u.L(x.wse)]) });
         series.push({ name: A ? 'WSE after' : 'max WSE', role: 'after', pts: sb.map(x => [u.L(x.s), u.L(x.wse)]) });
+        const fe = api.fema?.(); if (fe) series.push({ name: 'FEMA BFE', role: 'line', dash: true, pts: R.sampleProfile(line, { b: fe.grids.bfe }, ctx.geo, ctx.geo.dx).map(x => [u.L(x.s), u.L(x.b)]) });
         const markers = floorsNear(line, sb, ctx, B).map(m => ({ x: u.L(m.s), y: u.L(m.ffe), label: m.label }));
         const name = f.properties.name ?? 'Profile';
         figs.push({ name: `profile_${slug(name)}`, svg: R.lineChart(series, { title: `${name}: max water surface`, xLabel: `station, ${u.len}`, yLabel: `elevation, ${u.len}`, markers, theme, ...size }) });
@@ -209,12 +243,13 @@ export function initReport(map, api) {
   function render() {
     const secs = sections('dark'); last = secs;
     $('repOut').innerHTML = `<p class="iinfo">${A ? `Before: <b>${esc(A.label)}</b><br>After: <b>${esc(B.label)}</b>` : `Run: <b>${esc(B.label)}</b>`}</p>` + secs.map(sec => `<h3>${esc(sec.title)}</h3><p class="hint">${esc(sec.note)}</p>` +
-      (sec.pick ? `<label class="ifield"><span>From manhole</span><select id="repHglFrom">${sec.pick.nodes.map(n => `<option value="${n.i}"${n.i === sec.pick.sel ? ' selected' : ''}>${esc(n.name)}</option>`).join('')}</select></label>` : '') +
+      (sec.pick ? `<label class="ifield"><span>From manhole <i>or click one on the map</i></span><select id="repHglFrom">${sec.pick.nodes.map(n => `<option value="${n.i}"${n.i === sec.pick.sel ? ' selected' : ''}>${esc(n.name)}</option>`).join('')}</select></label>` : '') +
       sec.figures.map(f => `<div class="rep-fig">${f.svg}</div>`).join('') + sec.tables.map(t => `<details${sec.id === 'summary' ? ' open' : ''}><summary>${esc(t.title)}</summary>${tableHTML(t)}</details>`).join('')).join('') +
       '<div class="row"><button class="btn" id="repExport" type="button">Export report (.zip)</button></div>';
     $('repExport').onclick = () => exportReport().catch(e => { console.error(e); $('repNote').textContent = 'Export failed: ' + e.message; });
     if ($('repHglFrom')) $('repHglFrom').onchange = () => { hglFrom = Number($('repHglFrom').value); render(); };
     drawMarkers(secs.find(s => s.id === 'spread')?.markers ?? []);
+    drawNodes(secs.find(s => s.id === 'hgl')?.nodesMap ?? []);
   }
   function drawMarkers(rows) {
     if (!map.isStyleLoaded()) return;
@@ -225,6 +260,20 @@ export function initReport(map, api) {
       map.addLayer({ id: 'rep-inlets-label', type: 'symbol', source: 'rep-inlets', layout: { 'text-field': ['get', 'label'], 'text-size': 11, 'text-offset': [0, 1.1] }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#000000', 'text-halo-width': 1.2 } });
     } else map.getSource('rep-inlets').setData(fc);
     const vis = $('repDrawer').hidden ? 'none' : 'visible'; for (const id of ['rep-inlets', 'rep-inlets-label']) map.setLayoutProperty(id, 'visibility', vis);
+  }
+
+  /** Manholes on the map, by their HGL check; a click on one draws its profile to the outfall. */
+  function drawNodes(nodes) {
+    if (!map.isStyleLoaded()) return;
+    const fc = { type: 'FeatureCollection', features: nodes.filter(n => n.ll).map(n => ({ type: 'Feature', geometry: { type: 'Point', coordinates: n.ll }, properties: { i: n.i, sel: n.sel ? 1 : 0, c: n.check.startsWith('✕') ? 2 : n.check.startsWith('!') || n.check === 'surcharged' ? 1 : 0 } })) };
+    if (!map.getSource('rep-nodes')) {
+      map.addSource('rep-nodes', { type: 'geojson', data: fc });
+      map.addLayer({ id: 'rep-nodes', type: 'circle', source: 'rep-nodes', paint: { 'circle-radius': ['case', ['==', ['get', 'sel'], 1], 8, 5.5], 'circle-color': ['match', ['get', 'c'], 2, '#d03b3b', 1, '#fab219', '#ffffff'],
+        'circle-stroke-color': ['case', ['==', ['get', 'sel'], 1], '#2a78d6', '#1a1a19'], 'circle-stroke-width': ['case', ['==', ['get', 'sel'], 1], 3, 1.5] } });
+      map.on('click', 'rep-nodes', (e) => { if ($('repDrawer').hidden) return; const i = e.features?.[0]?.properties.i; if (i != null) { hglFrom = Number(i); render(); } });
+      map.on('mouseenter', 'rep-nodes', () => { map.getCanvas().style.cursor = 'pointer'; }); map.on('mouseleave', 'rep-nodes', () => { map.getCanvas().style.cursor = ''; });
+    } else map.getSource('rep-nodes').setData(fc);
+    map.setLayoutProperty('rep-nodes', 'visibility', $('repDrawer').hidden ? 'none' : 'visible');
   }
 
   // ---------------------------------------------------------------- export
@@ -263,7 +312,7 @@ ${secs.map(sec => `<h2>${esc(sec.title)}</h2><p class="note">${esc(sec.note)}</p
   function toggle(on = $('repDrawer').hidden) {
     $('repDrawer').hidden = !on; $('repToggle').setAttribute('aria-expanded', on);
     if (on) { for (const [d, c] of [['design', 'designClose'], ['infra', 'infraClose'], ['cmpDrawer', 'cmpClose'], ['emuDrawer', 'emuClose']]) if ($(d) && !$(d).hidden) $(c).click(); $('repFbUnit').textContent = us() ? 'ft' : 'm'; $('repSpreadUnit').textContent = us() ? 'ft' : 'm'; fillPickers().then(compute); }
-    else if (map.getLayer('rep-inlets')) for (const id of ['rep-inlets', 'rep-inlets-label']) map.setLayoutProperty(id, 'visibility', 'none');
+    else for (const id of ['rep-inlets', 'rep-inlets-label', 'rep-nodes']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
   }
   for (const id of ['designToggle', 'infraToggle', 'cmpToggle', 'emuToggle']) $(id)?.addEventListener('click', () => { if (!$('repDrawer').hidden) toggle(false); });
   $('repA').onchange = $('repB').onchange = () => { hglFrom = null; compute(); };

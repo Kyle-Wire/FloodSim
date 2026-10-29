@@ -24,6 +24,7 @@ const ALLOW = new Set([
   'www.mrlc.gov',                   // NLCD land cover (WMS/WCS)
   'sdmdataaccess.sc.egov.usda.gov', // SSURGO Soil Data Access
   'hdsc.nws.noaa.gov',              // NOAA Atlas 14 precipitation frequency
+  'hazards.fema.gov',               // FEMA National Flood Hazard Layer (flood zones, BFEs)
   'mesonet.agron.iastate.edu',      // IEM: historic rainfall (IEMRE, ASOS 1-minute)
   'www.nhc.noaa.gov',               // NHC HURDAT2 hurricane tracks
   'api.tidesandcurrents.noaa.gov',  // NOAA CO-OPS tide gauges
@@ -34,6 +35,7 @@ const ALLOW = new Set([
   'epsg.io',                        // coordinate-system definitions for imported GIS files
   'api.waterdata.usgs.gov',         // USGS Water Data APIs: STN high-water marks, groundwater levels
   'waterservices.usgs.gov',         // USGS NWIS: stream gauges, instantaneous flows, site lists
+  'api.water.usgs.gov',             // USGS NLDI: upstream basins (drainage-area ratio for river inflow)
   'nwis.waterdata.usgs.gov',        // USGS NWIS: annual peak flows
   'geodesy.noaa.gov',               // NOAA NCAT / VERTCON: NGVD29 → NAVD88 for gauge datums
 ]);

@@ -2,7 +2,7 @@
 // hydrograph peaks on time, recorded flows interpolate, river entries from a waterway crossing the area, the inflow link
 // books the water it adds, and the STN high-water-mark import keeps only marks with a usable datum.
 // Usage: node tests/run-inflow-tests.mjs  (--live: also fits the Patapsco at Hollofield record through the local server)
-import { normInv, lp3, designHydrograph, recordedHydrograph, riverEntries, InflowLinks, CFS } from '../src/inflow.js';
+import { normInv, lp3, designHydrograph, recordedHydrograph, riverEntries, InflowLinks, CFS, polygonAreaKm2, areaRatioScale, basinAreaKm2 } from '../src/inflow.js';
 import { fromSTN } from '../src/calibrate.js';
 import { GridRef, fromUTM } from '../src/geo.js';
 
@@ -52,6 +52,22 @@ if (process.argv.includes('--live')) {
   const { annualPeaks } = await import('../src/inflow.js');
   const p = await annualPeaks('01589000', fetcher);
   console.log(`Patapsco at Hollofield: ${p.length} annual peaks; Q10 ${(lp3(p, 10) / CFS).toFixed(0)} cfs, Q100 ${(lp3(p, 100) / CFS).toFixed(0)} cfs; largest recorded ${(Math.max(...p.map(x => x.q)) / CFS).toFixed(0)} cfs`);
+}
+
+{ // drainage-area transfer to an ungauged entry
+  const sq = (lat) => ({ type: 'Polygon', coordinates: [[[-76, lat], [-75.9, lat], [-75.9, lat + 0.1], [-76, lat + 0.1], [-76, lat]]] });
+  const a = polygonAreaKm2(sq(39)), hole = polygonAreaKm2({ type: 'Polygon', coordinates: [sq(39).coordinates[0], [[-75.98, 39.02], [-75.92, 39.02], [-75.92, 39.08], [-75.98, 39.08], [-75.98, 39.02]]] });
+  check('basin area of a 0.1° cell at 39° N', Math.abs(a - 11.132 * Math.cos(39.05 * Math.PI / 180) * 11.0574) < 0.05, `${a.toFixed(2)} km²`);
+  check('holes subtract', Math.abs(hole - a * (1 - 0.36)) < 0.05, `${hole.toFixed(2)} km²`);
+  const s = areaRatioScale(120, 100, 0.8), far = areaRatioScale(300, 100, 0.8);
+  check('drainage-area ratio: Q × (A / A_gauge)^b, flagged outside 0.5–1.5', Math.abs(s.k - 1.2 ** 0.8) < 1e-12 && s.ok && !far.ok && areaRatioScale(100, 100).k === 1);
+  const L = new InflowLinks([{ cells: [1, 2], flow: () => 10, scale: 1.25 }]), q = L.step(new Float32Array(2), new Float32Array(2), 2, 0);
+  check('the scale multiplies the entry’s inflow', Math.abs(q[0] + 6.25) < 1e-6 && Math.abs(q[1] + 6.25) < 1e-6);
+}
+if (process.argv.includes('--live')) {
+  const fetcher = (url) => fetch('http://localhost:8770/api/fetch', { method: 'POST', headers: { 'x-floodsim': '1' }, body: JSON.stringify({ url }) });
+  const b = await basinAreaKm2(-76.7867, 39.3101, fetcher); // the Patapsco just below the Hollofield gauge (01589000: 285 mi²)
+  check('live: NLDI basin area below the Hollofield gauge ≈ the gauge’s 285 mi²', b.areaKm2 / 2.589988 > 250 && b.areaKm2 / 2.589988 < 340, `${(b.areaKm2 / 2.589988).toFixed(1)} mi², NHDPlus reach ${b.comid}`);
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall inflow tests passed');

@@ -249,6 +249,18 @@ const sameAs = (f, snap) => Object.entries(snap).every(([k, v]) => { const a = k
   check('every preset has a foundation, apron, roof and height', Object.values(PRESETS).every(p => p.foundation && p.apronW >= 0 && p.roof && p.height > 0));
 }
 
+// ---- FEMA BFE: used when neither the building nor the scenario gives one; it also sets the floodplain-fill level
+{
+  const f = model(60, () => 50), bld = designFeature('building', square(20, 20, 12), { preset: 'sfr' }, 7);
+  const fema = { bfeAt: () => ({ zone: 'AE', sfha: true, bfe: 51, source: 'interpolated between BFE lines / cross-sections' }), bfeGrid: new Float32Array(60 * 60).fill(51) };
+  const r = applyDesign(f, fc(bld), fema).log.features[0].resolved;
+  check('FEMA BFE + freeboard sets the FFE when none is given', Math.abs(r.ffe - 51.3) < 1e-9 && r.bfeSource === 'FEMA' && r.femaZone === 'AE', `FFE ${r.ffe.toFixed(2)} (${r.governs})`);
+  const own = applyDesign(f, fc(designFeature('building', square(20, 20, 12), { preset: 'sfr', bfe: 52 }, 7)), fema).log.features[0].resolved;
+  check('a building’s own BFE wins over FEMA’s', Math.abs(own.ffe - 52.3) < 1e-9 && own.bfeSource === 'building');
+  const pad = applyDesign(f, fc(designFeature('grade', square(30, 30, 10), { elev: 50.5 }, 8)), fema).log.totals;
+  check('fill below FEMA’s BFE counts as floodplain fill', Math.abs(pad.floodFill - pad.fill) < 1e-6 && pad.floodFill > 0, `${pad.floodFill.toFixed(1)} m³ of ${pad.fill.toFixed(1)} m³`);
+}
+
 // ---- design numbers for the emulator: offered with their resolved values, and set as given (a saved lock dropped)
 {
   const f = model(60, (x, y) => 50 + 0.02 * x), bld = designFeature('building', square(20, 20, 12), { preset: 'sfr' }, 7), pad = designFeature('grade', square(40, 40, 8), { elev: 51 }, 8);

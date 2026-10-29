@@ -36,9 +36,10 @@ import { sedimentCells } from '../src/sediment.js';
 import { findBanks, bankClass, BANK_CLASSES, UNRATED } from '../src/banks.js';
 import { scourCells, scourClass, SCOUR_CLASSES, NOT_ERODIBLE } from '../src/scour.js';
 import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/calibrate.js';
-import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, InflowLinks, CFS } from '../src/inflow.js';
+import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, InflowLinks, CFS, basinAreaKm2, areaRatioScale } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
-import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear } from '../src/waterlevels.js';
+import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd } from '../src/waterlevels.js';
+import * as FEMA from '../src/fema.js';
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
  * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
@@ -143,7 +144,7 @@ map.on('moveend', () => { try { localStorage.setItem('floodsim.view', JSON.strin
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
 map.touchZoomRotate.disableRotation();
 
-const canvases = { depth: document.createElement('canvas'), shade: document.createElement('canvas'), lc: document.createElement('canvas'), dz: document.createElement('canvas') };
+const canvases = { depth: document.createElement('canvas'), shade: document.createElement('canvas'), lc: document.createElement('canvas'), dz: document.createElement('canvas'), fema: document.createElement('canvas') };
 const emptyFC = { type: 'FeatureCollection', features: [] };
 // 'style.load' needs no rendered frame, so building works in a background tab ('load' waits for the first paint)
 const mapReady = new Promise((resolve) => map.once('style.load', () => setTimeout(resolve, 0)));
@@ -208,6 +209,17 @@ function baseGroundAt(ll) {
   const fine = model.fine, [x, y] = toCells(fine, [ll])[0], i = Math.floor(x), j = Math.floor(y);
   return i < 0 || j < 0 || i >= fine.nx || j >= fine.ny ? null : model.base.z[j * fine.nx + i];
 }
+/** FEMA NFHL for the design (src/fema.js): zone and BFE over a footprint, and the BFE grid for floodplain fill. */
+const femaOpts = () => (model?.fema ? { bfeAt: (cells) => FEMA.atCells(model.fema.grids, cells), bfeGrid: model.fema.grids.bfe } : {});
+/** The build-log line for the NFHL: zones by area, the BFE range, the datum. → [text, level, detail] */
+function femaSummary(fe, fine) {
+  const a = FEMA.zoneAreas(fe.grids, fine.dx ** 2), tot = fine.nx * fine.ny * fine.dx ** 2, sfha = Object.entries(a).filter(([c]) => FEMA.ZONE_INFO[c]?.sfha).reduce((p, [, v]) => p + v, 0);
+  let lo = Infinity, hi = -Infinity; for (const v of fe.grids.bfe) if (Number.isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const zones = Object.entries(a).sort((p, q) => q[1] - p[1]).map(([c, v]) => `${c === 'X500' ? 'X (0.2 %)' : c === 'FW' ? 'floodway' : c} ${Math.round(100 * v / tot)} %`).join(', ');
+  if (!fe.data.zones.length) return ['FEMA: no mapped flood zones here', 'ok', 'NFHL has no S_FLD_HAZ_AR polygons in the area (unmapped or not yet digital)'];
+  return [`FEMA: ${Math.round(100 * sfha / tot)} % of the area in the 1 % floodplain${Number.isFinite(lo) ? `, BFE ${(lo / 0.3048).toFixed(1)}–${(hi / 0.3048).toFixed(1)} ft` : ''}`, sfha ? 'warn' : 'ok',
+    `${zones} · ${fe.data.lines.length} BFE lines / cross-sections · ${fe.data.datum}${fe.data.shift ? ` (NGVD29 + ${fe.data.shift.toFixed(3)} m by NOAA NCAT)` : ''} · FEMA NFHL`];
+}
 /** Open water on the fine grid (NLCD open water, mapped streams and rivers): fill into it is warned about. */
 function fineWater() {
   if (model.water) return model.water;
@@ -220,7 +232,7 @@ function applyScenario() {
   if (!sc || !sc.design.features.length) { model.f = model.base; model.design = null; design.setLog(sc ? { features: [], totals: { cut: 0, fill: 0, net: 0, impAdded: 0, impRemoved: 0, floodFill: 0, compCut: 0 }, warnings: [] } : null); return; }
   const t0 = performance.now(), fine = model.fine;
   const dsg = { features: sc.design.features, settings: sc.settings, locked: sc.locked };
-  const r = applyDesign(model.base, emu?.design ? withValues(dsg, emu.design) : dsg, { toCell: (p) => toCells(fine, [p])[0], wse: model.baseWse ?? null, water: fineWater(), hash: false });
+  const r = applyDesign(model.base, emu?.design ? withValues(dsg, emu.design) : dsg, { ...femaOpts(), toCell: (p) => toCells(fine, [p])[0], wse: model.baseWse ?? null, water: fineWater(), hash: false });
   r.log.floodRef = model.baseWse ? 'the existing-conditions run’s max water surface' + (r.log.settings.bfe != null ? ' or the BFE' : '') : r.log.settings.bfe != null ? `the BFE, ${(r.log.settings.bfe / 0.3048).toFixed(2)} ft` : null;
   model.f = r.fine; model.design = { name: sc.name, log: r.log, ms: performance.now() - t0 };
   design.setLog(r.log);
@@ -534,6 +546,8 @@ $('buildBtn').onclick = async () => {
     const lLc = log('NLCD land cover');
     const lSoil = log('SSURGO soils');
     const lA14 = log('NOAA Atlas 14 rainfall frequency');
+    const lFema = log('FEMA flood zones (NFHL)');
+    const femaP = FEMA.fetchNFHL(fine.lonlatBounds(0.0004), fetcher, { datumShift: (lo, la) => ngvdToNavd(lo, la, fetcher) }).catch((e) => { lFema.set('FEMA flood zones unavailable', 'warn', e.message); return null; });
     const ut = utilityFor(fine.lonlatBounds()), lUtil = ut ? log(`${ut.name} drainage inlets`) : null;
     const links = linkedLinks(), lLink = (links.pipes.length || links.inlets.length || links.outfalls.length) ? log('Your linked drainage data') : null;
     const [cx, cy] = [(fine.x0 + fine.x1) / 2, (fine.y0 + fine.y1) / 2], [clon, clat] = fromUTM(cx, cy, fine.zone);
@@ -563,7 +577,9 @@ $('buildBtn').onclick = async () => {
     f.channels = breachChannels(fine, f, osm.waterways.filter(w => /river|stream|brook|canal|ditch|drain/.test(w.kind))); // embankments over unmapped crossings
     lCond.set('Terrain conditioned', 'ok', `${fmtArea(f.stats.buildingArea)} buildings as walls · ${fmtArea(f.stats.roadArea)} streets` + (curb ? ` burned ${curb * 100} cm` : ' (lidar curbs kept as surveyed)')
       + ` · ${osm.culverts.length} mapped culverts linked · ${f.channels.breaches} road embankments breached on mapped streams`);
+    const nfhl = await femaP;
     model = { fine, f, base: f, dem, osm, nlcd, soils, curb, atlas14, util, linked, site: [clon, clat], poly: S.poly };
+    if (nfhl) { model.fema = { data: nfhl, grids: FEMA.nfhlGrids(nfhl, fine, f.z, { step: 4 }) }; lFema.set(...femaSummary(model.fema, fine)); }
     groundCache.clear(); emulatorUI.reset();
     applyScenario(); // the active design scenario, if any (model.base stays existing conditions)
     $('downspout').value = util?.combined ? 100 : 0; $('downspout').dispatchEvent(new Event('input')); // combined-sewer rowhouses: downspouts tie into the sewer
@@ -572,10 +588,6 @@ $('buildBtn').onclick = async () => {
     if (!atlas14) setStormSource('const'); // until the record has loaded
     loadHistory().catch((e) => { $('histEvent').innerHTML = '<option value="">Unavailable</option>'; $('histNote').textContent = 'Historic record unavailable: ' + e.message; });
     updateStorm();
-$('spacing').addEventListener('input', () => { $('spacingOut').textContent = $('spacing').value + ' m'; }); $('spacingOut').textContent = $('spacing').value + ' m';
-$('downspout').addEventListener('input', () => { $('downspoutOut').textContent = $('downspout').value + ' %'; }); $('downspoutOut').textContent = $('downspout').value + ' %';
-$('lumpRate').addEventListener('input', () => { $('lumpRateOut').textContent = $('lumpRate').value + ' mm/hr'; }); $('lumpRateOut').textContent = $('lumpRate').value + ' mm/hr';
-swmmReady.then(updateDrainUI);
     await mapReady; await gpuReady;
     drawStatic();
     setTiers();
@@ -589,6 +601,10 @@ swmmReady.then(updateDrainUI);
     console.error(e); log('Build failed: ' + e.message, 'err');
   } finally { $('buildBtn').disabled = false; }
 };
+// slider readouts, once at load (they sat inside Build, so they ran only after a build, once per build)
+$('spacing').addEventListener('input', () => { $('spacingOut').textContent = $('spacing').value + ' m'; }); $('spacingOut').textContent = $('spacing').value + ' m';
+$('downspout').addEventListener('input', () => { $('downspoutOut').textContent = $('downspout').value + ' %'; }); $('downspoutOut').textContent = $('downspout').value + ' %';
+$('lumpRate').addEventListener('input', () => { $('lumpRateOut').textContent = $('lumpRate').value + ' mm/hr'; }); $('lumpRateOut').textContent = $('lumpRate').value + ' mm/hr';
 
 function drawStatic() {
   const { fine, nlcd } = model, corners = fine.corners();
@@ -601,6 +617,7 @@ function drawStatic() {
   canvases.depth.getContext('2d').clearRect(0, 0, fine.nx, fine.ny);
   setCanvasLayer('shade', canvases.shade, corners, 'bld-fill', $('tShade').checked, 0.75);
   setCanvasLayer('lc', canvases.lc, corners, 'bld-fill', $('tLc').checked && !!nlcd, 0.6);
+  drawFema(corners);
   setCanvasLayer('dz', canvases.dz, corners, 'bld-fill', $('tDz').checked, 0.9);
   setCanvasLayer('depth', canvases.depth, corners, 'area-line', true, S.opacity);
   map.getSource('bld').setData(buildingsFC());
@@ -879,6 +896,7 @@ addEventListener('resize', () => { if ($('hyeto').firstChild) { drawHyeto(); if 
 // ------------------------------------------------------------------ drainage
 let drainSrc = 'network', swmmEngine = null, swmmError = null;
 const swmmReady = loadSWMM().then((e) => { swmmEngine = e; }).catch((e) => { swmmError = e; });
+swmmReady.then(updateDrainUI);
 function setDrainSource(d) {
   drainSrc = d;
   for (const b of $('drainSrc').children) b.setAttribute('aria-pressed', b.dataset.d === d);
@@ -1144,7 +1162,9 @@ function ensureSolver() {
   const start = startWater(c, F, stageCells); // rivers, lakes and tidal water from the gauges (or dry: the lidar surface)
   const pool = new Map(); for (const pd of run.sw.pools) for (const K of pd.cells) pool.set(K, Math.max(pool.get(K) ?? 0, pd.pool - c.z[K])); // wet ponds start at their permanent pool
   const at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
-  run.solver.setDepth((x, y) => Math.max(start ? start.depth[at(x, y)] : 0, pool.get(at(x, y)) ?? 0));
+  const w = run.warm; // the baseflow warm-up's end state (depths and velocities), else the start levels
+  run.solver.setDepth((x, y) => Math.max(w ? w.h[at(x, y)] : start ? start.depth[at(x, y)] : 0, pool.get(at(x, y)) ?? 0));
+  if (w) run.solver.setVelocity((x, y) => { const k = at(x, y), h = w.h[k]; return h > 1e-4 && !pool.has(k) ? [w.hu[k] / h, w.hv[k] / h] : [0, 0]; });
   run.storm = currentStorm(); lockStorm(true);
   if (coupled) {
     run.swmm = swmmEngine; run.swmmClosed = false;
@@ -1172,6 +1192,7 @@ async function prepareRun(r) {
   if (pairPrep) {
     r.levelsReady = pairPrep.levelsReady; r.inflowReady = pairPrep.inflowReady; scaleRunInflow(r);
     if (r.levelsReady) r.levelSrc = await levelSources(r.levelsReady, r.c, r.F);
+    await warmUp(r);
     return run === r && !r.solver;
   }
   if ($('startWater').value === 'gauge') {
@@ -1179,9 +1200,33 @@ async function prepareRun(r) {
   }
   try { r.inflowReady = await prepareInflow(); } catch (e) { log('River inflow: ' + e.message, 'warn'); r.inflowReady = []; }
   scaleRunInflow(r);
+  await warmUp(r);
   return run === r && !r.solver;
 }
 let pairPrep = null;
+/**
+ * Baseflow warm-up: before the storm, the rivers run at their flow at the storm's start (the design base, or the
+ * recorded flow then) for the set hours, with no rain, from the start levels; the storm run starts from that state, so
+ * its peaks, times and books all start with the storm. Skipped in the subgrid speed mode and without river inflow.
+ */
+async function warmUp(r) {
+  const hours = Number($('warmUp').value) || 0; r.warm = null;
+  if (!(hours > 0) || !r.inflowReady?.length || r.c.sg || !device) return;
+  const { c, F } = r, T = hours * 3600, t0 = performance.now();
+  const entries = r.inflowReady.map(e => { const q0 = Math.max(0, typeof e.flow === 'function' ? e.flow(0) : e.flow) ; return { ...e, flow: () => q0, cells: entryCells(c, e.at) }; }).filter(e => e.cells.length);
+  if (!entries.length) return;
+  const s = new GPUSolver(device, { nx: c.nx, ny: c.ny, dx: F, z: c.z, mask: c.mask, manning: c.manning, inlets: entries.flatMap(e => e.cells), sink: c.inside?.map(v => 1 - v),
+    bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2 });
+  try {
+    const start = startWater(c, F), at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
+    s.setDepth((x, y) => (start ? start.depth[at(x, y)] : 0));
+    const links = new InflowLinks(entries), hub = new LinkHub(s, [links], 2);
+    while (s.t < T - 1e-6) { if (run !== r) return; await s.advance(Math.min(T, hub.tNext)); if (s.t >= hub.tNext - 1e-6) await hub.exchange(); }
+    const st = await s.readState();
+    r.warm = { hours, h: st.h, hu: st.hu, hv: st.hv, volumeIn: links.totals.volume };
+    log(`Baseflow warm-up: ${hours} h of river base flow before the storm (${Math.round(links.totals.volume).toLocaleString()} m³ in, ${((performance.now() - t0) / 1000).toFixed(1)} s)`, 'ok');
+  } finally { s.destroy(); }
+}
 $('runBtn').onclick = async () => {
   if (!run) resetRun(); if (!run) return;
   if (!run.solver && !(await prepareRun(run))) return;
@@ -1288,13 +1333,13 @@ function forcingRecord(r) {
   const val = (...ids) => Object.fromEntries(ids.map(id => [id, $(id)?.type === 'checkbox' ? $(id).checked : $(id)?.value ?? null]));
   return {
     storm: st ? { ...stormMeta(st), waterLevel: undefined, depth: st.depth, t0: st.t0 ?? null } : null,
-    inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow })),
+    inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}) })),
     tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: $('tCoast').checked, ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
-    runLength: { stop: tStop() },
+    runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
     drainage: { src: drainSrc, ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
     area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value },
@@ -1499,7 +1544,7 @@ function designAt(scName, values) {
   const sc = design.scenarios.find(s => s.name === scName); if (!sc) throw new Error(`no scenario "${scName}"`);
   const key = CMP.hashOf({ scName, d: sc.design.features, s: sc.settings, l: sc.locked, values: values ?? {} }); if (groundCache.has(key)) return groundCache.get(key);
   const dsg = { features: sc.design.features, settings: sc.settings, locked: sc.locked };
-  const r = applyDesign(model.base, values && Object.keys(values).length ? withValues(dsg, values) : dsg, { toCell: llCell, wse: model.baseWse ?? null, water: fineWater(), hash: false });
+  const r = applyDesign(model.base, values && Object.keys(values).length ? withValues(dsg, values) : dsg, { ...femaOpts(), toCell: llCell, wse: model.baseWse ?? null, water: fineWater(), hash: false });
   groundCache.set(key, { f: r.fine, log: r.log }); if (groundCache.size > 4) groundCache.delete(groundCache.keys().next().value);
   return groundCache.get(key);
 }
@@ -1526,7 +1571,7 @@ const emulatorUI = initEmulator(map, {
   toCell: llCell,
 });
 const reportUI = initReport(map, {
-  records: () => [...records].reverse(), savedRuns, loadSaved, units: () => design.units, project: () => projects.current,
+  records: () => [...records].reverse(), savedRuns, loadSaved, units: () => design.units, project: () => projects.current, sweep: () => compareUI.sweep(), fema: () => model?.fema ?? null, bfeFreeboard: () => design.active?.settings?.freeboard ?? 0.3,
   profiles: () => design.analysis.features.filter(f => f.properties.type === 'profile' && f.geometry?.coordinates?.length > 1),
   ctx: () => model && { geo: { nx: model.fine.nx, ny: model.fine.ny, x0: model.fine.x0, y0: model.fine.y1 - model.fine.ny * model.fine.dx, dx: model.fine.dx }, z: model.base.z, bld: model.base.bld, toCell: llCell },
   async exportFiles(files, name, bytes) {
@@ -1776,6 +1821,21 @@ $('hazStd').onchange = () => { drawLegend(); if (run?.out) drawDepth(); if (run?
 $('opacity').oninput = () => { S.opacity = $('opacity').value / 100; $('opacityOut').textContent = $('opacity').value + ' %'; if (map.getLayer('ov-depth')) map.setPaintProperty('ov-depth', 'raster-opacity', S.opacity); };
 $('basemap').onchange = () => { for (const k of Object.keys(BASEMAPS)) map.setLayoutProperty(k, 'visibility', k === $('basemap').value ? 'visible' : 'none'); };
 for (const [id, layer] of [['tShade', 'ov-shade'], ['tLc', 'ov-lc']]) $(id).onchange = () => { if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', $(id).checked ? 'visible' : 'none'); };
+$('tFema').onchange = () => { const v = $('tFema').checked ? 'visible' : 'none'; for (const l of ['ov-fema', 'fema-bfe', 'fema-bfe-label']) if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', v); };
+/** FEMA flood zones as an overlay, and the BFE lines / cross-sections labelled in feet. */
+function drawFema(corners) {
+  const fe = model?.fema, fine = model.fine, cv = canvases.fema;
+  if (!fe) { if (map.getLayer('ov-fema')) map.setLayoutProperty('ov-fema', 'visibility', 'none'); return; }
+  cv.width = fine.nx; cv.height = fine.ny; cv.getContext('2d').putImageData(new ImageData(FEMA.zoneImage(fe.grids, fine.nx, fine.ny), fine.nx, fine.ny), 0, 0);
+  setCanvasLayer('fema', cv, corners, 'bld-fill', $('tFema').checked, 0.8);
+  const fc = { type: 'FeatureCollection', features: fe.data.lines.map(l => ({ type: 'Feature', geometry: { type: 'LineString', coordinates: l.line }, properties: { label: `${l.kind === 'xs' ? 'XS ' : ''}${(l.elev / 0.3048).toFixed(1)} ft` } })) };
+  const vis = $('tFema').checked ? 'visible' : 'none';
+  if (!map.getSource('fema-bfe')) {
+    map.addSource('fema-bfe', { type: 'geojson', data: fc });
+    map.addLayer({ id: 'fema-bfe', type: 'line', source: 'fema-bfe', layout: { visibility: vis }, paint: { 'line-color': '#9fd0ff', 'line-width': 1.5, 'line-dasharray': [3, 2] } });
+    map.addLayer({ id: 'fema-bfe-label', type: 'symbol', source: 'fema-bfe', layout: { visibility: vis, 'symbol-placement': 'line', 'text-field': ['get', 'label'], 'text-size': 11 }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#0b2a4a', 'text-halo-width': 1.4 } });
+  } else { map.getSource('fema-bfe').setData(fc); for (const l of ['fema-bfe', 'fema-bfe-label']) map.setLayoutProperty(l, 'visibility', vis); }
+}
 $('tBld').onchange = () => { for (const l of ['bld-fill', 'bld-line']) map.setLayoutProperty(l, 'visibility', $('tBld').checked ? 'visible' : 'none'); };
 for (const [id, fmt] of [['rain', v => v + ' mm/hr'], ['dur', v => v + ' min'], ['uplift', v => '+' + v + ' %'], ['tail', v => v + ' min'], ['speed', () => speedMul() === Infinity ? 'max' : speedMul().toLocaleString() + '×']]) {
   const upd = () => { $(id + 'Out').textContent = fmt($(id).value); }; $(id).addEventListener('input', upd); upd();
@@ -2035,15 +2095,31 @@ async function setupInflow() {
     return `<div class="inrow"><b>${en.name || 'Unnamed ' + en.kind} enters the area</b>
       <select id="inGauge${i}" aria-label="Gauge"><option value="">No inflow</option>${ranked.slice(0, 12).map(g => `<option value="${g.site}"${g === pick ? ' selected' : ''}>${g.name} (${g.areaMi2 ? g.areaMi2.toLocaleString() + ' mi², ' : ''}${(g.d / 1000).toFixed(1)} km ${g.up ? 'upstream' : g.altM != null ? 'downstream' : 'away'})</option>`).join('')}</select>
       <select id="inFlow${i}" aria-label="Flow"><option value="event">Recorded flows (historic storms)</option>${[2, 10, 25, 50, 100].map(T => `<option value="${T}"${T === 10 ? ' selected' : ''}>Design: ${T}-yr peak flow</option>`).join('')}</select>
-      <label class="field" style="margin:0"><span>River peak after the rain peak (h)</span><input id="inLag${i}" type="number" step="0.5" value="0" style="width:5em"></label></div>`;
+      <label class="field" style="margin:0"><span>River peak after the rain peak (h)</span><input id="inLag${i}" type="number" step="0.5" value="0" style="width:5em"></label>
+      <label class="toggle"><input type="checkbox" id="inScale${i}" checked> Scale to the drainage area where it enters</label> <span class="note" id="inArea${i}"></span></div>`;
   }).join('');
-  for (let i = 0; i < inflow.entries.length; i++) for (const id of ['inGauge', 'inFlow', 'inLag']) $(id + i).onchange = () => { if (model && (!run || !run.solver)) resetRun(); inflowNoteUpdate(); };
+  for (let i = 0; i < inflow.entries.length; i++) for (const id of ['inGauge', 'inFlow', 'inLag', 'inScale']) $(id + i).onchange = () => { if (model && (!run || !run.solver)) resetRun(); inflowNoteUpdate(); areaNote(i); };
+  for (const id of ['inExp', 'warmUp']) $(id).onchange = () => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
   inflowNoteUpdate();
+  inflow.entries.forEach((en, i) => { // the drainage area where each river enters (USGS NLDI), in the background
+    const [lo, la] = ll(en.at); en.area = basinAreaKm2(lo, la, fetcher).then((a) => { en.areaKm2 = a.areaKm2; areaNote(i); return a; }).catch((e) => { en.areaErr = e.message; areaNote(i); return null; });
+  });
 }
+/** The entry's drainage area against its gauge's, and the factor its flow is scaled by. → { k, text } */
+function entryScale(i) {
+  const en = inflow.entries[i], g = en?.ranked?.find(x => x.site === $('inGauge' + i)?.value), b = Number($('inExp').value) || 0.8;
+  if (!g) return { k: 1, text: '' };
+  if (!$('inScale' + i)?.checked) return { k: 1, text: 'flows as measured at the gauge' };
+  if (en.areaKm2 == null) return { k: 1, text: en.areaErr ? `drainage area unavailable (${en.areaErr}): flows as measured` : 'finding the drainage area…' };
+  if (!g.areaMi2) return { k: 1, text: 'the gauge has no published drainage area: flows as measured' };
+  const s = areaRatioScale(en.areaKm2, g.areaMi2 * 2.589988, b);
+  return { k: s.k, text: `enters draining ${(en.areaKm2 / 2.589988).toLocaleString(undefined, { maximumFractionDigits: 1 })} mi² vs the gauge's ${g.areaMi2.toLocaleString()} mi²: × ${s.k.toFixed(3)} (ratio ${s.ratio.toFixed(2)}^${b})${s.ok ? '' : ' — outside 0.5–1.5, where the transfer is weak'}` };
+}
+function areaNote(i) { const el = $('inArea' + i); if (el) el.textContent = entryScale(i).text; }
 function inflowNoteUpdate() {
   const on = inflow.entries.filter((_, i) => $('inGauge' + i)?.value).length;
   $('inflowNote').textContent = !inflow.gauges.length ? 'No USGS discharge gauges within ~15 km: the river enters dry unless you give it a flow.'
-    : `${on} of ${inflow.entries.length} river ${inflow.entries.length > 1 ? 'entries' : 'entry'} with a gauge inflow. A gauge counts the whole basin above it; flows are used as measured (no drainage-area scaling). Recorded flows need a historic storm (15-minute data since about 2007).`;
+    : `${on} of ${inflow.entries.length} river ${inflow.entries.length > 1 ? 'entries' : 'entry'} with a gauge inflow. A gauge counts the whole basin above it: each entry's flow is scaled by its drainage area against the gauge's (USGS NLDI basins, NWIS areas) unless you untick it. Recorded flows need a historic storm (15-minute data since about 2007).`;
 }
 /** Each entry's flow as a function of model time (s), fetched before the run starts. */
 async function prepareInflow() {
@@ -2066,7 +2142,9 @@ async function prepareInflow() {
       flow = designHydrograph(q, Math.max(600, peakAt + lag), { base });
       label = `${g.name}, ${mode}-yr peak ${(q / CFS).toLocaleString(undefined, { maximumFractionDigits: 0 })} cfs (log-Pearson III on ${peaks.length} annual peaks), base ${(base / CFS).toLocaleString(undefined, { maximumFractionDigits: 0 })} cfs (${q0 != null ? 'gauge reading' : '5 % of the peak'})`;
     }
-    out.push({ at: en.at, flow, label, site, name: en.name });
+    await en.area; const sc = entryScale(i); // the drainage-area transfer (1 when off or unknown)
+    if (sc.k !== 1) label += `, × ${sc.k.toFixed(3)} for the drainage area where it enters`;
+    out.push({ at: en.at, flow, label, site, name: en.name, ...(sc.k !== 1 ? { scale: sc.k } : {}) });
   }
   if (out.length) log('River inflow: ' + out.map(e => e.label).join('; '), 'ok', 'USGS NWIS');
   return out;
@@ -2215,7 +2293,7 @@ function scenarioFiles() {
   return design.scenarios.map(s => {
     const json = { settings: s.settings };
     if (model) {
-      const r = applyDesign(model.base, { features: s.design.features, settings: s.settings, locked: s.locked }, { toCell: llCell, wse: model.baseWse ?? null, water: fineWater() });
+      const r = applyDesign(model.base, { features: s.design.features, settings: s.settings, locked: s.locked }, { ...femaOpts(), toCell: llCell, wse: model.baseWse ?? null, water: fineWater() });
       Object.assign(json, resolvedValues(s.design, r.log));
     } else json.locked = s.locked;
     return { name: s.name, design: s.design, json };

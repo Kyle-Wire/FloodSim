@@ -176,7 +176,8 @@ export function applyDesign(f, design, opts = {}) {
   const touched = new Int32Array(N).fill(-1); // index of the last feature that changed the cell
   const graded = new Uint8Array(N), footprint = new Uint8Array(N); // ground to become compacted lawn; new building pads
   const water = opts.water ?? (f.cls ? Uint8Array.from(f.cls, c => (c === 11 ? 1 : 0)) : new Uint8Array(N));
-  const level = (k) => { const w = opts.wse?.[k], lv = [Number.isFinite(w) ? w : null, S.bfe].filter(v => v != null); return lv.length ? Math.max(...lv) : null; };
+  // flood level for floodplain fill: the existing run's max water surface, the scenario BFE, and FEMA's BFE (opts.bfeGrid)
+  const level = (k) => { const w = opts.wse?.[k], fb = opts.bfeGrid?.[k], lv = [Number.isFinite(w) ? w : null, S.bfe, Number.isFinite(fb) ? fb : null].filter(v => v != null); return lv.length ? Math.max(...lv) : null; };
   const roofs = new Map(), buildings = [], logs = [];
   const ponds = [], drawnGI = [], outlets = [], deferred = [], swaleN = new Map(); // stormwater
 
@@ -208,7 +209,9 @@ export function applyDesign(f, design, opts = {}) {
       let hag = -Infinity, ring = [];
       for (let l = 0; l < inFp.length; l++) if (eF.d2[l] > 0 && eF.d2[l] <= 2) { const k = win.global(l); ring.push(k); hag = Math.max(hag, z0[k]); }
       if (!Number.isFinite(hag)) hag = Math.max(...cells.map(k => z0[k]));
-      const reveal = num(p.reveal) ?? 0.15, bfe = num(p.bfe) ?? S.bfe, fb = num(p.freeboard) ?? S.freeboard;
+      // BFE: the building's, else the scenario's, else FEMA's at the footprint (opts.bfeAt: NFHL zone and BFE over the cells)
+      const fema = opts.bfeAt ? opts.bfeAt(cells) : null, bfeSrc = num(p.bfe) != null ? 'building' : S.bfe != null ? 'scenario' : fema?.bfe != null ? 'FEMA' : null;
+      const reveal = num(p.reveal) ?? 0.15, bfe = num(p.bfe) ?? S.bfe ?? fema?.bfe ?? null, fb = num(p.freeboard) ?? S.freeboard;
       const mins = [{ v: hag + reveal, why: 'HAG + reveal' }];
       if (bfe != null) mins.push({ v: bfe + fb, why: 'BFE + freeboard' });
       if (num(p.minFFE) != null) mins.push({ v: p.minFFE, why: 'fixed minimum' });
@@ -228,7 +231,10 @@ export function applyDesign(f, design, opts = {}) {
       const surface = (g) => { for (let l = 0; l < T.length; l++) if (region[l]) { T[l] = g - drop[l]; Te[l] = inFp[l] ? g : g - dropE[l]; } return daylight(z, win, region, T, Te, eR, fillS, cutS, dx, keep); };
       let ffe, g, mode = p.ffeMode ?? 'auto';
       const lock = design.locked?.[feat.id];
-      if (lock && Number.isFinite(lock.ffe)) { ffe = lock.ffe; g = Number.isFinite(lock.pad) ? lock.pad : ffe - reveal; mode = 'locked'; L.notes.push('FFE and pad from the saved scenario'); }
+      if (lock && Number.isFinite(lock.ffe)) {
+        ffe = lock.ffe; g = Number.isFinite(lock.pad) ? lock.pad : ffe - reveal; mode = 'locked'; L.notes.push('FFE and pad from the saved scenario');
+        if (ffe < ffeMin - 1e-6) L.warnings.push(`Saved FFE ${ffe.toFixed(2)} m is below the minimum ${ffeMin.toFixed(2)} m now (${gov.why}${bfeSrc === 'FEMA' ? ', from FEMA’s BFE' : ''}): edit the building to recompute it`);
+      }
       else if (mode === 'fixed' && num(p.ffe) != null) { ffe = p.ffe; g = ffe - reveal; if (ffe < ffeMin - 1e-6) L.warnings.push(`Fixed FFE ${ffe.toFixed(2)} m is below the minimum ${ffeMin.toFixed(2)} m (${gov.why})`); }
       else if (mode === 'balance' && !piers) { g = balance((gg) => volumes(z, win, surface(gg), dx), ffeMin - reveal, win, z); ffe = g + reveal; }
       else { ffe = ffeMin; g = ffe - reveal; mode = mode === 'fixed' ? 'auto (no fixed FFE given)' : mode; }
@@ -258,8 +264,9 @@ export function applyDesign(f, design, opts = {}) {
       }
       buildings.push({ id: feat.id, name: p.name ?? null, preset: p.preset, foundation: p.foundation, ffe, pad: piers ? null : g, opening: p.foundation === 'basement' ? (num(p.opening) ?? ffe) : ffe,
         height: num(p.height) ?? 0, rings: polyRings(feat.geometry), cells, ring });
-      L.resolved = { hag, ffeMin, governs: gov.why, ffe, pad: piers ? null : g, mode, reveal, bfe, freeboard: bfe != null ? fb : null, apronW, apronFall, foundation: p.foundation, roof: p.roof, height: num(p.height) ?? 0, footprintArea: cells.length * A };
-      if (bfe == null) L.notes.push('No BFE given: FFE from the ground only');
+      L.resolved = { hag, ffeMin, governs: gov.why, ffe, pad: piers ? null : g, mode, reveal, bfe, freeboard: bfe != null ? fb : null, apronW, apronFall, foundation: p.foundation, roof: p.roof, height: num(p.height) ?? 0, footprintArea: cells.length * A,
+        bfeSource: bfeSrc, femaZone: fema?.zone ?? null, femaSfha: fema?.sfha ?? null, femaBfeHow: fema?.source ?? null };
+      if (bfe == null) L.notes.push(fema?.sfha ? `FEMA zone ${fema.zone} has no published BFE here: give one (FFE from the ground only)` : fema?.zone ? `FEMA zone ${fema.zone}: outside the 1 % floodplain, FFE from the ground` : 'No BFE given: FFE from the ground only');
     } else if (p.type === 'paved') {
       const n = N_PAVED[p.surface] ?? N_PAVED.asphalt, curb = Math.max(0, num(p.curb) ?? 0), elev = num(p.elev);
       const own = cells.filter(k => !R('bld')[k]); if (own.length < cells.length) L.warnings.push(`${(cells.length - own.length) * A} m² under buildings left out`);
