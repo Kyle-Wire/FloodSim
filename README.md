@@ -189,8 +189,9 @@ this session's runs and the project's saved runs.
   - outflow in time; a one-run report adds inflow, worked out as outflow + change in storage;
   - peak stage, freeboard to the spillway and peak outflow.
 - **Storm sewer HGL:**
-  - a profile from a manhole (by default the one with the least freeboard) down to its outfall: rim, crown and invert
-    of each pipe, and the max HGL before and after;
+  - a profile from a manhole (by default the one with the least freeboard; pick another in the list or click it on the
+    map, where manholes show by their check) down to its outfall: rim, crown and invert of each pipe, and the max HGL
+    before and after;
   - a manhole table with rim, max HGL, freeboard and flooded volume. Checks: ✕ floods (HGL above the rim), ! low
     freeboard (under the setting, default 1 ft), surcharged (above the crown of the pipe leaving it);
   - a pipe table with max flow, max depth / D and max velocity;
@@ -205,6 +206,9 @@ this session's runs and the project's saved runs.
     depth falls under 3 mm. Water reaching the far curb is reported as the street full;
   - also the gutter depth, and the intercepted peak and volume;
   - checked against an allowable spread (default 8 ft), with map markers and a bar chart of the widest.
+- **Detention check over the design storms:** from Compare's return-period sweep (this session): pre vs post peak at
+  each control line by return period, with a chart per line, and the pond outlets by storm.
+- **FEMA flood zones:** see below.
 - **Summary:** the water balance, before / after.
 - **Export:** a zip, also saved under `reports/`, holding:
   - `report.html` (header with the runs, storm, fingerprint and commit; a methods note per section; prints to PDF);
@@ -223,6 +227,64 @@ this session's runs and the project's saved runs.
   - the charts and the CSV.
 - On the Meyerland design project (25-yr, existing vs proposed), the report's control-line peaks match Compare's
   (49.61 → 41.27 cfs). At that storm most of its streets are full from curb to curb.
+
+**FEMA flood zones and base flood elevations** (Data & assumptions → *FEMA flood zones and BFE lines*; `src/fema.js`).
+Build reads FEMA's National Flood Hazard Layer for the area:
+- **The data:** flood zones (S_FLD_HAZ_AR), the BFE lines (S_BFE) and the cross-sections with their regulatory water
+  surface (S_XS). NGVD29 elevations are shifted to NAVD88 by NOAA NCAT at the site; feet become metres.
+- **On the map:** the 1 % floodplain in blue (floodway darker), the 0.2 % X zone in orange, and the BFE lines labelled in
+  feet. The build log gives the share of the area in each zone and the BFE range.
+- **BFE at a point:**
+  - AE: interpolated between the two nearest BFE lines or cross-sections of different elevation, inversely to distance
+    (linear between two bracketing lines);
+  - AH and VE: the zone's own BFE; AO: the ground plus the zone's depth;
+  - A zones have no published BFE, and the app says so.
+- **In the design:** a building with no BFE of its own (and none in the scenario's settings) takes FEMA's highest BFE over
+  its footprint, so its auto finished floor is at least BFE + freeboard. FEMA's BFE also sets the level for floodplain
+  fill. A saved floor below the minimum this now gives is warned about. On the Meyerland test project both proposed
+  buildings' saved floors (54.73 and 53.19 ft) are below FEMA's BFE there (55.04 and 54.99 ft): the drawer flags them.
+- **In the Report:** the area by zone, and each new building's zone, BFE, floor and floor above the BFE against the
+  freeboard; profiles draw the BFE along the line.
+- Check the effective FIRM and any LOMR before relying on it. `npm run test:fema` (`--live`: Meyerland, zone AE, BFE
+  55.0 ft, through the local server).
+
+**Channel bathymetry (estimated)** (Area → *Channel bathymetry*; `src/bathymetry.js`; off by default). Lidar flattens
+rivers at the flight-day water surface; the channel below is missing. The estimate:
+- **The flattened surface:** grown from the mapped river lines over cells flat to the millimetre (at least 4 of 8
+  neighbours within 3 mm). Natural ground carries centimetres of lidar noise; flattened water carries none.
+- **Drainage area:** USGS NLDI where a river enters the model, else D8 flow accumulation on the DEM.
+- **Bankfull width and mean depth:** the regional curves of Bieger et al. (2015), nationwide (W = 2.70·A^0.352,
+  D = 0.30·A^0.213, A in km², metres) or by physiographic division (pick it: Atlantic Plain for Houston, Appalachian
+  Highlands for the Piedmont, …).
+- **The section:** parabolic across the flattened width, its centre 1.5 × the mean bankfull depth below the bank tops,
+  less the bank height above the water (that part was full on the flight day), at least 0.3 m; bank height is the
+  median rise from the water's edge to the highest ground within half the bankfull width.
+- **In the run:** the carved channel starts full to the lidar surface; gauge start levels rise from that surface.
+- Ellicott City (Appalachian Highlands): the Patapsco drains 292 mi², bankfull 160 ft wide and 5.7 ft deep; its banks
+  stand 5.9 ft above the flight-day water, so 2.7 ft is carved below it at the centre. 6,967 m³ of channel, starts full;
+  the run's water balance 1.8e-6. An estimate: use surveyed sections where you have them (Rivers, below).
+  `npm run test:bathymetry`.
+
+**Window reruns** (Compare → *Run both in a window*, *Check the window*; `src/window.js`; phase 4 of the site-design
+spec). On a large model, rerun a design change on a window around the site only.
+- **The window:** the site boundary (else the design's features) plus a margin (150 m by default). Cells outside become
+  sinks and take no rain, so their tiles stay inactive. Active tiles now count rain only where it falls.
+- **The existing run** books the flow across the window's edge in ~20 m segments every step (control-line faces).
+- **The window run:**
+  - each segment gives back what crossed it inward, into the cells just inside;
+  - the segment is shut (a crest, as for deployable barriers) while the existing run's flow there was inward and open
+    while it was outward;
+  - pipe-network inlets outside the window replay the existing run's exchange.
+- **The result** is merged into a full record: the window run inside, the existing run outside, with the existing run's
+  forcing, so Compare reads it like a full run and says it is a window rerun.
+- **The edge check:** the window run books the same segments. Where its outflow differs from the existing run's by more
+  than 5 %, the design reaches the edge: widen the window.
+- **Check the window** reruns existing conditions on the window: the difference from the full run is the window's own
+  error. On the small Meyerland block (448 × 352 m, 60 m margin, 48 % of the area): depth RMSE 6.4 mm over 90,000 wet
+  cells, 683 cells off by more than 3 cm (worst 18 cm, at a building on the edge), Line 1 peak 48.6 vs 49.6 cfs, total
+  outflow at the edge within 2 %. No time saved there: on a domain that small the 2 s pipe-network exchanges set the
+  pace. The saving comes on large models where the surface solver dominates. Use a margin that keeps the edge well clear
+  of what the design changes, and check it. `npm run test:window`.
 
 **Per-project emulator** (map button *Emulator*; `src/emulator.js`, `app/emulator-ui.js`). A fast stand-in for the
 solver, trained on the project's own runs. It answers "what if" inside a trained range in a fraction of a second, with
@@ -420,8 +482,15 @@ grids, not the subgrid speed mode) and a GPU with 10 storage buffers per shader 
   deposits that land on it; mapped water (rivers) takes deposits but does not erode (the survey has no bed material).
   The state keeps each class's store as its change from the start, and the bed as its initial level plus the change,
   so solids balance per class and small bed changes are not lost to fp32 rounding.
-- **Limit:** the bed store is mixed over its depth (no separate surface layer), so armouring shows only where the scour
-  is a fair share of the erodible depth.
+- **Armouring (active layer, Hirano).** Each cell's bed has a surface layer two coarse grains thick (at least 1 cm) with
+  its own mix:
+  - the flow erodes and moves grains in the surface's proportions;
+  - deposits join the surface;
+  - as the bed lowers the substrate refills the surface, and as it rises the surface's excess is buried.
+  So fines and sand are winnowed out and a coarse armour forms even on a thick erodible bed. The Grain view and the
+  exports show the surface's size; `readSediment` also gives the store's. GPU suite: a clear-water flow of about 20 Pa
+  over 0.3 m of sand and gravel raises the surface's gravel share from 30 to 45 % in an hour, while the store beneath
+  stays at 31 %. Armouring builds over hours of strong flow, so a single short storm changes the surface little.
 - **Checks** (GPU suite): settling of each class matches its exact decay to 0.001 %; a dam break over loam and over a
   sand–gravel mix conserves solids per class to ~1e-6 and water to ~1e-7, and 45 % of the scoured sand–gravel bed
   ends coarser than it started.
@@ -514,7 +583,18 @@ Catonsville and Elkridge gauges).
   annual peaks (the Bulletin 17B moments; 17C's EMA and regional skew are not applied, so these are planning numbers;
   Hollofield: Q100 ≈ 58,800 cfs from 69 peaks), NRCS gamma shape, peaking at the rain's peak plus a lag you set.
 - The flow enters on the channel's lowest cells at the crossing, through the solver's exchange cells, so the mass
-  books include it. Flows are used as measured (no drainage-area scaling between gauge and crossing).
+  books include it.
+- **Ungauged land between the gauge and the model.** Each entry's flow is scaled by its drainage area against the
+  gauge's: Q = Q_gauge · (A / A_gauge)^b, with b = 0.8 by default (editable; USGS practice uses about 0.6–0.8 for peaks,
+  1 for mean flows). The entry's area is the upstream basin of the NHDPlus reach nearest it (USGS NLDI); the gauge's is
+  its NWIS drainage area. The note flags ratios outside 0.5–1.5, where the transfer is weak. Untick an entry to use its
+  gauge's flow as measured. Check: NLDI gives 284.7 mi² just below the Hollofield gauge (published 285 mi²); the
+  Patapsco entering Ellicott City drains 292 mi², × 1.019.
+- **Baseflow warm-up** (Storm → *Baseflow warm-up before the storm*, hours). Before the storm the rivers run at their flow
+  at the storm's start (the design base, or the recorded flow then), with no rain, from the start levels. The storm run
+  then starts from that state, so its peaks, arrival times and books all begin with the storm. Skipped in the subgrid
+  speed mode. At Ellicott City, 1 h of the Patapsco's 57 cfs base put 5,889 m³ in (57 cfs × 1.019 × 1 h is 5,940 m³),
+  3,278 m³ of it still in the channel at the storm's start.
 - Check: Ellicott City in the speed mode with the Patapsco's 10-year flow: 1.35 million m³ through the model in 90
   minutes, surface mass error 1.6e-6 of the water that entered. `npm run test:inflow` (`--live` fits Hollofield).
 
@@ -533,7 +613,7 @@ nearby and the inflow gauges, at the storm start for a historic storm or their l
   - gage heights need a surveyed NGVD29 or NAVD88 datum, accurate to within 0.5 ft (datums read off maps are skipped);
   - NGVD29 is converted with NOAA's NCAT/VERTCON.
 - **Base flow:** each design inflow hydrograph's base is the gauge's flow at the start (else 5 % of the peak).
-- **Not covered:** ungauged water stays at the lidar surface, and there is still no bathymetry below it.
+- **Not covered:** ungauged water stays at the lidar surface; the channel below it can be estimated (Channel bathymetry, below).
 - **Checks:**
   - `npm run test:waterlevels`: parallel rise, flat lake fill, spreading onto connected ground only, datum rules,
     NGVD29 shift;
@@ -758,8 +838,8 @@ an area is instant and works offline. Overpass is the least reliable source (pub
   tide gates are not modelled (edge outfalls stand in for the interceptor)
 - 1D–2D exchange every 2 s sets the pace on small domains (~47× real time at 190 k cells)
 - Rain is uniform over the domain (no areal reduction factor, no MRMS radar replay yet); Atlas 14 temporal distributions not yet offered
-- Rivers come from hydro-flattened lidar with no bathymetry: gauged water starts at its gauge level above the lidar
-  surface, but the channel below that surface is not modelled
+- Rivers come from hydro-flattened lidar: the channel below the flight-day water surface is missing unless you estimate it
+  (Channel bathymetry; regional curves, not surveyed sections)
 - No catchment delineation: water from upstream of the drawn area is ignored (draw the polygon around the catchment);
   the drainage network is built over the polygon's bounding box, so inlets outside the polygon sit in dry sink cells
 - Max speed in exports is sampled at the display frame rate, not every solver step
@@ -838,6 +918,9 @@ Bed elevations are stored relative to the domain minimum for fp32 headroom.
 | Pond outlet onto the ground downstream: stored + in transit vs the start | – | 5e-7 |
 | Rain garden with an underdrain: underdrain share of the drain; books | – | 90.91 % (exact); 3.4e-6 (the GI store path, with or without the underdrain) |
 | Emulator vs solver, Meyerland block (held-out runs: return period × soil wetness; return period × pond orifice) | – | depth RMSE 0.5–1.2 mm, worst cell 3 cm, CSI ≥ 0.993, line peaks within 0.5 % |
+| Armouring: clear-water ~20 Pa over 0.3 m sand+gravel, 1 h (surface gravel share; solids per class) | – | 30 → 45 % (store 31 %); 8e-7 |
+| Window rerun of existing conditions vs the full run, Meyerland block, 60 m margin | – | depth RMSE 6.4 mm, line peak −2 %, edge outflow within 2 % |
+| FEMA BFE between two BFE lines; bathymetry centre depth and volume | exact (linear); within 5 % / 15 % | – |
 
 Full numbers: `tests/results-cpu.json`, `tests/results-gpu.json`.
 
@@ -859,15 +942,18 @@ node tests/run-soil-tests.mjs     # soils: texture classes, SSURGO rows, ponded 
 node tests/run-waterlevel-tests.mjs # starting water levels: river rise, lake fill, spreading, gauge datums (--live: a real gauge)
 node tests/run-bank-tests.mjs     # bank stability: friction-angle failure, cohesion, confinement, rapid drawdown, probability, bank tops
 node tests/run-report-tests.mjs   # report: hydrographs, profiles, HGL flags, stage–storage–discharge, gutter spread, charts
+node tests/run-fema-tests.mjs     # FEMA NFHL: zone codes, BFE between lines, zone and BFE grids (--live: Meyerland)
+node tests/run-bathymetry-tests.mjs # channel bathymetry: regional curves, flattened surface, carved section
+node tests/run-window-tests.mjs   # window reruns: the window, its edge segments (+ outward), inflow rates, the edge check, merging
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
-# GPU suite in your own browser: npm start, then open http://localhost:8766/tests/gpu-browser.html
-
-# GPU suite in headless Chromium (works with software WebGPU):
-python3 -m http.server 8766 &
-node tests/run-gpu-browser.mjs 8766 --json tests/results-gpu.json
-# or under Dawn with a real Vulkan/Metal/D3D driver (webgpu 0.6.2 currently segfaults on the first queue sync on
-# Windows; use the browser page):
-node tests/run-gpu-tests.mjs
+# GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
+# real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
+# log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8770
+# reuses a running server, --timeout 20 (minutes), --probe prints the adapter and exits, --headed shows the window;
+# CHROME_PATH picks a browser.
+npm run test:gpu
+# or in your own browser: npm start, then open http://localhost:8770/tests/gpu-browser.html
+# The old Dawn-for-Node runner (npm run test:gpu:dawn) crashes compiling the solver's shaders on some Windows/NVIDIA setups.
 
 # Gate B: npm start, open http://localhost:8766/benchmarks/ea/run.html, then:
 node benchmarks/ea/score.mjs
@@ -917,6 +1003,9 @@ src/design.js         site design: proposed buildings, pads, paved areas, demoli
 src/stormwater.js     outlet structures (rating, links), stage–storage, modified Puls, drawn GI, underdrains, the detention check
 src/compare.js        paired-run comparison: forcing fingerprint, .f32 grids, Δ maps, off-site impact, building and outlet tables
 src/report.js         H&H report outputs: hydrograph stats, profiles, HGL path and checks, stage–storage–discharge, gutter spread, SVG charts
+src/fema.js           FEMA NFHL: flood zones, BFE lines and cross-sections, zone and BFE grids
+src/bathymetry.js     estimated channel bathymetry from regional bankfull curves
+src/window.js         window reruns: the window, edge segments, inflow rates, the edge check, merging
 src/emulator.js       per-project emulator: Latin hypercube, Gaussian processes, PCA of flood fields, leave-one-out, save / load
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy

@@ -497,7 +497,7 @@ fn tileClear(@builtin(global_invocation_id) gid: vec3u) {
 fn tileWet(@builtin(global_invocation_id) gid: vec3u) {
   if (gid.x >= P.nx || gid.y >= P.ny) { return; }
   let c = (i32(gid.y) + GH) * i32(P.NX) + i32(gid.x) + GH;
-  if (U[c].x > 0.0 || P.rain > 0.0) { atomicMax(&TF[(gid.y / TILE) * P.tilesX + gid.x / TILE], 1u); }
+  if (U[c].x > 0.0 || P.rain * RF[c] > 0.0) { atomicMax(&TF[(gid.y / TILE) * P.tilesX + gid.x / TILE], 1u); } // rain counts only where it falls (sinks, a window rerun's outside: none)
 }
 @compute @workgroup_size(64)
 fn tileList(@builtin(global_invocation_id) gid: vec3u) {

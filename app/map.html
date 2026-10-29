@@ -269,6 +269,9 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <label class="ifield"><span>After (proposed)</span><select id="cmpB"></select></label>
       <div class="row"><button class="btn" id="cmpPair" type="button" title="Run existing conditions (unless a run with these settings is cached) and then the active scenario, with the same storm, gauge readings and settings">Run both</button>
         <button class="btn" id="cmpRefresh" type="button">Refresh list</button></div>
+      <div class="row"><button class="btn" id="cmpWindow" type="button" title="Existing conditions on the whole model, booking the flow across a window around the site, then the active scenario on that window only, its edges fed from it (faster on a large model). The edge check says when the window is too small.">Run both in a window</button>
+        <button class="btn" id="cmpWinCheck" type="button" title="Existing conditions on the whole model and again on the window only: the difference is the window's own error (where it is too small)">Check the window</button>
+        <label class="ifield" style="margin:0"><span>Margin around the site <i>m</i></span><input id="cmpWinBuf" inputmode="decimal" value="150"></label></div>
       <p class="note" id="cmpNote"></p>
       <label class="ifield"><span>Map</span><select id="cmpView"><option value="max_wse">Δ max water surface</option><option value="max_depth">Δ max depth</option><option value="t_above15">Δ time above 15 cm</option>
         <option value="t_wet">Δ first wetting (arrival)</option><option value="hazard">Δ hazard class (ARR)</option><option value="wetdry">Newly wet / newly dry</option></select></label>

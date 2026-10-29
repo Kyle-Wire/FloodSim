@@ -40,6 +40,7 @@ import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHyd
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
 import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd } from '../src/waterlevels.js';
 import * as FEMA from '../src/fema.js';
+import * as WIN from '../src/window.js';
 import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetry.js';
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
@@ -47,6 +48,8 @@ import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetr
  * the start), design: { '<id>.<prop>': value } }; null for every other run. emuPrep: the gauge readings a study reuses.
  */
 let emu = null, emuPrep = null;
+/** The next run's window (runWindowPair): { mode: 'record' (existing conditions, booking the window's edge) | 'rerun', rect, base }. */
+let windowNext = null;
 
 const $ = (id) => document.getElementById(id);
 const MMHR = 1 / 1000 / 3600;
@@ -1030,9 +1033,13 @@ function resetRun() {
   if ($('debrisOn').checked && !sed) $('debrisNote').textContent = 'Debris flows need sediment transport on (and the standard solver).';
   if (scour && c.sg && cal().manning !== 1) scour.n.forEach((v, k) => { scour.n[k] = v * cal().manning; });
   c.inside = model.poly ? polygonCells(model.fine, model.poly, F) : null; // polygon area: cells outside become sinks
+  const win = windowNext; // a window rerun: outside the window becomes sinks; both runs book the window's edge in segments
+  if (win?.mode === 'rerun') { const m = WIN.insideMask(win.rect, c.nx, c.ny); c.inside = c.inside ? c.inside.map((v, k) => (v && m[k] ? 1 : 0)) : m; }
+  const winSegs = win ? WIN.windowSegments(win.rect, c.nx, Math.max(4, Math.round(20 / (F * model.fine.dx)))) : [];
   // control lines (Site design → Control line): their solver faces, booked every step
   const clines = design.analysis.features.filter(f => f.properties.type === 'cline' && f.geometry?.coordinates?.length > 1);
-  const lf = clines.length ? CMP.lineFaces(clines.map(f => toCells(model.fine, f.geometry.coordinates).map(([x, y]) => [x / F, y / F])), c.nx, c.ny) : { faces: [], perLine: [] };
+  const allLines = [...clines.map(f => toCells(model.fine, f.geometry.coordinates).map(([x, y]) => [x / F, y / F])), ...winSegs.map(s => s.line)];
+  const lf = allLines.length ? CMP.lineFaces(allLines, c.nx, c.ny) : { faces: [], perLine: [] };
   const bars = buildBarriers(lay.barriers, model.fine, model.f, c, F, { fill: !c.sg }); // berms fill the bed: before anything reads c.z
   infra.setBarriers(bars.list, bars.skipped);
   // bank tops next to open water (after the berms fill the bed)
@@ -1065,7 +1072,8 @@ function resetRun() {
   const roofStages = roofHoldStages(c, net, roof, green);
   const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
   const sw = stormwaterLinks(c, F, net, new Set([...(net ? net.inlets.map(g => g.cell) : []), ...culv.flatMap(x => [x.a, x.b])]), gi);
-  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, faces: lf.perLine[l] })), faces: lf.faces, samples: clines.map(() => [[0, 0, 0, 0]]) }, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
+  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: [...clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, faces: lf.perLine[l] })), ...winSegs.map((s, q) => ({ id: 'win:' + q, name: null, side: s.side, faces: lf.perLine[clines.length + q] }))], faces: lf.faces, samples: allLines.map(() => [[0, 0, 0, 0]]) },
+    window: win ? { ...win, segs: winSegs } : null, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
   run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
   $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('hud').hidden = false;
   $('runTag').textContent = `${c.nx.toLocaleString()} × ${c.ny.toLocaleString()} @ ${F} m`;
@@ -1149,10 +1157,23 @@ function ensureSolver() {
   run.stageCells = stageCells?.length ?? 0;
   run.culverts = run.culv.length ? new CulvertLinks(run.culv, c.z, { cellArea: F * F }) : null;
   run.watch = run.bars.faces.length ? new BarrierWatch(run.bars, c.z, F) : null;
-  const lv0 = run.watch?.levels(0), crest = run.watch ? run.bars.faces.map((q, m) => ({ i: q.i, j: q.j, axis: q.axis, z: lv0[m], C: q.C, ground: q.ground })) : undefined;
+  const lv0 = run.watch?.levels(0); let crest = run.watch ? run.bars.faces.map((q, m) => ({ i: q.i, j: q.j, axis: q.axis, z: lv0[m], C: q.C, ground: q.ground })) : undefined;
+  if (run.window?.mode === 'rerun') {
+    // the window's edge as crests: shut (a wall) while the existing run's flow across a segment was inward, so its inflow
+    // goes in and stays in; open while it was outward, so water leaves to the sinks freely (windowCrests, every exchange)
+    const first = run.lines.defs.findIndex(d => String(d.id).startsWith('win:')), wf = run.lines.faces.filter(f => f.line >= first), segs = run.window.base.window.segs;
+    run.winCrest = { at: crest?.length ?? 0, seg: wf.map(f => f.line - first), rates: segs.map(sg => ({ in: WIN.rateOf(sg.series, 3), out: WIN.rateOf(sg.series, 2) })), key: '' };
+    crest = [...(crest ?? []), ...wf.map(f => ({ i: f.i, j: f.j, axis: f.axis, z: 1e6, C: 1.7, ground: NaN }))];
+  }
   run.outlets = run.sw.outlets.length ? new OutletLinks(run.sw.outlets, c.z, { cellArea: F * F }) : null;
   const base = [...(run.outlets?.cells ?? []), ...(coupled ? run.net.inlets.map(g => g.cell) : []), ...(run.culverts?.cells ?? [])], used = new Set(base);
-  const inflows = (run.inflowReady ?? []).map(e => ({ ...e, cells: entryCells(c, e.at, { used }) })).filter(e => e.cells.length);
+  let entries = run.inflowReady ?? [];
+  const wr = run.window?.mode === 'rerun' ? run.window : null;
+  if (wr) { // rivers entering inside the window as before; each edge segment gives back what crossed it inward in the existing run
+    const R = wr.rect, inR = (e) => { const I = Math.floor(e.at[0] / F), J = Math.floor(e.at[1] / F); return I >= R.i0 && I <= R.i1 && J >= R.j0 && J <= R.j1; };
+    entries = [...entries.filter(inR), ...wr.segs.map((s, q) => ({ label: 'window edge ' + q, site: null, at: null, cells: s.cells.filter(k => c.mask[k] && !used.has(k)), flow: WIN.rateOf(wr.base.window.segs[q]?.series ?? [[0, 0, 0, 0]], 3) }))];
+  }
+  const inflows = entries.map(e => ({ ...e, cells: e.cells ?? entryCells(c, e.at, { used }) })).filter(e => e.cells.length);
   inflows.forEach(e => e.cells.forEach(k => used.add(k)));
   run.inflow = inflows.length ? new InflowLinks(inflows) : null;
   const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
@@ -1176,6 +1197,13 @@ function ensureSolver() {
     run.swmm.open(run.inp);
     run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofStages ? run.roofStages[0].roofArea ?? run.roof?.roofArea : run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay });
     $('netReadouts').hidden = false;
+  }
+  if (run.coupler && run.window?.mode === 'record') run.coupler.recordInlets = true;
+  if (run.coupler && wr?.base.window?.inlets) { // inlets outside the window: the existing run's exchange, by inlet position
+    const bi = wr.base.window.inlets, R = wr.rect, at = new Map(bi.fineCells.map((k, m) => [k, m])), pre = new Map();
+    run.net.inlets.forEach((g, m) => { const I = g.cell % c.nx, J = (g.cell / c.nx) | 0; if (I >= R.i0 && I <= R.i1 && J >= R.j0 && J <= R.j1) return; const b = at.get(g.fineCell); if (b == null) return;
+      pre.set(m, (t0, t1) => WIN.volumeAt(bi.series, t1, 1 + b) - WIN.volumeAt(bi.series, t0, 1 + b)); });
+    run.coupler.prescribe = pre;
   }
   if (run.outlets) run.outlets.coupler = run.coupler ?? null; // network outlets hand their water to SWMM through the coupler
   run.underdrains = coupled && run.sw.under.length ? new UnderdrainLinks(run.solver, run.sw.under, { cellArea: F * F, coupler: run.coupler }) : null;
@@ -1279,7 +1307,8 @@ async function loop(gen) {
     const stage = atQ ? stageAt(run.storm, s.t) : null; // observed water level on open-water edges, refreshed every quantum
     if (stage != null) { s.setStage(stage); if (run.coupler) run.coupler.stage = stage; }
     if (run.exchanger) tEnd = Math.min(tEnd, run.exchanger.tNext);          // stop exactly at each 1D–2D / culvert exchange
-    if (run.watch) { const lv = run.watch.levels(s.t); if (lv) s.setCrestLevels(lv); tEnd = Math.min(tEnd, run.watch.next(s.t)); } // deployable barriers go up on time
+    if (run.watch) { const lv = run.watch.levels(s.t); if (lv && !run.winCrest) s.setCrestLevels(lv); tEnd = Math.min(tEnd, run.watch.next(s.t)); } // deployable barriers go up on time
+    if (run.winCrest) windowCrests(s);
     const every = Number($('frameEvery').value), frameDue = every > 0 && tEnd >= run.nextFrame - 1e-6;
     if (every > 0) tEnd = Math.min(tEnd, Math.max(run.nextFrame, s.t));       // and at each saved export frame
     const need = tEnd - s.t;
@@ -1376,7 +1405,8 @@ async function finishRecord() {
   };
   const hazard = new Float32Array(Nf); for (let k = 0; k < Nf; k++) hazard[k] = wall(k) ? NaN : maxD[k] > 0.005 ? hz.cls.arr[cellOf(k)] : 0;
   if (L) r.lines.samples.forEach((sm, l) => { if (sm.at(-1)[0] < s.t - 1e-6) sm.push([s.t, L.net[l], L.plus[l], L.minus[l]]); });
-  const lines = r.lines.defs.map((d, l) => ({ id: d.id, name: d.name, faces: d.faces, volume: L ? L.net[l] : NaN, plus: L ? L.plus[l] : NaN, minus: L ? L.minus[l] : NaN, series: r.lines.samples[l] }));
+  const allLines = r.lines.defs.map((d, l) => ({ id: d.id, name: d.name, side: d.side, faces: d.faces, volume: L ? L.net[l] : NaN, plus: L ? L.plus[l] : NaN, minus: L ? L.minus[l] : NaN, series: r.lines.samples[l] }));
+  const isWin = (l) => String(l.id).startsWith('win:'), lines = allLines.filter(l => !isWin(l)), winLines = allLines.filter(isWin);
   const m = r.mass ?? {}, outfalls = r.swmm && r.netMass ? r.netMass.externalOutflow * 1000 - (r.coupler?.totals.latOut ?? 0) : null;
   const ponds = r.outlets?.results() ?? [];
   if (ponds.length) design.setPondResults(ponds);
@@ -1388,8 +1418,17 @@ async function finishRecord() {
   const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
     saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
     grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
+  rec.wall = r.wall;
+  if (r.window?.mode === 'record') rec.window = { rect: r.window.rect, segs: winLines, inlets: books.hgl?.inletSeries ? { fineCells: (books.inlets ?? []).map(g => g.fineCell), series: books.hgl.inletSeries } : null };
+  if (r.window?.mode === 'rerun') { // inside the window this run, outside it the existing run: compares like a full run
+    const base = r.window.base, inside = WIN.fineInside(r.window.rect, fine.nx, fine.ny, F), check = WIN.checkWindow(base.window.segs, winLines);
+    Object.assign(rec, { grids: WIN.mergeGrids(base.grids, rec.grids, inside), hazard: WIN.mergeGrids({ h: base.hazard }, { h: rec.hazard }, inside).h, forcing: base.forcing, books: null,
+      label: 'WINDOW ' + rec.label, windowRun: { rect: r.window.rect, check, wall: r.wall, baseWall: base.wall ?? null, insideFrac: inside.reduce((a, v) => a + v, 0) / inside.length } });
+    log(`Window rerun: ${(rec.windowRun.insideFrac * 100).toFixed(0)} % of the area in ${r.wall?.toFixed(0)} s${base.wall ? ` (the full existing run took ${base.wall.toFixed(0)} s)` : ''}; edge check: ${check.changed ? `${check.changed} segment${check.changed > 1 ? 's' : ''} changed by up to ${(check.maxRel * 100).toFixed(0)} % — widen the window` : `outflow at the edge within ${(check.maxRel * 100).toFixed(1)} % of the existing run`}`, check.changed ? 'warn' : 'ok');
+  }
   r.record = rec; records.push(rec);
-  if (!rec.scenario) { baselines.set(forcing.hash, rec); model.baseWse = grids.max_wse; if (baselines.size > 3) baselines.delete(baselines.keys().next().value); }
+  // the existing-conditions cache (a window rerun of existing conditions, a self-check, is never the baseline)
+  if (!rec.scenario && !rec.windowRun) { baselines.set(forcing.hash, rec); model.baseWse = grids.max_wse; if (baselines.size > 3) baselines.delete(baselines.keys().next().value); }
   while (records.length > 6) { const i = records.findIndex(x => ![...baselines.values()].includes(x)); records.splice(i < 0 ? 0 : i, 1); }
   design.setLineResults(new Map(lines.map(l => { const st = CMP.lineStats(l); return [l.id, { volume: l.volume, plus: l.plus, minus: l.minus, peak: st.peak, tPeak: st.tPeak }]; })));
   if (rec.scenario) {
@@ -1463,6 +1502,43 @@ async function runPair(note) {
     return [before, after];
   } finally { pairPrep = null; $('speed').value = speed; $('speed').dispatchEvent(new Event('input')); }
 }
+/** A window rerun's edge (run.winCrest): each segment shut or open by the existing run's flow across it now; the
+ *  barriers' own crests first. Sets the solver's crests only when something changed. */
+function windowCrests(s) {
+  const W = run.winCrest, t = s.t + 1, state = W.rates.map(r => (r.in(t) > r.out(t) ? 1 : 0)), key = state.join('') + (run.watch?._lv ?? []).join(',');
+  if (key === W.key) return; W.key = key;
+  s.setCrestLevels([...(run.watch?._lv ?? []), ...W.seg.map(q => (state[q] ? 1e6 : -Infinity))]);
+}
+/**
+ * Window rerun (src/window.js): existing conditions over the whole model, booking the flow across a window around the
+ * site (unless a run with the same forcing and window is cached), then the active scenario on the window only, its
+ * edges fed from it. bufferM: the window's margin around the site boundary (else the design's features). → [before, after]
+ */
+async function runWindowPair(note, bufferM = 150, { self = false } = {}) { // self: existing conditions again in the window (the window's own error)
+  if (!model || !device) throw new Error('Build a model first.');
+  const sc = design.active; if (!sc || !sc.design.features.length) throw new Error('Pick a proposed scenario with features first (Site design).');
+  const F = gridF(), site = design.analysis.features.find(f => f.properties.type === 'site');
+  const pts = site ? site.geometry.coordinates[0] : sc.design.features.flatMap(f => (f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.type === 'LineString' ? f.geometry.coordinates : [f.geometry.coordinates]));
+  const cells = pts.map(p => llCell(p)).map(([x, y]) => [x / F, y / F]), xs = cells.map(p => p[0]), ys = cells.map(p => p[1]);
+  const nx = Math.round(model.fine.nx / F), ny = Math.round(model.fine.ny / F), rect = WIN.windowRect([Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], bufferM / (F * model.fine.dx), nx, ny);
+  const same = (a, b) => a && a.i0 === b.i0 && a.j0 === b.j0 && a.i1 === b.i1 && a.j1 === b.j1;
+  const speed = $('speed').value; $('speed').value = 100; $('speed').dispatchEvent(new Event('input'));
+  const toEnd = async (label) => { note(`Running ${label}…`); ensureSolver(); run.playing = true; $('runBtn').textContent = 'Pause'; run.lastWall = performance.now(); run.wall0 ??= run.lastWall; loop(run.gen); const e = await run.done; if (e) throw e; return run.record; };
+  try {
+    design.activate(null); applyScenario(); drawDesign(); windowNext = { mode: 'record', rect }; resetRun(); windowNext = null;
+    if (!(await prepareRun(run))) throw new Error('the run was replaced');
+    pairPrep = { levelsReady: run.levelsReady, inflowReady: run.inflowReady };
+    const fp = CMP.fingerprint(forcingRecord(run)).hash, cached = [...records].reverse().find(x => !x.scenario && x.forcing?.hash === fp && same(x.window?.rect, rect));
+    const before = cached ?? await toEnd('existing conditions (booking the window’s edge)');
+    if (cached) note('Existing conditions with these settings and this window already ran: reusing it.');
+    design.activate(self ? null : sc.name); applyScenario(); drawDesign(); windowNext = { mode: 'rerun', rect, base: before }; resetRun(); windowNext = null;
+    if (!(await prepareRun(run))) throw new Error('the run was replaced');
+    const after = await toEnd(`${self ? 'existing conditions' : sc.name} in the window`);
+    const w = after.windowRun;
+    note(`Done: ${sc.name} on ${(w.insideFrac * 100).toFixed(0)} % of the area in ${w.wall?.toFixed(0)} s${w.baseWall ? ` (full run ${w.baseWall.toFixed(0)} s)` : ''}. Edge check: ${w.check.changed ? `${w.check.changed} segment(s) changed by up to ${(w.check.maxRel * 100).toFixed(0)} % — widen the window` : 'unchanged at the edge'}.`);
+    return [before, after];
+  } finally { pairPrep = null; windowNext = null; $('speed').value = speed; $('speed').dispatchEvent(new Event('input')); }
+}
 /**
  * Return-period sweep: paired runs (existing conditions from the cache when it already ran with the same forcing) over
  * the design storms `aris`, one after another in this page; `cancelled()` is checked between runs and the current run
@@ -1487,7 +1563,7 @@ const sweep = { cancel: false, running: false };
 /** Stop a sweep now: the run in progress ends (unfinished, not recorded) and no further run starts. */
 function cancelSweep() { sweep.cancel = true; if (run && !run.record) { const r = run; r.finish?.(new Error('Sweep cancelled')); stopRun(); resetRun(); } }
 const compareUI = initCompare(map, {
-  records: () => [...records].reverse(), savedRuns, loadSaved, runPair, units: () => design.units,
+  records: () => [...records].reverse(), savedRuns, loadSaved, runPair, runWindowPair, units: () => design.units,
   runSweep: (aris, note, each) => { sweep.running = true; return runSweep(aris, note, each); }, cancelSweep, detentionTable,
   ctx: () => model && { geo: { nx: model.fine.nx, ny: model.fine.ny, x0: model.fine.x0, y0: model.fine.y1 - model.fine.ny * model.fine.dx, dx: model.fine.dx },
     z: model.base.z, bld: model.base.bld, toCell: llCell, prj: utmPRJ(model.fine.zone),
@@ -2483,5 +2559,5 @@ function barrierCSV(rs) {
 }
 const projects = initProjects({ capture: captureProject, layer: () => infra.layer, restore: restoreProject, runFiles, scenarios: scenarioFiles, analysis: () => design.analysis });
 
-window.__floodsim = { get run() { return run; }, get model() { return model; }, get records() { return records; }, map, infra, design, projects, buildPackage, runFiles, reportUI, compareUI }; // console debugging
+window.__floodsim = { get run() { return run; }, get model() { return model; }, get records() { return records; }, map, infra, design, projects, buildPackage, runFiles, reportUI, compareUI, runWindowPair }; // console debugging
 gpuReady.then(() => updateSizeNote());

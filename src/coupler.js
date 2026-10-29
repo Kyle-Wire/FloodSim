@@ -58,6 +58,8 @@ export class Coupler {
     // Overflow that SWMM discarded last interval was handed to the street by netting it out of this rate; it is credited
     // back so SWMM is not charged twice (it already booked it as flooding).
     const lat = new Float64Array(net.nodes.length);
+    // a window rerun: inlets outside the window replay what the existing run exchanged (prescribe: Map inlet → (t0, t1) ⇒ m³)
+    if (this.prescribe) for (const [m, f] of this.prescribe) vol[m] = f(tNext - interval, tNext);
     for (let m = 0; m < M; m++) {
       const v = vol[m]; if (v > 0) this.totals.toNetwork += v; else this.totals.toSurface -= v;
       lat[this.inletNodes[m]] += v / interval + this.ret[m];
@@ -100,6 +102,7 @@ export class Coupler {
       const i = this.inletNodes[m], n = net.nodes[i];
       const share = overflow[i] / this.perNode[i]; // a manhole's overflow leaves through all of its grates
       this.q[m] = inletFlow(h[m], this.zs[m], this.state.head[i], this.grates[m], net.opts) - share - (back?.[m] ?? 0); this.ret[m] = share;
+      if (this.prescribe?.has(m)) { this.q[m] = 0; this.ret[m] = 0; } // replayed: no surface exchange (the cell is outside the window)
       if (back) this.totals.backflow += back[m] * interval;
       flooding += share;
     }
@@ -140,13 +143,14 @@ export class Coupler {
       const q = v / interval; if (q > s.peakQ) { s.peakQ = q; s.tPeakQ = t; }
       if (h[m] > s.maxDepth) s.maxDepth = h[m];
     }
-    if (t - r.tLast >= 10 - 1e-9) { r.series.push([t, ...r.outfalls.map(i => swmm.node('INFLOW', this.swIdx[i]))]); r.tLast = t; }
+    if (this.recordInlets) { r.cum ??= new Float64Array(M); for (let m = 0; m < M; m++) r.cum[m] += vol[m]; } // for window reruns: each inlet's exchange so far
+    if (t - r.tLast >= 10 - 1e-9) { r.series.push([t, ...r.outfalls.map(i => swmm.node('INFLOW', this.swIdx[i]))]); if (r.cum) (r.inletSeries ??= []).push([t, ...r.cum]); r.tLast = t; }
   }
   /** The report books (see record), JSON-ready: infinities as null. */
   report() {
     const r = this.rec; if (!r) return null;
     const fin = (v) => (Number.isFinite(v) ? v : null);
     return { nodes: r.nodes.map(s => ({ maxHead: fin(s.maxHead), tMax: fin(s.tMax), surchargedS: s.surchargedS, floodVol: s.floodVol })), pipes: r.pipes.map(s => ({ ...s, tMaxQ: fin(s.tMaxQ) })),
-      inlets: r.inlets.map(s => ({ ...s, tPeakQ: fin(s.tPeakQ) })), outfalls: r.outfalls, series: r.series };
+      inlets: r.inlets.map(s => ({ ...s, tPeakQ: fin(s.tPeakQ) })), outfalls: r.outfalls, series: r.series, ...(r.inletSeries ? { inletSeries: r.inletSeries } : {}) };
   }
 }

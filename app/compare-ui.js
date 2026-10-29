@@ -125,8 +125,9 @@ export function initCompare(map, api) {
       `<td>${b.floodedBefore == null ? '–' : b.floodedBefore ? '<b class="warn">yes</b>' : 'no'} / ${b.floodedAfter ? '<b class="warn">yes</b>' : 'no'}</td></tr>`).join('');
     const oRows = c.outlets.map(o => `<tr><td>${esc(o.name ?? o.id)}</td><td>${Q(o.peakA)}</td><td>${Q(o.peakB)}</td><td>${V(o.volA)}</td><td>${V(o.volB)}</td><td>${fmtNum(o.tPeakA / 60, 0)} / ${fmtNum(o.tPeakB / 60, 0)}</td></tr>`).join('');
     const better = (o) => Number.isFinite(o.peakA) && Number.isFinite(o.peakB) && Math.abs(o.peakB) <= Math.abs(o.peakA) + 1e-9;
-    const emulated = [c.a, c.b].filter(r => r.emulated);
+    const emulated = [c.a, c.b].filter(r => r.emulated), wr = c.b.windowRun ?? c.a.windowRun;
     $('cmpOut').innerHTML =
+      (wr ? `<p class="iinfo${wr.check.changed ? ' warn' : ''}"><b>Window rerun.</b> The proposed design ran on ${fmtNum(wr.insideFrac * 100, 0)} % of the area (outside it: existing conditions) in ${fmtNum(wr.wall, 0)} s${wr.baseWall ? ` against ${fmtNum(wr.baseWall, 0)} s for the full run` : ''}. Edge check: ${wr.check.changed ? `<b>${wr.check.changed} edge segment${wr.check.changed > 1 ? 's' : ''} changed by up to ${fmtNum(wr.check.maxRel * 100, 0)} %</b>: the design reaches the window's edge, widen it and rerun` : `outflow at the edge within ${fmtNum(wr.check.maxRel * 100, 1)} % of the existing run`}.</p>` : '') +
       (emulated.length ? `<p class="iinfo warn"><b>Emulated: screening only.</b> ${emulated.map(r => esc(r.label)).join(' and ')} ${emulated.length > 1 ? 'are' : 'is'} the emulator's estimate, not a solver run. Confirm with a solver run before using these numbers.</p>` : '') +
       `<p class="iinfo">Same forcing <code>${esc(c.a.forcing.hash)}</code>: the runs differ only in the design. Under ${fmtNum(c.band * 1000, 0)} mm: no change.</p>` +
       `<h3>Off-site impact${c.site ? '' : ' <i>no site boundary: everywhere counts</i>'}</h3><p class="iinfo">${imp.cells ? `<span class="warn"><b>${imp.cells.toLocaleString()} cells (${area(imp.area)}) higher</b>, by up to ${fmtNum(imp.maxRise * 1000, 0)} mm</span>` : '<span class="good"><b>No off-site rise</b> above the band</span>'}` +
@@ -216,6 +217,13 @@ export function initCompare(map, api) {
   $('cmpView').onchange = () => { view = $('cmpView').value; draw(); };
   $('cmpSiteOnly').onchange = () => draw();
   $('cmpRefresh').onclick = () => fillPickers().then(compute);
+  for (const [id, self] of [['cmpWindow', false], ['cmpWinCheck', true]]) $(id).onclick = async () => {
+    const b = $(id); b.disabled = true; $('cmpNote').textContent = '';
+    try {
+      const [a, w] = await api.runWindowPair((t) => { $('cmpNote').textContent = t; }, Math.max(20, Number($('cmpWinBuf').value) || 150), { self });
+      await fillPickers(); $('cmpA').value = 'm:' + a.id; $('cmpB').value = 'm:' + w.id; await compute(); // this pair (a self-check: Δ = the window's own error)
+    } catch (e) { $('cmpNote').textContent = e.message; } finally { b.disabled = false; }
+  };
   $('cmpPair').onclick = async () => {
     const b = $('cmpPair'); b.disabled = true; $('cmpNote').textContent = '';
     try { await api.runPair((t) => { $('cmpNote').textContent = t; }); await fillPickers(); $('cmpA').value = ''; $('cmpB').value = ''; await fillPickers(); await compute(); }
