@@ -70,6 +70,8 @@ header a { font-size: 12.5px; color: var(--accent); }
 .probe { position: absolute; pointer-events: none; font-family: var(--mono); font-size: 11.5px; padding: 4px 7px; border-radius: 4px;
   background: var(--surface); border: 1px solid var(--rule); color: var(--ink); white-space: nowrap; transform: translate(12px, 12px); display: none; }
 .drawing .maplibregl-canvas, .infra-drawing .maplibregl-canvas { cursor: crosshair !important; }
+.toggles { position: absolute; top: 10px; right: 52px; display: flex; gap: 8px; }
+.toggles .infra-toggle { position: static; }
 .infra-toggle { position: absolute; top: 10px; right: 52px; font: 600 12.5px var(--body); padding: 7px 11px; border-radius: 5px; cursor: pointer;
   background: var(--surface); color: var(--ink); border: 1px solid var(--rule); }
 .infra-toggle[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
@@ -98,6 +100,17 @@ header a { font-size: 12.5px; color: var(--accent); }
 .ifield select { font-family: var(--body); }
 .iinfo { margin: 8px 0 0; font-size: 12px; color: var(--muted); } .iinfo b { color: var(--ink); } .iinfo .warn { color: var(--warn); }
 #barNote .warn { color: var(--warn); } .iinfo .good { color: var(--good); }
+.sw.building { border-radius: 2px; background: #f2a65a; } .sw.pad { border-radius: 2px; background: transparent; border: 1.5px dashed #9ad17b; }
+.sw.paved { border-radius: 2px; background: #9aa7b1; } .sw.demolish { border-radius: 2px; background: transparent; border: 2px solid #ff5d5d; }
+.scn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 10px; align-items: center; } .scn select { grid-column: 1 / -1; }
+.scn select { min-width: 0; font: 12.5px var(--body); background: transparent; color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 4px 6px; }
+.scn .btn { padding: 4px 7px; font-size: 12px; }
+.dtab { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11.5px; font-family: var(--mono); }
+.dtab th { font: 600 11px var(--body); color: var(--muted); text-align: right; padding: 2px 4px; } .dtab th:first-child, .dtab td:first-child { text-align: left; font-family: var(--body); }
+.dtab td { text-align: right; padding: 2px 4px; border-top: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+.iinfo .muted { color: var(--muted); } .iinfo.warn { color: var(--warn); }
+.dz-legend { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.dz-legend i { flex: 1; height: 8px; border-radius: 2px; background: linear-gradient(90deg, rgb(178,24,43), rgb(244,165,130), rgba(0,0,0,0), rgb(146,197,222), rgb(33,102,172)); }
 .iimport { margin-top: 8px; font-size: 12.5px; } .iimport summary { cursor: pointer; color: var(--muted); }
 
 .rail { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; overflow: auto; min-height: 0; }
@@ -235,7 +248,32 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <div><b>Rain</b><span id="hudRain">–</span></div>
     </div>
     <div class="probe" id="probe"></div>
-    <button class="infra-toggle" id="infraToggle" aria-expanded="false" aria-controls="infra" title="Draw, import or estimate pipes, culverts, structures and storage">Infrastructure <b id="infraCount"></b></button>
+    <div class="toggles">
+      <button class="infra-toggle" id="designToggle" aria-expanded="false" aria-controls="design" title="Proposed buildings, pads, paved areas and grading, as scenarios over existing conditions">Site design <b id="designCount"></b></button>
+      <button class="infra-toggle" id="infraToggle" aria-expanded="false" aria-controls="infra" title="Draw, import or estimate pipes, culverts, structures and storage">Infrastructure <b id="infraCount"></b></button>
+    </div>
+    <aside class="drawer" id="design" hidden aria-label="Site design drawer">
+      <header><h2>Site design</h2>
+        <select id="designUnits" aria-label="Units"><option value="us">US (ft)</option><option value="si">SI (m)</option></select>
+        <button class="x" id="designClose" type="button" aria-label="Close drawer">×</button></header>
+      <div class="scn"><select id="scnSel" aria-label="Scenario"></select>
+        <button class="btn" id="scnNew" type="button" title="New proposed scenario">New</button><button class="btn" id="scnCopy" type="button" title="Duplicate this scenario">Copy</button>
+        <button class="btn" id="scnRename" type="button" title="Rename this scenario">Rename</button><button class="btn" id="scnDelete" type="button" title="Delete this scenario">×</button></div>
+      <div class="tools" id="designTools" role="toolbar" aria-label="Design tools">
+        <button data-tool="select" aria-pressed="true" title="Select and edit">Select</button>
+        <button data-tool="building" title="Draw a proposed building"><i class="sw building"></i>Building</button>
+        <button data-tool="grade" title="Draw a graded pad"><i class="sw pad"></i>Pad</button>
+        <button data-tool="paved" title="Draw a driveway, parking, sidewalk or road"><i class="sw paved"></i>Paved</button>
+        <button data-tool="demolish" title="Remove a mapped building" class="wide"><i class="sw demolish"></i>Demolish</button>
+      </div>
+      <p class="hint" id="designHint"></p>
+      <div class="props" id="designProps"></div>
+      <label class="toggle"><input type="checkbox" id="tDz" checked> Cut and fill on the map</label>
+      <div class="dz-legend"><span>cut</span><i></i><span>fill</span></div>
+      <div class="props" id="designLog"></div>
+      <details class="iimport"><summary>Scenario settings (BFE, freeboard, slopes)</summary><div id="designSettings"></div></details>
+      <p class="note" id="designNote"></p>
+    </aside>
     <aside class="drawer" id="infra" hidden aria-label="Infrastructure drawer">
       <header><h2>Infrastructure</h2>
         <select id="infraUnits" aria-label="Units"><option value="us">US (in, ft)</option><option value="si">SI (mm, m)</option></select>

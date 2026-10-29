@@ -98,7 +98,7 @@ export function findBanks(c, F, f, water, { reach = 20, minH = 0.5, minSlope = M
     for (const k of front) { const i = k % nx, j = (k / nx) | 0;
       for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
         const a = i + di, b = j + dj; if (a < 0 || b < 0 || a >= nx || b >= ny) continue;
-        const p = b * nx + a, t = toe[k], d = Math.hypot(a - (t % nx), b - ((t / nx) | 0)) * F;
+        const p = b * nx + a, t = toe[k], d = Math.fround(Math.hypot(a - (t % nx), b - ((t / nx) | 0)) * F); // as stored: a float64 d over its rounded-up float32 would "improve" forever
         if (!mask[p] || water[p] || d >= dist[p] || d > reach) continue;
         dist[p] = d; toe[p] = t; nf.push(p);
       } }

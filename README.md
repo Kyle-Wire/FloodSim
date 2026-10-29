@@ -44,6 +44,54 @@ the layer is stored as lon/lat GeoJSON in metres.
   stone. Each unit becomes a SWMM storage unit joined to the nearest manhole by a connection pipe, so it fills when the
   network surcharges and drains back afterwards. `npm run test:infra` covers this, including a SWMM run.
 
+**Site design** (map button *Site design*; `src/design.js`, `app/design-ui.js`; phase 1 of
+[`docs/specs/site-design-mode.md`](docs/specs/site-design-mode.md)). Draw a proposed development on a built model;
+FloodSim turns it into edits to the 1 m layers and runs it through the same pipeline, with nothing fetched again.
+- **Scenarios.** *Existing conditions* is always there and has no features. A scenario is an ordered list of features
+  over it (lon/lat GeoJSON, SI units, ft or m in the drawer). Drawing on existing conditions starts one. Later features
+  override earlier ones where they overlap. `applyDesign(fine, design)` is pure: it never writes the baseline arrays
+  and copies only the layers it changes. No features gives the baseline model itself, so the run is bit-identical.
+- **Buildings** with presets (single-family, townhouse / multifamily, commercial, warehouse, parking garage, elevated
+  on piers, shed): foundation, finished floor (FFE), apron, roof and height. Every preset value is copied onto the
+  feature, so a later change to a default never changes a saved scenario. Confirm them against the local code.
+  - FFE (auto) is the highest of HAG + reveal (0.15 m, IRC R404.1.6), BFE + freeboard (1 ft default; the BFE is a user
+    input, per building or per scenario) and a fixed minimum. Warehouses also take truck court + 1.2 m. *Balance* lifts
+    the pad to where cut equals fill, never below that minimum. *Fixed* takes a given FFE and warns if it is low.
+  - HAG is the highest existing grade on the ring of cells around the footprint. Finished grade at the foundation
+    (the pad) is FFE − reveal. The apron falls 0.15 m in the first 3 m (IRC R401.3), 2 % on paved sides.
+  - In the footprint: a wall (`bld` 1, its own building id), impervious, no infiltration, NLCD 24, not erodible,
+    collapse and swell flags cleared (and reported). Piers: flow passes under, and the ground is left as it is.
+  - Roofs: to the ground, to the network (the manhole chosen, else the nearest within 30 m, else the ground), to a
+    cistern (holds capacity / roof area, then overflows; no drawdown during the storm) or a green roof (holds 25 mm).
+    Roof routing works per building id, so each new roof follows its own setting; mapped buildings keep the slider.
+- **Pads** (flat, a plane through three spot elevations, or flat where cut and fill balance), **paved areas**
+  (driveway, parking, sidewalk, road: impervious, n 0.014 asphalt / 0.013 concrete, optional target elevation with a
+  cross slope or crown, optional curb) and **demolish** (click a mapped building; the lidar under it is bare earth).
+- **Grading engine.** A feature sets a target T over its footprint. Outside it the ground daylights to existing grade,
+  z′ = clamp(z, Tₑ − d/S_fill, Tₑ + d/S_cut). d is the distance to the footprint edge and Tₑ the target at the nearest
+  footprint point, from an exact Euclidean distance transform with the nearest point (Felzenszwalb & Huttenlocher).
+  Slopes default to 3:1 fill and 2:1 cut; 0 means a vertical edge (a retaining wall). Graded ground becomes compacted
+  lawn: one hydrologic group down (A→B, B→C, C→D), with Green-Ampt for the new group. Placed fill takes the
+  compacted-fill rate. The native texture is kept (erodible), and the depth to bedrock and the water table moves with
+  the ground.
+- **Log** (drawer and `summary.json`). Per feature and in total: cells changed, cut and fill, impervious area added
+  and removed, and floodplain fill below the existing-conditions run's max water surface or the BFE (cut below it is
+  reported as compensatory storage). Warnings flag fill into open water, slopes steeper than 2:1, grading within 20 m
+  of a bank top (`findBanks` re-run on z′) and buildings on collapsible or expansive soil. After a scenario run, each
+  new building is reported flooded or dry: the max water surface around it against its FFE (the lowest opening for
+  a basement).
+- **On the map.** The proposed hillshade, a cut (red) / fill (blue) overlay, and the building layer without
+  demolitions. The 3D package exports the proposed DEM with the new buildings.
+- **Saved** in the project folder as `scenarios/<name>/design.geojson` plus `scenario.json`. The JSON holds the
+  settings, the presets used and every resolved value (each building's HAG, FFE and pad, cut and fill). Opening a
+  project keeps each building's saved FFE and pad until that building is edited.
+- Not yet: the run comparison, control lines, ponds and outlet structures (phases 2–3). The street-network estimate is
+  rebuilt on the proposed model; the spec's "proposed network = baseline layer + design features" comes with phase 3.
+- `npm run test:design`: the distance transform against brute force; a pad on a tilted plane is flat and daylights at
+  exactly 3:1 and 2:1; cut and fill match the analytic frustum volumes (within 0.3 %); the apron; the FFE rules (HAG,
+  BFE, balanced); demolish; the layer updates; floodplain fill = footprint × depth in a pond; no features → the same
+  model and bit-identical solver inputs; roof routing per building id.
+
 **Flood barriers** (drawer tools *Flood wall*, *Levee / berm*, *Deployable*; `src/barriers.js`). Each is a line with
 a crest, set either as a height above the lidar ground under it (so it follows the ground) or as a fixed elevation
 (NAVD88).
@@ -309,8 +357,11 @@ high-water marks (water surface elevation), observed depths, or flooded / dry re
 Each project is a folder in `Documents\FloodSim Projects` (override with `FLOODSIM_PROJECTS`):
 - `project.json` holds the area and every setting.
 - `infrastructure.geojson` holds the drawer layer.
+- `scenarios/<name>/` holds each site-design scenario: `design.geojson` and `scenario.json` (settings, presets used,
+  resolved FFE / pad and cut / fill per feature).
 - `runs/<date_time>/` gets one folder per finished run: `summary.json`, `max_depth.asc` and `max_speed.asc` (ESRI ASCII
-  + `.prj`, open in QGIS / ArcGIS), the SWMM `.inp` and report, the hyetograph, and the layer as run.
+  + `.prj`, open in QGIS / ArcGIS), the SWMM `.inp` and report, the hyetograph, and the layer as run. A run of a
+  design scenario also records the scenario, its grid hash and its features (`design.geojson`).
 
 Opening a project rebuilds the model from the saved settings, and reloads a historic event if one was used.
 
@@ -646,9 +697,11 @@ src/waterlevels.js    starting water levels from USGS gauges: river rise, lake f
 src/banks.js          bank tops next to water, Culmann bank stability, probability of collapse
 src/sediment.js       sediment transport inputs (4 grain classes, settling, erodible stores, skin roughness, soil strength)
 src/gi.js             green infrastructure layers (permeable pavement, rain gardens) and green-roof retention
+src/design.js         site design: proposed buildings, pads, paved areas, demolitions → edited 1 m layers; grading engine, cut / fill log
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)
+app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/projects.js project folders
 app/                  Phase 0 lab template + voxel shell, build script
 tests/                CPU suite, Phase 1 suite, shared GPU suite, browser + Dawn runners, results JSON
 benchmarks/ea/        Gate B: EA 2D benchmark cases, browser runner, scorer, results (data/ is the GOV.UK archive)

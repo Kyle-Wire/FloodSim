@@ -3,7 +3,8 @@
 import { GPUSolver } from '../src/solver-gpu.js';
 import { gridFromLonLatBox, fromUTM, polygonCells, insideRing } from '../src/geo.js';
 import { fetchDEM, fetchOSM, fetchNLCD, fetchSoils, NLCD_COLORS, NLCD_NAMES, toCells } from '../src/ingest.js';
-import { buildFine, coarsen, hillshade, roofConnections, roofRouting, MANNING_ROAD } from '../src/terrain.js';
+import { buildFine, coarsen, coarseIds, hillshade, roofConnections, roofRouting, MANNING_ROAD } from '../src/terrain.js';
+import { applyDesign, floodedBuildings, resolvedValues, hashFine } from '../src/design.js';
 import { downscaleDepth, volumeRatio } from '../src/downscale.js';
 import { zip, png16, exr, buildingsGLB } from '../src/export.js';
 import { fetchAtlas14, hyetograph, constantStorm, rainAt, ddf, fitGEV, annualMaxima24h, recordStorm, wettest24, gevQuantile, pdsToAms } from '../src/storm.js';
@@ -19,6 +20,7 @@ import { breachChannels, culvertLinks, culvertDiameter } from '../src/channels.j
 import { CulvertLinks, LinkHub } from '../src/links.js';
 import { attachStorage, networkToLayer } from '../src/infra.js';
 import { initInfra } from './infra-ui.js';
+import { initDesign } from './design-ui.js';
 import { initProjects } from './projects.js';
 import { buildBarriers, BarrierWatch } from '../src/barriers.js';
 import { buildSubgrid, fineDepth, CT as SG_CT, FT as SG_FT } from '../src/subgrid.js';
@@ -127,7 +129,7 @@ map.on('moveend', () => { try { localStorage.setItem('floodsim.view', JSON.strin
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
 map.touchZoomRotate.disableRotation();
 
-const canvases = { depth: document.createElement('canvas'), shade: document.createElement('canvas'), lc: document.createElement('canvas') };
+const canvases = { depth: document.createElement('canvas'), shade: document.createElement('canvas'), lc: document.createElement('canvas'), dz: document.createElement('canvas') };
 const emptyFC = { type: 'FeatureCollection', features: [] };
 // 'style.load' needs no rendered frame, so building works in a background tab ('load' waits for the first paint)
 const mapReady = new Promise((resolve) => map.once('style.load', () => setTimeout(resolve, 0)));
@@ -165,6 +167,65 @@ function groundAt(ll) {
   const fine = model.fine, [x, y] = toCells(fine, [ll])[0], i = Math.floor(x), j = Math.floor(y);
   return i < 0 || j < 0 || i >= fine.nx || j >= fine.ny ? null : model.f.z[j * fine.nx + i];
 }
+// site design drawer: proposed scenarios as edits to the fine model (model.base is existing conditions, model.f the active scenario)
+const design = initDesign(map, { onChange: designChanged, groundAt: baseGroundAt, ready: mapReady,
+  manholes: () => infra.layer.features.filter(f => f.properties.type === 'manhole' || f.properties.type === 'inlet')
+    .map(f => ({ ll: f.geometry.coordinates, label: `${f.properties.type === 'inlet' ? 'Catch basin' : 'Manhole'} ${f.id}${Number.isFinite(f.properties.invert) ? `, invert ${(f.properties.invert / 0.3048).toFixed(2)} ft` : ''}` })),
+  buildingAt: (pt) => map.getLayer('bld-fill') ? map.queryRenderedFeatures([[pt.x - 2, pt.y - 2], [pt.x + 2, pt.y + 2]], { layers: ['bld-fill'] })[0] ?? null : null });
+let designTimer = 0;
+function designChanged() {
+  clearTimeout(designTimer);
+  designTimer = setTimeout(() => {
+    if (!model) return;
+    applyScenario(); drawDesign();
+    if (run?.solver) { $('designNote').textContent = 'Edits apply to the next run: press Reset.'; return; }
+    $('designNote').textContent = ''; resetRun();
+  }, 300);
+}
+/** Lidar ground (existing conditions) under a lon/lat point. */
+function baseGroundAt(ll) {
+  if (!model) return null;
+  const fine = model.fine, [x, y] = toCells(fine, [ll])[0], i = Math.floor(x), j = Math.floor(y);
+  return i < 0 || j < 0 || i >= fine.nx || j >= fine.ny ? null : model.base.z[j * fine.nx + i];
+}
+/** Open water on the fine grid (NLCD open water, mapped streams and rivers): fill into it is warned about. */
+function fineWater() {
+  if (model.water) return model.water;
+  const fine = model.fine, lines = (model.osm.waterways || []).filter(w => /river|stream|canal|tidal/.test(w.kind)).map(w => toCells(fine, w.line));
+  return (model.water = waterCells({ nx: fine.nx, ny: fine.ny, mask: new Uint8Array(fine.nx * fine.ny).fill(1) }, 1, fine, model.nlcd, lines));
+}
+/** model.f ← the active scenario applied to existing conditions (nothing is fetched again). */
+function applyScenario() {
+  const sc = design.active;
+  if (!sc || !sc.design.features.length) { model.f = model.base; model.design = null; design.setLog(sc ? { features: [], totals: { cut: 0, fill: 0, net: 0, impAdded: 0, impRemoved: 0, floodFill: 0, compCut: 0 }, warnings: [] } : null); return; }
+  const t0 = performance.now(), fine = model.fine;
+  const r = applyDesign(model.base, { features: sc.design.features, settings: sc.settings, locked: sc.locked }, { toCell: (p) => toCells(fine, [p])[0], wse: model.baseWse ?? null, water: fineWater(), hash: false });
+  r.log.floodRef = model.baseWse ? 'the existing-conditions run’s max water surface' + (r.log.settings.bfe != null ? ' or the BFE' : '') : r.log.settings.bfe != null ? `the BFE, ${(r.log.settings.bfe / 0.3048).toFixed(2)} ft` : null;
+  model.f = r.fine; model.design = { name: sc.name, log: r.log, ms: performance.now() - t0 };
+  design.setLog(r.log);
+}
+/** Proposed hillshade, cut and fill overlay and building outlines after a design change. */
+function drawDesign() {
+  const { fine, f, base } = model;
+  canvases.shade.getContext('2d').putImageData(new ImageData(hillshade(f.z, fine.nx, fine.ny, fine.dx), fine.nx, fine.ny), 0, 0); refreshCanvas('shade');
+  const img = new ImageData(fine.nx, fine.ny), px = img.data;
+  if (f !== base) for (let k = 0; k < f.z.length; k++) {
+    const d = f.z[k] - base.z[k]; if (Math.abs(d) < 0.01) continue;
+    const t = Math.min(1, Math.abs(d) / 1.5), c = d < 0 ? [244 - 66 * t, 165 - 141 * t, 130 - 87 * t] : [146 - 113 * t, 197 - 95 * t, 222 - 50 * t];
+    px[4 * k] = c[0]; px[4 * k + 1] = c[1]; px[4 * k + 2] = c[2]; px[4 * k + 3] = 150 + 90 * t;
+  }
+  canvases.dz.getContext('2d').putImageData(img, 0, 0); refreshCanvas('dz');
+  map.getSource('bld')?.setData(buildingsFC());
+  if (model && run && !run.solver) setTiers();
+}
+/** Mapped buildings, less the ones the active scenario demolishes. */
+function buildingsFC() {
+  const { fine, f, base, osm } = model, W = fine.nx;
+  const gone = (b) => { if (f === base) return false; const c = toCells(fine, [b.rings[0].reduce((a, p) => [a[0] + p[0] / b.rings[0].length, a[1] + p[1] / b.rings[0].length], [0, 0])])[0], i = Math.floor(c[0]), j = Math.floor(c[1]);
+    return i >= 0 && j >= 0 && i < W && j < fine.ny && base.bld[j * W + i] && !f.bld[j * W + i]; };
+  return { type: 'FeatureCollection', features: osm.buildings.filter(b => !gone(b)).map(b => ({ type: 'Feature', properties: { h: b.height }, geometry: { type: 'Polygon', coordinates: b.rings } })) };
+}
+$('tDz').onchange = () => { if (map.getLayer('ov-dz')) map.setLayoutProperty('ov-dz', 'visibility', $('tDz').checked ? 'visible' : 'none'); };
 /** The network Build would make without the layer (linked pipes, else street-following), as editable features. */
 async function estimateLayer() {
   if (!model) return null;
@@ -481,7 +542,8 @@ $('buildBtn').onclick = async () => {
     f.channels = breachChannels(fine, f, osm.waterways.filter(w => /river|stream|brook|canal|ditch|drain/.test(w.kind))); // embankments over unmapped crossings
     lCond.set('Terrain conditioned', 'ok', `${fmtArea(f.stats.buildingArea)} buildings as walls · ${fmtArea(f.stats.roadArea)} streets` + (curb ? ` burned ${curb * 100} cm` : ' (lidar curbs kept as surveyed)')
       + ` · ${osm.culverts.length} mapped culverts linked · ${f.channels.breaches} road embankments breached on mapped streams`);
-    model = { fine, f, dem, osm, nlcd, soils, curb, atlas14, util, linked, site: [clon, clat], poly: S.poly };
+    model = { fine, f, base: f, dem, osm, nlcd, soils, curb, atlas14, util, linked, site: [clon, clat], poly: S.poly };
+    applyScenario(); // the active design scenario, if any (model.base stays existing conditions)
     $('downspout').value = util?.combined ? 100 : 0; $('downspout').dispatchEvent(new Event('input')); // combined-sewer rowhouses: downspouts tie into the sewer
     $('a14Btn').textContent = atlas14 ? 'Atlas 14 design' : 'Site-record design';
     for (const id of ['a14dur', 'pattern', 'which']) $(id).closest('.field').hidden = !atlas14; // site-record storms: 24 h, recorded shape
@@ -507,9 +569,8 @@ swmmReady.then(updateDrainUI);
 };
 
 function drawStatic() {
-  const { fine, f, osm, nlcd } = model, corners = fine.corners();
+  const { fine, nlcd } = model, corners = fine.corners();
   for (const c of Object.values(canvases)) { c.width = fine.nx; c.height = fine.ny; }
-  canvases.shade.getContext('2d').putImageData(new ImageData(hillshade(f.z, fine.nx, fine.ny, fine.dx), fine.nx, fine.ny), 0, 0);
   if (nlcd) {
     const img = new ImageData(fine.nx, fine.ny);
     for (let k = 0; k < nlcd.length; k++) { const c = NLCD_COLORS[nlcd[k]]; if (c) { img.data[4 * k] = c[0]; img.data[4 * k + 1] = c[1]; img.data[4 * k + 2] = c[2]; img.data[4 * k + 3] = 255; } }
@@ -518,8 +579,10 @@ function drawStatic() {
   canvases.depth.getContext('2d').clearRect(0, 0, fine.nx, fine.ny);
   setCanvasLayer('shade', canvases.shade, corners, 'bld-fill', $('tShade').checked, 0.75);
   setCanvasLayer('lc', canvases.lc, corners, 'bld-fill', $('tLc').checked && !!nlcd, 0.6);
+  setCanvasLayer('dz', canvases.dz, corners, 'bld-fill', $('tDz').checked, 0.9);
   setCanvasLayer('depth', canvases.depth, corners, 'area-line', true, S.opacity);
-  map.getSource('bld').setData({ type: 'FeatureCollection', features: osm.buildings.map(b => ({ type: 'Feature', properties: { h: b.height }, geometry: { type: 'Polygon', coordinates: b.rings } })) });
+  map.getSource('bld').setData(buildingsFC());
+  drawDesign();
   showAreaOutline(fine);
 }
 
@@ -532,6 +595,12 @@ function giLabel() {
   if (run?.tanks?.length) parts.push(`${run.tanks.reduce((a, t) => a + t.volume, 0).toLocaleString()} m³ of tanks at ${run.tanks.length} outfall manholes`);
   return parts.length ? parts.join(' · ') : 'none (set under Drainage)';
 }
+function designRow() {
+  const d = model.design; if (!d) return design.scenarios.length ? 'Existing conditions (no design applied)' : 'Existing conditions';
+  const t = d.log.totals, b = model.f.designBuildings ?? [], w = d.log.warnings.length;
+  return `Scenario <b>${d.name.replace(/</g, '&lt;')}</b>: ${d.log.features.length} features${b.length ? `, ${b.length} new building${b.length > 1 ? 's' : ''} (FFE ${b.map(x => (x.ffe / 0.3048).toFixed(2)).join(', ')} ft)` : ''}; ` +
+    `cut ${fmtVol(t.cut)}, fill ${fmtVol(t.fill)}; impervious +${fmtArea(t.impAdded)} / −${fmtArea(t.impRemoved)}; applied to the 1 m model, nothing fetched again` + (w ? `<span class="pill warn">${w} warning${w > 1 ? 's' : ''}</span>` : '');
+}
 function setTiers() {
   const { dem, osm, nlcd, soils, curb, fine } = model, F = gridF();
   const native = dem.sourceRes != null && dem.sourceRes <= 1.01;
@@ -542,6 +611,7 @@ function setTiers() {
     ['Solver grid', F === 1 ? '1 m, same as DEM' : isSubgrid() ? `${F} m subgrid speed mode: each cell and face carries 1 m storage and conveyance tables, buildings as porosity, depths at 1 m<span class="pill warn">opt-in</span>`
       : `${F} m; depths downscaled to the 1 m DEM by water-surface projection`],
     ['Buildings', `${osm.buildings.length.toLocaleString()} OSM footprints as walls, ${osm.buildings.filter(b => b.height).length} with heights`],
+    ['Site design', designRow()],
     ['Streets', `${osm.roads.length.toLocaleString()} OSM segments, n = ${MANNING_ROAD}, ${curb ? `burned ${curb * 100} cm` : 'lidar elevations kept'}`],
     ['Land cover', nlcd ? `${nlcd.label} (30 m) → Manning’s n, impervious %` : 'no NLCD here: urban defaults (n 0.045, compacted-fill infiltration)'],
     ['Soils', soilsRow()],
@@ -896,7 +966,8 @@ function resetRun() {
     if (berms.length) { const z = Float64Array.from(model.f.z); buildBarriers(berms, model.fine, model.f, { nx: model.fine.nx, ny: model.fine.ny, z, mask: model.f.bld.map(b => 1 - b) }, 1); f = { ...model.f, z }; }
     const sg = buildSubgrid(f, F);
     c = { ...sg, sg, manning: new Float64Array(sg.nx * sg.ny) };
-    c.rainField = sgRain(c, roofRouting(c.mask, c.nx, c.ny, roofF).rainField, roofF);
+    if (model.f.roofs?.size) { c.bldId = coarseIds(model.f, F); c.roofs = model.f.roofs; } // new buildings' roofs (site design)
+    c.rainField = sgRain(c, roofRouting(c.mask, c.nx, c.ny, roofF, c.roofs ? { ids: c.bldId, roofs: c.roofs } : null).rainField, roofF);
   } else { c = coarsen(model.f, F, roofF); if (cal().manning !== 1) c.manning = c.manning.map(v => v * cal().manning); }
   // infiltration: Green-Ampt from the soil survey (c.infil becomes K; the run carries ψΔθ and the water-table storage)
   const wt = $('wtDepth').value.trim() === '' ? null : Math.max(0.05, Number($('wtDepth').value));
@@ -925,8 +996,12 @@ function resetRun() {
   const net = drainSrc === 'network' ? makeNetwork(c, F) : null;
   if (net) net.opts = { ...net.opts, clog: cal().clog };
   const down = Number($('downspout').value) / 100; // downspouts straight into the nearest manhole (needs the SWMM engine)
-  const roof = net && swmmEngine && down > 0 ? roofConnections(c, net, down, Number($('roof').value) / 100) : null;
+  const drains = c.roofs && [...c.roofs.values()].some(r => r.roof === 'network'); // new buildings with roof drains (site design)
+  const roof = net && swmmEngine && (down > 0 || drains) ? roofConnections(c, net, down, Number($('roof').value) / 100, 80, { toCell: llCell }) : null;
   if (roof) c.rainField = c.sg ? sgRain(c, roof.rainField, roofF, net, down, roof.roofArea) : roof.rainField;
+  if (c.roofs) design.setRoofLinks(new Map([...c.roofs].filter(([, r]) => r.roof === 'network').map(([id]) => [id, roof?.links.has(id)
+    ? (roof.links.get(id) == null ? 'no manhole within 30 m (or 5 m of the one chosen): to the ground' : `manhole ${roof.links.get(id)} of the network`)
+    : !net ? 'no pipe network in this run: to the ground' : 'the SWMM engine is not loaded: to the ground']))); // where new buildings' roof drains go
   const gi = giLayers(model.f, c, F, { pavement: Number($('giPave').value) / 100, rainGarden: Number($('giGarden').value) / 100 });
   const tanks = net ? addTanks(net, Number($('giTank').value)) : [];
   const storage = attachStorage(net, lay.storage, model.fine, model.f).attached; // after addTanks, which clears storage
@@ -934,12 +1009,13 @@ function resetRun() {
   drawNetwork(net);
   const green = Number($('giRoof').value) / 100; // green roofs hold the first 25 mm on their share of the roofs
   // until they fill, only the other roofs shed water: downspouts take down·(1 − green), the ground (1 − down)·(1 − green)·roof
-  const rf = Number($('roof').value) / 100, roofEarly = green > 0 ? (roof ? roofConnections(c, net, down * (1 - green), (1 - green) * (1 - down) * rf / Math.max(1e-9, 1 - down * (1 - green)))
-    : { rainField: roofRouting(c.mask, c.nx, c.ny, rf * (1 - green)).rainField }) : null;
+  const rf = Number($('roof').value) / 100, roofEarly = green > 0 ? (roof ? roofConnections(c, net, down * (1 - green), (1 - green) * (1 - down) * rf / Math.max(1e-9, 1 - down * (1 - green)), 80, { toCell: llCell })
+    : { rainField: roofRouting(c.mask, c.nx, c.ny, rf * (1 - green), c.roofs ? { ids: c.bldId, roofs: c.roofs } : null).rainField }) : null;
   if (roofEarly && c.sg) roofEarly.rainField = roof ? sgRain(c, roofEarly.rainField, (1 - green) * (1 - down) * rf / Math.max(1e-9, 1 - down * (1 - green)), net, down * (1 - green), roofEarly.roofArea)
     : sgRain(c, roofEarly.rainField, rf * (1 - green));
+  const roofStages = roofHoldStages(c, net, roof, green);
   const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
-  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
+  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
   run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
   $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('hud').hidden = false;
   $('runTag').textContent = `${c.nx.toLocaleString()} × ${c.ny.toLocaleString()} @ ${F} m`;
@@ -949,6 +1025,30 @@ function resetRun() {
   lockStorm(false); drawHyeto(); updateDrainUI(); $('netReadouts').hidden = true;
   for (const id of ['drainSrc', 'networkCtl', 'lumpedCtl']) $(id).classList.remove('locked');
   $('hudTime').textContent = '0:00'; $('hudMax').textContent = '–'; $('hudRain').textContent = '–';
+}
+const llCell = (ll) => toCells(model.fine, [ll])[0];
+/**
+ * Rain fields while new buildings' green roofs and cisterns fill (site design): each holds its roof rain until the rain
+ * depth reaches its retention, so the field changes at each distinct retention (and at the area's green-roof retention
+ * when that slider is on). → [{ until (m of rain), rainField, roofArea }] for the stages before the last, or null
+ */
+function roofHoldStages(c, net, roof, green) {
+  const holds = c.roofs ? [...c.roofs].filter(([, r]) => r.retention > 0 && r.roof !== 'network') : [];
+  if (!holds.length) return null;
+  const rf = Number($('roof').value) / 100, down = Number($('downspout').value) / 100;
+  const ends = [...new Set([...holds.map(([, r]) => r.retention), ...(green > 0 ? [GI.greenRoofRetention] : [])])].sort((a, b) => a - b);
+  return ends.map(until => {
+    const held = new Set(holds.filter(([, r]) => r.retention >= until).map(([id]) => id)), g = until <= GI.greenRoofRetention ? green : 0;
+    if (roof) {
+      const sewer = down * (1 - g), ground = g ? (1 - g) * (1 - down) * rf / Math.max(1e-9, 1 - down * (1 - g)) : rf;
+      const r = roofConnections(c, net, sewer, ground, 80, { held, toCell: llCell });
+      if (c.sg) r.rainField = sgRain(c, r.rainField, ground, net, sewer, r.roofArea);
+      return { until, ...r };
+    }
+    let field = roofRouting(c.mask, c.nx, c.ny, rf * (1 - g), { ids: c.bldId, roofs: c.roofs, held }).rainField;
+    if (c.sg) field = sgRain(c, field, rf * (1 - g));
+    return { until, rainField: field };
+  });
 }
 function ensureSolver() {
   if (run.solver) return;
@@ -968,7 +1068,7 @@ function ensureSolver() {
   const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
   run.solver = new GPUSolver(device, {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask: c.mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
-    sink: c.inside?.map(v => 1 - v), gi: run.gi ?? undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: run.roofEarly ? run.roofEarly.rainField : c.rainField,
+    sink: c.inside?.map(v => 1 - v), gi: run.gi ?? undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: run.roofStages ? run.roofStages[0].rainField : run.roofEarly ? run.roofEarly.rainField : c.rainField,
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
   });
   const start = startWater(c, F, stageCells); // rivers, lakes and tidal water from the gauges (or dry: the lidar surface)
@@ -979,7 +1079,7 @@ function ensureSolver() {
     run.twoWay = $('twoWay').checked;
     run.inp = toINP(run.net, model.fine, { durationS: Math.ceil(tStop() / 60) * 60 + 3600, title: 'FloodSim synthetic network (data tier 2)', pressurise: run.twoWay });
     run.swmm.open(run.inp);
-    run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay });
+    run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofStages ? run.roofStages[0].roofArea ?? run.roof?.roofArea : run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay });
     $('netReadouts').hidden = false;
   }
   const members = [run.coupler, run.culverts, run.inflow].filter(Boolean);
@@ -1021,7 +1121,14 @@ async function loop(gen) {
   const s = run.solver, now = performance.now(), wall = Math.min(0.25, (now - run.lastWall) / 1000); run.lastWall = now;
   try {
     let tEnd = Math.min(tStop(), s.t + (speedMul() === Infinity ? 1e9 : speedMul() * wall));
-    if (run.roofEarly && !run.greenFull && s.vol.rain / Math.max(1, s.rainArea) >= GI.greenRoofRetention) {
+    if (run.roofStages) { // new buildings' green roofs and cisterns (and the area's green roofs) fill one after another
+      const depth = s.vol.rain / Math.max(1, s.rainArea);
+      while (run.stage < run.roofStages.length && depth >= run.roofStages[run.stage].until) {
+        const next = run.roofStages[++run.stage] ?? { rainField: run.c.rainField, roofArea: run.roof?.roofArea };
+        s.setRainField(next.rainField); if (run.coupler && next.roofArea) run.coupler.roofArea = next.roofArea;
+        if (run.roofEarly && !run.greenFull && depth >= GI.greenRoofRetention) run.greenFull = s.t;
+      }
+    } else if (run.roofEarly && !run.greenFull && s.vol.rain / Math.max(1, s.rainArea) >= GI.greenRoofRetention) {
       run.greenFull = s.t; s.setRainField(run.c.rainField); if (run.coupler && run.roof) run.coupler.roofArea = run.roof.roofArea;
     }
     const rr = rainAt(run.storm, s.t); // piecewise-constant hyetograph: never let a frame straddle a block change
@@ -1067,6 +1174,7 @@ async function loop(gen) {
       }
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
       if (S.obs.length) scoreAndShow();
+      afterRunDesign();
       projects.runFinished(); run.finish?.();
     }
   } catch (e) {
@@ -1075,6 +1183,17 @@ async function loop(gen) {
   nextTick(() => loop(gen));
 }
 
+/**
+ * After a run, the max water surface at 1 m (NaN where dry): an existing-conditions run keeps it for the floodplain-fill
+ * report of every scenario; a scenario run checks its new buildings against their FFE.
+ */
+function afterRunDesign() {
+  const { c, F } = run, d = F === 1 && !c.sg ? run.hmax : toFine(c, run.hmax, 1), z = model.f.z, wse = new Float32Array(d.length);
+  for (let k = 0; k < d.length; k++) wse[k] = d[k] > 0.005 ? z[k] + d[k] : NaN;
+  if (!run.scenario) { model.baseWse = wse; return; }
+  const fl = floodedBuildings(model.f, wse); run.flooded = fl; design.setResults(fl);
+  if (fl.some(b => b.flooded)) log(`${fl.filter(b => b.flooded).length} of ${fl.length} new buildings flooded above the FFE (${run.scenario})`, 'warn');
+}
 /** Surface mass balance plus exact max depths (the GPU tracks them every step). One at a time: each read folds the GPU's
  *  running totals into the books and restarts them, so two overlapping reads (a save during a run) would count twice. */
 function readMass() {
@@ -1349,7 +1468,8 @@ async function buildPackage() {
 
   // buildings: local metres from the grid's SW corner
   const { default: earcut } = await import('https://cdn.jsdelivr.net/npm/earcut@3.0.1/+esm');
-  const local = osm.buildings.map(b => ({ height: b.height, rings: b.rings.map(r => toCells(fine, r).map(([ci, cj]) => [ci * fine.dx, (fine.ny - cj) * fine.dx])) }));
+  const kept = buildingsFC().features.map(g => ({ height: g.properties.h, rings: g.geometry.coordinates })); // less demolitions, plus the scenario's new buildings
+  const local = [...kept, ...(f.designBuildings ?? []).map(b => ({ height: b.height, rings: b.rings }))].map(b => ({ height: b.height, rings: b.rings.map(r => toCells(fine, r).map(([ci, cj]) => [ci * fine.dx, (fine.ny - cj) * fine.dx])) }));
   const groundAt = (x, y) => { const i = Math.floor(x / fine.dx), j = Math.floor(fine.ny - y / fine.dx); return (i >= 0 && j >= 0 && i < W && j < H) ? f.z[j * W + i] - zmin : NaN; };
   files.push({ name: 'buildings/buildings.glb', data: buildingsGLB(local, earcut, groundAt) });
   files.push({ name: 'buildings/buildings_local_m.geojson', data: enc.encode(JSON.stringify({ type: 'FeatureCollection', features: local.map(b => ({ type: 'Feature', properties: { height_m: b.height }, geometry: { type: 'Polygon', coordinates: b.rings } })) })) });
@@ -1744,7 +1864,30 @@ function captureProject() {
   }
   return { version: 1, area: S.area, poly: S.poly, place: $('findNote').textContent.split('. Now')[0] || '', stormSrc, drainSrc, inputs,
     hist: stormSrc === 'hist' ? { event: $('histEvent').value, label: $('histEvent').selectedOptions[0]?.textContent ?? '' } : null,
-    view: { center: map.getCenter().toArray(), zoom: map.getZoom() }, infraUnits: $('infraUnits').value, obs: S.obs };
+    view: { center: map.getCenter().toArray(), zoom: map.getZoom() }, infraUnits: $('infraUnits').value, obs: S.obs,
+    activeScenario: design.active?.name ?? null, designUnits: design.units };
+}
+/**
+ * Site-design scenarios for the project folder: the features, plus scenario.json with the settings, presets used and
+ * every resolved value (each building's FFE and pad), applied to existing conditions now so they are current.
+ */
+function scenarioFiles() {
+  return design.scenarios.map(s => {
+    const json = { settings: s.settings };
+    if (model) {
+      const r = applyDesign(model.base, { features: s.design.features, settings: s.settings, locked: s.locked }, { toCell: llCell, wse: model.baseWse ?? null, water: fineWater() });
+      Object.assign(json, resolvedValues(s.design, r.log));
+    } else json.locked = s.locked;
+    return { name: s.name, design: s.design, json };
+  });
+}
+/** Scenarios read from a project: each building keeps the FFE and pad it was saved with (until it is edited). */
+function loadScenarios(list) {
+  return list.map(s => {
+    const locked = { ...(s.json?.locked ?? {}) };
+    for (const [id, v] of Object.entries(s.json?.features ?? {})) if (v.type === 'building' && Number.isFinite(v.ffe)) locked[id] = { ffe: v.ffe, pad: v.pad };
+    return { name: s.name, design: s.design, settings: s.json?.settings ?? {}, locked };
+  });
 }
 function applyInputs(inputs) {
   for (const [id, v] of Object.entries(inputs ?? {})) {
@@ -1754,9 +1897,10 @@ function applyInputs(inputs) {
   }
   for (const id of linkFields) $(id).dispatchEvent(new Event('change')); // remember linked URLs
 }
-async function restoreProject(pj, layer) {
+async function restoreProject(pj, layer, scenarios = []) {
   stopRun(); model = null; logEl.textContent = '';
   applyInputs(pj.inputs); infra.setLayer(layer); S.obs = pj.obs ?? []; drawObs(); obsNote();
+  design.setScenarios(loadScenarios(scenarios), pj.activeScenario);
   setStormSource(pj.stormSrc ?? 'a14'); setDrainSource(pj.drainSrc ?? 'network');
   if (!pj.area) { log(`Opened ${pj.name}: no area saved yet`, 'warn'); return; }
   cancelPoly(); setArea(pj.area, pj.poly);
@@ -1814,6 +1958,8 @@ async function runFiles() {
     site: model.site, extent: S.area, polygon: S.poly, grid: { nx: c.nx, ny: c.ny, cellM: F, epsg: model.fine.epsg, mode: c.sg ? 'subgrid speed mode (1 m tables; max_depth.asc at 1 m, other grids per solver cell)' : 'standard' },
     storm: { label: stormLabel(run.storm), ...stormMeta(run.storm) }, drainage: plain(drainLabel()), greenInfrastructure: plain(giLabel()),
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
+    scenario: run.scenario ?? 'Existing conditions', designHash: run.scenario ? hashFine(model.f) : null,
+    design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
     hazard: Object.fromEntries(Object.entries(STANDARDS).map(([k, st]) => [k, { name: st.name, note: st.note,
       areaM2: Object.fromEntries(run.haz.classAreas(k, A, (q) => c.mask[q] && (!c.inside || c.inside[q]), wetAreaOf()).map((a, i) => [st.classes[i].label, a])) }])),
@@ -1834,6 +1980,7 @@ async function runFiles() {
     { path: 'max_depth.asc', data: maxFine ? ascFine(maxFine) : ascGrid(run.hmax) }, { path: 'max_depth.prj', data: prj },
     { path: 'max_speed.asc', data: ascGrid(run.smax) }, { path: 'max_speed.prj', data: prj },
     { path: 'hyetograph.csv', data: csv }, { path: 'infrastructure.geojson', data: JSON.stringify(infra.layer) },
+    ...(run.scenario && design.active ? [{ path: 'design.geojson', data: JSON.stringify(design.active.design) }] : []),
   ];
   const hz = run.haz, grid = (name, v) => files.push({ path: name + '.asc', data: ascGrid(v) }, { path: name + '.prj', data: prj });
   grid('hazard_arr', hz.cls.arr); grid('hazard_fd2320', hz.cls.defra); grid('hazard_fd2320_urban', hz.cls.defraUrban);
@@ -1864,7 +2011,7 @@ function barrierCSV(rs) {
     ...rs.map(r => [r.id, JSON.stringify(name(r)), r.type, n(r.length, 1), n(r.crestMin), n(r.crestMax), r.deployAt == null ? 'never' : min(r.deployAt), n(r.minFreeboard), n(r.maxLevel), r.overtopped ? 'yes' : 'no',
       min(r.tOver), n(r.overVol, 2), n(r.peakRate), min(r.tPeakRate), n(r.peakUnitQ), n(r.peakLoad, 2), min(r.tLoad), n(r.fill, 1)].join(','))].join('\n');
 }
-const projects = initProjects({ capture: captureProject, layer: () => infra.layer, restore: restoreProject, runFiles });
+const projects = initProjects({ capture: captureProject, layer: () => infra.layer, restore: restoreProject, runFiles, scenarios: scenarioFiles });
 
-window.__floodsim = { get run() { return run; }, get model() { return model; }, map, infra, projects, buildPackage, runFiles }; // console debugging
+window.__floodsim = { get run() { return run; }, get model() { return model; }, map, infra, design, projects, buildPackage, runFiles }; // console debugging
 gpuReady.then(() => updateSizeNote());

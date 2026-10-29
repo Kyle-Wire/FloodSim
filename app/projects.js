@@ -2,6 +2,8 @@
 //   project.json             area, every setting, storm and drainage choices (enough to rebuild and rerun)
 //   infrastructure.geojson   the drawer layer
 //   runs/<date time>/        one folder per saved run: summary, max depth / speed grids (.asc + .prj), SWMM files
+//   scenarios/<name>/        one folder per site-design scenario: design.geojson (the features, every value on them)
+//                            and scenario.json (settings, presets used and every resolved value: FFE, pad, cut / fill)
 const $ = (id) => document.getElementById(id);
 const H = { 'x-floodsim': '1' };
 const api = (path, o = {}) => fetch(path, { ...o, headers: { ...H, ...(o.headers || {}) } }).then(async r => { if (!r.ok) throw new Error(await r.text()); return r; });
@@ -21,8 +23,9 @@ export async function readFile(folder, path) { return (await api('/api/projects/
  * @param layer    () => infrastructure FeatureCollection
  * @param restore  async (project, layer) => void: apply and rebuild
  * @param runFiles async () => [{ path, data }] for the finished run, or null when there is none
+ * @param scenarios () => [{ name, design (FeatureCollection), json (scenario.json object) }] (site design)
  */
-export function initProjects({ capture, layer, restore, runFiles }) {
+export function initProjects({ capture, layer, restore, runFiles, scenarios = () => [] }) {
   let current = null; // { folder, name }
   try { current = JSON.parse(localStorage.getItem('floodsim.project')); } catch { /* storage off */ }
   const show = () => {
@@ -34,9 +37,14 @@ export function initProjects({ capture, layer, restore, runFiles }) {
 
   async function save(target = current) {
     if (!target) { openDialog(true); return false; }
-    const pj = { ...capture(), name: target.name, saved: new Date().toISOString(), app: 'FloodSim' };
+    const sc = scenarios().map(s => ({ ...s, folder: folderName(s.name) }));
+    const pj = { ...capture(), name: target.name, saved: new Date().toISOString(), app: 'FloodSim', scenarios: sc.map(s => ({ name: s.name, folder: s.folder })) };
     await writeFile(target.folder, 'project.json', JSON.stringify(pj, null, 1));
     await writeFile(target.folder, 'infrastructure.geojson', JSON.stringify(layer()));
+    for (const s of sc) {
+      await writeFile(target.folder, `scenarios/${s.folder}/design.geojson`, JSON.stringify(s.design, null, 1));
+      await writeFile(target.folder, `scenarios/${s.folder}/scenario.json`, JSON.stringify({ ...s.json, name: s.name, saved: pj.saved }, null, 1));
+    }
     current = target; show(); status('Saved', 'ok'); return true;
   }
   async function saveRun(label = '') {
@@ -49,8 +57,16 @@ export function initProjects({ capture, layer, restore, runFiles }) {
   async function open(folder) {
     const pj = JSON.parse(await readFile(folder, 'project.json'));
     let lay = null; try { lay = JSON.parse(await readFile(folder, 'infrastructure.geojson')); } catch { /* none saved */ }
+    const sc = [];
+    for (const s of pj.scenarios ?? []) {
+      try {
+        const design = JSON.parse(await readFile(folder, `scenarios/${s.folder}/design.geojson`));
+        let json = null; try { json = JSON.parse(await readFile(folder, `scenarios/${s.folder}/scenario.json`)); } catch { /* features only */ }
+        sc.push({ name: s.name, design, json });
+      } catch (e) { status(`Scenario “${s.name}” could not be read: ${e.message}`, 'warn'); }
+    }
     current = { folder, name: pj.name ?? folder }; show(); closeDialog();
-    await restore(pj, lay);
+    await restore(pj, lay, sc);
   }
 
   // ---------------------------------------------------------------- dialog

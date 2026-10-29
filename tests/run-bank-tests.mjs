@@ -56,5 +56,16 @@ check('normal CDF', Math.abs(normCdf(0) - 0.5) < 1e-7 && Math.abs(normCdf(1.9599
   check('a bank that only stands on rock or cementation is not rated', cliff.pf === UNRATED);
 }
 
+// ---- the nearest-water search stays bounded: a float64 distance over its float32-rounded store once counted as an
+// improvement every time, so the front grew without end (a winding stream: "Invalid array length" after ~14 s)
+{
+  const n = 160, N = n * n, z = new Float64Array(N), mask = new Uint8Array(N).fill(1), water = new Uint8Array(N);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const d = Math.abs(i - 0.6 * j - 30); if (d < 3 + 2 * Math.sin(j / 7)) water[j * n + i] = 1; z[j * n + i] = water[j * n + i] ? 0 : Math.min(4, 0.5 * d); }
+  const f = { nx: n, bld: new Uint8Array(N), texture: new Uint8Array(N).fill(TEXTURES.indexOf('loam')), cls: new Uint8Array(N).fill(41), bedrock: new Float32Array(N).fill(NaN),
+    ga: { K: new Float32Array(N).fill(1e-6), thetaE: new Float32Array(N).fill(0.4), depth: new Float32Array(N).fill(Infinity) } };
+  const t0 = Date.now(); let r = null, err = null; try { r = findBanks({ nx: n, ny: n, z, mask }, 1, f, water); } catch (e) { err = e.message; }
+  check('nearest-water search terminates on a winding stream', r && r.count > 1000 && Date.now() - t0 < 2000, err ?? `${r.count} bank tops in ${Date.now() - t0} ms`);
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nall bank tests passed');
 process.exit(fails ? 1 : 0);

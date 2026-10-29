@@ -137,12 +137,34 @@ export function coarsen(fine, F, roofFrac = 1) {
     z[K] = nOpen ? zo / nOpen : za / (F * F);
     manning[K] = nOpen ? no / nOpen : 0.05; infil[K] = nOpen ? fo / nOpen : 0; roadFrac[K] = nRoad / (F * F);
   }
-  const { rainField, roofLost } = roofRouting(mask, cnx, cny, roofFrac);
-  return { nx: cnx, ny: cny, F, z, mask, manning, infil, roadFrac, rainField, roofLost };
+  const bldId = fine.bldId ? coarseIds(fine, F) : null, design = bldId && fine.roofs?.size ? { ids: bldId, roofs: fine.roofs } : null;
+  const { rainField, roofLost } = roofRouting(mask, cnx, cny, roofFrac, design);
+  return { nx: cnx, ny: cny, F, z, mask, manning, infil, roadFrac, rainField, roofLost, ...(design ? { bldId, roofs: fine.roofs } : {}) };
 }
 
-/** Per-cell rain multiplier: each building blob's roof rain (× roofFrac) spread evenly over its bordering open cells. */
-export function roofRouting(mask, nx, ny, roofFrac = 1) {
+/** Building id per solver cell: the most common id among its building pixels (0 = a mapped building, or none). */
+export function coarseIds(fine, F) {
+  const fnx = fine.nx, cnx = fnx / F, cny = fine.ny / F, ids = new Int32Array(cnx * cny);
+  for (let J = 0; J < cny; J++) for (let I = 0; I < cnx; I++) {
+    let best = 0, bn = 0; const n = new Map();
+    for (let j = J * F; j < (J + 1) * F; j++) for (let i = I * F; i < (I + 1) * F; i++) {
+      const k = j * fnx + i; if (!fine.bld[k]) continue;
+      const id = fine.bldId[k], c = (n.get(id) ?? 0) + 1; n.set(id, c);
+      if (c > bn || (c === bn && id < best)) { best = id; bn = c; }
+    }
+    ids[J * cnx + I] = best;
+  }
+  return ids;
+}
+
+/**
+ * Per-cell rain multiplier: each building blob's roof rain (× roofFrac) spread evenly over its bordering open cells.
+ * design (site design mode): { ids: building id per cell (0 = mapped building), roofs: Map(id → { roof, retention }),
+ * held: ids whose roofs still hold the rain (green roofs and cisterns before they fill), ground(id, blob, cells): the
+ * share of that building's roof rain that lands on the ground (default 1, 0 while held) }. A blob's cells are split by
+ * id, so each new building's roof follows its own setting; `roofFrac` sees only the mapped part (blob.cells).
+ */
+export function roofRouting(mask, nx, ny, roofFrac = 1, design = null) {
   const N = nx * ny, rain = new Float64Array(N).fill(1), seen = new Uint8Array(N);
   let roofLost = 0; const stack = [], blob = [], edge = new Set(), blobs = [];
   const fracOf = typeof roofFrac === 'function' ? roofFrac : () => roofFrac;
@@ -160,6 +182,18 @@ export function roofRouting(mask, nx, ny, roofFrac = 1) {
     }
     let ci = 0, cj = 0; for (const k of blob) { ci += k % nx; cj += (k / nx) | 0; }
     const b = { cells: blob.length, ci: ci / blob.length + 0.5, cj: cj / blob.length + 0.5, edgeCells: edge.size };
+    if (design) {
+      const own = new Map(); let mapped = 0;
+      for (const k of blob) { const id = design.ids[k]; if (id && design.roofs.has(id)) own.set(id, (own.get(id) ?? 0) + 1); else mapped++; }
+      if (own.size) { // new buildings in the blob: each roof by its own setting
+        b.cells = mapped; b.ids = own; blobs.push(b);
+        if (!edge.size) { roofLost += blob.length; continue; }
+        let wet = mapped ? (b.groundFrac = fracOf(b)) * mapped : 0;
+        for (const [id, n] of own) wet += n * (design.ground ? design.ground(id, b, n) : design.held?.has(id) ? 0 : 1);
+        for (const q of edge) rain[q] += wet / edge.size;
+        continue;
+      }
+    }
     b.groundFrac = edge.size ? fracOf(b) : 0; // the rest of the roof goes elsewhere (e.g. downspouts into the sewer)
     blobs.push(b);
     if (!edge.size) { roofLost += blob.length; continue; }
@@ -174,10 +208,21 @@ export function roofRouting(mask, nx, ny, roofFrac = 1) {
  * Returns the solver-grid rain field for what still lands on the ground, and the roof area (m²) feeding each node.
  * The disconnected share follows `groundFrac` (roof runoff routed to the ground); buildings with no manhole in reach keep it all.
  */
-export function roofConnections(c, net, sewerFrac, groundFrac = 1, maxDist = 80) {
+export function roofConnections(c, net, sewerFrac, groundFrac = 1, maxDist = 80, { held = null, toCell = null } = {}) {
   const F = c.F, nodes = net.nodes.map((n, i) => ({ i, x: n.p[0] / F, y: n.p[1] / F })).filter(o => !net.nodes[o.i].outfall);
   const roofArea = new Float64Array(net.nodes.length), A = F * F;
-  let connected = 0, total = 0;
+  let connected = 0, total = 0; const links = new Map(); // new building id → node index its roof drains to (null: the ground)
+  const nearest = (x, y, lim) => { let best = null, bd = Infinity; for (const o of nodes) { const d = Math.hypot(o.x - x, o.y - y); if (d < bd) { bd = d; best = o; } } return best && bd * F <= lim ? best : null; };
+  // new buildings with roof drains (site design mode): all of the roof to the chosen manhole (within 5 m of the point
+  // given) or the nearest within 30 m; with none in reach, to the ground
+  const design = c.bldId && c.roofs?.size ? { ids: c.bldId, roofs: c.roofs, held, ground: (id, b, n) => {
+    const r = c.roofs.get(id); total += n * A;
+    if (held?.has(id)) return 0;
+    if (r.roof !== 'network') return 1;
+    const at = r.to && toCell ? toCell(r.to) : null, o = at ? nearest(at[0] / F, at[1] / F, 5) : nearest(b.ci, b.cj, 30);
+    links.set(id, o ? o.i : null); if (!o) return 1;
+    roofArea[o.i] += n * A; connected += n * A; return 0;
+  } } : null;
   const { rainField, roofLost } = roofRouting(c.mask, c.nx, c.ny, (b) => {
     total += b.cells * A;
     let best = null, bd = Infinity;
@@ -185,8 +230,8 @@ export function roofConnections(c, net, sewerFrac, groundFrac = 1, maxDist = 80)
     if (!best || bd * F > maxDist || sewerFrac <= 0) return groundFrac;
     roofArea[best.i] += sewerFrac * b.cells * A; connected += sewerFrac * b.cells * A;
     return (1 - sewerFrac) * groundFrac;
-  });
-  return { rainField, roofArea, roofLost, connectedArea: connected, roofTotal: total };
+  }, design);
+  return { rainField, roofArea, roofLost, connectedArea: connected, roofTotal: total, links };
 }
 
 /** Grey hillshade (RGBA) for a DEM, sun from the north-west at 45°. */
