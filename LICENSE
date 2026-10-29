@@ -1,0 +1,24 @@
+Proprietary License
+
+Copyright (c) 2026 SPARC Labs LLC. All rights reserved.
+
+This software and its associated documentation (the "Software") are the
+proprietary and confidential property of SPARC Labs LLC. Unauthorized
+copying, distribution, modification, or use of the Software, in whole or in
+part, is strictly prohibited without prior written permission from
+SPARC Labs LLC.
+
+No licence to use, copy, modify, publish or distribute the Software is
+granted by this file or by access to this repository.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. Its outputs are
+screening-level flood hazard estimates for planning and are not a regulatory
+flood determination.
+
+Third-party software and data retain their own licences and terms; nothing in
+this file alters them. See vendor/ and package.json for bundled and declared
+dependencies, including SWMM and the WebGPU toolchain. Environment Agency
+benchmark data is used under its own terms and is not redistributed by this
+license.
