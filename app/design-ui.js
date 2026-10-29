@@ -254,7 +254,7 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
         out.push(`HAG ${fmt('elev', r.hag)} ${unit('elev')} · minimum ${fmt('elev', r.ffeMin)} ${unit('elev')} (${r.governs})`);
         if (r.pad != null) out.push(`Pad (finished grade at the foundation) ${fmt('elev', r.pad)} ${unit('elev')}`);
       }
-      if (p.roof === 'network' && roofLinks.has(f.id)) out.push(`Roof drains to ${esc(roofLinks.get(f.id))}`);
+      if (p.roof === 'network' && roofLinks.has(f.id)) out.push(`Roof drains ${esc(roofLinks.get(f.id))}`);
       const hit = results?.find(b => b.id === f.id);
       if (hit) out.push(hit.flooded ? `<span class="warn"><b>Flooded</b>: water ${fmt('elev', hit.maxWse)} ${unit('elev')} at the walls, ${fmt('elev', hit.maxWse - hit.critical)} ${unit('elev')} over the ${p.foundation === 'basement' ? 'lowest opening' : 'FFE'}</span>`
         : hit.maxWse != null ? `<span class="good"><b>Dry</b></span>: water up to ${fmt('elev', hit.maxWse)} ${unit('elev')} at the walls, ${fmt('elev', hit.critical - hit.maxWse)} ${unit('elev')} below the ${p.foundation === 'basement' ? 'lowest opening' : 'FFE'}` : 'No water at its walls in the last run');

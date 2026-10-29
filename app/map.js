@@ -1000,8 +1000,8 @@ function resetRun() {
   const roof = net && swmmEngine && (down > 0 || drains) ? roofConnections(c, net, down, Number($('roof').value) / 100, 80, { toCell: llCell }) : null;
   if (roof) c.rainField = c.sg ? sgRain(c, roof.rainField, roofF, net, down, roof.roofArea) : roof.rainField;
   if (c.roofs) design.setRoofLinks(new Map([...c.roofs].filter(([, r]) => r.roof === 'network').map(([id]) => [id, roof?.links.has(id)
-    ? (roof.links.get(id) == null ? 'no manhole within 30 m (or 5 m of the one chosen): to the ground' : `manhole ${roof.links.get(id)} of the network`)
-    : !net ? 'no pipe network in this run: to the ground' : 'the SWMM engine is not loaded: to the ground']))); // where new buildings' roof drains go
+    ? (roof.links.get(id) == null ? 'to the ground: no manhole within 30 m (or within 5 m of the one chosen)' : `to manhole ${roof.links.get(id)} of the network`)
+    : !net ? 'to the ground: no pipe network in this run' : 'to the ground: the SWMM engine is not loaded']))); // where new buildings' roof drains go
   const gi = giLayers(model.f, c, F, { pavement: Number($('giPave').value) / 100, rainGarden: Number($('giGarden').value) / 100 });
   const tanks = net ? addTanks(net, Number($('giTank').value)) : [];
   const storage = attachStorage(net, lay.storage, model.fine, model.f).attached; // after addTanks, which clears storage
