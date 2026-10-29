@@ -106,6 +106,47 @@ export class Coupler {
     net.nodes.forEach((n, i) => { if (!this.perNode[i] && overflow[i] > 0) this.totals.overflowLost += overflow[i] * interval; });
     this.state.surcharged = surcharged; this.state.flooding = flooding;
     net.pipes.forEach((p, k) => { this.state.flow[k] = swmm.link('FLOW', k); this.state.depth[k] = swmm.link('DEPTH', k); });
+    this.record(vol, h, interval, tNext, flood);
     return this.q;
+  }
+
+  /**
+   * Report books every exchange: per node the max head (HGL) and its time, time surcharged (head within 5 cm of the rim
+   * or above, as `surcharged` counts) and flooded volume; per pipe max flow, max depth / D and max velocity; per inlet the
+   * volume taken in, the peak rate and the peak depth at its grate; outfall inflows every 10 s.
+   */
+  record(vol, h, interval, t, flood) {
+    const { swmm, net } = this, N = net.nodes.length, P = net.pipes.length, M = this.inletNodes.length;
+    const r = this.rec ??= {
+      nodes: Array.from({ length: N }, () => ({ maxHead: -Infinity, tMax: NaN, surchargedS: 0, floodVol: 0 })),
+      pipes: Array.from({ length: P }, () => ({ maxQ: 0, tMaxQ: NaN, maxRatio: 0, maxV: 0 })),
+      inlets: Array.from({ length: M }, () => ({ volume: 0, peakQ: 0, tPeakQ: NaN, maxDepth: 0 })),
+      outfalls: net.nodes.map((n, i) => (n.outfall ? i : -1)).filter(i => i >= 0), series: [], tLast: -Infinity,
+    };
+    for (let i = 0; i < N; i++) {
+      const H = this.state.head[i], s = r.nodes[i];
+      if (H > s.maxHead) { s.maxHead = H; s.tMax = t; }
+      if (!net.nodes[i].outfall && H > net.nodes[i].ground - 0.05) s.surchargedS += interval;
+      s.floodVol += flood[i];
+    }
+    for (let k = 0; k < P; k++) {
+      const s = r.pipes[k], q = Math.abs(this.state.flow[k]), D = net.pipes[k].D;
+      if (q > s.maxQ) { s.maxQ = q; s.tMaxQ = t; }
+      if (D > 0) s.maxRatio = Math.max(s.maxRatio, this.state.depth[k] / D);
+      s.maxV = Math.max(s.maxV, Math.abs(swmm.link('VELOCITY', k)));
+    }
+    for (let m = 0; m < M; m++) {
+      const s = r.inlets[m], v = vol[m]; if (v > 0) s.volume += v;
+      const q = v / interval; if (q > s.peakQ) { s.peakQ = q; s.tPeakQ = t; }
+      if (h[m] > s.maxDepth) s.maxDepth = h[m];
+    }
+    if (t - r.tLast >= 10 - 1e-9) { r.series.push([t, ...r.outfalls.map(i => swmm.node('INFLOW', this.swIdx[i]))]); r.tLast = t; }
+  }
+  /** The report books (see record), JSON-ready: infinities as null. */
+  report() {
+    const r = this.rec; if (!r) return null;
+    const fin = (v) => (Number.isFinite(v) ? v : null);
+    return { nodes: r.nodes.map(s => ({ maxHead: fin(s.maxHead), tMax: fin(s.tMax), surchargedS: s.surchargedS, floodVol: s.floodVol })), pipes: r.pipes.map(s => ({ ...s, tMaxQ: fin(s.tMaxQ) })),
+      inlets: r.inlets.map(s => ({ ...s, tPeakQ: fin(s.tPeakQ) })), outfalls: r.outfalls, series: r.series };
   }
 }

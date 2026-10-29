@@ -107,7 +107,7 @@ export class OutletLinks {
     this.flow = new Float64Array(outlets.length); this.pending = outlets.map(() => ({ cell: -1, vol: 0 }));
     this.totals = { moved: 0, toNetwork: 0, offsite: 0 };
     this.stats = outlets.map(() => ({ peakStage: -Infinity, tStage: NaN, peakQ: 0, tQ: NaN, parts: null, volume: 0 }));
-    this.t = 0;
+    this.t = 0; this.series = outlets.map(() => []); this.tSample = -Infinity; // [t, stage, outflow, orifices, weir, spillway] every 10 s
   }
   get count() { return this.cells.length; }
   /** Water a surface outlet took and has not yet delivered (m³): it counts as stored. */
@@ -138,14 +138,16 @@ export class OutletLinks {
       const src = q > 0 ? ia : ib; if (q) { this.q[src] += Math.abs(q); this.out[src] += Math.abs(q) * interval; }
       const p = this.pending[j]; if (p.cell >= 0) { const d = slot.get(p.cell); this.q[d] -= p.vol / interval; this.inDel[d] += p.vol; }
       const s = this.stats[j]; if (H > s.peakStage) { s.peakStage = H; s.tStage = this.t; } if (q > s.peakQ) { s.peakQ = q; s.tQ = this.t; s.parts = r.parts; }
+      if (this.t - this.tSample >= 10 - 1e-9) this.series[j].push([this.t, H, q, r.parts.orifices, r.parts.weir, r.parts.spillway]);
     });
+    if (this.t - this.tSample >= 10 - 1e-9) this.tSample = this.t;
     return this.q;
   }
   /** Per outlet: peak stage, freeboard to the spillway crest (− = the spillway ran), peak outflow, volume out. */
   results() {
     return this.outlets.map((o, j) => {
       const s = this.stats[j], sp = o.structure.spillway?.crest;
-      return { id: o.id, name: o.name ?? null, mode: o.mode, peakStage: s.peakStage, tPeakStage: s.tStage, freeboard: Number.isFinite(sp) ? sp - s.peakStage : null, peakQ: s.peakQ, tPeakQ: s.tQ, parts: s.parts, volume: s.volume };
+      return { id: o.id, name: o.name ?? null, mode: o.mode, peakStage: s.peakStage, tPeakStage: s.tStage, freeboard: Number.isFinite(sp) ? sp - s.peakStage : null, peakQ: s.peakQ, tPeakQ: s.tQ, parts: s.parts, volume: s.volume, structure: o.structure, series: this.series[j] };
     });
   }
 }

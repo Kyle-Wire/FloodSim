@@ -25,6 +25,8 @@ import { initDesign } from './design-ui.js';
 import { initCompare } from './compare-ui.js';
 import { initEmulator } from './emulator-ui.js';
 import * as CMP from '../src/compare.js';
+import * as REP from '../src/report.js';
+import { initReport } from './report-ui.js';
 import { initProjects, readBytes, readFile as readProjectFile, writeFile as writeProjectFile, stamp } from './projects.js';
 import { buildBarriers, BarrierWatch } from '../src/barriers.js';
 import { buildSubgrid, fineDepth, CT as SG_CT, FT as SG_FT } from '../src/subgrid.js';
@@ -1330,11 +1332,14 @@ async function finishRecord() {
   const m = r.mass ?? {}, outfalls = r.swmm && r.netMass ? r.netMass.externalOutflow * 1000 - (r.coupler?.totals.latOut ?? 0) : null;
   const ponds = r.outlets?.results() ?? [];
   if (ponds.length) design.setPondResults(ponds);
+  const outletLog = new Map((model.design?.log.features ?? []).filter(l => l.type === 'outlet').map(l => [l.id, l.resolved]));
+  for (const p of ponds) p.stageStorage = outletLog.get(p.id)?.stageStorage ?? null; // for the stage–storage–discharge table
+  const books = reportBooks(r, maxD);
   const newBuildings = (model.f.designBuildings ?? []).map(b => ({ id: b.id, name: b.name, ffe: b.ffe, critical: b.foundation === 'basement' ? b.opening : b.ffe, foundation: b.foundation, cells: b.cells, ring: b.ring }));
   const when = new Date(), forcing = CMP.fingerprint(forcingRecord(r));
   const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
     saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
-    grids, hazard, lines, newBuildings, ponds, books: { rain: m.rain, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
+    grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
   r.record = rec; records.push(rec);
   if (!rec.scenario) { baselines.set(forcing.hash, rec); model.baseWse = grids.max_wse; if (baselines.size > 3) baselines.delete(baselines.keys().next().value); }
   while (records.length > 6) { const i = records.findIndex(x => ![...baselines.values()].includes(x)); records.splice(i < 0 ? 0 : i, 1); }
@@ -1343,9 +1348,30 @@ async function finishRecord() {
     const fl = floodedBuildings(model.f, grids.max_wse); r.flooded = fl; design.setResults(fl);
     if (fl.some(b => b.flooded)) log(`${fl.filter(b => b.flooded).length} of ${fl.length} new buildings flooded above the FFE (${r.scenario})`, 'warn');
   }
-  compareUI.refresh();
+  compareUI.refresh(); reportUI.refresh();
 }
 let recordSeq = 0;
+/**
+ * What the report needs from the storm sewer (src/report.js): the network's geometry (nodes with lon/lat, rim and
+ * invert; pipes with their end inverts), the coupler's books (max HGL per node, pipe peaks, outfall series) and per
+ * inlet its books plus the gutter spread from the run's max depth (1 m) across the nearest street.
+ */
+function reportBooks(r, maxD) {
+  const net = r.net; if (!net) return { network: null, hgl: null, inlets: null };
+  const fine = model.fine, geo = { nx: fine.nx, ny: fine.ny, dx: fine.dx }, cellLL = (k) => fromUTM(fine.x0 + ((k % fine.nx) + 0.5) * fine.dx, fine.y1 - (((k / fine.nx) | 0) + 0.5) * fine.dx, fine.zone);
+  const network = {
+    nodes: net.nodes.map((n, i) => ({ name: n.name ?? 'N' + i, ll: nodeLL(n), p: n.p, ground: n.ground, invert: n.invert, outfall: !!n.outfall, offsite: !!n.offsite, storage: !!n.storage })),
+    pipes: net.pipes.map(q => ({ from: q.from, to: q.to, L: q.L ?? q.length ?? Math.hypot(net.nodes[q.to].p[0] - net.nodes[q.from].p[0], net.nodes[q.to].p[1] - net.nodes[q.from].p[1]) * fine.dx, D: q.D, W: q.W ?? null,
+      invUp: net.nodes[q.from].invert + (q.inOffset ?? 0), invDown: net.nodes[q.to].invert + (q.outOffset ?? 0), offsite: !!q.offsite, storageLink: !!q.storageLink })),
+  };
+  const hgl = r.coupler?.report() ?? null;
+  const roads = model.roadCells ??= (model.osm.roads ?? []).map(rd => toCells(fine, rd.line));
+  const inlets = (net.inlets ?? []).map((g, m) => {
+    const k = g.fineCell, col = k % fine.nx, row = (k / fine.nx) | 0, sp = maxD ? REP.gutterSpread(maxD, geo, [col + 0.5, row + 0.5], roads) : null;
+    return { node: g.node, fineCell: k, ll: cellLL(k), grates: g.grates, ...(hgl?.inlets[m] ?? {}), spread: sp?.spread ?? null, full: !!sp?.full, gutterDepth: sp?.gutterDepth ?? maxD?.[k] ?? null, toCentre: sp?.toCentre ?? null };
+  });
+  return { network, hgl, inlets };
+}
 /** A record from a saved run folder (summary.json, grids/*.f32, lines.json, buildings.json). */
 async function loadSaved(dir) {
   const folder = projects.current?.folder; if (!folder) throw new Error('no project open');
@@ -1355,8 +1381,11 @@ async function loadSaved(dir) {
   await Promise.all([...Object.keys(CMP.GRIDS), 'hazard_arr'].map(async k => { grids[k] = CMP.decodeF32(await readBytes(folder, path(`grids/${k}.f32`))); }));
   const json = async (p, d) => { try { return JSON.parse(await readProjectFile(folder, path(p))); } catch { return d; } };
   const lines = await json('lines.json', []), newBuildings = await json('buildings.json', []);
+  const [network, hgl, inlets] = await Promise.all([json('network.json', null), json('hgl.json', null), json('inlets.json', null)]);
+  let ground = null; try { ground = CMP.decodeF32(await readBytes(folder, path('grids/ground.f32'))); } catch { /* existing conditions: the base DEM */ }
   return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
-    storm: sm.storm?.label, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null };
+    storm: sm.storm?.label, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null,
+    ponds: sm.ponds ?? null, network, hgl, inlets, ground };
 }
 async function savedRuns() {
   const folder = projects.current?.folder; if (!folder) return [];
@@ -1495,6 +1524,15 @@ const emulatorUI = initEmulator(map, {
   setOverlay: (canvas, visible) => { if (model) setCanvasLayer('emu', canvas, model.fine.corners(), 'area-line', visible, 0.9); },
   geo: () => model && { nx: model.fine.nx, ny: model.fine.ny, x0: model.fine.x0, y0: model.fine.y1 - model.fine.ny * model.fine.dx, dx: model.fine.dx },
   toCell: llCell,
+});
+const reportUI = initReport(map, {
+  records: () => [...records].reverse(), savedRuns, loadSaved, units: () => design.units, project: () => projects.current,
+  profiles: () => design.analysis.features.filter(f => f.properties.type === 'profile' && f.geometry?.coordinates?.length > 1),
+  ctx: () => model && { geo: { nx: model.fine.nx, ny: model.fine.ny, x0: model.fine.x0, y0: model.fine.y1 - model.fine.ny * model.fine.dx, dx: model.fine.dx }, z: model.base.z, bld: model.base.bld, toCell: llCell },
+  async exportFiles(files, name, bytes) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/zip' })); a.download = name + '.zip'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    if (projects.current) { const dir = `reports/${stamp()}_${name.slice(0, 40)}`; for (const f of files) await writeProjectFile(projects.current.folder, `${dir}/${f.name}`, f.data); }
+  },
 });
 /** Surface mass balance plus exact max depths (the GPU tracks them every step). One at a time: each read folds the GPU's
  *  running totals into the books and restarts them, so two overlapping reads (a save during a run) would count twice. */
@@ -2311,6 +2349,9 @@ async function runFiles() {
     const rec = run.record, hdr = CMP.gridHeader(rec.geo);
     for (const [k, v] of [...Object.entries(rec.grids), ['hazard_arr', rec.hazard]]) files.push({ path: `grids/${k}.f32`, data: CMP.encodeF32(v) }, { path: `grids/${k}.hdr`, data: hdr });
     files.push({ path: 'lines.json', data: JSON.stringify(rec.lines) }, { path: 'buildings.json', data: JSON.stringify(rec.newBuildings) });
+    // for the report (src/report.js): the storm sewer's geometry and books, inlets with their gutter spread, the designed ground
+    if (rec.network) files.push({ path: 'network.json', data: JSON.stringify(rec.network) }, { path: 'hgl.json', data: JSON.stringify(rec.hgl) }, { path: 'inlets.json', data: JSON.stringify(rec.inlets) });
+    if (rec.ground) files.push({ path: 'grids/ground.f32', data: CMP.encodeF32(rec.ground) }, { path: 'grids/ground.hdr', data: hdr });
     if (rec.lines.length) files.push({ path: 'control_lines.csv', data: CMP.toCSV(rec.lines.flatMap(l => CMP.hydrograph(l.series).map(([t, q], m) => ({ line: l.id, name: l.name, t, q, out: CMP.hydrograph(l.series, 2)[m]?.[1], back: CMP.hydrograph(l.series, 3)[m]?.[1] }))), [['line', 'line'], ['name', 'name'], ['t', 'time_s', 0], ['q', 'net_flow_m3s', 5], ['out', 'flow_to_plus_m3s', 5], ['back', 'flow_to_minus_m3s', 5]]) });
   }
   return files.map(f => ({ path: f.path, data: typeof f.data === 'string' ? enc.encode(f.data) : f.data }));
@@ -2324,5 +2365,5 @@ function barrierCSV(rs) {
 }
 const projects = initProjects({ capture: captureProject, layer: () => infra.layer, restore: restoreProject, runFiles, scenarios: scenarioFiles, analysis: () => design.analysis });
 
-window.__floodsim = { get run() { return run; }, get model() { return model; }, get records() { return records; }, map, infra, design, projects, buildPackage, runFiles }; // console debugging
+window.__floodsim = { get run() { return run; }, get model() { return model; }, get records() { return records; }, map, infra, design, projects, buildPackage, runFiles, reportUI, compareUI }; // console debugging
 gpuReady.then(() => updateSizeNote());

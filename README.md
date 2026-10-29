@@ -175,6 +175,55 @@ Two runs compare only when they differ in nothing but the design.
   - the `.f32` grids, Δ with the band, newly wet / dry, the off-site impact;
   - the building and outlet tables, control-line faces and their signs, the CSV and the summary page.
 
+**H&H report** (map button *Report*; `src/report.js`, `app/report-ui.js`). The standard plots and tables of a drainage
+or flood submittal, for one run or for a before / after pair with the same forcing fingerprint (as in Compare). It lists
+this session's runs and the project's saved runs.
+- **Hydrographs:**
+  - each control line: flow out across it, before dashed and after solid;
+  - each storm-sewer outfall: SWMM inflow at the outfall node, every 10 s;
+  - a table of peak, time to peak and volume.
+- **Detention ponds:**
+  - stage–storage (from the graded ground) and stage–discharge (from the outlet rating, free outfall), as two panels
+    with stage on y, and the stage–storage–discharge table with the orifice, riser-weir and spillway parts;
+  - stage in time against the riser crest, spillway and top of bank;
+  - outflow in time; a one-run report adds inflow, worked out as outflow + change in storage;
+  - peak stage, freeboard to the spillway and peak outflow.
+- **Storm sewer HGL:**
+  - a profile from a manhole (by default the one with the least freeboard) down to its outfall: rim, crown and invert
+    of each pipe, and the max HGL before and after;
+  - a manhole table with rim, max HGL, freeboard and flooded volume. Checks: ✕ floods (HGL above the rim), ! low
+    freeboard (under the setting, default 1 ft), surcharged (above the crown of the pipe leaving it);
+  - a pipe table with max flow, max depth / D and max velocity;
+  - from new per-run books: the coupler keeps each node's max head and time, time surcharged and flooded volume, and
+    each pipe's peaks, at every 2 s exchange.
+- **Water surface profiles:** along each profile line (Site design → *Profile*):
+  - the ground (before and after), max water surface and depth every 1 m;
+  - marks for the finished floors of buildings within 5 m (existing ones estimated);
+  - a table at stations about every 25 ft.
+- **Gutter spread:**
+  - per inlet: from the grate (at the curb) across the street toward the nearest mapped centreline, to where the max
+    depth falls under 3 mm. Water reaching the far curb is reported as the street full;
+  - also the gutter depth, and the intercepted peak and volume;
+  - checked against an allowable spread (default 8 ft), with map markers and a bar chart of the widest.
+- **Summary:** the water balance, before / after.
+- **Export:** a zip, also saved under `reports/`, holding:
+  - `report.html` (header with the runs, storm, fingerprint and commit; a methods note per section; prints to PDF);
+  - every figure as SVG and PNG, and every table as CSV.
+  Charts are plain SVG with one y axis each and direct labels; the colours are the validated reference palette (blue
+  after, orange dashed before).
+- **Each saved run** now also holds `network.json` (nodes with rim and invert, pipes with end inverts), `hgl.json`,
+  `inlets.json` (with spread), pond stage / outflow series every 10 s in `summary.json`, and `grids/ground.f32` for a
+  scenario's designed ground.
+- `npm run test:report` covers:
+  - series peaks and volumes;
+  - a profile through a flat lake;
+  - the HGL path and its flags;
+  - stage–storage–discharge against hand values;
+  - spread on a crowned street (2.75 m vs T = d / Sx = 3 m, at 1 m cells), and the street-full case;
+  - the charts and the CSV.
+- On the Meyerland design project (25-yr, existing vs proposed), the report's control-line peaks match Compare's
+  (49.61 → 41.27 cfs). At that storm most of its streets are full from curb to curb.
+
 **Per-project emulator** (map button *Emulator*; `src/emulator.js`, `app/emulator-ui.js`). A fast stand-in for the
 solver, trained on the project's own runs. It answers "what if" inside a trained range in a fraction of a second, with
 an error estimate. It is for screening: confirm with a solver run before a number goes in a report.
@@ -809,6 +858,7 @@ node tests/run-inflow-tests.mjs   # river inflow: LP3, hydrographs, river entrie
 node tests/run-soil-tests.mjs     # soils: texture classes, SSURGO rows, ponded Green-Ampt vs analytic, water table, aggregation, grain classes
 node tests/run-waterlevel-tests.mjs # starting water levels: river rise, lake fill, spreading, gauge datums (--live: a real gauge)
 node tests/run-bank-tests.mjs     # bank stability: friction-angle failure, cohesion, confinement, rapid drawdown, probability, bank tops
+node tests/run-report-tests.mjs   # report: hydrographs, profiles, HGL flags, stage–storage–discharge, gutter spread, charts
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
 # GPU suite in your own browser: npm start, then open http://localhost:8766/tests/gpu-browser.html
 
@@ -866,11 +916,12 @@ src/gi.js             green infrastructure layers (permeable pavement, rain gard
 src/design.js         site design: proposed buildings, pads, paved areas, demolitions → edited 1 m layers; grading engine, cut / fill log
 src/stormwater.js     outlet structures (rating, links), stage–storage, modified Puls, drawn GI, underdrains, the detention check
 src/compare.js        paired-run comparison: forcing fingerprint, .f32 grids, Δ maps, off-site impact, building and outlet tables
+src/report.js         H&H report outputs: hydrograph stats, profiles, HGL path and checks, stage–storage–discharge, gutter spread, SVG charts
 src/emulator.js       per-project emulator: Latin hypercube, Gaussian processes, PCA of flood fields, leave-one-out, save / load
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)
-app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/projects.js project folders
+app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer; app/projects.js project folders
 app/                  Phase 0 lab template + voxel shell, build script
 tests/                CPU suite, Phase 1 suite, shared GPU suite, browser + Dawn runners, results JSON
 benchmarks/ea/        Gate B: EA 2D benchmark cases, browser runner, scorer, results (data/ is the GOV.UK archive)

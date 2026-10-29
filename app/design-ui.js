@@ -13,9 +13,9 @@ const UNITS = {
   si: { elev: ['m', 1, 2], len: ['m', 1, 2], size: ['mm', 0.001, 0], area: ['m²', 1, 0], vol: ['m³', 1, 1], cvol: ['m³', 1, 1], mmhr: ['mm/hr', 1, 0], q: ['m³/s', 1, 3] },
 };
 const CONVERT = new Set(['elev', 'len', 'size', 'cvol', 'mmhr']);
-const NAMES = { building: 'Building', grade: 'Pad', paved: 'Paved area', demolish: 'Demolish', cline: 'Control line', site: 'Site boundary', pond: 'Pond', swale: 'Swale', bioretention: 'Rain garden', permeable: 'Permeable pavement', outlet: 'Pond outlet', downspout: 'Downspout' };
-const LINES = new Set(['cline', ...LINE_TYPES]);
-const ANALYSIS = new Set(['cline', 'site']);
+const NAMES = { building: 'Building', grade: 'Pad', paved: 'Paved area', demolish: 'Demolish', cline: 'Control line', profile: 'Profile line', site: 'Site boundary', pond: 'Pond', swale: 'Swale', bioretention: 'Rain garden', permeable: 'Permeable pavement', outlet: 'Pond outlet', downspout: 'Downspout' };
+const LINES = new Set(['cline', 'profile', ...LINE_TYPES]);
+const ANALYSIS = new Set(['cline', 'profile', 'site']);
 const COLORS = { building: '#f2a65a', grade: '#9ad17b', paved: '#9aa7b1', demolish: '#ff5d5d', pond: '#4fa3e0', swale: '#59c9a5', bioretention: '#7bd389', permeable: '#c2b280', outlet: '#f4f4f4', downspout: '#5cc8f2' };
 const HINTS = {
   select: 'Click a feature to edit it. Delete removes the selection. Features apply in list order: later ones override earlier ones where they overlap.',
@@ -24,6 +24,7 @@ const HINTS = {
   paved: 'Click the corners of the driveway, parking, sidewalk or road. Impervious; optionally graded to an elevation with a cross slope or crown, and a curb.',
   demolish: 'Click a mapped building to remove it (or draw a polygon around several). The lidar is bare earth, so the ground under it is already there.',
   cline: 'Click along a control line (a property line, a site outlet, across a culvert or a street); double-click or Enter finishes. Every run books the flow across it each step; + is water crossing to the right of the line as drawn (outward for a closed line). Shared by all scenarios.',
+  profile: 'Click along a street, swale or channel, from upstream to downstream; double-click or Enter finishes. The Report drawer draws the ground, max water surface and depth along it for each run (before vs after), with the finished floors of buildings within 5 m. Shared by all scenarios.',
   pond: 'Click the corners of the pond along the top of its bank. It is graded with side slopes down to a flat bottom; its stage–storage comes from that ground. Add an outlet structure from it.',
   swale: 'Click along the swale from upstream to downstream; double-click or Enter finishes. Inverts default to the ground at the ends less the depth.',
   bioretention: 'Click the corners of the rain garden. It is a depression of the ponding depth over engineered media that fills, drains to the native soil, and optionally to a manhole through an underdrain.',
@@ -66,11 +67,12 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
     map.addSource('analysis', { type: 'geojson', data: analysis });
     map.addLayer({ id: 'analysis-site', type: 'line', source: 'analysis', filter: T('site'), paint: { 'line-color': selW('#f2c94c', '#ffffff'), 'line-width': selW(2, 3.5), 'line-dasharray': [4, 2] } });
     map.addLayer({ id: 'analysis-cline', type: 'line', source: 'analysis', filter: T('cline'), layout: { 'line-cap': 'round' }, paint: { 'line-color': selW('#5ce1e6', '#ffffff'), 'line-width': selW(3, 5) } });
+    map.addLayer({ id: 'analysis-profile', type: 'line', source: 'analysis', filter: T('profile'), layout: { 'line-cap': 'round' }, paint: { 'line-color': selW('#c792ea', '#ffffff'), 'line-width': selW(2.5, 4.5), 'line-dasharray': [3, 1.5] } });
     map.addLayer({ id: 'design-draft-line', type: 'line', source: 'design-draft', paint: { 'line-color': '#ffffff', 'line-width': 2, 'line-dasharray': [2, 1.5] } });
     map.addLayer({ id: 'design-draft-pts', type: 'circle', source: 'design-draft', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 3, 'circle-color': '#ffffff' } });
     refresh(false);
   });
-  const LAYERS = ['design-fill', 'design-line', 'design-grade-line', 'analysis-cline', 'analysis-site'];
+  const LAYERS = ['design-fill', 'design-line', 'design-grade-line', 'analysis-cline', 'analysis-profile', 'analysis-site'];
   const open = () => !$('design').hidden;
 
   function persist() { try { localStorage.setItem('floodsim.design', JSON.stringify({ scenarios, active })); } catch { /* too big or storage off */ } }
@@ -153,10 +155,11 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
   function finishDraft() {
     const d = draft; cancelDraft();
     if (d && ANALYSIS.has(d.type)) { // control line (2+ points) or site boundary (3+); one site per project
-      if (d.pts.length < (d.type === 'cline' ? 2 : 3)) return;
+      const isLine = d.type === 'cline' || d.type === 'profile';
+      if (d.pts.length < (isLine ? 2 : 3)) return;
       if (d.type === 'site') analysis.features = analysis.features.filter(f => f.properties.type !== 'site');
-      const n = analysis.features.filter(f => f.properties.type === 'cline').length + 1;
-      const f = designFeature(d.type, d.type === 'cline' ? { type: 'LineString', coordinates: d.pts } : { type: 'Polygon', coordinates: [[...d.pts, d.pts[0]]] }, { name: d.type === 'cline' ? `Line ${n}` : 'Site' });
+      const n = analysis.features.filter(f => f.properties.type === d.type).length + 1;
+      const f = designFeature(d.type, isLine ? { type: 'LineString', coordinates: d.pts } : { type: 'Polygon', coordinates: [[...d.pts, d.pts[0]]] }, { name: d.type === 'cline' ? `Line ${n}` : d.type === 'profile' ? `Profile ${n}` : 'Site' });
       analysis.features.push(f); refreshAnalysis(); select(f.id); $('designHint').textContent = HINTS[tool]; return;
     }
     if (d && LINE_TYPES.has(d.type)) { // swale, outlet, downspout: lines of 2+ points
@@ -306,6 +309,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
       if (q) out.push(`Last run: <b>${fmt('vol', q.volume)} ${unit('vol')}</b> net (${fmt('vol', q.plus)} +, ${fmt('vol', q.minus)} −), peak ${Number.isFinite(q.peak) ? (q.peak / UNITS[units].vol[1]).toFixed(units === 'us' ? 1 : 3) : '–'} ${unit('vol')}/s${Number.isFinite(q.tPeak) ? ` at ${Math.round(q.tPeak / 60)} min` : ''}`);
       return out;
     }
+    if (p.type === 'profile') return [`Length ${fmt('len', lineLength(f.geometry.coordinates))} ${unit('len')}, drawn from upstream to downstream. Its plot is in the Report drawer.`];
     if (LINE_TYPES.has(p.type)) return lineInfo(f, L, r);
     const area = ringArea(f.geometry.coordinates[0]);
     out.push(`${p.type === 'site' ? 'Area' : 'Footprint'} ${fmt('area', area)} ${unit('area')}`);
