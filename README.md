@@ -85,9 +85,29 @@ FloodSim turns it into edits to the 1 m layers and runs it through the same pipe
 - **Saved** in the project folder as `scenarios/<name>/design.geojson` plus `scenario.json`. The JSON holds the
   settings, the presets used and every resolved value (each building's HAG, FFE and pad, cut and fill). Opening a
   project keeps each building's saved FFE and pad until that building is edited.
-- Not yet: ponds and outlet structures, drawn stormwater and the return-period sweep (phase 3). The street-network
-  estimate is rebuilt on the proposed model; the spec's "proposed network = baseline layer + design features" comes
-  with phase 3.
+- **Stormwater** (drawer row *Pond*, *Outlet*, *Swale*, *Rain garden*, *Permeable*, *Downspout*; `src/stormwater.js`):
+  - **Pond**: the outline is the top of the bank (by default the lowest ground around it, where it would spill). The
+    inside slopes (3:1) run down to a flat bottom (1.5 m below by default). An optional permanent pool makes a wet pond:
+    runs start with it full. Its stage–storage comes from the graded 1 m ground and is not entered separately.
+  - **Outlet structure**: a line from the riser in the pond to where it discharges.
+    - The structure has up to two orifices (a 6 in one at the bottom or the pool by default; part-full flow on the
+      flowing depth, continuous at the crown), a riser crest as overflow weir (18 in below the bank top, 3.8 m of
+      crest) and an emergency spillway (6 in below the top, 10 ft). Weirs use Villemonte submergence.
+    - The outlet runs as a link from the pond's lowest cell near the riser to a ground cell at its end, to a manhole of
+      the SWMM network (its water goes in as lateral inflow), or off the model. Links measure what they remove and
+      deliver exactly that, as the culverts do.
+    - Each run reports, per outlet, the peak stage, the freeboard to the spillway crest and the peak outflow (orifices,
+      riser and spillway shares).
+  - **Swale**: a channel cut along a line, with an invert profile (default: the ground at the ends less the depth),
+    bottom width, side slopes and its own Manning's n.
+  - **Rain garden (bioretention)**: a depression of the ponding depth over engineered media. It uses the solver's GI
+    store kernel at 100 % on the drawn cells: media rate, media depth × porosity as the store, a drain to the native
+    soil, and an optional underdrain at its own rate to a manhole.
+  - **Permeable pavement**: paved, with all rain through the area-wide pavement store (200 mm at 1000 mm/hr).
+  - **Downspout**: a line from a building (new or mapped) to a manhole. The building's roof drains there, overriding its
+    roof setting (a mapped building gets its own id for the roof routing).
+  - The street-network estimate is still rebuilt on the proposed model; drawn pipes in a scenario are not supported
+    yet.
 - `npm run test:design`: the distance transform against brute force; a pad on a tilted plane is flat and daylights at
   exactly 3:1 and 2:1; cut and fill match the analytic frustum volumes (within 0.3 %); the apron; the FFE rules (HAG,
   BFE, balanced); demolish; the layer updates; floodplain fill = footprint × depth in a pond; no features → the same
@@ -134,12 +154,22 @@ Two runs compare only when they differ in nothing but the design.
     before and after, and flooded before / after.
   - Outlet table per control line: peak outflow, net volume and time to peak, pre vs post, with the post ≤ pre check.
   - Totals: Δ runoff off the edge and to the outfalls, Δ infiltration, Δ impervious, cut / fill, floodplain fill.
+- **Return-period sweep and the detention check** (Compare → *Return-period sweep*): paired runs over the design storms
+  (2, 10, 25, 100-yr by default, editable), one after another in the page. Existing conditions comes from the cache
+  when it already ran with the same forcing. *Cancel* stops the run in progress at once. The table gives, per return
+  period and control line, the pre- and post-development peak outflow and the check post ≤ pre. Per pond outlet it
+  gives the peak stage, freeboard and peak outflow. Both download as CSV.
 - **Export:** a zip with the Δ grids (`.asc` + `.prj`), newly wet / dry, `buildings.csv`, `control_lines.csv`, the
   hydrographs, `comparison.json` and a one-page `summary.html`. With a project open, it is also saved under
   `comparisons/`.
 - `summary.json` of every saved run gains `scenario`, `designHash` (the grid hash of the model it ran), `forcingHash`
   with the per-part `forcing` hashes, `commit`, the books and the control lines. The compare panel lists the project's
   saved runs (`/api/projects/runs`) next to this session's runs.
+- `npm run test:stormwater` covers:
+  - the outlet rating (orifice regimes, weirs, submergence, a composite that never steps back);
+  - stage–storage and modified Puls (vs an exponential and a Torricelli drawdown, to 3e-5 m);
+  - the pond (3:1 sides, storage = the truncated pyramid), swale, rain garden, permeable pavement and outlet defaults;
+  - downspouts on new and mapped buildings, the outlet links' books, and the detention check.
 - `npm run test:compare` covers:
   - the fingerprint (stable, names the difference, ignores the design);
   - the `.f32` grids, Δ with the band, newly wet / dry, the off-site impact;
@@ -682,6 +712,9 @@ Bed elevations are stored relative to the domain minimum for fp32 headroom.
 | Control lines: across a channel vs downstream storage + edge outflow; around the domain vs edge outflow + outer ring | – | 9e-9, 1e-9 (tiled = untiled) |
 | Rerun of the same run (urban cloudburst; batches of 7 vs 64 steps): depths, peaks, hazard, line books | – | 0 values differ |
 | Peak speed and first wetting (> 5 cm) every step vs CPU | – | 3.6e-6 m/s, 0 s |
+| Pond with one orifice vs modified Puls in JS on the same stage–storage (30 min drawdown); surface books with the outlet | – | stage within 4.8 mm, volume out within 0.3 %, books 1e-6 |
+| Pond outlet onto the ground downstream: stored + in transit vs the start | – | 5e-7 |
+| Rain garden with an underdrain: underdrain share of the drain; books | – | 90.91 % (exact); 3.4e-6 (the GI store path, with or without the underdrain) |
 
 Full numbers: `tests/results-cpu.json`, `tests/results-gpu.json`.
 
@@ -756,6 +789,7 @@ src/banks.js          bank tops next to water, Culmann bank stability, probabili
 src/sediment.js       sediment transport inputs (4 grain classes, settling, erodible stores, skin roughness, soil strength)
 src/gi.js             green infrastructure layers (permeable pavement, rain gardens) and green-roof retention
 src/design.js         site design: proposed buildings, pads, paved areas, demolitions → edited 1 m layers; grading engine, cut / fill log
+src/stormwater.js     outlet structures (rating, links), stage–storage, modified Puls, drawn GI, underdrains, the detention check
 src/compare.js        paired-run comparison: forcing fingerprint, .f32 grids, Δ maps, off-site impact, building and outlet tables
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy

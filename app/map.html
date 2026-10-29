@@ -101,6 +101,8 @@ header a { font-size: 12.5px; color: var(--accent); }
 .iinfo { margin: 8px 0 0; font-size: 12px; color: var(--muted); } .iinfo b { color: var(--ink); } .iinfo .warn { color: var(--warn); }
 #barNote .warn { color: var(--warn); } .iinfo .good { color: var(--good); }
 .sw.building { border-radius: 2px; background: #f2a65a; } .sw.pad { border-radius: 2px; background: transparent; border: 1.5px dashed #9ad17b; }
+.sw.pond { border-radius: 2px; background: #4fa3e0; } .sw.outlet { border-radius: 0; height: 4px; border: 0; background: #f4f4f4; } .sw.swale { border-radius: 0; height: 5px; border: 0; background: #59c9a5; }
+.sw.bio { border-radius: 2px; background: #7bd389; } .sw.perm { border-radius: 2px; background: repeating-linear-gradient(45deg, #c2b280 0 2px, #8a7d5c 2px 4px); } .sw.dsp { border-radius: 0; height: 3px; border: 0; background: #5cc8f2; }
 .sw.paved { border-radius: 2px; background: #9aa7b1; } .sw.cline { border-radius: 0; height: 4px; border: 0; background: #5ce1e6; } .sw.site { border-radius: 2px; background: transparent; border: 1.5px dashed #f2c94c; } .sw.demolish { border-radius: 2px; background: transparent; border: 2px solid #ff5d5d; }
 .scn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 10px; align-items: center; } .scn select { grid-column: 1 / -1; }
 .scn select { min-width: 0; font: 12.5px var(--body); background: transparent; color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 4px 6px; }
@@ -269,6 +271,13 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <label class="toggle"><input type="checkbox" id="cmpSiteOnly"> Hide on-site changes (off-site only)</label>
       <div class="dz-legend cmp-legend" id="cmpLegend"></div>
       <div class="props" id="cmpOut"></div>
+      <details class="iimport" open><summary>Return-period sweep and detention check</summary>
+        <label class="ifield"><span>Design storms (yr)</span><input id="swAris" value="2, 10, 25, 100"></label>
+        <div class="row"><button class="btn" id="swRun" type="button" title="Existing conditions (reused when it already ran with the same settings) and the active scenario, at each return period of the Atlas 14 design storm">Run sweep</button>
+          <button class="btn" id="swCancel" type="button" disabled>Cancel</button></div>
+        <p class="note" id="swNote">Runs existing conditions and the active scenario at each design storm, one pair after another, and fills the check: post-development peak ≤ pre-development peak at each control line.</p>
+        <div class="props" id="swOut"></div>
+      </details>
     </aside>
     <aside class="drawer" id="design" hidden aria-label="Site design drawer">
       <header><h2>Site design</h2>
@@ -285,6 +294,14 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <button data-tool="demolish" title="Remove a mapped building"><i class="sw demolish"></i>Demolish</button>
         <button data-tool="cline" title="Draw a control line: flow across it is booked every step (all scenarios)"><i class="sw cline"></i>Control line</button>
         <button data-tool="site" title="Draw the site boundary: comparisons split results on-site and off-site"><i class="sw site"></i>Site</button>
+      </div>
+      <div class="tools" id="swTools" role="toolbar" aria-label="Stormwater tools">
+        <button data-tool="pond" title="Draw a detention / retention pond (top of bank)"><i class="sw pond"></i>Pond</button>
+        <button data-tool="outlet" title="Draw a pond outlet structure: from the riser to where it discharges"><i class="sw outlet"></i>Outlet</button>
+        <button data-tool="swale" title="Draw a swale along its centre line"><i class="sw swale"></i>Swale</button>
+        <button data-tool="bioretention" title="Draw a rain garden (bioretention)"><i class="sw bio"></i>Rain garden</button>
+        <button data-tool="permeable" title="Draw permeable pavement"><i class="sw perm"></i>Permeable</button>
+        <button data-tool="downspout" title="Draw a downspout connection: from a building to a manhole"><i class="sw dsp"></i>Downspout</button>
       </div>
       <p class="hint" id="designHint"></p>
       <div class="props" id="designProps"></div>

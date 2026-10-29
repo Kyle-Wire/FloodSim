@@ -9,6 +9,16 @@
 //                        elevation with a cross slope or crown, optional curb
 //   grade     (polygon)  a pad: flat at an elevation, a plane through three spot elevations, or flat at the elevation
 //                        that balances cut and fill
+// Stormwater (phase 3):
+//   pond          (polygon)  detention / retention pond: the outline is the top of the bank; side slopes down to a flat
+//                            bottom; an optional permanent pool (wet pond); stage–storage comes from the graded ground
+//   swale         (line)     a channel cut along the line: invert profile, bottom width, side slopes, its own Manning n
+//   bioretention  (polygon)  a rain garden: a depression of the ponding depth over engineered media (the solver's GI
+//                            store at 100 %), draining to the native soil and optionally through an underdrain to a node
+//   permeable     (polygon)  permeable pavement: paved, all rain through the GI store (the area-wide pavement values)
+//   outlet        (line)     a pond's outlet structure, from the riser in the pond to where it discharges (a surface
+//                            point, a network node, or off the model): orifices, overflow weir, emergency spillway
+//   downspout     (line)     from a building to a node: its roof drains there (overrides the building's roof setting)
 //
 // One grading engine serves all of them: a feature defines a target surface T over its footprint, and outside it the
 // ground daylights to the existing grade, z′ = clamp(z, Tₑ − d/S_fill, Tₑ + d/S_cut), d the distance to the
@@ -21,9 +31,11 @@ import { tauFor, NOT_ERODIBLE } from './scour.js';
 import { findBanks } from './banks.js';
 import { TEXTURES } from './sediment.js';
 import { GI } from './gi.js';
+import { stageStorage } from './stormwater.js';
 
 const MMHR = 1 / 1000 / 3600;
-export const DESIGN_TYPES = ['building', 'demolish', 'paved', 'grade'];
+export const DESIGN_TYPES = ['building', 'demolish', 'paved', 'grade', 'pond', 'swale', 'bioretention', 'permeable', 'outlet', 'downspout'];
+export const LINE_TYPES = new Set(['swale', 'outlet', 'downspout']);
 export const FOUNDATIONS = ['slab', 'crawlspace', 'basement', 'piers'];
 export const ROOFS = ['ground', 'network', 'cistern', 'green'];
 
@@ -51,6 +63,17 @@ export const DEFAULTS = {
   demolish: {},
   paved: { use: 'driveway', surface: 'asphalt', elev: null, crossSlope: 0.02, slopeDir: 0, crown: false, curb: 0, fillSlope: null, cutSlope: null },
   grade: { mode: 'flat', elev: null, spots: null, fillSlope: null, cutSlope: null },
+  // 3:1 inside slopes, 1.5 m deep below the lowest ground on the outline (the bank top), dry (no permanent pool)
+  pond: { top: null, bottom: null, depth: 1.5, sideSlope: 3, pool: null, fillSlope: null, cutSlope: null },
+  // 18 in deep, 2 ft bottom, 3:1 sides, grass-lined n 0.035; inverts from the ground at the ends less the depth
+  swale: { invertUp: null, invertDn: null, depth: 0.45, bottomW: 0.6, sideSlope: 3, n: 0.035 },
+  // 6 in ponding over 2 ft of media at 35 % voids taking 50 mm/hr (≈ 2 in/hr); underdrain off
+  bioretention: { ponding: 0.15, media: 0.6, porosity: 0.35, mediaRate: 50, underdrain: false, underRate: 25, node: null, fillSlope: null, cutSlope: null },
+  permeable: { store: GI.pavement.store, rate: GI.pavement.rate, n: 0.015 },
+  // a 6 in orifice at the pond bottom (or the permanent pool), the riser crest 18 in below the bank top (a 4 ft riser:
+  // 3.8 m of crest), an emergency spillway 6 in below the top, 10 ft wide; null inverts and crests come from the pond
+  outlet: { to: 'surface', node: null, orifice1D: 0.1524, orifice1Inv: null, orifice2D: null, orifice2Inv: null, weirCrest: null, weirL: 3.8, spillwayCrest: null, spillwayL: 3.048, Cd: 0.61 },
+  downspout: { node: null },
 };
 /** Scenario-wide settings: BFE (m NAVD88, a user input: no FEMA data in the app yet), freeboard, daylight slopes (H:V), reach (m). */
 export const SETTINGS = { bfe: null, freeboard: 0.3, fillSlope: 3, cutSlope: 2, reach: 50 };
@@ -155,6 +178,7 @@ export function applyDesign(f, design, opts = {}) {
   const water = opts.water ?? (f.cls ? Uint8Array.from(f.cls, c => (c === 11 ? 1 : 0)) : new Uint8Array(N));
   const level = (k) => { const w = opts.wse?.[k], lv = [Number.isFinite(w) ? w : null, S.bfe].filter(v => v != null); return lv.length ? Math.max(...lv) : null; };
   const roofs = new Map(), buildings = [], logs = [];
+  const ponds = [], drawnGI = [], outlets = [], deferred = [], swaleN = new Map(); // stormwater
 
   feats.forEach((feat, idx) => {
     const p = feat.properties, L = { id: feat.id, type: p.type, name: p.name ?? null, preset: p.preset ?? null, cells: 0, cut: 0, fill: 0,
@@ -162,7 +186,9 @@ export function applyDesign(f, design, opts = {}) {
     logs.push(L);
     const rings = polyRings(feat.geometry).map(r => r.map(toCell)), cells = [];
     if (rings.length) fillRings(rings, nx, ny, (k) => cells.push(k));
-    if (!cells.length) { L.warnings.push('Outside the model grid or smaller than a cell: no effect'); return; }
+    const line = LINE_TYPES.has(p.type) && feat.geometry?.type === 'LineString' ? feat.geometry.coordinates.map(toCell) : null;
+    if (p.type === 'outlet' || p.type === 'downspout') { deferred.push({ feat, idx, L, line }); return; } // after all the grading
+    if (line ? !line.some(([x, y]) => x >= 0 && y >= 0 && x < nx && y < ny) : !cells.length) { L.warnings.push('Outside the model grid or smaller than a cell: no effect'); return; }
     const zBefore = new Map(); // z before this feature, for its own cut and fill
     const setZ = (k, v) => { if (v === z[k]) return; if (!zBefore.has(k)) zBefore.set(k, z[k]); z[k] = v; touched[k] = idx; };
     const fillS = num(p.fillSlope) ?? S.fillSlope, cutS = num(p.cutSlope) ?? S.cutSlope;
@@ -269,11 +295,100 @@ export function applyDesign(f, design, opts = {}) {
         if (zw) for (let l = 0; l < zw.length; l++) { const k = win.global(l); setZ(k, zw[l]); if (zw[l] !== z0[k]) graded[k] = 1; }
       }
       L.cells = new Set([...own, ...zBefore.keys()]).size;
+    } else if (p.type === 'pond' || p.type === 'bioretention') {
+      const own = cells.filter(k => !R('bld')[k]); if (own.length < cells.length) L.warnings.push(`${(cells.length - own.length) * A} m² under buildings left out`);
+      if (own.length) {
+        const win = windowOf(own, nx, ny, Math.ceil(S.reach / dx) + 2), region = new Uint8Array(win.w * win.h); for (const k of own) region[win.local(k)] = 1;
+        const outside = Uint8Array.from(region, v => 1 - v), eIn = edt(outside, win.w, win.h), eR = edt(region, win.w, win.h), keep = protectMask(win, R('bld'), region);
+        // the bank top: the lowest existing ground just outside the outline (where the pond would spill), unless given
+        let edgeMin = Infinity; for (let l = 0; l < region.length; l++) if (!region[l] && eR.d2[l] <= 2) edgeMin = Math.min(edgeMin, z[win.global(l)]);
+        if (!Number.isFinite(edgeMin)) edgeMin = Math.min(...own.map(k => z[k]));
+        const T = new Float64Array(region.length), Te = new Float64Array(region.length);
+        let top, bottom, slope;
+        if (p.type === 'pond') {
+          top = num(p.top) ?? edgeMin; bottom = num(p.bottom) ?? top - (num(p.depth) ?? 1.5); slope = Math.max(0, num(p.sideSlope) ?? 3);
+          for (let l = 0; l < T.length; l++) if (region[l]) { const d = (Math.sqrt(eIn.d2[l]) - 0.5) * dx; T[l] = slope > 0 ? Math.max(bottom, top - d / slope) : bottom; Te[l] = top; }
+        } else { // bioretention: a flat bottom the ponding depth below the lowest ground around it
+          top = edgeMin; bottom = top - Math.max(0, num(p.ponding) ?? 0.15); slope = 0;
+          for (let l = 0; l < T.length; l++) if (region[l]) { T[l] = bottom; Te[l] = top; }
+        }
+        const zw = daylight(z, win, region, T, Te, eR, fillS, cutS, dx, keep);
+        for (let l = 0; l < zw.length; l++) { const k = win.global(l); setZ(k, zw[l]); if (zw[l] !== z0[k]) graded[k] = 1; }
+        for (const k of own) graded[k] = 1;
+        const ss = stageStorage(z, own, A, top, 40), pool = p.type === 'pond' ? num(p.pool) : null;
+        if (p.type === 'pond') {
+          ponds.push({ id: feat.id, name: p.name ?? null, cells: own, top, bottom, pool: pool != null && pool > bottom ? Math.min(pool, top) : null, stageStorage: ss });
+          L.resolved = { top, bottom, sideSlope: slope, pool, volumeAtTop: ss.S.at(-1), areaAtTop: ss.area.at(-1), area: own.length * A };
+          if (pool != null) { const v = own.reduce((a, k) => a + Math.max(0, pool - z[k]) * A, 0); L.resolved.poolVolume = v; L.notes.push(`Wet pond: the permanent pool at ${pool.toFixed(2)} m holds ${v.toFixed(0)} m³ at the start of a run`); }
+          if (num(p.top) == null) L.notes.push('Bank top at the lowest ground around the outline: the pond spills there first');
+        } else {
+          const node = p.underdrain && Array.isArray(p.node) ? p.node : null;
+          drawnGI.push({ id: feat.id, kind: 'bioretention', cells: own, rate: Math.max(0, num(p.mediaRate) ?? 50) * MMHR, store: Math.max(0, num(p.media) ?? 0.6) * Math.min(1, Math.max(0, num(p.porosity) ?? 0.35)),
+            under: node ? Math.max(0, num(p.underRate) ?? 25) * MMHR : 0, node });
+          if (p.underdrain && !node) L.warnings.push('Underdrain on but no node chosen: it drains to the native soil only');
+          L.resolved = { rim: top, bottom, ponding: top - bottom, pondingVolume: ss.S.at(-1), mediaStore: drawnGI.at(-1).store * own.length * A, area: own.length * A };
+        }
+      }
+      L.cells = new Set([...own, ...zBefore.keys()]).size;
+    } else if (p.type === 'permeable') {
+      const own = cells.filter(k => !R('bld')[k]); if (own.length < cells.length) L.warnings.push(`${(cells.length - own.length) * A} m² under buildings left out`);
+      for (const k of own) { W('road')[k] = 1; W('perv')[k] = 0; W('infil')[k] = 0; W('manning')[k] = num(p.n) ?? 0.015; W('tauC')[k] = NOT_ERODIBLE; graded[k] = 0; footprint[k] = 0; touched[k] = idx; }
+      drawnGI.push({ id: feat.id, kind: 'permeable', cells: own, rate: Math.max(0, num(p.rate) ?? GI.pavement.rate) * MMHR, store: Math.max(0, num(p.store) ?? GI.pavement.store), under: 0, node: null });
+      L.cells = own.length; L.resolved = { area: own.length * A, store: own.length * A * (num(p.store) ?? GI.pavement.store) };
+    } else if (p.type === 'swale' && line) {
+      const bw = Math.max(0, num(p.bottomW) ?? 0.6), depth = Math.max(0.01, num(p.depth) ?? 0.45), sl = Math.max(0.5, num(p.sideSlope) ?? 3), half = bw / 2 + depth * sl;
+      const seg = []; let len = 0; for (let m = 0; m + 1 < line.length; m++) { const [ax, ay] = line[m], [bx, by] = line[m + 1], l = Math.hypot(bx - ax, by - ay) * dx; seg.push({ ax, ay, bx, by, l, s0: len }); len += l; }
+      const at = (x, y) => { let best = null; for (const g of seg) { const ex = g.bx - g.ax, ey = g.by - g.ay, L2 = ex * ex + ey * ey || 1e-12, t = Math.max(0, Math.min(1, ((x - g.ax) * ex + (y - g.ay) * ey) / L2)), d = Math.hypot(x - g.ax - t * ex, y - g.ay - t * ey) * dx; if (!best || d < best.d) best = { d, s: g.s0 + t * g.l }; } return best; };
+      const gAt = (pt) => { const i = Math.min(nx - 1, Math.max(0, Math.floor(pt[0]))), j = Math.min(ny - 1, Math.max(0, Math.floor(pt[1]))); return z[j * nx + i]; };
+      const inv0 = num(p.invertUp) ?? gAt(line[0]) - depth, inv1 = num(p.invertDn) ?? gAt(line.at(-1)) - depth;
+      const pad = Math.ceil(half / dx) + 1, own = [];
+      let i0 = Infinity, i1 = -Infinity, j0 = Infinity, j1 = -Infinity; for (const [x, y] of line) { i0 = Math.min(i0, x); i1 = Math.max(i1, x); j0 = Math.min(j0, y); j1 = Math.max(j1, y); }
+      for (let j = Math.max(0, Math.floor(j0) - pad); j <= Math.min(ny - 1, Math.ceil(j1) + pad); j++) for (let i = Math.max(0, Math.floor(i0) - pad); i <= Math.min(nx - 1, Math.ceil(i1) + pad); i++) {
+        const k = j * nx + i; if (R('bld')[k]) continue;
+        const q = at(i + 0.5, j + 0.5); if (q.d > half) continue;
+        const T = inv0 + (inv1 - inv0) * q.s / Math.max(1e-9, len) + Math.max(0, q.d - bw / 2) / sl;
+        if (q.d <= bw / 2 || T < z[k]) { setZ(k, T); own.push(k); graded[k] = 1; swaleN.set(k, num(p.n) ?? 0.035); }
+      }
+      if (inv1 > inv0) L.warnings.push('The invert rises downstream: water will pond in the swale');
+      L.cells = own.length; L.resolved = { invertUp: inv0, invertDn: inv1, slope: (inv0 - inv1) / Math.max(1e-9, len), length: len, bottomW: bw, depth, sideSlope: sl, n: num(p.n) ?? 0.035 };
     }
     // this feature's own cut and fill (against the ground before it), and checks on the ground it changed
     for (const [k, zb] of zBefore) { const dz = z[k] - zb; if (dz > 0) L.fill += dz * A; else L.cut -= dz * A; }
     if (zBefore.size) checks(L, [...zBefore.keys()], z, z0, f, water, nx, ny, dx, idx, touched);
   });
+
+  // outlet structures and downspouts, once the ground is graded
+  const cellOf = ([x, y]) => (x >= 0 && y >= 0 && x < nx && y < ny ? Math.floor(y) * nx + Math.floor(x) : -1);
+  for (const { feat, L, line } of deferred) {
+    const p = feat.properties;
+    if (!line || line.length < 2) { L.warnings.push('Needs a line of two points or more'); continue; }
+    const k0 = cellOf(line[0]), k1 = cellOf(line.at(-1));
+    if (p.type === 'outlet') {
+      const pond = ponds.find(q => q.cells.includes(k0));
+      if (!pond) L.warnings.push('The outlet does not start inside a pond: it drains the ground where it starts');
+      const bottom = pond ? pond.pool ?? pond.bottom : (k0 >= 0 ? z[k0] : 0), top = pond?.top ?? bottom + 1.5;
+      const orifices = [[num(p.orifice1D), num(p.orifice1Inv) ?? bottom], [num(p.orifice2D), num(p.orifice2Inv)]].filter(([D, inv]) => D > 0 && inv != null).map(([D, inv]) => ({ D, inv }));
+      const weir = (num(p.weirL) ?? 0) > 0 ? { crest: num(p.weirCrest) ?? top - 0.457, L: num(p.weirL) } : null;
+      const spillway = (num(p.spillwayL) ?? 0) > 0 ? { crest: num(p.spillwayCrest) ?? top - 0.152, L: num(p.spillwayL) } : null;
+      if (weir && spillway && spillway.crest < weir.crest) L.warnings.push('The emergency spillway is below the riser crest');
+      if (pond && spillway && spillway.crest > pond.top) L.warnings.push('The spillway crest is above the bank top: the pond overtops its bank first');
+      if (k1 < 0 && p.to === 'surface') L.warnings.push('Discharges outside the model: treated as off the model');
+      const structure = { orifices, weir, spillway, Cd: num(p.Cd) ?? 0.61 };
+      outlets.push({ id: feat.id, name: p.name ?? null, pondId: pond?.id ?? null, start: line[0], end: line.at(-1), mode: k1 < 0 && p.to === 'surface' ? 'offsite' : p.to ?? 'surface', node: Array.isArray(p.node) ? p.node : null, structure });
+      L.cells = 0; L.resolved = { pond: pond?.name ?? pond?.id ?? null, ...structure, to: p.to, stageStorage: pond ? { h: Array.from(pond.stageStorage.h), S: Array.from(pond.stageStorage.S) } : null };
+    } else { // downspout: the building the line starts in now drains its roof to the node at the line's end
+      const bldA = R('bld'); if (k0 < 0 || !bldA[k0]) { L.warnings.push('The downspout does not start in a building'); continue; }
+      let id = R('bldId')?.[k0] ?? 0;
+      if (!id || !roofs.has(id)) { // a mapped building: give its blob this feature's id
+        id = feat.id; const st = [k0], seen = new Set([k0]);
+        while (st.length) { const k = st.pop(); W('bldId')[k] = id; const i = k % nx, j = (k / nx) | 0; for (const [a, b] of [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]]) { const q = b * nx + a; if (a >= 0 && b >= 0 && a < nx && b < ny && bldA[q] && !seen.has(q)) { seen.add(q); st.push(q); } } }
+        roofs.set(id, { roof: 'network', retention: 0, to: Array.isArray(p.node) ? p.node : feat.geometry.coordinates.at(-1), area: seen.size * A, name: p.name ?? null, downspout: feat.id });
+        L.cells = seen.size;
+      } else { const r = roofs.get(id); roofs.set(id, { ...r, roof: 'network', retention: 0, to: Array.isArray(p.node) ? p.node : feat.geometry.coordinates.at(-1), downspout: feat.id }); L.cells = 0; }
+      L.resolved = { building: id, to: Array.isArray(p.node) ? p.node : feat.geometry.coordinates.at(-1) };
+      L.notes.push('The roof drains to the manhole at the end of the line (within 5 m), else the nearest within 30 m');
+    }
+  }
 
   // graded ground becomes compacted lawn: one hydrologic group down (A→B, B→C, C→D), Green-Ampt of the new group (placed
   // fill: the compacted-fill rate); native texture kept (erodible); lawn n and pervious share
@@ -287,6 +402,7 @@ export function applyDesign(f, design, opts = {}) {
     W('infil')[k] = (fillHere || !h ? URBAN_FILL_RATE : HSG_RATE['ABCD'[h - 1]]) * lawnPerv * MMHR;
     const tx = f.texture ? texName(f.texture[k]) : 'compacted fill'; W('tauC')[k] = tauFor(lawnPerv, 21, tx);
   }
+  for (const [k, n] of swaleN) if (!R('bld')[k] && !R('road')?.[k]) W('manning')[k] = n; // swales keep their own roughness
   // soil depth to bedrock and to the water table move with the ground
   const totals = emptyTotals(), bldA = R('bld'), pervA = R('perv');
   for (let k = 0; k < N; k++) {
@@ -309,7 +425,7 @@ export function applyDesign(f, design, opts = {}) {
   totals.net = totals.fill - totals.cut;
 
   const ga = out['ga.K'] || out['ga.psi'] || out['ga.thetaE'] || out['ga.depth'] ? { ...f.ga, K: R('ga.K'), psi: R('ga.psi'), thetaE: R('ga.thetaE'), depth: R('ga.depth') } : f.ga;
-  const fine = { ...f, ga, bldId: R('bldId') ?? null, roofs, designBuildings: buildings };
+  const fine = { ...f, ga, bldId: R('bldId') ?? null, roofs, designBuildings: buildings, ponds, drawnGI, outlets };
   for (const [key, a] of Object.entries(out)) if (!key.startsWith('ga.')) fine[key] = a;
   let bldCells = 0, roadCells = 0; const fb = fine.bld, fr = fine.road; for (let k = 0; k < N; k++) { if (fb[k]) bldCells++; else if (fr?.[k]) roadCells++; }
   fine.stats = { ...f.stats, buildingArea: bldCells * A, roadArea: roadCells * A, design: totals };

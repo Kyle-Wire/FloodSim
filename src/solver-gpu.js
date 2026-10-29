@@ -71,8 +71,11 @@ export class GPUSolver {
     this.GIh = new Float32Array(N * 4); this.hasGI = !!o.gi;
     if (o.gi) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
       const k = j * this.nx + i, c = this.idx(i, j); if (!(o.gi.cap[k] > 0)) continue;
-      this.GIh[c * 4] = o.gi.rate[k]; this.GIh[c * 4 + 1] = o.gi.cap[k]; this.GIh[c * 4 + 2] = o.gi.drain[k];
+      this.GIh[c * 4] = o.gi.rate[k]; this.GIh[c * 4 + 1] = o.gi.cap[k]; this.GIh[c * 4 + 2] = o.gi.drain[k]; this.GIh[c * 4 + 3] = o.gi.under?.[k] ?? 0;
     }
+    // underdrains (o.underdrains: interior cells whose GI store has one, gathered by readUnderdrains)
+    this.nUnder = o.underdrains?.length ?? 0; this.UDCh = new Uint32Array(Math.max(1, this.nUnder));
+    (o.underdrains ?? []).forEach((k, m) => { this.UDCh[m] = this.idx(k % this.nx, (k / this.nx) | 0); });
     // Green-Ampt (o.ga: { psiD, fmax, perv } per interior cell, src/soil.js gaCells; o.infil is then K on the cell basis)
     this.GAPh = new Float32Array(N * 4); this.hasGA = !!o.ga;
     if (o.ga) for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
@@ -169,7 +172,7 @@ export class GPUSolver {
       TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 8), TC: mk(8),
       TA: mk(24, GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
       GI: mk(N * 16), GS: mk(N * 16), GAP: mk(N * 16),
-      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 64), LF: mk(this.LFh.byteLength), CL: mk(this.LFh.length * 16), SCR: mk(N * 16), SDA: mk(this.sed ? N * 64 : 16), SDB: mk(this.sed ? N * 64 : 16), SDP: mk(this.sed ? N * 16 : 16), SE0: mk(this.sed ? N * 32 : 16), BK: mk(this.BKh.byteLength), BR: mk(this.BRh.byteLength),
+      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 64), LF: mk(this.LFh.byteLength), CL: mk(this.LFh.length * 16), UDC: mk(this.UDCh.byteLength), UDX: mk(this.UDCh.length * 4), SCR: mk(N * 16), SDA: mk(this.sed ? N * 64 : 16), SDB: mk(this.sed ? N * 64 : 16), SDP: mk(this.sed ? N * 16 : 16), SE0: mk(this.sed ? N * 32 : 16), BK: mk(this.BKh.byteLength), BR: mk(this.BRh.byteLength),
       SGC: mk(this.sg ? N * CT * 4 : 16), SGF: mk(this.sg ? 2 * N * FT * 4 : 16), EO: mk(2 * (this.nx + this.ny) * 8),
     };
     this.read = {
@@ -192,7 +195,7 @@ export class GPUSolver {
     d.queue.writeBuffer(this.buf.BQ, 0, this.BQh);
     if (this.sg) { d.queue.writeBuffer(this.buf.SGC, 0, this.SGCh); d.queue.writeBuffer(this.buf.SGF, 0, this.SGFh); }
     const hz = new Float32Array(N * 16); for (let c = 0; c < N; c++) { hz[16 * c + 3] = -1; hz[16 * c + 13] = -1; } d.queue.writeBuffer(this.buf.HZ, 0, hz);
-    d.queue.writeBuffer(this.buf.LF, 0, this.LFh);
+    d.queue.writeBuffer(this.buf.LF, 0, this.LFh); d.queue.writeBuffer(this.buf.UDC, 0, this.UDCh);
     d.queue.writeBuffer(this.buf.SCR, 0, this.TCh);
     if (this.nBank) { d.queue.writeBuffer(this.buf.BK, 0, this.BKh); d.queue.writeBuffer(this.buf.BR, 0, this.BRh); }
     if (this.sed) { d.queue.writeBuffer(this.buf.SDA, 0, this.SDh); d.queue.writeBuffer(this.buf.SDB, 0, this.SDh); d.queue.writeBuffer(this.buf.SDP, 0, this.SDPh); d.queue.writeBuffer(this.buf.SE0, 0, this.SE0h); }
@@ -201,7 +204,7 @@ export class GPUSolver {
     const mod = d.createShaderModule({ code: KERNELS_WGSL });
     this.module = mod;
     const B = [this.buf.params, this.buf.U, this.buf.U0, this.buf.S, this.buf.W, this.buf.FX, this.buf.FY, this.buf.A, this.buf.DT, this.buf.RED, this.buf.OUT, this.buf.TH, this.buf.RF, this.buf.INC, this.buf.INQ, this.buf.INX, this.buf.STG,
-      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP, this.buf.SE0, this.buf.BK, this.buf.BR, this.buf.LF, this.buf.CL];
+      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP, this.buf.SE0, this.buf.BK, this.buf.BR, this.buf.LF, this.buf.CL, this.buf.UDC, this.buf.UDX];
     const uses = {
       prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27, 32], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
       sgPrim: [0, 1, 4, 16, 28], sgFluxX: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgFluxY: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgUpdate: [0, 1, 3, 5, 6, 7, 8, 11],
@@ -224,7 +227,7 @@ export class GPUSolver {
       dtFinal: make('dtFinal', uses.dtFinal), pack: make('pack', uses.pack),
       exchange: make('exchange', uses.exchange), barrier0: make('barrier', uses.barrier, { STAGE: 0 }), barrier1: make('barrier', uses.barrier, { STAGE: 1 }),
       hazard: make('hazard', uses.hazard), resetTotals: make('resetTotals', uses.resetTotals), edgeOut: make('edgeOut', uses.edgeOut),
-      ...(this.nLine ? { lineFlux: make('lineFlux', [0, 4, 5, 6, 8, 11, 39, 40]) } : {}),
+      ...(this.nLine ? { lineFlux: make('lineFlux', [0, 4, 5, 6, 8, 11, 39, 40]) } : {}), ...(this.nUnder ? { udGather: make('udGather', [23, 41, 42]) } : {}),
     };
     if (this.tiled) Object.assign(this.k, {
       tileClear: make('tileClear', uses.tileClear), tileWet: make('tileWet', uses.tileWet),
@@ -463,6 +466,15 @@ export class GPUSolver {
       o.vmax[k] = a[q + 12]; o.tWet[k] = a[q + 13] >= 0 ? a[q + 13] : NaN;
     }
     return o;
+  }
+
+  /** Underdrained depth so far (m, per o.underdrains cell, on the cell basis): what each GI store let out through its
+   *  underdrain (part of the books' infiltration). */
+  async readUnderdrains() {
+    if (!this.nUnder) return new Float32Array(0);
+    const enc = this.device.createCommandEncoder(), pass = enc.beginComputePass();
+    this._dispatch(pass, this.k.udGather, Math.ceil(this.nUnder / 64)); pass.end(); this.device.queue.submit([enc.finish()]);
+    return (await this._readBuffer(this.buf.UDX, this.nUnder * 4)).slice(0, this.nUnder);
   }
 
   /** Control lines (o.lines) since the start, per line: volume crossing to its + side and to its − side (m³, both

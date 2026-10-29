@@ -4,18 +4,19 @@
 // applies the active scenario to the fine model (src/design.js applyDesign) and rebuilds the run inputs.
 // Control lines and the site boundary are not part of any scenario: they sit in a shared analysis layer, so both runs of
 // a comparison book the same lines (`onAnalysis` rebuilds the run inputs).
-import { PRESETS, DEFAULTS, SETTINGS, FOUNDATIONS, ROOFS, LEVEL_HEIGHT, designFeature, applyPreset, bumpDesignIds } from '../src/design.js';
+import { PRESETS, DEFAULTS, SETTINGS, FOUNDATIONS, ROOFS, LEVEL_HEIGHT, LINE_TYPES, designFeature, applyPreset, bumpDesignIds } from '../src/design.js';
 import { ringArea, lineLength } from '../src/infra.js';
 
 const $ = (id) => document.getElementById(id);
 const UNITS = {
-  us: { elev: ['ft', 0.3048, 2], len: ['ft', 0.3048, 1], size: ['in', 0.0254, 1], area: ['ft²', 0.09290304, 0], vol: ['ft³', 0.028316846592, 0], cvol: ['gal', 0.003785411784, 0] },
-  si: { elev: ['m', 1, 2], len: ['m', 1, 2], size: ['mm', 0.001, 0], area: ['m²', 1, 0], vol: ['m³', 1, 1], cvol: ['m³', 1, 1] },
+  us: { elev: ['ft', 0.3048, 2], len: ['ft', 0.3048, 1], size: ['in', 0.0254, 1], area: ['ft²', 0.09290304, 0], vol: ['ft³', 0.028316846592, 0], cvol: ['gal', 0.003785411784, 0], mmhr: ['in/hr', 25.4, 2], q: ['cfs', 0.028316846592, 2] },
+  si: { elev: ['m', 1, 2], len: ['m', 1, 2], size: ['mm', 0.001, 0], area: ['m²', 1, 0], vol: ['m³', 1, 1], cvol: ['m³', 1, 1], mmhr: ['mm/hr', 1, 0], q: ['m³/s', 1, 3] },
 };
-const CONVERT = new Set(['elev', 'len', 'size', 'cvol']);
-const NAMES = { building: 'Building', grade: 'Pad', paved: 'Paved area', demolish: 'Demolish', cline: 'Control line', site: 'Site boundary' };
+const CONVERT = new Set(['elev', 'len', 'size', 'cvol', 'mmhr']);
+const NAMES = { building: 'Building', grade: 'Pad', paved: 'Paved area', demolish: 'Demolish', cline: 'Control line', site: 'Site boundary', pond: 'Pond', swale: 'Swale', bioretention: 'Rain garden', permeable: 'Permeable pavement', outlet: 'Pond outlet', downspout: 'Downspout' };
+const LINES = new Set(['cline', ...LINE_TYPES]);
 const ANALYSIS = new Set(['cline', 'site']);
-const COLORS = { building: '#f2a65a', grade: '#9ad17b', paved: '#9aa7b1', demolish: '#ff5d5d' };
+const COLORS = { building: '#f2a65a', grade: '#9ad17b', paved: '#9aa7b1', demolish: '#ff5d5d', pond: '#4fa3e0', swale: '#59c9a5', bioretention: '#7bd389', permeable: '#c2b280', outlet: '#f4f4f4', downspout: '#5cc8f2' };
 const HINTS = {
   select: 'Click a feature to edit it. Delete removes the selection. Features apply in list order: later ones override earlier ones where they overlap.',
   building: 'Click the corners of the footprint; Enter, double-click, or a click on the first corner finishes. The preset sets the foundation, apron, roof and height.',
@@ -23,6 +24,12 @@ const HINTS = {
   paved: 'Click the corners of the driveway, parking, sidewalk or road. Impervious; optionally graded to an elevation with a cross slope or crown, and a curb.',
   demolish: 'Click a mapped building to remove it (or draw a polygon around several). The lidar is bare earth, so the ground under it is already there.',
   cline: 'Click along a control line (a property line, a site outlet, across a culvert or a street); double-click or Enter finishes. Every run books the flow across it each step; + is water crossing to the right of the line as drawn (outward for a closed line). Shared by all scenarios.',
+  pond: 'Click the corners of the pond along the top of its bank. It is graded with side slopes down to a flat bottom; its stage–storage comes from that ground. Add an outlet structure from it.',
+  swale: 'Click along the swale from upstream to downstream; double-click or Enter finishes. Inverts default to the ground at the ends less the depth.',
+  bioretention: 'Click the corners of the rain garden. It is a depression of the ponding depth over engineered media that fills, drains to the native soil, and optionally to a manhole through an underdrain.',
+  permeable: 'Click the corners of the permeable pavement: all rain on it goes through its stone store (200 mm at 1000 mm/hr by default), which drains to the native soil.',
+  outlet: 'Click from the riser inside a pond to where the outlet discharges (a point downstream, or near a manhole), then Enter. Orifices, the riser crest (overflow weir) and the emergency spillway make its rating.',
+  downspout: 'Click from inside a building to a manhole, then Enter: that building\'s roof drains to the manhole (it overrides the roof setting).',
   site: 'Click the corners of the site boundary; Enter, double-click, or a click on the first corner finishes. Comparisons split results into on-site and off-site with it. One per project, shared by all scenarios.',
 };
 const PCT = 'pct';
@@ -32,6 +39,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
   let scenarios = [], active = -1, tool = 'select', sel = null, draft = null, units = 'us', log = null, results = null, roofLinks = new Map();
   let analysis = { type: 'FeatureCollection', features: [] }; // control lines and the site boundary
   let lineResults = null; // control-line books of the last run: Map(id → { volume, plus, minus, peak, tPeak })
+  let pondResults = []; // pond outlets of the last run
   try {
     const st = JSON.parse(localStorage.getItem('floodsim.design'));
     if (st?.scenarios) { scenarios = st.scenarios; active = st.active ?? -1; }
@@ -50,7 +58,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
     map.addSource('design', { type: 'geojson', data: fc() });
     map.addSource('design-draft', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
     const T = (t) => ['==', ['get', 'type'], t], selW = (a, b) => ['case', ['boolean', ['feature-state', 'sel'], false], b, a];
-    map.addLayer({ id: 'design-fill', type: 'fill', source: 'design', paint: { 'fill-color': ['match', ['get', 'type'], ...Object.entries(COLORS).flat(), '#ffffff'],
+    map.addLayer({ id: 'design-fill', type: 'fill', source: 'design', filter: ['==', ['geometry-type'], 'Polygon'], paint: { 'fill-color': ['match', ['get', 'type'], ...Object.entries(COLORS).flat(), '#ffffff'],
       'fill-opacity': ['match', ['get', 'type'], 'building', 0.6, 'demolish', 0.3, 'paved', 0.45, 0.18] } });
     const lineColor = selW(['match', ['get', 'type'], ...Object.entries(COLORS).flat(), '#ffffff'], '#ffffff');
     map.addLayer({ id: 'design-line', type: 'line', source: 'design', filter: ['!=', ['get', 'type'], 'grade'], paint: { 'line-color': lineColor, 'line-width': selW(1.6, 3.2) } });
@@ -120,7 +128,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
   // ---------------------------------------------------------------- tools
   function setTool(t) {
     cancelDraft(); tool = t;
-    for (const b of $('designTools').children) b.setAttribute('aria-pressed', b.dataset.tool === t);
+    for (const b of [...$('designTools').children, ...$('swTools').children]) b.setAttribute('aria-pressed', b.dataset.tool === t);
     map.getContainer().classList.toggle('infra-drawing', t !== 'select' && open());
     if (t !== 'select') map.doubleClickZoom.disable(); else map.doubleClickZoom.enable();
     $('designHint').textContent = HINTS[t];
@@ -132,7 +140,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
   function drawDraft(cursor) {
     if (!draft) return;
     const pts = cursor ? [...draft.pts, cursor] : draft.pts, F = [];
-    if (pts.length > 1) F.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: pts.length > 2 && draft.type !== 'cline' ? [...pts, pts[0]] : pts }, properties: {} });
+    if (pts.length > 1) F.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: pts.length > 2 && !LINES.has(draft.type) ? [...pts, pts[0]] : pts }, properties: {} });
     for (const p of draft.pts) F.push({ type: 'Feature', geometry: { type: 'Point', coordinates: p }, properties: {} });
     map.getSource('design-draft')?.setData({ type: 'FeatureCollection', features: F });
   }
@@ -151,6 +159,11 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
       const f = designFeature(d.type, d.type === 'cline' ? { type: 'LineString', coordinates: d.pts } : { type: 'Polygon', coordinates: [[...d.pts, d.pts[0]]] }, { name: d.type === 'cline' ? `Line ${n}` : 'Site' });
       analysis.features.push(f); refreshAnalysis(); select(f.id); $('designHint').textContent = HINTS[tool]; return;
     }
+    if (d && LINE_TYPES.has(d.type)) { // swale, outlet, downspout: lines of 2+ points
+      if (d.pts.length < 2) return;
+      add(d.type, { type: 'LineString', coordinates: d.pts }, d.type === 'downspout' ? { node: nearNode(d.pts.at(-1)) } : d.type === 'outlet' && defaults.outlet.to === 'network' ? { node: nearNode(d.pts.at(-1)) } : {});
+      $('designHint').textContent = HINTS[tool]; return;
+    }
     if (!d || d.pts.length < 3) return;
     const props = d.type === 'grade' && defaults.grade.mode === 'plane' ? { spots: d.pts.slice(0, 3).map(p => groundAt(p)) } : {};
     add(d.type, { type: 'Polygon', coordinates: [[...d.pts, d.pts[0]]] }, props);
@@ -165,7 +178,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
       if (b) { add('demolish', b.geometry, { name: 'Demolish' + (b.properties?.h ? ` (${Math.round(b.properties.h)} m tall)` : '') }); return; }
     }
     draft ??= { type: tool, pts: [] };
-    if (draft.pts.length >= 3 && draft.type !== 'cline') { const a = map.project(draft.pts[0]); if (Math.hypot(a.x - e.point.x, a.y - e.point.y) < 10) { finishDraft(); return; } }
+    if (draft.pts.length >= 3 && !LINES.has(draft.type)) { const a = map.project(draft.pts[0]); if (Math.hypot(a.x - e.point.x, a.y - e.point.y) < 10) { finishDraft(); return; } }
     const last = draft.pts.at(-1), q = last && map.project(last);
     if (!q || Math.hypot(q.x - e.point.x, q.y - e.point.y) > 3) draft.pts.push(ll);
     drawDraft();
@@ -220,6 +233,19 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
       ['crossSlope', 'Cross slope', PCT, when(p => p.elev != null)], ['crown', 'Crowned (falls both ways from the long axis)', 'bool', when(p => p.elev != null)],
       ['slopeDir', 'Falls toward (degrees from north)', 'num', when(p => p.elev != null && !p.crown)], ['curb', 'Curb height', 'size'], ...SLOPES],
     demolish: [['name', 'Name', 'text']],
+    pond: [['name', 'Name', 'text'], ['top', 'Bank top', 'elev', { ph: 'lowest ground around' }], ['depth', 'Depth below the top', 'len'], ['bottom', 'Bottom', 'elev', { ph: 'top − depth' }],
+      ['sideSlope', 'Inside slopes (H per 1 V)', 'num'], ['pool', 'Permanent pool (wet pond)', 'elev', { ph: 'dry pond' }], ...SLOPES],
+    swale: [['name', 'Name', 'text'], ['depth', 'Depth', 'size'], ['bottomW', 'Bottom width', 'len'], ['sideSlope', 'Side slopes (H per 1 V)', 'num'],
+      ['invertUp', 'Upstream invert', 'elev', { ph: 'ground − depth' }], ['invertDn', 'Downstream invert', 'elev', { ph: 'ground − depth' }], ['n', 'Manning’s n', 'num']],
+    bioretention: [['name', 'Name', 'text'], ['ponding', 'Ponding depth', 'size'], ['media', 'Media depth', 'size'], ['porosity', 'Media porosity', PCT], ['mediaRate', 'Media infiltration rate', 'mmhr'],
+      ['underdrain', 'Underdrain to a manhole', 'bool'], ['underRate', 'Underdrain rate', 'mmhr', when(p => p.underdrain)], ['node', 'Underdrain to', 'node', { when: p => p.underdrain, none: 'Pick a manhole…' }], ...SLOPES],
+    permeable: [['name', 'Name', 'text'], ['store', 'Stone store (depth × voids)', 'size'], ['rate', 'Surface intake rate', 'mmhr'], ['n', 'Manning’s n', 'num']],
+    outlet: [['name', 'Name', 'text'], ['to', 'Discharges to', 'select', [['surface', 'The ground at the line’s end'], ['network', 'A manhole (pipe network)'], ['offsite', 'Off the model (an outfall)']]],
+      ['node', 'Manhole', 'node', { when: p => p.to === 'network', none: 'Nearest within 30 m of the end' }],
+      ['orifice1D', 'Orifice 1 diameter', 'size'], ['orifice1Inv', 'Orifice 1 invert', 'elev', { ph: 'pond bottom / pool' }], ['orifice2D', 'Orifice 2 diameter', 'size', { ph: 'none' }], ['orifice2Inv', 'Orifice 2 invert', 'elev', when(p => p.orifice2D > 0)],
+      ['weirCrest', 'Riser crest (overflow weir)', 'elev', { ph: 'bank top − 18 in' }], ['weirL', 'Riser crest length', 'len', { ph: 'none' }],
+      ['spillwayCrest', 'Emergency spillway crest', 'elev', { ph: 'bank top − 6 in' }], ['spillwayL', 'Spillway width', 'len', { ph: 'none' }], ['Cd', 'Orifice coefficient Cd', 'num']],
+    downspout: [['name', 'Name', 'text'], ['node', 'Manhole', 'node', { none: 'The one at the line’s end (within 5 m), else the nearest within 30 m' }]],
     cline: [['name', 'Name', 'text']],
     site: [['name', 'Name', 'text']],
   };
@@ -227,8 +253,8 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
     const id = 'dp-' + k, ph = x?.ph ?? '';
     if (kind === 'select') return `<label class="ifield"><span>${label}</span><select id="${id}" data-k="${k}" data-kind="select">${x.map(([v, t]) => `<option value="${v}"${String(p[k] ?? x[0][0]) === String(v) ? ' selected' : ''}>${t}</option>`).join('')}</select></label>`;
     if (kind === 'node') {
-      const list = manholes(), v = p.roofTo ? p.roofTo.join(',') : '';
-      return `<label class="ifield"><span>${label}</span><select id="${id}" data-k="${k}" data-kind="node"><option value="">Nearest manhole within 30 m</option>${list.map(m => `<option value="${m.ll.join(',')}"${m.ll.join(',') === v ? ' selected' : ''}>${esc(m.label)}</option>`).join('')}</select></label>`;
+      const list = manholes(), v = Array.isArray(p[k]) ? p[k].join(',') : '';
+      return `<label class="ifield"><span>${label}</span><select id="${id}" data-k="${k}" data-kind="node"><option value="">${x?.none ?? 'Nearest manhole within 30 m'}</option>${list.map(m => `<option value="${m.ll.join(',')}"${m.ll.join(',') === v ? ' selected' : ''}>${esc(m.label)}</option>`).join('')}</select></label>`;
     }
     if (kind === 'text') return `<label class="ifield"><span>${label}</span><input id="${id}" data-k="${k}" data-kind="text" value="${esc(p[k] ?? '')}" placeholder="optional"></label>`;
     if (kind === 'bool') return `<label class="ifield check"><input type="checkbox" id="${id}" data-k="${k}" data-kind="bool"${p[k] ? ' checked' : ''}><span>${label}</span></label>`;
@@ -255,7 +281,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
     const p = f ? f.properties : defaults[type], k = el.dataset.k, kind = el.dataset.kind;
     if (kind === 'bool') p[k] = el.checked;
     else if (kind === 'text') p[k] = el.value.trim() || null;
-    else if (kind === 'node') p.roofTo = el.value ? el.value.split(',').map(Number) : null;
+    else if (kind === 'node') p[k] = el.value ? el.value.split(',').map(Number) : null;
     else if (kind === 'select') {
       p[k] = el.value;
       if (k === 'preset') { const keep = { name: p.name, bfe: p.bfe, minFFE: p.minFFE }; applyPreset(p, el.value); Object.assign(p, keep); if (el.value === 'garage') p.height = (p.levels ?? 3) * LEVEL_HEIGHT; }
@@ -280,8 +306,16 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
       if (q) out.push(`Last run: <b>${fmt('vol', q.volume)} ${unit('vol')}</b> net (${fmt('vol', q.plus)} +, ${fmt('vol', q.minus)} −), peak ${Number.isFinite(q.peak) ? (q.peak / UNITS[units].vol[1]).toFixed(units === 'us' ? 1 : 3) : '–'} ${unit('vol')}/s${Number.isFinite(q.tPeak) ? ` at ${Math.round(q.tPeak / 60)} min` : ''}`);
       return out;
     }
+    if (LINE_TYPES.has(p.type)) return lineInfo(f, L, r);
     const area = ringArea(f.geometry.coordinates[0]);
     out.push(`${p.type === 'site' ? 'Area' : 'Footprint'} ${fmt('area', area)} ${unit('area')}`);
+    if (p.type === 'pond' && Number.isFinite(r.top)) {
+      out.push(`Bank top ${fmt('elev', r.top)} ${unit('elev')}, bottom ${fmt('elev', r.bottom)} ${unit('elev')}: <b>${fmt('vol', r.volumeAtTop)} ${unit('vol')}</b> to the top (${Math.round(r.volumeAtTop * 264.172).toLocaleString()} gal)` + (r.poolVolume ? `, permanent pool ${fmt('vol', r.poolVolume)} ${unit('vol')}` : ''));
+      for (const o of pondResults.filter(x => x.pondId === f.id)) out.push(pondLine(o));
+      if (!(cur()?.design.features ?? []).some(g => g.properties.type === 'outlet' && pondOf(g.id) === f.id)) out.push('<span class="warn">No outlet structure: draw one from inside the pond (Outlet)</span>');
+    }
+    if (p.type === 'bioretention' && Number.isFinite(r.rim)) out.push(`Ponds ${fmt('size', r.ponding)} ${unit('size')} deep (${fmt('vol', r.pondingVolume)} ${unit('vol')}) over media holding ${fmt('vol', r.mediaStore)} ${unit('vol')}`);
+    if (p.type === 'permeable' && r.store) out.push(`Stone store holds ${fmt('vol', r.store)} ${unit('vol')}`);
     if (p.type === 'site') { out.push('Comparisons split every result into on-site and off-site with it.'); return out; }
     if (p.type === 'building') {
       out.push(`<span class="muted">${PRESETS[p.preset]?.label ?? 'Custom'}: confirm against the local code.</span>`);
@@ -303,6 +337,39 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
     return out;
   }
 
+  /** The pond an outlet starts in (its feature id), from the outlet line's first point. */
+  function pondOf(outletId) {
+    const F = cur()?.design.features ?? [], o = F.find(g => g.id === outletId); if (!o) return null;
+    const [x, y] = o.geometry.coordinates[0];
+    return F.find(g => g.properties.type === 'pond' && insideRing(g.geometry.coordinates[0], x, y))?.id ?? null;
+  }
+  const insideRing = (r, x, y) => { let c = false; for (let a = 0, b = r.length - 1; a < r.length; b = a++) { const [xa, ya] = r[a], [xb, yb] = r[b]; if ((ya > y) !== (yb > y) && x < xa + (y - ya) / (yb - ya) * (xb - xa)) c = !c; } return c; };
+  const pondLine = (o) => `Last run: peak stage <b>${fmt('elev', o.peakStage)} ${unit('elev')}</b>${Number.isFinite(o.tPeakStage) ? ` at ${Math.round(o.tPeakStage / 60)} min` : ''}, ` +
+    (o.freeboard == null ? '' : o.freeboard >= 0 ? `${fmt('elev', o.freeboard)} ${unit('elev')} below the spillway, ` : `<span class="warn">the spillway ran (${fmt('elev', -o.freeboard)} ${unit('elev')} over its crest)</span>, `) +
+    `peak outflow <b>${fmt('q', o.peakQ)} ${unit('q')}</b>${o.parts ? ` (orifices ${fmt('q', o.parts.orifices)}, riser ${fmt('q', o.parts.weir)}, spillway ${fmt('q', o.parts.spillway)})` : ''}`;
+  /** What a line feature (swale, outlet, downspout) resolved to. */
+  function lineInfo(f, L, r) {
+    const p = f.properties, out = [`Length ${fmt('len', lineLength(f.geometry.coordinates))} ${unit('len')}`];
+    if (p.type === 'swale' && Number.isFinite(r.invertUp)) out.push(`Inverts ${fmt('elev', r.invertUp)} → ${fmt('elev', r.invertDn)} ${unit('elev')} (${(r.slope * 100).toFixed(2)} %), n ${r.n}`);
+    if (p.type === 'outlet' && r.orifices) {
+      out.push(r.pond != null ? `Drains pond ${esc(r.pond)}` : '<span class="warn">Not in a pond</span>');
+      out.push(r.orifices.map((o, i) => `Orifice ${i + 1}: ${fmt('size', o.D)} ${unit('size')} at ${fmt('elev', o.inv)} ${unit('elev')}`).join(' · ') || 'No orifice');
+      if (r.weir) out.push(`Riser crest ${fmt('elev', r.weir.crest)} ${unit('elev')}, ${fmt('len', r.weir.L)} ${unit('len')} long`);
+      if (r.spillway) out.push(`Spillway crest ${fmt('elev', r.spillway.crest)} ${unit('elev')}, ${fmt('len', r.spillway.L)} ${unit('len')} wide`);
+      const res = pondResults.find(o => o.id === f.id); if (res) out.push(pondLine(res));
+    }
+    if (L && (L.cut || L.fill)) out.push(`Cut ${fmt('vol', L.cut)} ${unit('vol')} · fill ${fmt('vol', L.fill)} ${unit('vol')}`);
+    for (const n of L?.notes ?? []) out.push(`<span class="muted">${esc(n)}</span>`);
+    for (const w of L?.warnings ?? []) out.push(`<span class="warn">${esc(w)}</span>`);
+    return out;
+  }
+  /** The manhole nearest a point (within 30 m), as its lon/lat, for a downspout or outlet drawn to it. */
+  function nearNode(ll) {
+    const m = (a, b) => Math.hypot((a[0] - b[0]) * 111320 * Math.cos(a[1] * Math.PI / 180), (a[1] - b[1]) * 110540);
+    let best = null; for (const h of manholes()) { const d = m(ll, h.ll); if (d <= 30 && (!best || d < best.d)) best = { d, ll: h.ll }; }
+    return best?.ll ?? null;
+  }
+
   // ---------------------------------------------------------------- log
   function renderLog() {
     const box = $('designLog'), s = cur();
@@ -320,7 +387,7 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
   }
 
   // ---------------------------------------------------------------- toggles, units
-  $('designTools').onclick = (e) => { const b = e.target.closest('button'); if (b) setTool(b.dataset.tool); };
+  $('designTools').onclick = $('swTools').onclick = (e) => { const b = e.target.closest('button'); if (b) setTool(b.dataset.tool); };
   $('designUnits').value = units;
   $('designUnits').onchange = () => { units = $('designUnits').value; try { localStorage.setItem('floodsim.designUnits', units); } catch { /* storage off */ } renderProps(); renderLog(); renderSettings(); };
   $('designToggle').onclick = () => toggle(); $('designClose').onclick = () => toggle(false);
@@ -353,6 +420,8 @@ export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, man
     setAnalysis(next) { analysis = next?.features ? next : { type: 'FeatureCollection', features: [] }; bumpDesignIds(analysis); lineResults = null; refreshAnalysis(false); try { localStorage.setItem('floodsim.analysis', JSON.stringify(analysis)); } catch { /* storage off */ } },
     /** After a run: each control line's books (Map id → { volume, plus, minus, peak, tPeak }). */
     setLineResults(m) { lineResults = m; renderProps(); },
+    /** After a run: each pond outlet's peak stage, freeboard to the spillway and peak outflow. */
+    setPondResults(list) { pondResults = list.map(o => ({ ...o, pondId: pondOf(o.id) })); renderProps(); },
     /** After the run inputs are built: where each roof drain goes (id → text). */
     setRoofLinks(m) { roofLinks = m; renderProps(); },
     /** After a run: new buildings flooded or dry. */

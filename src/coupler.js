@@ -35,7 +35,10 @@ export class Coupler {
     this.tNext = interval;
     this.stage = null; // observed water level (m) applied to outfalls that discharge to a stream
     this.streamOutfalls = net.nodes.map((n, i) => (n.toStream ? i : -1)).filter(i => i >= 0);
-    this.totals = { toNetwork: 0, toSurface: 0, overflowReturned: 0, overflowLost: 0, roofToSewer: 0, backflow: 0, latOut: 0 };
+    this.totals = { toNetwork: 0, toSurface: 0, overflowReturned: 0, overflowLost: 0, roofToSewer: 0, backflow: 0, latOut: 0, extra: 0 };
+    // lateral inflow (m³/s) other link models add at nodes for the coming interval (pond outlets, underdrains); they
+    // step before the coupler in the hub, and it is cleared once given to SWMM
+    this.extra = new Float64Array(net.nodes.length);
     this.state = { head: new Float64Array(net.nodes.length), flow: new Float64Array(net.pipes.length), depth: new Float64Array(net.pipes.length), surcharged: 0, flooding: 0 };
   }
 
@@ -66,8 +69,10 @@ export class Coupler {
     }
     // SWMM books a negative lateral flow (water back up through an inlet) as external outflow; keep the total so the
     // combined balance can take it out of SWMM's outflow (it is on the street, not gone through an outfall)
+    for (let i = 0; i < lat.length; i++) if (this.extra[i]) { lat[i] += this.extra[i]; this.totals.extra += this.extra[i] * interval; (this.extraNodes ??= new Set()).add(i); }
+    this.extra.fill(0);
     for (let i = 0; i < lat.length; i++) if (lat[i] < 0 && (this.perNode[i] || this.roofArea?.[i])) this.totals.latOut += -lat[i] * interval;
-    for (let i = 0; i < lat.length; i++) if (this.perNode[i] || this.roofArea?.[i]) swmm.setLatFlow(this.swIdx[i], lat[i]);
+    for (let i = 0; i < lat.length; i++) if (this.perNode[i] || this.roofArea?.[i] || this.extraNodes?.has(i)) swmm.setLatFlow(this.swIdx[i], lat[i]);
     if (this.stage != null) for (const i of this.streamOutfalls) swmm.setOutfallStage(this.swIdx[i], Math.max(this.stage, net.nodes[i].invert));
     // advance SWMM step by step, integrating each node's overflow (flooding) volume exactly as SWMM books it
     const flood = new Float64Array(net.nodes.length), junc = this.junctions ??= net.nodes.map((n, i) => (n.outfall ? -1 : i)).filter(i => i >= 0);

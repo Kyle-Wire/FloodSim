@@ -155,6 +155,49 @@ export function initCompare(map, api) {
   }
   const meta = (r) => ({ label: r.label, scenario: r.scenario ?? 'Existing conditions', saved: r.saved, forcing: r.forcing, designHash: r.designHash, commit: r.commit, storm: r.storm });
 
+  // ---------------------------------------------------------------- return-period sweep and the detention check
+  let sweepRes = [];
+  /** Per return period and control line: pre and post peak outflow, post ≤ pre; per pond outlet: peak stage, freeboard, peak outflow. */
+  function sweepTables() {
+    const rows = [], ponds = [];
+    for (const { ari, before, after } of sweepRes) {
+      const ids = [...new Set([...(before.lines ?? []), ...(after.lines ?? [])].map(l => l.id))];
+      for (const id of ids) {
+        const a = before.lines?.find(l => l.id === id), b = after.lines?.find(l => l.id === id);
+        rows.push({ ari, line: { id, name: (b ?? a).name }, pre: a ? C.lineStats(a).peak : NaN, post: b ? C.lineStats(b).peak : NaN, preVol: a?.volume ?? NaN, postVol: b?.volume ?? NaN });
+      }
+      for (const o of after.ponds ?? []) ponds.push({ ari, ...o });
+    }
+    return { rows: api.detentionTable(rows), ponds };
+  }
+  function renderSweep() {
+    const us = api.units() === 'us', Q = (q) => (us ? `${fmtNum(q / FT3, 2)} cfs` : `${fmtNum(q, 3)} m³/s`), L = (m) => (us ? `${fmtNum(m / FT, 2)} ft` : `${fmtNum(m, 2)} m`);
+    const { rows, ponds } = sweepTables();
+    $('swOut').innerHTML = (rows.length ? `<table class="dtab"><thead><tr><th>Storm</th><th>Line</th><th>Pre peak</th><th>Post peak</th><th>Check</th></tr></thead><tbody>${rows.map(r =>
+      `<tr><td>${r.ari}-yr</td><td>${esc(r.line.name ?? r.line.id)}</td><td>${Q(r.pre)}</td><td>${Q(r.post)}</td><td>${r.pass == null ? '–' : r.pass ? '<span class="good">post ≤ pre</span>' : `<b class="warn">+${fmtNum((r.ratio - 1) * 100, 0)} %</b>`}</td></tr>`).join('')}</tbody></table>`
+      : sweepRes.length ? '<p class="note">No control lines: draw them at the site outlets (Site design → Control line) to fill the detention check.</p>' : '') +
+      (ponds.length ? `<table class="dtab"><thead><tr><th>Storm</th><th>Pond outlet</th><th>Peak stage</th><th>To spillway</th><th>Peak out</th></tr></thead><tbody>${ponds.map(o =>
+        `<tr><td>${o.ari}-yr</td><td>${esc(o.name ?? o.id)}</td><td>${L(o.peakStage)}</td><td>${o.freeboard == null ? '–' : o.freeboard >= 0 ? L(o.freeboard) : `<b class="warn">over by ${L(-o.freeboard)}</b>`}</td><td>${Q(o.peakQ)}</td></tr>`).join('')}</tbody></table>` : '') +
+      (rows.length ? '<div class="row"><button class="btn" id="swCsv" type="button">Detention table (.csv)</button></div>' : '');
+    if ($('swCsv')) $('swCsv').onclick = () => {
+      const csv = C.toCSV(rows.map(r => ({ ari: r.ari, line: r.line.id, name: r.line.name, pre: r.pre, post: r.post, pass: r.pass, preVol: r.preVol, postVol: r.postVol })),
+        [['ari', 'return_period_yr'], ['line', 'line'], ['name', 'name'], ['pre', 'pre_peak_m3s', 4], ['post', 'post_peak_m3s', 4], ['pass', 'post_le_pre'], ['preVol', 'pre_volume_m3', 1], ['postVol', 'post_volume_m3', 1]]) +
+        (ponds.length ? '\n' + C.toCSV(ponds, [['ari', 'return_period_yr'], ['id', 'outlet'], ['name', 'name'], ['peakStage', 'peak_stage_m', 3], ['freeboard', 'freeboard_to_spillway_m', 3], ['peakQ', 'peak_outflow_m3s', 4], ['volume', 'volume_out_m3', 1]]) : '');
+      api.exportFiles([{ name: 'detention_check.csv', data: new TextEncoder().encode(csv) }], 'detention_check', new TextEncoder().encode(csv), 'text/csv');
+    };
+  }
+  $('swRun').onclick = async () => {
+    const aris = $('swAris').value.split(/[,\s]+/).map(Number).filter(v => v > 0);
+    if (!aris.length) { $('swNote').textContent = 'List the return periods, e.g. 2, 10, 25, 100.'; return; }
+    $('swRun').disabled = true; $('swCancel').disabled = false; sweepRes = []; renderSweep();
+    try {
+      await api.runSweep(aris, (t) => { $('swNote').textContent = t; }, (r) => { sweepRes.push(r); renderSweep(); fillPickers(); });
+      $('swNote').textContent = `Sweep done: ${sweepRes.length} return period${sweepRes.length === 1 ? '' : 's'}.`;
+    } catch (e) { $('swNote').textContent = e.message; }
+    finally { $('swRun').disabled = false; $('swCancel').disabled = true; }
+  };
+  $('swCancel').onclick = () => { api.cancelSweep(); $('swNote').textContent = 'Cancelling…'; };
+
   // ---------------------------------------------------------------- wiring
   $('cmpToggle').onclick = () => toggle(); $('cmpClose').onclick = () => toggle(false);
   function toggle(on = $('cmpDrawer').hidden) {

@@ -37,8 +37,8 @@ override STAGE: u32 = 0u;
 @group(0) @binding(20) var<storage, read_write> TC: array<atomic<u32>>; // the two list lengths
 @group(0) @binding(21) var<storage, read_write> TA: array<u32>;         // indirect dispatch args: (n1, 1, 1), (n2, 1, 1)
 // green infrastructure: per-cell GI infiltration into a store of fixed capacity that drains to native soil
-@group(0) @binding(22) var<storage, read> GI: array<vec4f>;          // rate (m/s), capacity (m), drain (m/s), unused; capacity 0 = no GI
-@group(0) @binding(23) var<storage, read_write> GS: array<vec4f>;   // GI stored (m), time of last update (s), Green-Ampt depth infiltrated F (m per pervious area), -
+@group(0) @binding(22) var<storage, read> GI: array<vec4f>;          // rate (m/s), capacity (m), drain to the native soil (m/s), underdrain (m/s); capacity 0 = no GI
+@group(0) @binding(23) var<storage, read_write> GS: array<vec4f>;   // GI stored (m), time of last update (s), Green-Ampt depth infiltrated F (m per pervious area), underdrained so far (m)
 // Green-Ampt (src/soil.js): ψ·Δθ (m), soil storage to the water table / bedrock (m per pervious area), pervious share, on
 @group(0) @binding(31) var<storage, read> GAP: array<vec4f>;
 // flood barriers on cell faces: crest (m, -1e30 = none) and weir coefficient, for the x-face west of the cell and the
@@ -442,7 +442,10 @@ fn sourcesAt(x: u32, y: u32) {
   if (gi.y > 0.0) {
     // the store drains linearly since its last update (tiles may skip dry cells, so the elapsed time is exact either way)
     let now = DT[1];
-    st.x = max(0.0, st.x - gi.z * (now - st.y)); st.y = now;
+    // the store drains linearly to the native soil (gi.z) and through an underdrain (gi.w), which books its share
+    let gone = min(st.x, (gi.z + gi.w) * (now - st.y));
+    if (gi.w > 0.0 && gone > 0.0) { st.w += gone * gi.w / (gi.z + gi.w); }
+    st.x = st.x - gone; st.y = now;
     let g2 = min(min(gi.x * dt, d + r - inf), gi.y - st.x);
     if (g2 > 0.0) { inf += g2; st.x += g2; }
   }
@@ -773,6 +776,17 @@ fn edgeOut(@builtin(global_invocation_id) gid: vec3u) {
   f = f * TH[select(c, g, (f > 0.0) == (sgn < 0.0))]; // the donor: the edge cell for outflow, the ghost for inflow
   let v = sgn * f * P.dx * dt * select(1.0, 0.5, P.secondOrder == 1u);
   var e = EO[m]; let y = v - e.y; let t = e.x + y; e.y = (t - e.x) - y; e.x = t; EO[m] = e;
+}
+
+// ---- underdrains of drawn bioretention (src/stormwater.js UnderdrainLinks): the depth each listed cell's GI store has
+// let out through its underdrain so far, gathered for the host
+@group(0) @binding(41) var<storage, read> UDC: array<u32>;         // padded cells
+@group(0) @binding(42) var<storage, read_write> UDX: array<f32>;   // underdrained depth (m)
+@compute @workgroup_size(64)
+fn udGather(@builtin(global_invocation_id) gid: vec3u) {
+  let m = gid.x;
+  if (m >= arrayLength(&UDC)) { return; }
+  UDX[m] = GS[UDC[m]].w;
 }
 
 // ---- control lines (src/compare.js lineFaces): the volume across each listed face, booked every stage exactly as

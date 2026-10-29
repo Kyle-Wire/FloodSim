@@ -7,6 +7,8 @@ import { buildSubgrid, fineDepth, cellVolume, CT } from '../src/subgrid.js';
 import { settling, bedSize } from '../src/sediment.js';
 import { bankFS } from '../src/banks.js';
 import { lineFaces } from '../src/compare.js';
+import { OutletLinks, rating, stageStorage, modifiedPuls } from '../src/stormwater.js';
+import { LinkHub } from '../src/links.js';
 
 export async function runGpuSuite(device, log = console.log) {
   const results = {};
@@ -427,6 +429,56 @@ export async function runGpuSuite(device, log = console.log) {
     const same = cmp(a, b), batch = cmp(a, c);
     results.rerun = { same, batch };
     log(`rerun (urban cloudburst, 600 s): Δ between two runs: ${same.cells} values differ (max ${same.max.toExponential(1)}), line Δ ${same.line.toExponential(1)} m³, outflow Δ ${same.out.toExponential(1)} m³;  batch of 7 vs 64 steps: ${batch.cells} differ (max ${batch.max.toExponential(1)}), line Δ ${batch.line.toExponential(1)} m³`);
+  }
+
+  // Stormwater (site design, phase 3). A dry pond (a 30 m square bowl, 3:1 sides, 1.5 m deep) full to 1.3 m drains
+  // through one 6 in orifice off the model: its stage and outflow follow level-pool (modified Puls) routing done in JS
+  // on the same stage–storage, and the surface books close with the outlet's water booked as it leaves. Then the same
+  // pond outlet discharging into a ditch downstream (water in transit counts as stored).
+  {
+    const n = 60, dx = 1, N = n * n, z = new Float64Array(N);
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const d = Math.min(i + 0.5 - 15, 45 - i - 0.5, j + 0.5 - 15, 45 - j - 0.5); z[j * n + i] = d < 0 ? 10 : Math.max(8.5, 10 - d / 3); } // d: cell centre to the bank top
+    for (let j = 26; j < 35; j++) for (let i = 50; i < 58; i++) z[j * n + i] = 7; // a ditch downstream, below the pond
+    const inPond = (i, j) => i >= 15 && i < 45 && j >= 15 && j < 45, pondCells = [];
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) if (inPond(i, j)) pondCells.push(j * n + i);
+    const a = 30 * n + 30, h0 = 9.8, o = { orifices: [{ D: 0.1524, inv: 8.5 }] };
+    for (const mode of ['offsite', 'surface']) {
+      const b = mode === 'surface' ? 30 * n + 55 : -1;
+      const g = new GPUSolver(device, { nx: n, ny: n, dx, z, manning: 0.03, inlets: mode === 'surface' ? [a, b] : [a], bc: { west: 'wall', east: 'wall', south: 'wall', north: 'wall' } });
+      g.setDepth((x, y, zz) => (inPond(Math.floor(x), Math.floor(y)) ? Math.max(0, h0 - zz) : 0));
+      const L = new OutletLinks([{ a, b, node: -1, mode, structure: o, id: 1 }], z, { cellArea: dx * dx }), hub = new LinkHub(g, [L], 2), track = [];
+      const step0 = L.step.bind(L); L.step = (vol, h, iv) => { track.push([hub.tNext, z[a] + h[0]]); return step0(vol, h, iv); };
+      const tEnd = 1800; while (hub.tNext <= tEnd) { await g.advance(hub.tNext); await hub.exchange(); }
+      const st = await g.readState();
+      if (mode === 'offsite') {
+        const ss = stageStorage(z, pondCells, dx * dx, 10, 151), puls = modifiedPuls(() => 0, ss, (h) => rating(o, h).q, { h0, dt: 2, tEnd });
+        let dmax = 0; for (const [t, H] of track) { const p = puls[Math.round(t / 2)]; if (p) dmax = Math.max(dmax, Math.abs(H - p.h)); }
+        const outGPU = L.totals.offsite, Vjs = puls[0].S - puls.at(-1).S;
+        results.pondPuls = { maxStageDiff: dmax, outGPU, outJS: Vjs, volRel: (outGPU - Vjs) / Vjs, massRel: st.mass.rel, exchanged: st.mass.exchanged };
+        log(`pond, one orifice vs modified Puls (30 min drawdown): max |Δstage| ${(dmax * 1000).toFixed(1)} mm, out ${outGPU.toFixed(2)} vs ${Vjs.toFixed(2)} m³ (${(100 * results.pondPuls.volRel).toFixed(2)} %), surface books ${st.mass.rel.toExponential(1)} (outlet volume booked as exchanged ${st.mass.exchanged.toFixed(2)} m³)`);
+      } else {
+        const m = st.mass, inTr = L.inTransit;
+        // the surface link moves water within the model: stored + in transit = initial (no rain, walls)
+        const relS = (m.volume + inTr - g.vol.initial) / g.vol.initial;
+        results.pondSurface = { moved: L.totals.moved, inTransit: inTr, rel: relS, booksRel: m.rel };
+        log(`pond outlet onto the ground: moved ${L.totals.moved.toFixed(2)} m³ (${inTr.toFixed(3)} in transit), stored + in transit vs the start ${relS.toExponential(1)}`);
+      }
+      g.destroy();
+    }
+  }
+  // A rain garden with an underdrain: 50 mm/hr media into a 0.21 m store draining 2.5 mm/hr to the soil and 25 mm/hr
+  // through the underdrain, under 100 mm/hr of rain for 30 min (walls, no soil infiltration elsewhere): the books
+  // close, and the underdrain took its share of what drained
+  {
+    const n = 40, dx = 1, N = n * n, z = new Float64Array(N), rate = new Float64Array(N), cap = new Float64Array(N), drain = new Float64Array(N), under = new Float64Array(N), cells = [];
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const k = j * n + i; z[k] = 5 + 0.002 * Math.hypot(i - 20, j - 20); if (Math.abs(i - 20) < 4 && Math.abs(j - 20) < 4) { z[k] -= 0.15; rate[k] = 50 * MMHR; cap[k] = 0.21; drain[k] = 2.5 * MMHR; under[k] = 25 * MMHR; cells.push(k); } }
+    const g = new GPUSolver(device, { nx: n, ny: n, dx, z, manning: 0.04, gi: { rate, cap, drain, under }, underdrains: cells });
+    g.setDepth(() => 0); g.rainRate = 100 * MMHR; await g.advance(1800); g.rainRate = 0; await g.advance(3600);
+    const st = await g.readState(), ud = await g.readUnderdrains(); let U = 0; for (const v of ud) U += v * dx * dx;
+    const drained = st.mass.infil - st.mass.giStored, share = U / drained;
+    results.bioretention = { massRel: st.mass.rel, infil: st.mass.infil, stored: st.mass.giStored, underdrain: U, share, expectedShare: 25 / 27.5 };
+    log(`rain garden + underdrain (1 h): books ${st.mass.rel.toExponential(1)}, into the media ${st.mass.infil.toFixed(2)} m³ = stored ${st.mass.giStored.toFixed(2)} + drained ${drained.toFixed(2)}; underdrain ${U.toFixed(2)} m³ = ${(100 * share).toFixed(2)} % of the drain (expected ${(100 * 25 / 27.5).toFixed(2)} %)`);
+    g.destroy();
   }
 
   return results;

@@ -10,6 +10,7 @@ import { zip, png16, exr, buildingsGLB } from '../src/export.js';
 import { fetchAtlas14, hyetograph, constantStorm, rainAt, ddf, fitGEV, annualMaxima24h, recordStorm, wettest24, gevQuantile, pdsToAms } from '../src/storm.js';
 import { synthNetwork, toINP, lumpedInfil, addTanks } from '../src/drainage.js';
 import { giLayers, GI } from '../src/gi.js';
+import { drawnGI, OutletLinks, UnderdrainLinks, detentionTable } from '../src/stormwater.js';
 import { loadSWMM, SWMM } from '../src/swmm.js';
 import * as H from '../src/history.js';
 import { Coupler } from '../src/coupler.js';
@@ -1015,7 +1016,7 @@ function resetRun() {
   if (c.roofs) design.setRoofLinks(new Map([...c.roofs].filter(([, r]) => r.roof === 'network').map(([id]) => [id, roof?.links.has(id)
     ? (roof.links.get(id) == null ? 'to the ground: no manhole within 30 m (or within 5 m of the one chosen)' : `to manhole ${roof.links.get(id)} of the network`)
     : !net ? 'to the ground: no pipe network in this run' : 'to the ground: the SWMM engine is not loaded']))); // where new buildings' roof drains go
-  const gi = giLayers(model.f, c, F, { pavement: Number($('giPave').value) / 100, rainGarden: Number($('giGarden').value) / 100 });
+  const gi = drawnGI(model.f, c, F, giLayers(model.f, c, F, { pavement: Number($('giPave').value) / 100, rainGarden: Number($('giGarden').value) / 100 })); // + drawn bioretention and permeable pavement (site design)
   const tanks = net ? addTanks(net, Number($('giTank').value)) : [];
   const storage = attachStorage(net, lay.storage, model.fine, model.f).attached; // after addTanks, which clears storage
   infra.setAttached(net ? storage : []);
@@ -1028,7 +1029,8 @@ function resetRun() {
     : sgRain(c, roofEarly.rainField, rf * (1 - green));
   const roofStages = roofHoldStages(c, net, roof, green);
   const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
-  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, lines: { defs: clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, faces: lf.perLine[l] })), faces: lf.faces, samples: clines.map(() => [[0, 0, 0, 0]]) }, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
+  const sw = stormwaterLinks(c, F, net, new Set([...(net ? net.inlets.map(g => g.cell) : []), ...culv.flatMap(x => [x.a, x.b])]), gi);
+  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, faces: lf.perLine[l] })), faces: lf.faces, samples: clines.map(() => [[0, 0, 0, 0]]) }, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
   run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
   $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('hud').hidden = false;
   $('runTag').textContent = `${c.nx.toLocaleString()} × ${c.ny.toLocaleString()} @ ${F} m`;
@@ -1040,6 +1042,45 @@ function resetRun() {
   $('hudTime').textContent = '0:00'; $('hudMax').textContent = '–'; $('hudRain').textContent = '–';
 }
 const llCell = (ll) => toCells(model.fine, [ll])[0];
+/**
+ * The site design's pond outlets, underdrains and wet-pond pools on the solver grid: each outlet drains its pond's
+ * lowest cell near the riser to a free surface cell at its end, a network node (the one within 5 m of the point given,
+ * else the nearest within 30 m of the end; with no SWMM network: the surface at the end), or off the model.
+ * → { outlets (OutletLinks input), under: [{ id, node, cells }], pools: [{ id, pool, cells }], notes }
+ */
+function stormwaterLinks(c, F, net, taken, gi) {
+  const f = model.f, out = { outlets: [], under: [], pools: [], notes: [] }, used = new Set(taken), W = model.fine.nx;
+  const cellAt = (ll) => { const [x, y] = llCell(ll), I = Math.floor(x / F), J = Math.floor(y / F); return I < 0 || J < 0 || I >= c.nx || J >= c.ny ? -1 : J * c.nx + I; };
+  const solverCells = (fineCells) => [...new Set(fineCells.map(k => (((k / W) | 0) / F | 0) * c.nx + ((k % W) / F | 0)))].filter(K => c.mask[K]);
+  const nodes = net && swmmEngine && drainSrc === 'network' ? net.nodes.map((n, i) => ({ i, x: n.p[0] / F, y: n.p[1] / F })).filter(o => !net.nodes[o.i].outfall) : [];
+  const nodeNear = (ll, lim) => { if (!ll || !nodes.length) return -1; const [x, y] = llCell(ll); let best = -1, bd = lim / F; for (const o of nodes) { const d = Math.hypot(o.x - x / F, o.y - y / F); if (d < bd) { bd = d; best = o.i; } } return best; };
+  const free = (K) => { if (K >= 0 && c.mask[K] && !used.has(K)) return K; let best = -1; const I = K % c.nx, J = (K / c.nx) | 0;
+    for (let dj = -2; dj <= 2; dj++) for (let di = -2; di <= 2; di++) { const a = I + di, b = J + dj, q = b * c.nx + a; if (a < 0 || b < 0 || a >= c.nx || b >= c.ny || !c.mask[q] || used.has(q)) continue; if (best < 0 || c.z[q] < c.z[best]) best = q; }
+    return best; };
+  for (const pd of f.ponds ?? []) if (pd.pool != null) out.pools.push({ id: pd.id, pool: pd.pool, cells: solverCells(pd.cells) });
+  for (const o of f.outlets ?? []) {
+    const pond = (f.ponds ?? []).find(pd => pd.id === o.pondId), startLL = fromCellLL(o.start), endLL = fromCellLL(o.end);
+    // the riser: the lowest pond cell within 5 m of where the line starts (the pond drains to it), else the start cell
+    let a = -1; const s0 = cellAt(startLL);
+    if (pond) { const [x0, y0] = o.start; for (const K of solverCells(pond.cells)) { const I = K % c.nx, J = (K / c.nx) | 0; if (Math.hypot((I + 0.5) * F - x0, (J + 0.5) * F - y0) > Math.max(5, F * 1.5) || used.has(K)) continue; if (a < 0 || c.z[K] < c.z[a]) a = K; } }
+    if (a < 0) a = free(s0); if (a < 0) { out.notes.push(`Outlet ${o.name ?? o.id}: no free cell at the riser`); continue; }
+    used.add(a);
+    let mode = o.mode, b = -1, node = -1;
+    if (mode === 'network') { node = nodeNear(o.node, 5); if (node < 0) node = nodeNear(endLL, 30); if (node < 0) { mode = 'surface'; out.notes.push(`Outlet ${o.name ?? o.id}: no network node in reach (or no SWMM network in this run): it discharges on the surface at its end`); } }
+    if (mode === 'surface') { b = free(cellAt(endLL)); if (b < 0 || b === a) { mode = 'offsite'; b = -1; } else used.add(b); }
+    out.outlets.push({ id: o.id, name: o.name, a, b, node, mode, structure: o.structure, pondId: o.pondId });
+  }
+  for (const g of gi?.drawn ?? []) {
+    const src = (f.drawnGI ?? []).find(x => x.id === g.id); if (!src?.under) continue;
+    const node = nodeNear(src.node, 5) >= 0 ? nodeNear(src.node, 5) : nodeNear(src.node, 30);
+    if (node < 0) { out.notes.push(`Rain garden ${g.id}: underdrain node not in this run's network: it drains to the native soil only`); for (const K of g.cells) gi.under[K] = 0; continue; }
+    out.under.push({ id: g.id, node, cells: g.cells.filter(K => gi.under[K] > 0) });
+  }
+  if (!(nodes.length)) for (const K of gi?.under ? gi.under.keys() : []) if (gi.under[K] > 0 && !out.under.some(u => u.cells.includes(K))) gi.under[K] = 0;
+  return out;
+}
+/** Fine-cell coordinates [col, row] → lon/lat. */
+const fromCellLL = ([x, y]) => fromUTM(model.fine.x0 + x * model.fine.dx, model.fine.y1 - y * model.fine.dx, model.fine.zone);
 /**
  * Rain fields while new buildings' green roofs and cisterns fill (site design): each holds its roof rain until the rain
  * depth reaches its retention, so the field changes at each distinct retention (and at the area's green-roof retention
@@ -1074,18 +1115,21 @@ function ensureSolver() {
   run.culverts = run.culv.length ? new CulvertLinks(run.culv, c.z, { cellArea: F * F }) : null;
   run.watch = run.bars.faces.length ? new BarrierWatch(run.bars, c.z, F) : null;
   const lv0 = run.watch?.levels(0), crest = run.watch ? run.bars.faces.map((q, m) => ({ i: q.i, j: q.j, axis: q.axis, z: lv0[m], C: q.C, ground: q.ground })) : undefined;
-  const base = [...(coupled ? run.net.inlets.map(g => g.cell) : []), ...(run.culverts?.cells ?? [])], used = new Set(base);
+  run.outlets = run.sw.outlets.length ? new OutletLinks(run.sw.outlets, c.z, { cellArea: F * F }) : null;
+  const base = [...(run.outlets?.cells ?? []), ...(coupled ? run.net.inlets.map(g => g.cell) : []), ...(run.culverts?.cells ?? [])], used = new Set(base);
   const inflows = (run.inflowReady ?? []).map(e => ({ ...e, cells: entryCells(c, e.at, { used }) })).filter(e => e.cells.length);
   inflows.forEach(e => e.cells.forEach(k => used.add(k)));
   run.inflow = inflows.length ? new InflowLinks(inflows) : null;
   const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
   run.solver = new GPUSolver(device, {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask: c.mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
-    sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: run.roofStages ? run.roofStages[0].rainField : run.roofEarly ? run.roofEarly.rainField : c.rainField,
+    sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, underdrains: coupled && run.sw.under.length ? run.sw.under.flatMap(g => g.cells) : undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: run.roofStages ? run.roofStages[0].rainField : run.roofEarly ? run.roofEarly.rainField : c.rainField,
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
   });
   const start = startWater(c, F, stageCells); // rivers, lakes and tidal water from the gauges (or dry: the lidar surface)
-  run.solver.setDepth(start ? (x, y) => start.depth[Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F))] : () => 0);
+  const pool = new Map(); for (const pd of run.sw.pools) for (const K of pd.cells) pool.set(K, Math.max(pool.get(K) ?? 0, pd.pool - c.z[K])); // wet ponds start at their permanent pool
+  const at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
+  run.solver.setDepth((x, y) => Math.max(start ? start.depth[at(x, y)] : 0, pool.get(at(x, y)) ?? 0));
   run.storm = currentStorm(); lockStorm(true);
   if (coupled) {
     run.swmm = swmmEngine; run.swmmClosed = false;
@@ -1095,8 +1139,11 @@ function ensureSolver() {
     run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofStages ? run.roofStages[0].roofArea ?? run.roof?.roofArea : run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay });
     $('netReadouts').hidden = false;
   }
-  const members = [run.coupler, run.culverts, run.inflow].filter(Boolean);
-  run.exchanger = members.length > 1 || run.culverts || run.inflow ? new LinkHub(run.solver, members, 2) : run.coupler; // every 2 s
+  if (run.outlets) run.outlets.coupler = run.coupler ?? null; // network outlets hand their water to SWMM through the coupler
+  run.underdrains = coupled && run.sw.under.length ? new UnderdrainLinks(run.solver, run.sw.under, { cellArea: F * F, coupler: run.coupler }) : null;
+  // outlets and underdrains step before the coupler, so SWMM gets their water in the same exchange
+  const members = [run.outlets, run.underdrains, run.coupler, run.culverts, run.inflow].filter(Boolean);
+  run.exchanger = members.length > 1 || run.culverts || run.inflow || run.outlets ? new LinkHub(run.solver, members, 2) : run.coupler; // every 2 s
   for (const id of ['drainSrc', 'networkCtl', 'lumpedCtl']) $(id).classList.add('locked');
   setTiers();
   run.hmax = new Float32Array(c.nx * c.ny); run.smax = new Float32Array(c.nx * c.ny);
@@ -1203,7 +1250,8 @@ async function loop(gen) {
         // SWMM's external outflow is the outfalls plus any water sent back up through inlets (negative lateral flow)
         const c = run.netMass, m = run.mass, outfalls = c.externalOutflow * 1000 - run.coupler.totals.latOut;
         const rain = m.rain + run.coupler.totals.roofToSewer; // rain on the surface + rain piped straight from roofs
-        run.netMass.combinedRel = (rain + (run.inflow?.totals.volume ?? 0) - m.infil - m.outflow - outfalls - m.volume - c.finalStored * 1000) / rain; // + river inflow
+        // + river inflow; underdrains: GI water the books count as infiltrated that went into the pipes; outlets off the model
+        run.netMass.combinedRel = (rain + (run.inflow?.totals.volume ?? 0) + (run.underdrains?.totals.underdrain ?? 0) - (run.outlets?.totals.offsite ?? 0) - m.infil - m.outflow - outfalls - m.volume - c.finalStored * 1000) / rain;
       }
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
       if (S.obs.length) scoreAndShow();
@@ -1266,11 +1314,13 @@ async function finishRecord() {
   if (L) r.lines.samples.forEach((sm, l) => { if (sm.at(-1)[0] < s.t - 1e-6) sm.push([s.t, L.net[l], L.plus[l], L.minus[l]]); });
   const lines = r.lines.defs.map((d, l) => ({ id: d.id, name: d.name, faces: d.faces, volume: L ? L.net[l] : NaN, plus: L ? L.plus[l] : NaN, minus: L ? L.minus[l] : NaN, series: r.lines.samples[l] }));
   const m = r.mass ?? {}, outfalls = r.swmm && r.netMass ? r.netMass.externalOutflow * 1000 - (r.coupler?.totals.latOut ?? 0) : null;
+  const ponds = r.outlets?.results() ?? [];
+  if (ponds.length) design.setPondResults(ponds);
   const newBuildings = (model.f.designBuildings ?? []).map(b => ({ id: b.id, name: b.name, ffe: b.ffe, critical: b.foundation === 'basement' ? b.opening : b.ffe, foundation: b.foundation, cells: b.cells, ring: b.ring }));
   const when = new Date(), forcing = CMP.fingerprint(forcingRecord(r));
   const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
     saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
-    grids, hazard, lines, newBuildings, books: { rain: m.rain, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
+    grids, hazard, lines, newBuildings, ponds, books: { rain: m.rain, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
   r.record = rec; records.push(rec);
   if (!rec.scenario) { baselines.set(forcing.hash, rec); model.baseWse = grids.max_wse; if (baselines.size > 3) baselines.delete(baselines.keys().next().value); }
   while (records.length > 6) { const i = records.findIndex(x => ![...baselines.values()].includes(x)); records.splice(i < 0 ? 0 : i, 1); }
@@ -1322,14 +1372,38 @@ async function runPair(note) {
     return [before, after];
   } finally { pairPrep = null; $('speed').value = speed; $('speed').dispatchEvent(new Event('input')); }
 }
+/**
+ * Return-period sweep: paired runs (existing conditions from the cache when it already ran with the same forcing) over
+ * the design storms `aris`, one after another in this page; `cancelled()` is checked between runs and the current run
+ * stops at once on cancelSweep(). Calls `each({ ari, before, after })` after each pair. The storm's return period is
+ * put back afterwards. → [{ ari, before, after }]
+ */
+async function runSweep(aris, note, each) {
+  if (stormSrc !== 'a14') throw new Error('The sweep varies the design storm’s return period: pick Atlas 14 design (or the site-record design) under Storm.');
+  const ari0 = $('ari').value, out = []; sweep.cancel = false;
+  try {
+    for (const ari of aris) {
+      if (sweep.cancel) break;
+      if (![...$('ari').options].some(o => o.value === String(ari))) { note(`${ari}-yr is not a design storm here: skipped`); continue; }
+      $('ari').value = String(ari); updateStorm();
+      const [before, after] = await runPair((t) => note(`${ari}-yr (${out.length + 1} of ${aris.length}): ${t}`));
+      out.push({ ari, before, after }); each?.(out.at(-1));
+    }
+  } finally { $('ari').value = ari0; updateStorm(); sweep.running = false; }
+  return out;
+}
+const sweep = { cancel: false, running: false };
+/** Stop a sweep now: the run in progress ends (unfinished, not recorded) and no further run starts. */
+function cancelSweep() { sweep.cancel = true; if (run && !run.record) { const r = run; r.finish?.(new Error('Sweep cancelled')); stopRun(); resetRun(); } }
 const compareUI = initCompare(map, {
   records: () => [...records].reverse(), savedRuns, loadSaved, runPair, units: () => design.units,
+  runSweep: (aris, note, each) => { sweep.running = true; return runSweep(aris, note, each); }, cancelSweep, detentionTable,
   ctx: () => model && { geo: { nx: model.fine.nx, ny: model.fine.ny, x0: model.fine.x0, y0: model.fine.y1 - model.fine.ny * model.fine.dx, dx: model.fine.dx },
     z: model.base.z, bld: model.base.bld, toCell: llCell, prj: utmPRJ(model.fine.zone),
     siteRing: design.analysis.features.find(f => f.properties.type === 'site')?.geometry.coordinates[0] ?? null },
   setOverlay: (canvas, visible) => { if (model) setCanvasLayer('cmp', canvas, model.fine.corners(), 'area-line', visible, 0.9); },
-  async exportFiles(files, name, bytes) {
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/zip' })); a.download = name + '.zip'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  async exportFiles(files, name, bytes, type = 'application/zip') {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type })); a.download = name + (type === 'text/csv' ? '.csv' : '.zip'); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
     if (projects.current) { const dir = `comparisons/${stamp()}_${name.slice(0, 40)}`; for (const f of files) await writeProjectFile(projects.current.folder, `${dir}/${f.name}`, f.data); }
   },
 });
@@ -1342,8 +1416,8 @@ function readMass() {
 }
 async function readMassNow() {
   const st = await run.solver.readState(); run.mass = st.mass;
-  if (run.culverts) { // water a culvert took upstream and has not yet delivered downstream counts as stored
-    const m = run.mass, inTransit = run.culverts.pending.reduce((a, p) => a + p.vol, 0);
+  if (run.culverts || run.outlets) { // water a culvert or pond outlet took upstream and has not yet delivered downstream counts as stored
+    const m = run.mass, inTransit = (run.culverts?.pending.reduce((a, p) => a + p.vol, 0) ?? 0) + (run.outlets?.inTransit ?? 0);
     m.culvertInTransit = inTransit; m.volume += inTransit; m.rel = (m.volume - m.expected) / Math.max(1e-30, Math.abs(m.expected), run.solver.vol.initial + m.rain + Math.max(0, -m.exchanged) + Math.max(0, -m.outflow));
   }
   const zs = run.c.sg ? run.c.z : null; // subgrid: the solver reports the peak level; keep depth at the lowest point
@@ -2099,7 +2173,7 @@ async function runFiles() {
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
     forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), commit: appCommit, grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
-    books: run.record?.books ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
+    books: run.record?.books ?? null, ponds: run.record?.ponds ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
     hazard: Object.fromEntries(Object.entries(STANDARDS).map(([k, st]) => [k, { name: st.name, note: st.note,
