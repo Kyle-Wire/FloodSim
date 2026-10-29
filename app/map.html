@@ -135,6 +135,8 @@ section h2 em { font-style: normal; font-family: var(--mono); letter-spacing: 0;
 .field output { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .field input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
 .field select { max-width: 100%; min-width: 0; font: 13px var(--body); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; }
+.emu-num { width: 64px; box-sizing: border-box; font: 12px var(--mono); background: transparent; color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 2px 4px; }
+.emu-slider { grid-template-columns: 1fr; } .emu-slider input[type=range] { width: 100%; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .btn { flex: 1; min-width: 84px; padding: 9px 10px; border-radius: 5px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 600 13px var(--body); cursor: pointer; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
@@ -257,6 +259,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <button class="infra-toggle" id="designToggle" aria-expanded="false" aria-controls="design" title="Proposed buildings, pads, paved areas and grading, as scenarios over existing conditions">Site design <b id="designCount"></b></button>
       <button class="infra-toggle" id="infraToggle" aria-expanded="false" aria-controls="infra" title="Draw, import or estimate pipes, culverts, structures and storage">Infrastructure <b id="infraCount"></b></button>
       <button class="infra-toggle" id="cmpToggle" aria-expanded="false" aria-controls="cmpDrawer" title="Compare two runs with the same storm and settings: what the design changed">Compare</button>
+      <button class="infra-toggle" id="emuToggle" aria-expanded="false" aria-controls="emuDrawer" title="Per-project emulator: instant flood maps across a range of storms and design values, trained on this project&rsquo;s own runs (screening only)">Emulator</button>
     </div>
     <aside class="drawer wide" id="cmpDrawer" hidden aria-label="Compare drawer">
       <header><h2>Compare runs</h2><button class="x" id="cmpClose" type="button" aria-label="Close drawer">×</button></header>
@@ -278,6 +281,21 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <p class="note" id="swNote">Runs existing conditions and the active scenario at each design storm, one pair after another, and fills the check: post-development peak ≤ pre-development peak at each control line.</p>
         <div class="props" id="swOut"></div>
       </details>
+    </aside>
+    <aside class="drawer wide" id="emuDrawer" hidden aria-label="Emulator drawer">
+      <header><h2>Emulator</h2><button class="x" id="emuClose" type="button" aria-label="Close drawer">×</button></header>
+      <p class="hint">A fast stand-in for the solver, trained on this project&rsquo;s own runs: a flood map in a fraction of a second anywhere inside the trained range. Screening only: confirm with a solver run before a report.</p>
+      <label class="ifield"><span>Study</span><select id="emuStudy"></select></label>
+      <div id="emuNew"></div>
+      <div id="emuStudyBox" hidden>
+        <div id="emuStatus"></div>
+        <div class="row"><button class="btn" id="emuRun" type="button" title="Run the training runs still to do, one after another (resumes where it stopped)">Run training</button>
+          <button class="btn" id="emuCancel" type="button" disabled>Cancel</button><button class="btn" id="emuTrain" type="button" title="Fit the emulator to the runs done so far and test it">Train</button></div>
+        <div id="emuSliders"></div>
+        <label class="ifield" id="emuViewBox" hidden><span>Map</span><select id="emuView"></select></label>
+        <div class="props" id="emuOut"></div>
+      </div>
+      <p class="note" id="emuNote"></p>
     </aside>
     <aside class="drawer" id="design" hidden aria-label="Site design drawer">
       <header><h2>Site design</h2>

@@ -6,7 +6,7 @@
 import { buildFine, coarsen, roofRouting, roofConnections } from '../src/terrain.js';
 import { hsgParams, URBAN_FILL } from '../src/soil.js';
 import { NOT_ERODIBLE, TAU_GRASS } from '../src/scour.js';
-import { applyDesign, designFeature, edt, hashFine, floodedBuildings, resolvedValues, PRESETS } from '../src/design.js';
+import { applyDesign, designFeature, edt, hashFine, floodedBuildings, resolvedValues, PRESETS, designVariables, withValues } from '../src/design.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -247,6 +247,17 @@ const sameAs = (f, snap) => Object.entries(snap).every(([k, v]) => { const a = k
   check('flooded check: water at 5.2 m stays below FFE 5.3 m', fl.length === 2 && fl.every(b => !b.flooded));
   check('flooded check: water at 5.4 m floods both', floodedBuildings(fine, wse.fill(5.4)).every(b => b.flooded));
   check('every preset has a foundation, apron, roof and height', Object.values(PRESETS).every(p => p.foundation && p.apronW >= 0 && p.roof && p.height > 0));
+}
+
+// ---- design numbers for the emulator: offered with their resolved values, and set as given (a saved lock dropped)
+{
+  const f = model(60, (x, y) => 50 + 0.02 * x), bld = designFeature('building', square(20, 20, 12), { preset: 'sfr' }, 7), pad = designFeature('grade', square(40, 40, 8), { elev: 51 }, 8);
+  const design = { ...fc(bld, pad), locked: { 7: { ffe: 99, pad: 98.85 } } }, base = applyDesign(f, fc(bld, pad));
+  const vars = designVariables(design, base.log), v7 = vars.find(v => v.key === '7.ffe'), v8 = vars.find(v => v.key === '8.elev');
+  check('design numbers on offer, starting from the resolved values', v7 && v8 && Math.abs(v7.value - base.log.features[0].resolved.ffe) < 1e-12 && v8.value === 51 && v7.min < v7.value && v7.max > v7.value, vars.map(v => v.key).join(', '));
+  const d2 = withValues(design, { '7.ffe': v7.value + 0.4, '8.elev': 51.3 }), r2 = applyDesign(f, d2).log.features;
+  check('set values are used as given (the saved FFE lock dropped)', Math.abs(r2[0].resolved.ffe - (v7.value + 0.4)) < 1e-9 && r2[0].resolved.mode === 'fixed' && r2[1].resolved.elev === 51.3 && !!design.locked[7] && !d2.locked[7]);
+  check('the original design is left as it was', design.features[0].properties.ffeMode === 'auto' && design.features[1].properties.elev === 51);
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nAll design tests passed');

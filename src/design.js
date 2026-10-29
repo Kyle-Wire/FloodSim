@@ -570,3 +570,57 @@ export function resolvedValues(design, log) {
     totals: log.totals, hash: log.hash,
   };
 }
+
+// ------------------------------------------------------------------ design numbers the emulator can vary
+
+/**
+ * Design numbers an emulator study can vary, per feature type: the property, a label, its kind (an elevation, a
+ * length or a diameter, for units), where the value it starts from comes from (`base`: the feature's resolved value,
+ * since many are worked out from the ground), the default span around it, and what else to set so the value is used
+ * as given (`also`: a building's FFE only counts once the mode is fixed).
+ */
+export const VARIABLE = {
+  building: [{ prop: 'ffe', label: 'Finished floor', kind: 'elev', base: (r) => r.ffe, span: [-0.3, 0.6], also: { ffeMode: 'fixed' } }],
+  grade: [{ prop: 'elev', label: 'Pad elevation', kind: 'elev', base: (r) => r.elev, span: [-0.5, 0.5], also: { mode: 'flat' } }],
+  paved: [{ prop: 'elev', label: 'Paving elevation', kind: 'elev', base: (r, p) => num(p.elev), span: [-0.3, 0.3] }],
+  pond: [{ prop: 'bottom', label: 'Pond bottom', kind: 'elev', base: (r) => r.bottom, span: [-1, 0.5] },
+    { prop: 'sideSlope', label: 'Pond side slope (H:V)', kind: 'ratio', base: (r) => r.sideSlope, span: [-1, 1], min: 1 }],
+  swale: [{ prop: 'depth', label: 'Swale depth', kind: 'len', base: (r) => r.depth, span: [-0.2, 0.3], min: 0.05 },
+    { prop: 'bottomW', label: 'Swale bottom width', kind: 'len', base: (r) => r.bottomW, span: [-0.3, 1.2], min: 0 }],
+  bioretention: [{ prop: 'ponding', label: 'Ponding depth', kind: 'len', base: (r, p) => num(p.ponding), span: [-0.1, 0.15], min: 0.02 },
+    { prop: 'media', label: 'Media depth', kind: 'len', base: (r, p) => num(p.media), span: [-0.3, 0.6], min: 0.1 }],
+  outlet: [{ prop: 'orifice1D', label: 'Low orifice diameter', kind: 'diam', base: (r, p) => num(p.orifice1D), span: [-0.08, 0.15], min: 0.025 },
+    { prop: 'weirCrest', label: 'Riser crest', kind: 'elev', base: (r) => r.weir?.crest, span: [-0.5, 0.3] },
+    { prop: 'weirL', label: 'Riser weir length', kind: 'len', base: (r, p) => num(p.weirL), span: [-2, 4], min: 0.3 },
+    { prop: 'spillwayCrest', label: 'Spillway crest', kind: 'elev', base: (r) => r.spillway?.crest, span: [-0.3, 0.3] }],
+};
+/**
+ * The design numbers on offer for a design and its build log: [{ key: '<id>.<prop>', id, prop, label, kind, value,
+ * min, max, featureName }] with the default range around the resolved value.
+ */
+export function designVariables(design, log) {
+  const out = [], res = Object.fromEntries((log?.features ?? []).map(l => [l.id, l.resolved ?? {}]));
+  for (const f of design?.features ?? []) {
+    const p = f.properties; if (p.type === 'building' && p.foundation === 'piers') continue;
+    for (const v of VARIABLE[p.type] ?? []) {
+      const val = v.base(res[f.id] ?? {}, p); if (!Number.isFinite(val)) continue;
+      const lo = v.min != null ? Math.max(v.min, val + v.span[0]) : val + v.span[0], hi = val + v.span[1];
+      out.push({ key: `${f.id}.${v.prop}`, id: f.id, prop: v.prop, label: v.label, kind: v.kind, value: val, min: lo, max: hi, featureName: p.name ?? `${p.type} ${f.id}` });
+    }
+  }
+  return out;
+}
+/**
+ * A copy of the design with design numbers set: values = { '<id>.<prop>': v }. Each changed feature also gets the
+ * `also` properties and loses its saved FFE / pad lock, so the value is used as given. Unknown keys are ignored.
+ */
+export function withValues(design, values) {
+  const d = structuredClone(design); d.locked = { ...(d.locked ?? {}) };
+  for (const [key, v] of Object.entries(values ?? {})) {
+    const dot = key.lastIndexOf('.'), id = key.slice(0, dot), prop = key.slice(dot + 1);
+    const f = d.features.find(q => String(q.id) === id); if (!f) continue;
+    const spec = (VARIABLE[f.properties.type] ?? []).find(s => s.prop === prop); if (!spec) continue;
+    Object.assign(f.properties, spec.also ?? {}, { [prop]: v }); delete d.locked[f.id];
+  }
+  return d;
+}

@@ -175,6 +175,79 @@ Two runs compare only when they differ in nothing but the design.
   - the `.f32` grids, Δ with the band, newly wet / dry, the off-site impact;
   - the building and outlet tables, control-line faces and their signs, the CSV and the summary page.
 
+**Per-project emulator** (map button *Emulator*; `src/emulator.js`, `app/emulator-ui.js`). A fast stand-in for the
+solver, trained on the project's own runs. It answers "what if" inside a trained range in a fraction of a second, with
+an error estimate. It is for screening: confirm with a solver run before a number goes in a report.
+- **A study** is one scenario (existing conditions or a saved design) and 1–6 parameters with ranges. What can vary:
+  - the return period of the Atlas 14 design storm, 1–1000 yr on a log scale (`ddf` now interpolates log–log between
+    the table's columns; the columns themselves are unchanged);
+  - a rain depth factor;
+  - a river inflow scale, when the model has river inflow;
+  - a tide / surge offset, for a historic storm with a water level;
+  - the soil wetness at the start (Green-Ampt Se);
+  - design numbers of the scenario's features (`VARIABLE` in `src/design.js`): finished floor, pad and paving
+    elevations, pond bottom and side slope, swale depth and width, rain-garden ponding and media depth, and the pond
+    outlet's orifice, riser crest, weir length and spillway crest.
+  Everything else stays as it is set when the study starts. Every run's forcing fingerprint must match the first one's
+  on the parts the study does not vary, or the study stops and names what changed.
+- **Training runs** are ordinary solver runs at full speed:
+  - the points are a maximin Latin hypercube (10 per parameter by default, at least 8) plus the centre of the box;
+  - plus 3 held-out random points the solver also runs, as an honest test;
+  - gauge readings are fetched once and reused, as in *Run both*;
+  - each run is saved in the project's `runs/` with its ground (`grids/ground.f32`), so a study resumes where it
+    stopped and retrains from what is there.
+- **What it learns:**
+  - the max water surface on the cells wet in any run (widened by 2). In dry cells the surface is carried in smoothly
+    from the wet cells around them (pull–push) and capped at the ground. A lake stays one flat level across a pad that
+    pokes out of it, so the field changes smoothly with the parameters even where the shoreline moves;
+  - max depth = max(0, surface − ground), with the ground of the design values asked for (`applyDesign`);
+  - also √(max speed), time above 15 cm, each control line's peak and volume, each new building's water level, and
+    the edge outflow and infiltration.
+- **How:**
+  - PCA of the fields from the N×N Gram matrix (Jacobi), keeping 99.9 % of the variance;
+  - one Gaussian process per component and per scalar output: Matérn 5/2 with a length scale per parameter, constant
+    mean and a nugget, fitted by maximum likelihood (multi-start Nelder–Mead);
+  - the error estimate per cell is √(Σ σₖ²φₖ² + what the dropped components leave out).
+- **Validation, shown after every training:**
+  - leave-one-out in closed form (Dubrule) for every training run; it keeps the run in the PCA basis, so it is a little
+    optimistic;
+  - the held-out runs, the honest test: depth RMSE and worst cell over cells wet in either, extent CSI at 15 cm, and
+    control-line peak error.
+  - *Check with the solver* runs the solver at the slider values and reports the same errors there; that run then joins
+    the training. *Add a run where it's least sure* runs the point of largest predicted variance among 1,500 and
+    retrains.
+- **Use:** sliders give the max depth, speed, time above 15 cm or uncertainty map, the control-line peaks (± 2σ) and
+  the new buildings' water against their floors. *Send to Compare* puts the emulated map in the Compare drawer, marked
+  emulated everywhere, including the exported summary. Send an existing-conditions study and a design study at the
+  same storm values to compare the two. *Export grids* writes `.asc` grids and a README to the study folder.
+- **Files:** `emulators/<name>/study.json` (parameters, points, the runs used, the fixed fingerprint), `model.json`,
+  the means and bases as `.f32`, `mask.u8`, `nodata.u8` and `validation.json`. A study trained before an app change is
+  flagged.
+- **Limits:** only inside the trained box, for that scenario and that model build. Drawing a new feature needs a new
+  study. Training holds N runs × the wet cells × 3 fields in memory and refuses above about 1 GB.
+- **On a Meyerland block** (450 × 350 m at 1 m, the 1-hr Atlas 14 storm, 90-min runs of about 90 s each):
+  - existing conditions, return period 2–100 yr × soil wetness 0.15–0.95, 13 training and 3 held-out runs.
+    Held out: depth RMSE 0.6–1.2 mm, worst cell 3 cm, extent CSI ≥ 0.993, control-line peak within 0.5 %.
+    *Check with the solver* at a new point (37-yr, Se 0.60): RMSE 1 mm, worst cell 2.2 cm, CSI 0.995.
+    Training takes under 1 s; a map at new values 13–30 ms.
+  - the proposed design (two buildings and a pond), return period × the pond's low orifice (0.24–0.99 ft), 11 + 2
+    held out: depth RMSE 0.5–1.0 mm, worst cell 2 cm, CSI ≥ 0.993, peaks within 0.5 %.
+  - emulated existing vs emulated proposed at the 25-yr storm, against the solver's paired runs (the same forcing
+    fingerprint): control-line peak 49.38 → 40.98 cfs vs 49.61 → 41.27; cells with a higher max water surface 650 vs
+    614, lower 12,411 vs 12,401; off-site rises 38 cells up to 7 mm vs 1 cell at 5 mm.
+  An emulated comparison widens Compare's no-change band per cell to 2σ of the two emulators combined. Changes under
+  about 1 cm in it are still within its error: confirm an off-site impact with the solver.
+  Storm and soil sliders snap to round values (1 yr, 0.01), and each has a box for an exact value, so two studies can be
+  set to the same storm; design numbers stay continuous.
+- `npm run test:emulator` covers:
+  - the Latin hypercube (one point per bin, maximin spacing);
+  - the GP: through its training points, Branin from 40 points, its ±2σ coverage;
+  - closed-form leave-one-out = refitting to 2e-10, the likelihood fit's length scales;
+  - PCA with every component rebuilds its fields;
+  - a synthetic lake and a tilting flood surface with moving fronts, recovered at held-out points; a design value that
+    raises a pad out of the water;
+  - Atlas 14 between columns, and a saved emulator predicting exactly what the trained one did.
+
 **Flood barriers** (drawer tools *Flood wall*, *Levee / berm*, *Deployable*; `src/barriers.js`). Each is a line with
 a crest, set either as a height above the lidar ground under it (so it follows the ground) or as a fixed elevation
 (NAVD88).
@@ -715,6 +788,7 @@ Bed elevations are stored relative to the domain minimum for fp32 headroom.
 | Pond with one orifice vs modified Puls in JS on the same stage–storage (30 min drawdown); surface books with the outlet | – | stage within 4.8 mm, volume out within 0.3 %, books 1e-6 |
 | Pond outlet onto the ground downstream: stored + in transit vs the start | – | 5e-7 |
 | Rain garden with an underdrain: underdrain share of the drain; books | – | 90.91 % (exact); 3.4e-6 (the GI store path, with or without the underdrain) |
+| Emulator vs solver, Meyerland block (held-out runs: return period × soil wetness; return period × pond orifice) | – | depth RMSE 0.5–1.2 mm, worst cell 3 cm, CSI ≥ 0.993, line peaks within 0.5 % |
 
 Full numbers: `tests/results-cpu.json`, `tests/results-gpu.json`.
 
@@ -735,6 +809,7 @@ node tests/run-inflow-tests.mjs   # river inflow: LP3, hydrographs, river entrie
 node tests/run-soil-tests.mjs     # soils: texture classes, SSURGO rows, ponded Green-Ampt vs analytic, water table, aggregation, grain classes
 node tests/run-waterlevel-tests.mjs # starting water levels: river rise, lake fill, spreading, gauge datums (--live: a real gauge)
 node tests/run-bank-tests.mjs     # bank stability: friction-angle failure, cohesion, confinement, rapid drawdown, probability, bank tops
+node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
 # GPU suite in your own browser: npm start, then open http://localhost:8766/tests/gpu-browser.html
 
 # GPU suite in headless Chromium (works with software WebGPU):
@@ -791,10 +866,11 @@ src/gi.js             green infrastructure layers (permeable pavement, rain gard
 src/design.js         site design: proposed buildings, pads, paved areas, demolitions → edited 1 m layers; grading engine, cut / fill log
 src/stormwater.js     outlet structures (rating, links), stage–storage, modified Puls, drawn GI, underdrains, the detention check
 src/compare.js        paired-run comparison: forcing fingerprint, .f32 grids, Δ maps, off-site impact, building and outlet tables
+src/emulator.js       per-project emulator: Latin hypercube, Gaussian processes, PCA of flood fields, leave-one-out, save / load
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)
-app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/projects.js project folders
+app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/projects.js project folders
 app/                  Phase 0 lab template + voxel shell, build script
 tests/                CPU suite, Phase 1 suite, shared GPU suite, browser + Dawn runners, results JSON
 benchmarks/ea/        Gate B: EA 2D benchmark cases, browser runner, scorer, results (data/ is the GOV.UK archive)

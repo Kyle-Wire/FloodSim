@@ -115,12 +115,12 @@ export function toASC(a, geo, dp = 3) {
  * those cells are the newly wet and newly dry ones. |Δ| under `band` is no change (0). mask (optional): cells to count.
  * → { delta, stats: { rise, fall, same, onlyA, onlyB, maxRise, maxFall, kMaxRise } } (counts of cells)
  */
-export function diffGrid(a, b, { band = 0.003, mask = null } = {}) {
+export function diffGrid(a, b, { band = 0.003, mask = null, bandGrid = null } = {}) {
   const n = a.length, delta = new Float32Array(n), s = { rise: 0, fall: 0, same: 0, onlyA: 0, onlyB: 0, maxRise: 0, maxFall: 0, kMaxRise: -1 };
   for (let k = 0; k < n; k++) {
     const x = a[k], y = b[k], fx = Number.isFinite(x), fy = Number.isFinite(y);
     if (!fx || !fy) { delta[k] = NaN; if (mask && !mask[k]) continue; if (fx) s.onlyA++; else if (fy) s.onlyB++; continue; }
-    const d = y - x, v = Math.abs(d) < band ? 0 : d; delta[k] = v;
+    const d = y - x, v = Math.abs(d) < (bandGrid && bandGrid[k] > band ? bandGrid[k] : band) ? 0 : d; delta[k] = v; // bandGrid: a wider band per cell (an emulator's uncertainty)
     if (mask && !mask[k]) continue;
     if (v > 0) { s.rise++; if (v > s.maxRise) { s.maxRise = v; s.kMaxRise = k; } } else if (v < 0) { s.fall++; if (v < s.maxFall) s.maxFall = v; } else s.same++;
   }
@@ -268,6 +268,7 @@ export function hydrograph(samples, col = 1) {
  * samples carry it, else the net. → { peak, tPeak, peakBack (largest flow to the − side), volume }
  */
 export function lineStats(rec) {
+  if (rec?.emulated) return { peak: rec.peak, tPeak: rec.tPeak ?? NaN, peakBack: NaN, volume: rec.volume ?? NaN }; // an emulator's estimate: no series
   const s = rec?.series ?? [], gross = s.length > 1 && s[1].length >= 4, q = hydrograph(s, gross ? 2 : 1), back = gross ? hydrograph(s, 3) : q.map(([t, v]) => [t, -v]);
   let peak = 0, tPeak = NaN, peakBack = 0;
   for (const [t, v] of q) if (v > peak) { peak = v; tPeak = t; }
@@ -305,6 +306,7 @@ export function summaryHTML(cmp) {
   return `<!doctype html><meta charset="utf-8"><title>FloodSim comparison</title>
 <style>body{font:13px/1.45 system-ui,sans-serif;max-width:820px;margin:24px auto;color:#111}h1{font-size:18px}h2{font-size:14px;margin:18px 0 6px}table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #ddd;padding:3px 6px;text-align:left}td.n{text-align:right;font-variant-numeric:tabular-nums}.bad{color:#b00020}.ok{color:#0a6}</style>
 <h1>FloodSim comparison: ${esc(cmp.b.label)} vs ${esc(cmp.a.label)}</h1>
+${cmp.a.emulated || cmp.b.emulated ? `<p class="bad"><b>EMULATED — screening only.</b> ${[cmp.a, cmp.b].filter(r => r.emulated).map(r => esc(r.label)).join(' and ')} ${cmp.a.emulated && cmp.b.emulated ? 'are' : 'is'} the per-project emulator's estimate, not a solver run (typical error ${esc(cmp.b.emulated?.error ?? cmp.a.emulated?.error ?? 'see its validation')}). Confirm with a solver run before using these numbers in a report.</p>` : ''}
 <p>Both runs share the forcing fingerprint <code>${esc(cmp.a.forcing.hash)}</code> (storm, inflow, tide, start levels, soil, grid, solver, options, drainage, area, app commit ${esc(cmp.a.commit ?? '?')}); they differ only in the design. Changes under ${(cmp.band * 1000).toFixed(0)} mm are reported as no change.</p>
 <table>${row('Before', `${esc(cmp.a.label)} (${esc(cmp.a.saved ?? '')})`)}${row('After', `${esc(cmp.b.label)} (${esc(cmp.b.saved ?? '')}), design ${esc(cmp.b.designHash ?? '–')}`)}${row('Storm', esc(cmp.a.storm ?? ''))}</table>
 <h2>Off-site impact${cmp.site ? '' : ' (no site boundary drawn: the whole model counts as off-site)'}</h2>

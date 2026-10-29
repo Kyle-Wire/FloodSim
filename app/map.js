@@ -4,7 +4,7 @@ import { GPUSolver } from '../src/solver-gpu.js';
 import { gridFromLonLatBox, fromUTM, polygonCells, insideRing } from '../src/geo.js';
 import { fetchDEM, fetchOSM, fetchNLCD, fetchSoils, NLCD_COLORS, NLCD_NAMES, toCells } from '../src/ingest.js';
 import { buildFine, coarsen, coarseIds, hillshade, roofConnections, roofRouting, MANNING_ROAD } from '../src/terrain.js';
-import { applyDesign, floodedBuildings, resolvedValues, hashFine } from '../src/design.js';
+import { applyDesign, floodedBuildings, resolvedValues, hashFine, withValues, designVariables } from '../src/design.js';
 import { downscaleDepth, volumeRatio } from '../src/downscale.js';
 import { zip, png16, exr, buildingsGLB } from '../src/export.js';
 import { fetchAtlas14, hyetograph, constantStorm, rainAt, ddf, fitGEV, annualMaxima24h, recordStorm, wettest24, gevQuantile, pdsToAms } from '../src/storm.js';
@@ -23,6 +23,7 @@ import { attachStorage, networkToLayer } from '../src/infra.js';
 import { initInfra } from './infra-ui.js';
 import { initDesign } from './design-ui.js';
 import { initCompare } from './compare-ui.js';
+import { initEmulator } from './emulator-ui.js';
 import * as CMP from '../src/compare.js';
 import { initProjects, readBytes, readFile as readProjectFile, writeFile as writeProjectFile, stamp } from './projects.js';
 import { buildBarriers, BarrierWatch } from '../src/barriers.js';
@@ -36,6 +37,12 @@ import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/
 import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, InflowLinks, CFS } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
 import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear } from '../src/waterlevels.js';
+/**
+ * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
+ * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
+ * the start), design: { '<id>.<prop>': value } }; null for every other run. emuPrep: the gauge readings a study reuses.
+ */
+let emu = null, emuPrep = null;
 
 const $ = (id) => document.getElementById(id);
 const MMHR = 1 / 1000 / 3600;
@@ -210,7 +217,8 @@ function applyScenario() {
   const sc = design.active;
   if (!sc || !sc.design.features.length) { model.f = model.base; model.design = null; design.setLog(sc ? { features: [], totals: { cut: 0, fill: 0, net: 0, impAdded: 0, impRemoved: 0, floodFill: 0, compCut: 0 }, warnings: [] } : null); return; }
   const t0 = performance.now(), fine = model.fine;
-  const r = applyDesign(model.base, { features: sc.design.features, settings: sc.settings, locked: sc.locked }, { toCell: (p) => toCells(fine, [p])[0], wse: model.baseWse ?? null, water: fineWater(), hash: false });
+  const dsg = { features: sc.design.features, settings: sc.settings, locked: sc.locked };
+  const r = applyDesign(model.base, emu?.design ? withValues(dsg, emu.design) : dsg, { toCell: (p) => toCells(fine, [p])[0], wse: model.baseWse ?? null, water: fineWater(), hash: false });
   r.log.floodRef = model.baseWse ? 'the existing-conditions run’s max water surface' + (r.log.settings.bfe != null ? ' or the BFE' : '') : r.log.settings.bfe != null ? `the BFE, ${(r.log.settings.bfe / 0.3048).toFixed(2)} ft` : null;
   model.f = r.fine; model.design = { name: sc.name, log: r.log, ms: performance.now() - t0 };
   design.setLog(r.log);
@@ -554,6 +562,7 @@ $('buildBtn').onclick = async () => {
     lCond.set('Terrain conditioned', 'ok', `${fmtArea(f.stats.buildingArea)} buildings as walls · ${fmtArea(f.stats.roadArea)} streets` + (curb ? ` burned ${curb * 100} cm` : ' (lidar curbs kept as surveyed)')
       + ` · ${osm.culverts.length} mapped culverts linked · ${f.channels.breaches} road embankments breached on mapped streams`);
     model = { fine, f, base: f, dem, osm, nlcd, soils, curb, atlas14, util, linked, site: [clon, clat], poly: S.poly };
+    groundCache.clear(); emulatorUI.reset();
     applyScenario(); // the active design scenario, if any (model.base stays existing conditions)
     $('downspout').value = util?.combined ? 100 : 0; $('downspout').dispatchEvent(new Event('input')); // combined-sewer rowhouses: downspouts tie into the sewer
     $('a14Btn').textContent = atlas14 ? 'Atlas 14 design' : 'Site-record design';
@@ -649,11 +658,15 @@ function setStormSource(s) {
 }
 /** The storm the next run will use (null before Atlas 14 is loaded). */
 function currentStorm() {
+  const st = stormBase();
+  return st && emu?.rain != null && emu.rain !== 1 ? scaleStorm(st, emu.rain) : st;
+}
+function stormBase() {
   if (stormSrc === 'hist') return hist.storm;
   if (stormSrc === 'const') return constantStorm(Number($('rain').value), Number($('dur').value));
-  if (!model?.atlas14) return hist.fit && hist.pattern ? recordStorm(hist.fit, hist.pattern, { ari: Number($('ari').value), factor: 1 + Number($('uplift').value) / 100, years: hist.years }) : null;
+  if (!model?.atlas14) return hist.fit && hist.pattern ? recordStorm(hist.fit, hist.pattern, { ari: emu?.ari ?? Number($('ari').value), factor: 1 + Number($('uplift').value) / 100, years: hist.years }) : null;
   const [pattern, peak] = $('pattern').value.split(':');
-  return hyetograph(model.atlas14, { ari: Number($('ari').value), durationMin: Number($('a14dur').value), pattern, peak: Number(peak ?? 0.5), which: $('which').value, factor: 1 + Number($('uplift').value) / 100 });
+  return hyetograph(model.atlas14, { ari: emu?.ari ?? Number($('ari').value), durationMin: Number($('a14dur').value), pattern, peak: Number(peak ?? 0.5), which: $('which').value, factor: 1 + Number($('uplift').value) / 100 });
 }
 function stormLabel(st) {
   if (!st) return 'none';
@@ -783,7 +796,7 @@ function histSummary(st) {
   return `${st.name}: ${st.total.toFixed(0)} mm, peak ${st.peakIntensity.toFixed(0)} mm/hr over ${st.blockMin} min. ${rp ? 'Against Atlas 14 at the site: ' + rp + '.' : ''}${wl} Source: ${st.source}.`;
 }
 /** Water level at simulation time t (s), or null. */
-const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, st.t0 + t * 1000) : null);
+const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, st.t0 + t * 1000) + (emu?.tide ?? 0) : null);
 
 /**
  * Edge cells of the solver grid that meet open water: NLCD open water / wetland under the cell, or a mapped stream or
@@ -982,7 +995,7 @@ function resetRun() {
   } else { c = coarsen(model.f, F, roofF); if (cal().manning !== 1) c.manning = c.manning.map(v => v * cal().manning); }
   // infiltration: Green-Ampt from the soil survey (c.infil becomes K; the run carries ψΔθ and the water-table storage)
   const wt = $('wtDepth').value.trim() === '' ? null : Math.max(0.05, Number($('wtDepth').value));
-  const ga = $('infilModel').value === 'ga' && model.f.ga ? gaCells(model.f, c.nx, c.ny, F, c.mask, { Se: WETNESS[$('wetness').value], wtOverride: wt, perCellArea: !!c.sg }) : null;
+  const ga = $('infilModel').value === 'ga' && model.f.ga ? gaCells(model.f, c.nx, c.ny, F, c.mask, { Se: emu?.se ?? WETNESS[$('wetness').value], wtOverride: wt, perCellArea: !!c.sg }) : null;
   if (ga) c.infil = ga.K;
   if (cal().infil !== 1) c.infil = c.infil.map(v => v * cal().infil);
   // scour: critical shear of the erodible ground and the n for the shear (the subgrid mode has no per-cell n of its own)
@@ -1155,7 +1168,7 @@ async function prepareRun(r) {
   await inflow.ready; // the gauge lists (they load after the build)
   if (run !== r) return false;
   if (pairPrep) {
-    r.levelsReady = pairPrep.levelsReady; r.inflowReady = pairPrep.inflowReady;
+    r.levelsReady = pairPrep.levelsReady; r.inflowReady = pairPrep.inflowReady; scaleRunInflow(r);
     if (r.levelsReady) r.levelSrc = await levelSources(r.levelsReady, r.c, r.F);
     return run === r && !r.solver;
   }
@@ -1163,6 +1176,7 @@ async function prepareRun(r) {
     try { r.levelsReady = await prepareLevels(); if (r.levelsReady) r.levelSrc = await levelSources(r.levelsReady, r.c, r.F); } catch (e) { log('Gauge levels: ' + e.message, 'warn'); }
   }
   try { r.inflowReady = await prepareInflow(); } catch (e) { log('River inflow: ' + e.message, 'warn'); r.inflowReady = []; }
+  scaleRunInflow(r);
   return run === r && !r.solver;
 }
 let pairPrep = null;
@@ -1256,7 +1270,7 @@ async function loop(gen) {
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
       if (S.obs.length) scoreAndShow();
       const done = run; await finishRecord();
-      await projects.runFinished(); done.finish?.(); // filed before anyone (Run both) starts the next run
+      if (!done.emu) await projects.runFinished(); done.finish?.(); // filed before anyone (Run both) starts the next run; emulator runs save themselves
     }
   } catch (e) {
     console.error(e); run.playing = false; log('Solver error: ' + e.message, 'err'); run.finish?.(e); return;
@@ -1273,9 +1287,9 @@ function forcingRecord(r) {
   return {
     storm: st ? { ...stormMeta(st), waterLevel: undefined, depth: st.depth, t0: st.t0 ?? null } : null,
     inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow })),
-    tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: $('tCoast').checked } : null,
+    tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: $('tCoast').checked, ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
-    antecedent: val('infilModel', 'wetness', 'wtDepth'),
+    antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
     runLength: { stop: tStop() },
@@ -1406,6 +1420,81 @@ const compareUI = initCompare(map, {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type })); a.download = name + (type === 'text/csv' ? '.csv' : '.zip'); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
     if (projects.current) { const dir = `comparisons/${stamp()}_${name.slice(0, 40)}`; for (const f of files) await writeProjectFile(projects.current.folder, `${dir}/${f.name}`, f.data); }
   },
+});
+// ------------------------------------------------------------------ emulator (src/emulator.js, app/emulator-ui.js)
+/** A storm with every depth and intensity × f (an emulator run's rain depth factor). */
+function scaleStorm(st, f) {
+  const x = (a) => (Array.isArray(a) ? a.map(v => v * f) : a);
+  return { ...st, depth: x(st.depth), intensity: x(st.intensity), total: st.total * f, peakIntensity: st.peakIntensity * f, factor: (st.factor ?? 1) * f };
+}
+const scaleInflow = (entries, k) => (entries ?? []).map(e => ({ ...e, label: `${e.label} × ${k.toFixed(3)}`,
+  flow: typeof e.flow === 'function' ? ((fn) => (t) => k * fn(t))(e.flow) : typeof e.flow === 'number' ? k * e.flow : Array.isArray(e.flow) ? e.flow.map(v => (typeof v === 'number' ? k * v : v)) : e.flow }));
+function scaleRunInflow(r) { r.inflowRaw = r.inflowReady; if (emu?.inflow != null && emu.inflow !== 1) r.inflowReady = scaleInflow(r.inflowReady, emu.inflow); }
+/** One emulator training run: the scenario (null = existing conditions) with the overrides, at full speed, saved to the
+ *  project with its ground (grids/ground.f32). Gauge readings are fetched once per study and reused. → { record, dir, wall } */
+async function runAt(scName, over, label, note) {
+  if (!model || !device) throw new Error('Build a model first.');
+  if (!projects.current) throw new Error('Save the project first: training runs are kept in its runs folder.');
+  const speed = $('speed').value; $('speed').value = 100; $('speed').dispatchEvent(new Event('input'));
+  emu = over; pairPrep = emuPrep;
+  try {
+    design.activate(scName); applyScenario(); drawDesign(); resetRun();
+    if (!(await prepareRun(run))) throw new Error('the run was replaced');
+    emuPrep ??= { levelsReady: run.levelsReady, inflowReady: run.inflowRaw ?? run.inflowReady };
+    note?.('running'); run.emu = true; ensureSolver(); run.playing = true; $('runBtn').textContent = 'Pause'; run.lastWall = performance.now(); run.wall0 ??= run.lastWall; loop(run.gen);
+    const e = await run.done; if (e) throw e;
+    const r = run, dir = await projects.saveRun(label);
+    if (!dir) throw new Error('the run could not be saved');
+    await writeProjectFile(projects.current.folder, `${dir}/grids/ground.f32`, CMP.encodeF32(model.f.z));
+    return { record: r.record, dir: dir.replace(/^runs\//, ''), wall: r.wall, F: r.F };
+  } finally { emu = null; pairPrep = null; $('speed').value = speed; $('speed').dispatchEvent(new Event('input')); }
+}
+/** The forcing fingerprint a solver run with these overrides would have (for an emulated record). The gauge readings
+ *  are the ones this session's study runs used, or fetched now as a run would. */
+async function forcingAt(over, F) {
+  if (!emuPrep) {
+    await inflow.ready;
+    let levelsReady = null, inflowReady = [];
+    if ($('startWater').value === 'gauge') { try { levelsReady = await prepareLevels(); } catch { /* none nearby */ } }
+    try { inflowReady = await prepareInflow(); } catch { /* none */ }
+    emuPrep = { levelsReady, inflowReady };
+  }
+  emu = over;
+  try { return CMP.fingerprint(forcingRecord({ storm: currentStorm(), inflowReady: over?.inflow != null && over.inflow !== 1 ? scaleInflow(emuPrep?.inflowReady, over.inflow) : emuPrep?.inflowReady ?? [], levelsReady: emuPrep?.levelsReady, F })); }
+  finally { emu = null; }
+}
+const groundCache = new Map();
+/** The fine model of a scenario with design numbers set (cached on the last few): { f, log } — existing conditions: the base. */
+function designAt(scName, values) {
+  if (!scName) return { f: model.base, log: null };
+  const sc = design.scenarios.find(s => s.name === scName); if (!sc) throw new Error(`no scenario "${scName}"`);
+  const key = CMP.hashOf({ scName, d: sc.design.features, s: sc.settings, l: sc.locked, values: values ?? {} }); if (groundCache.has(key)) return groundCache.get(key);
+  const dsg = { features: sc.design.features, settings: sc.settings, locked: sc.locked };
+  const r = applyDesign(model.base, values && Object.keys(values).length ? withValues(dsg, values) : dsg, { toCell: llCell, wse: model.baseWse ?? null, water: fineWater(), hash: false });
+  groundCache.set(key, { f: r.fine, log: r.log }); if (groundCache.size > 4) groundCache.delete(groundCache.keys().next().value);
+  return groundCache.get(key);
+}
+/** What a study can vary on this model and scenario: forcing parameters that apply here, and the design numbers. */
+function emuParams(scName) {
+  const out = [];
+  if (stormSrc === 'a14' && model.atlas14) out.push({ key: 'ari', label: 'Return period', unit: 'yr', min: 2, max: 100, log: true, value: Number($('ari').value) });
+  else if (stormSrc === 'a14' && hist.fit) out.push({ key: 'ari', label: 'Return period (site record)', unit: 'yr', min: 2, max: 100, log: true, value: Number($('ari').value) });
+  out.push({ key: 'rain', label: 'Rain depth factor', unit: '×', min: 0.6, max: 1.4, value: 1 });
+  if (inflow.entries.length) out.push({ key: 'inflow', label: 'River inflow scale', unit: '×', min: 0.5, max: 1.5, value: 1 });
+  if (stormSrc === 'hist' && hist.storm?.wl) out.push({ key: 'tide', label: 'Tide / surge offset', unit: 'm', min: -0.3, max: 0.6, value: 0 });
+  if ($('infilModel').value === 'ga') out.push({ key: 'se', label: 'Soil wetness at the start (Se)', unit: '', min: 0.15, max: 0.95, value: WETNESS[$('wetness').value] });
+  if (scName) { const { log } = designAt(scName, null); const sc = design.scenarios.find(s => s.name === scName); for (const v of designVariables(sc.design, log)) out.push({ key: 'design:' + v.key, label: `${v.featureName}: ${v.label}`, unit: v.kind === 'ratio' ? 'H:V' : 'm', kind: v.kind, min: v.min, max: v.max, value: v.value }); }
+  return out;
+}
+const emulatorUI = initEmulator(map, {
+  ready: () => !!model && !!device, model: () => model, project: () => projects.current, scenarios: () => design.scenarios.map(s => s.name), activeScenario: () => design.active?.name ?? null,
+  params: emuParams, runAt, forcingAt, designAt, resetPrep: () => { emuPrep = null; }, units: () => design.units, commit: () => appCommit,
+  fixedForcing: () => (run?.record?.forcing ?? null), readBytes: (path) => readBytes(projects.current.folder, path), readText: (path) => readProjectFile(projects.current.folder, path),
+  writeFile: (path, data) => writeProjectFile(projects.current.folder, path, data), savedRuns, cancelRun: () => { if (run && !run.record) { const r = run; r.finish?.(new Error('Study cancelled')); stopRun(); resetRun(); } },
+  addRecord: (rec) => { records.push(rec); while (records.length > 8) records.splice(records.findIndex(x => ![...baselines.values()].includes(x)), 1); compareUI.refresh(); },
+  setOverlay: (canvas, visible) => { if (model) setCanvasLayer('emu', canvas, model.fine.corners(), 'area-line', visible, 0.9); },
+  geo: () => model && { nx: model.fine.nx, ny: model.fine.ny, x0: model.fine.x0, y0: model.fine.y1 - model.fine.ny * model.fine.dx, dx: model.fine.dx },
+  toCell: llCell,
 });
 /** Surface mass balance plus exact max depths (the GPU tracks them every step). One at a time: each read folds the GPU's
  *  running totals into the books and restarts them, so two overlapping reads (a save during a run) would count twice. */
@@ -2113,7 +2202,7 @@ function applyInputs(inputs) {
 async function restoreProject(pj, layer, scenarios = [], analysis = null) {
   stopRun(); model = null; logEl.textContent = '';
   applyInputs(pj.inputs); infra.setLayer(layer); S.obs = pj.obs ?? []; drawObs(); obsNote();
-  design.setScenarios(loadScenarios(scenarios), pj.activeScenario); design.setAnalysis(analysis); compareUI.clear();
+  design.setScenarios(loadScenarios(scenarios), pj.activeScenario); design.setAnalysis(analysis); compareUI.clear(); emulatorUI.reset();
   setStormSource(pj.stormSrc ?? 'a14'); setDrainSource(pj.drainSrc ?? 'network');
   if (!pj.area) { log(`Opened ${pj.name}: no area saved yet`, 'warn'); return; }
   cancelPoly(); setArea(pj.area, pj.poly);

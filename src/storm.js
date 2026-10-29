@@ -41,11 +41,17 @@ export async function fetchAtlas14(lon, lat, fetcher) {
 }
 
 /**
- * Depth (mm) for duration tMin at return period `ari` (must be a table column), log–log interpolated between table
- * durations. `which`: 'median' | 'upper' | 'lower' (90% confidence bounds).
+ * Depth (mm) for duration tMin at return period `ari`, log–log interpolated between table durations. A return period
+ * between two table columns (1–1000 yr) is log–log interpolated between them too (the emulator varies it smoothly);
+ * table columns are exact. `which`: 'median' | 'upper' | 'lower' (90% confidence bounds).
  */
 export function ddf(pf, ari, tMin, which = 'median') {
-  const col = A14_ARI.indexOf(ari); if (col < 0) throw new Error('return period not in Atlas 14 table: ' + ari);
+  const col = A14_ARI.indexOf(ari);
+  if (col < 0) {
+    if (!(ari > A14_ARI[0] && ari < A14_ARI.at(-1))) throw new Error('return period outside the Atlas 14 table (1–1000 yr): ' + ari);
+    const hi = A14_ARI.findIndex(a => a > ari), lo = hi - 1, t = Math.log(ari / A14_ARI[lo]) / Math.log(A14_ARI[hi] / A14_ARI[lo]);
+    return Math.exp((1 - t) * Math.log(ddf(pf, A14_ARI[lo], tMin, which)) + t * Math.log(ddf(pf, A14_ARI[hi], tMin, which)));
+  }
   const tab = pf[which], D = A14_DURATIONS;
   if (tMin <= D[0]) return tab[0][col] * tMin / D[0]; // below 5 min: constant 5-min intensity
   for (let i = 1; i < D.length; i++) if (tMin <= D[i]) {

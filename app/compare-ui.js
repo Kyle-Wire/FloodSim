@@ -56,9 +56,12 @@ export function initCompare(map, api) {
   function analyse(a, b, ctx) {
     const { nx, ny } = ctx.geo, A = ctx.geo.dx ** 2, band = Math.max(0, Number($('cmpBand').value) || 3) / 1000;
     const onsite = ctx.siteRing ? C.polygonMask([ctx.siteRing], nx, ny, ctx.toCell) : null;
+    // an emulated run's water level is uncertain by its ±σ per cell: a change smaller than 2σ (both runs' σ combined) is
+    // within the emulators' error and counts as no change
+    const sdA = a.emulated?.sd, sdB = b.emulated?.sd, emuBand = sdA || sdB ? Float32Array.from({ length: nx * ny }, (_, k) => 2 * Math.hypot(sdA?.[k] || 0, sdB?.[k] || 0)) : null;
     const maps = MAPS.map(m => {
       const ga = m.key === 'hazard' ? a.hazard : a.grids[m.key], gb = m.key === 'hazard' ? b.hazard : b.grids[m.key];
-      const { delta, stats } = C.diffGrid(ga, gb, { band: m.band ?? band });
+      const { delta, stats } = C.diffGrid(ga, gb, { band: m.band ?? band, bandGrid: ['max_wse', 'max_depth'].includes(m.key) ? emuBand : null });
       return { ...m, delta, stats };
     });
     const wetDry = C.newlyWetDry(a.grids.max_depth, b.grids.max_depth, 0.15);
@@ -77,7 +80,7 @@ export function initCompare(map, api) {
       'Δ runoff off the model edge': d(bk(a, 'outflow'), bk(b, 'outflow')), 'Δ to the pipe network outfalls': d(bk(a, 'outfalls'), bk(b, 'outfalls')),
       'Δ infiltration': d(bk(a, 'infil'), bk(b, 'infil')), 'Δ impervious area (m²)': (b.design?.totals?.impAdded ?? 0) - (b.design?.totals?.impRemoved ?? 0) - ((a.design?.totals?.impAdded ?? 0) - (a.design?.totals?.impRemoved ?? 0)),
       'Cut / fill (m³)': b.design?.totals ? `${b.design.totals.cut.toFixed(1)} / ${b.design.totals.fill.toFixed(1)}` : '–',
-      'Floodplain fill / compensatory cut (m³)': b.design?.totals ? `${b.design.totals.floodFill.toFixed(1)} / ${b.design.totals.compCut.toFixed(1)}` : '–',
+      'Floodplain fill / compensatory cut (m³)': b.design?.totals && Number.isFinite(b.design.totals.floodFill) ? `${b.design.totals.floodFill.toFixed(1)} / ${b.design.totals.compCut.toFixed(1)}` : '–',
     };
     const totals = Object.fromEntries(Object.entries(tot).map(([k, v]) => [k, typeof v === 'number' ? (Number.isFinite(v) ? `${v >= 0 ? '+' : ''}${v.toFixed(1)}${/m²/.test(k) ? '' : ' m³'}` : '–') : v]));
     return { a, b, band, onsite, site: !!onsite, maps, wetDry, buildings, impact, outlets, totals, ctx, A };
@@ -122,7 +125,9 @@ export function initCompare(map, api) {
       `<td>${b.floodedBefore == null ? '–' : b.floodedBefore ? '<b class="warn">yes</b>' : 'no'} / ${b.floodedAfter ? '<b class="warn">yes</b>' : 'no'}</td></tr>`).join('');
     const oRows = c.outlets.map(o => `<tr><td>${esc(o.name ?? o.id)}</td><td>${Q(o.peakA)}</td><td>${Q(o.peakB)}</td><td>${V(o.volA)}</td><td>${V(o.volB)}</td><td>${fmtNum(o.tPeakA / 60, 0)} / ${fmtNum(o.tPeakB / 60, 0)}</td></tr>`).join('');
     const better = (o) => Number.isFinite(o.peakA) && Number.isFinite(o.peakB) && Math.abs(o.peakB) <= Math.abs(o.peakA) + 1e-9;
+    const emulated = [c.a, c.b].filter(r => r.emulated);
     $('cmpOut').innerHTML =
+      (emulated.length ? `<p class="iinfo warn"><b>Emulated: screening only.</b> ${emulated.map(r => esc(r.label)).join(' and ')} ${emulated.length > 1 ? 'are' : 'is'} the emulator's estimate, not a solver run. Confirm with a solver run before using these numbers.</p>` : '') +
       `<p class="iinfo">Same forcing <code>${esc(c.a.forcing.hash)}</code>: the runs differ only in the design. Under ${fmtNum(c.band * 1000, 0)} mm: no change.</p>` +
       `<h3>Off-site impact${c.site ? '' : ' <i>no site boundary: everywhere counts</i>'}</h3><p class="iinfo">${imp.cells ? `<span class="warn"><b>${imp.cells.toLocaleString()} cells (${area(imp.area)}) higher</b>, by up to ${fmtNum(imp.maxRise * 1000, 0)} mm</span>` : '<span class="good"><b>No off-site rise</b> above the band</span>'}` +
       `${imp.newlyWet ? `<br>${imp.newlyWet.toLocaleString()} cells newly wet off-site (${area(imp.newlyWetArea)})` : ''}<br>Existing buildings affected: ${imp.affected.length ? imp.affected.map(b => `${esc(b.id)} (+${fmtNum(b.rise * 1000, 0)} mm)`).join(', ') : 'none'}</p>` +

@@ -39,6 +39,8 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   check('Δ under the 3 mm band is no change', delta[0] === 0 && Math.abs(delta[1] - 0.01) < 1e-6 && Math.abs(delta[2] + 0.01) < 1e-6 && delta[5] === 0);
   check('Δ where only one run has a value is NaN, and counted', Number.isNaN(delta[3]) && Number.isNaN(delta[4]) && stats.onlyB === 1 && stats.onlyA === 1);
   check('Δ stats: rises, falls, no change, largest rise', stats.rise === 1 && stats.fall === 1 && stats.same === 2 && Math.abs(stats.maxRise - 0.01) < 1e-6 && stats.kMaxRise === 1);
+  const wide = C.diffGrid(a, b, { band: 0.003, bandGrid: Float32Array.from([0, 0.02, 0, 0, 0, 0]) });
+  check('a wider band per cell (an emulator’s uncertainty) hides changes inside it only', wide.delta[1] === 0 && Math.abs(wide.delta[2] + 0.01) < 1e-6 && wide.stats.rise === 0 && wide.stats.fall === 1);
   const same = C.diffGrid(a, a);
   check('identical grids: Δ = 0 everywhere', same.stats.rise === 0 && same.stats.fall === 0 && same.stats.onlyA === 0);
   const wd = C.newlyWetDry(Float32Array.from([0, 0.2, 0.3, 0.1]), Float32Array.from([0.2, 0.1, 0.3, 0.12]), 0.15);
