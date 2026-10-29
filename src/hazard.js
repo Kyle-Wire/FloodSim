@@ -77,6 +77,7 @@ export class HazardTracker {
     this.duration = new Float32Array(n); this.arrival = new Float32Array(n).fill(NaN);
     this.cls = Object.fromEntries(Object.keys(STANDARDS).map(k => [k, new Uint8Array(n)]));
     this.shear = new Float32Array(n); this.excess = new Float32Array(n); this.erosion = new Float32Array(n); this.tShear = new Float32Array(n);
+    this.vmax = new Float32Array(n); this.tWet = new Float32Array(n).fill(NaN); // peak speed and first time deeper than VCUT
   }
   /** Packed [depth, speed] per cell at time t (s), for a host-side tracker. Duration counts each interval at the state
    *  seen at its end. */
@@ -90,6 +91,7 @@ export class HazardTracker {
     const dv = d * v; if (dv > this.dv[k]) this.dv[k] = dv;
     const f = forcePerWidth(d, v); if (f > this.force[k]) this.force[k] = f;
     if (d > this.thr) { this.duration[k] += dt; if (Number.isNaN(this.arrival[k])) this.arrival[k] = t; }
+    if (d > VCUT) { if (v > this.vmax[k]) this.vmax[k] = v; if (Number.isNaN(this.tWet[k])) this.tWet[k] = t; }
     for (const s of KEYS) { const c = STANDARDS[s].classify(d, v); if (c > this.cls[s][k]) this.cls[s][k] = c; }
     if (d >= VCUT && n > 0) { // bed shear and scour, as the GPU kernel
       const tau = shearStress(d, v, n);
@@ -99,7 +101,7 @@ export class HazardTracker {
     this.t = t;
   }
   /** Take a solver's every-step results (GPUSolver.readHazard / CPUSolver.readHazard) at time t. */
-  load(r, t) { Object.assign(this, { dv: r.dv, force: r.force, duration: r.duration, arrival: r.arrival, cls: r.cls, shear: r.shear ?? this.shear, excess: r.excess ?? this.excess, erosion: r.erosion ?? this.erosion, tShear: r.tShear ?? this.tShear, t }); }
+  load(r, t) { Object.assign(this, { dv: r.dv, force: r.force, duration: r.duration, arrival: r.arrival, cls: r.cls, shear: r.shear ?? this.shear, excess: r.excess ?? this.excess, erosion: r.erosion ?? this.erosion, tShear: r.tShear ?? this.tShear, vmax: r.vmax ?? this.vmax, tWet: r.tWet ?? this.tWet, t }); }
   /** Area (m²) in each class of a standard, from the worst class each cell reached; `keep(k)` filters cells, and
    *  `areaOf(k)` replaces the cell area (the subgrid mode counts only the 1 m pixels that got wet). */
   classAreas(std, cellArea, keep = () => true, areaOf = null) {

@@ -21,7 +21,9 @@ import { CulvertLinks, LinkHub } from '../src/links.js';
 import { attachStorage, networkToLayer } from '../src/infra.js';
 import { initInfra } from './infra-ui.js';
 import { initDesign } from './design-ui.js';
-import { initProjects } from './projects.js';
+import { initCompare } from './compare-ui.js';
+import * as CMP from '../src/compare.js';
+import { initProjects, readBytes, readFile as readProjectFile, writeFile as writeProjectFile, stamp } from './projects.js';
 import { buildBarriers, BarrierWatch } from '../src/barriers.js';
 import { buildSubgrid, fineDepth, CT as SG_CT, FT as SG_FT } from '../src/subgrid.js';
 import { watershed } from '../src/watershed.js';
@@ -123,7 +125,9 @@ const map = new maplibregl.Map({
       { id: 'usgs', type: 'raster', source: 'usgs' }, { id: 'esri', type: 'raster', source: 'esri', layout: { visibility: 'none' } }],
   },
 });
-const gpuReady = initGPU(); // Build awaits it: a project opened at page load can finish building before the GPU is up
+const gpuReady = initGPU();
+let appCommit = 'unknown'; // the server's checkout: part of every run's forcing fingerprint
+fetch('/api/version', { cache: 'no-store' }).then(r => r.json()).then(v => { if (v.commit) appCommit = v.commit + (v.dirty ? '+dirty' : ''); }).catch(() => {}); // Build awaits it: a project opened at page load can finish building before the GPU is up
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 map.on('moveend', () => { try { localStorage.setItem('floodsim.view', JSON.stringify({ center: map.getCenter().toArray(), zoom: map.getZoom() })); } catch { /* storage off */ } });
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
@@ -168,11 +172,17 @@ function groundAt(ll) {
   return i < 0 || j < 0 || i >= fine.nx || j >= fine.ny ? null : model.f.z[j * fine.nx + i];
 }
 // site design drawer: proposed scenarios as edits to the fine model (model.base is existing conditions, model.f the active scenario)
-const design = initDesign(map, { onChange: designChanged, groundAt: baseGroundAt, ready: mapReady,
+const design = initDesign(map, { onChange: designChanged, onAnalysis: analysisChanged, groundAt: baseGroundAt, ready: mapReady,
   manholes: () => infra.layer.features.filter(f => f.properties.type === 'manhole' || f.properties.type === 'inlet')
     .map(f => ({ ll: f.geometry.coordinates, label: `${f.properties.type === 'inlet' ? 'Catch basin' : 'Manhole'} ${f.id}${Number.isFinite(f.properties.invert) ? `, invert ${(f.properties.invert / 0.3048).toFixed(2)} ft` : ''}` })),
   buildingAt: (pt) => map.getLayer('bld-fill') ? map.queryRenderedFeatures([[pt.x - 2, pt.y - 2], [pt.x + 2, pt.y + 2]], { layers: ['bld-fill'] })[0] ?? null : null });
 let designTimer = 0;
+/** Control lines or the site boundary changed: lines feed the solver, so the run inputs are rebuilt (before a run). */
+function analysisChanged() {
+  if (!model) return;
+  if (run?.solver) { $('designNote').textContent = 'Control lines apply to the next run: press Reset.'; return; }
+  clearTimeout(designTimer); designTimer = setTimeout(() => { if (model && !run?.solver) resetRun(); }, 300);
+}
 function designChanged() {
   clearTimeout(designTimer);
   designTimer = setTimeout(() => {
@@ -984,6 +994,9 @@ function resetRun() {
   if ($('debrisOn').checked && !sed) $('debrisNote').textContent = 'Debris flows need sediment transport on (and the standard solver).';
   if (scour && c.sg && cal().manning !== 1) scour.n.forEach((v, k) => { scour.n[k] = v * cal().manning; });
   c.inside = model.poly ? polygonCells(model.fine, model.poly, F) : null; // polygon area: cells outside become sinks
+  // control lines (Site design → Control line): their solver faces, booked every step
+  const clines = design.analysis.features.filter(f => f.properties.type === 'cline' && f.geometry?.coordinates?.length > 1);
+  const lf = clines.length ? CMP.lineFaces(clines.map(f => toCells(model.fine, f.geometry.coordinates).map(([x, y]) => [x / F, y / F])), c.nx, c.ny) : { faces: [], perLine: [] };
   const bars = buildBarriers(lay.barriers, model.fine, model.f, c, F, { fill: !c.sg }); // berms fill the bed: before anything reads c.z
   infra.setBarriers(bars.list, bars.skipped);
   // bank tops next to open water (after the berms fill the bed)
@@ -1015,7 +1028,7 @@ function resetRun() {
     : sgRain(c, roofEarly.rainField, rf * (1 - green));
   const roofStages = roofHoldStages(c, net, roof, green);
   const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
-  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
+  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, lines: { defs: clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, faces: lf.perLine[l] })), faces: lf.faces, samples: clines.map(() => [[0, 0, 0, 0]]) }, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
   run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
   $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('hud').hidden = false;
   $('runTag').textContent = `${c.nx.toLocaleString()} × ${c.ny.toLocaleString()} @ ${F} m`;
@@ -1068,7 +1081,7 @@ function ensureSolver() {
   const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
   run.solver = new GPUSolver(device, {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask: c.mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
-    sink: c.inside?.map(v => 1 - v), gi: run.gi ?? undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: run.roofStages ? run.roofStages[0].rainField : run.roofEarly ? run.roofEarly.rainField : c.rainField,
+    sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: run.roofStages ? run.roofStages[0].rainField : run.roofEarly ? run.roofEarly.rainField : c.rainField,
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
   });
   const start = startWater(c, F, stageCells); // rivers, lakes and tidal water from the gauges (or dry: the lidar surface)
@@ -1089,18 +1102,26 @@ function ensureSolver() {
   run.hmax = new Float32Array(c.nx * c.ny); run.smax = new Float32Array(c.nx * c.ny);
   run.haz = new HazardTracker(c.nx * c.ny);
 }
+/** Gauge readings for a run's start levels and river inflow (fetched now, or the ones a paired run already used, so
+ *  both runs of a comparison see the same forcing). → false when the run was replaced meanwhile. */
+async function prepareRun(r) {
+  await inflow.ready; // the gauge lists (they load after the build)
+  if (run !== r) return false;
+  if (pairPrep) {
+    r.levelsReady = pairPrep.levelsReady; r.inflowReady = pairPrep.inflowReady;
+    if (r.levelsReady) r.levelSrc = await levelSources(r.levelsReady, r.c, r.F);
+    return run === r && !r.solver;
+  }
+  if ($('startWater').value === 'gauge') {
+    try { r.levelsReady = await prepareLevels(); if (r.levelsReady) r.levelSrc = await levelSources(r.levelsReady, r.c, r.F); } catch (e) { log('Gauge levels: ' + e.message, 'warn'); }
+  }
+  try { r.inflowReady = await prepareInflow(); } catch (e) { log('River inflow: ' + e.message, 'warn'); r.inflowReady = []; }
+  return run === r && !r.solver;
+}
+let pairPrep = null;
 $('runBtn').onclick = async () => {
   if (!run) resetRun(); if (!run) return;
-  if (!run.solver) {
-    const r = run;
-    await inflow.ready; // the gauge lists (they load after the build)
-    if (run !== r) return;
-    if ($('startWater').value === 'gauge') {
-      try { r.levelsReady = await prepareLevels(); if (r.levelsReady) r.levelSrc = await levelSources(r.levelsReady, r.c, r.F); } catch (e) { log('Gauge levels: ' + e.message, 'warn'); }
-    }
-    try { r.inflowReady = await prepareInflow(); } catch (e) { log('River inflow: ' + e.message, 'warn'); r.inflowReady = []; }
-    if (run !== r || r.solver) return;
-  }
+  if (!run.solver && !(await prepareRun(run))) return;
   try { ensureSolver(); } catch (e) { log(e.message, 'err'); return; }
   run.playing = !run.playing;
   $('runBtn').textContent = run.playing ? 'Pause' : 'Run';
@@ -1116,12 +1137,23 @@ const stormEnd = () => (run?.storm ?? currentStorm()).durationMin * 60;
 const tStop = () => stormEnd() + Number($('tail').value) * 60;
 const speedMul = () => { const v = Number($('speed').value); return v >= 100 ? Infinity : Math.round(10 ** (v / 25)); }; // 1×…10 000×, then max
 
+/** Steps are cut only at multiples of STEP_QUANTUM s of simulated time (and at the storm's own stop times: hyetograph
+ *  blocks, exchanges, barrier deployments, saved frames), never at a wall-clock time, so a rerun repeats the same steps
+ *  and gives Δ = 0. The speed setting only decides how far to step per frame. Anything that switches mid-run (green
+ *  roofs filling, the tide) switches on a quantum. */
+const STEP_QUANTUM = 10;
 async function loop(gen) {
   if (!run || run.gen !== gen || !run.playing) return;
   const s = run.solver, now = performance.now(), wall = Math.min(0.25, (now - run.lastWall) / 1000); run.lastWall = now;
   try {
-    let tEnd = Math.min(tStop(), s.t + (speedMul() === Infinity ? 1e9 : speedMul() * wall));
-    if (run.roofStages) { // new buildings' green roofs and cisterns (and the area's green roofs) fill one after another
+    const Q = STEP_QUANTUM, atQ = Math.abs(s.t - Q * Math.round(s.t / Q)) < 1e-3, pace = speedMul();
+    run.paceT = pace === Infinity ? null : Math.min((run.paceT ?? s.t) + pace * wall, s.t + pace * 0.5);
+    let tEnd = Math.min(tStop(), (Math.floor(s.t / Q + 1e-6) + 1) * Q);
+    if (atQ && run.lines.faces.length && s.t > run.lines.samples[0].at(-1)[0] + 1e-6) { // control lines: cumulative volume on every quantum
+      const L = await s.readLines(); if (!run || run.gen !== gen) return;
+      run.lines.samples.forEach((sm, l) => sm.push([s.t, L.net[l], L.plus[l], L.minus[l]])); run.lines.last = L;
+    }
+    if (!atQ) { /* roof stages and the stage boundary switch on quanta only */ } else if (run.roofStages) { // new buildings' green roofs and cisterns (and the area's green roofs) fill one after another
       const depth = s.vol.rain / Math.max(1, s.rainArea);
       while (run.stage < run.roofStages.length && depth >= run.roofStages[run.stage].until) {
         const next = run.roofStages[++run.stage] ?? { rainField: run.c.rainField, roofArea: run.roof?.roofArea };
@@ -1133,8 +1165,8 @@ async function loop(gen) {
     }
     const rr = rainAt(run.storm, s.t); // piecewise-constant hyetograph: never let a frame straddle a block change
     s.rainRate = rr.mmhr * MMHR; tEnd = Math.min(tEnd, rr.until);
-    const stage = stageAt(run.storm, s.t); // observed water level on open-water edges, refreshed at least once a simulated minute
-    if (stage != null) { s.setStage(stage); if (run.coupler) run.coupler.stage = stage; tEnd = Math.min(tEnd, s.t + 60); }
+    const stage = atQ ? stageAt(run.storm, s.t) : null; // observed water level on open-water edges, refreshed every quantum
+    if (stage != null) { s.setStage(stage); if (run.coupler) run.coupler.stage = stage; }
     if (run.exchanger) tEnd = Math.min(tEnd, run.exchanger.tNext);          // stop exactly at each 1D–2D / culvert exchange
     if (run.watch) { const lv = run.watch.levels(s.t); if (lv) s.setCrestLevels(lv); tEnd = Math.min(tEnd, run.watch.next(s.t)); } // deployable barriers go up on time
     const every = Number($('frameEvery').value), frameDue = every > 0 && tEnd >= run.nextFrame - 1e-6;
@@ -1143,6 +1175,7 @@ async function loop(gen) {
     // adaptive batch: aim for ~40 ms of GPU work per submit, but never queue steps past tEnd (they would be dt = 0 work)
     let K = Math.max(1, Math.min(run.K, s.dtAvg > 0 ? Math.ceil(need / s.dtAvg) + 2 : run.K)); // steps past tEnd would be dt = 0 work
     if (need <= 0) K = 0;
+    if (run.paceT != null) { const allow = run.paceT - s.t; K = allow <= 0 ? 0 : Math.min(K, Math.max(1, Math.ceil(allow / (s.dtAvg || 1)))); } // the speed setting
     const t0 = s.t, c0 = performance.now();
     const wantOut = frameDue || s.t + need >= tStop() - 1e-3 || !run.out || now - run.lastOut > 150; // full readback only to draw / save
     const out = await s.frame(tEnd, K, wantOut);
@@ -1174,8 +1207,8 @@ async function loop(gen) {
       }
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
       if (S.obs.length) scoreAndShow();
-      afterRunDesign();
-      projects.runFinished(); run.finish?.();
+      const done = run; await finishRecord();
+      await projects.runFinished(); done.finish?.(); // filed before anyone (Run both) starts the next run
     }
   } catch (e) {
     console.error(e); run.playing = false; log('Solver error: ' + e.message, 'err'); run.finish?.(e); return;
@@ -1183,17 +1216,123 @@ async function loop(gen) {
   nextTick(() => loop(gen));
 }
 
-/**
- * After a run, the max water surface at 1 m (NaN where dry): an existing-conditions run keeps it for the floodplain-fill
- * report of every scenario; a scenario run checks its new buildings against their FFE.
- */
-function afterRunDesign() {
-  const { c, F } = run, d = F === 1 && !c.sg ? run.hmax : toFine(c, run.hmax, 1), z = model.f.z, wse = new Float32Array(d.length);
-  for (let k = 0; k < d.length; k++) wse[k] = d[k] > 0.005 ? z[k] + d[k] : NaN;
-  if (!run.scenario) { model.baseWse = wse; return; }
-  const fl = floodedBuildings(model.f, wse); run.flooded = fl; design.setResults(fl);
-  if (fl.some(b => b.flooded)) log(`${fl.filter(b => b.flooded).length} of ${fl.length} new buildings flooded above the FFE (${run.scenario})`, 'warn');
+// ------------------------------------------------------------------ run records (comparisons)
+const records = [], baselines = new Map(); // this session's finished runs; existing-conditions runs by forcing hash
+/** Everything that is not the design (src/compare.js fingerprint): two runs compare only when this matches. */
+function forcingRecord(r) {
+  const st = r.storm ?? currentStorm(), sample = (fn) => { const out = []; for (let t = 0; t <= tStop(); t += 60) out.push(+fn(t).toFixed(6)); return out; };
+  const val = (...ids) => Object.fromEntries(ids.map(id => [id, $(id)?.type === 'checkbox' ? $(id).checked : $(id)?.value ?? null]));
+  return {
+    storm: st ? { ...stormMeta(st), waterLevel: undefined, depth: st.depth, t0: st.t0 ?? null } : null,
+    inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow })),
+    tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: $('tCoast').checked } : null,
+    startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
+    antecedent: val('infilModel', 'wetness', 'wtDepth'),
+    grid: { solver: $('dxSel').value, F: r.F },
+    solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
+    runLength: { stop: tStop() },
+    options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
+    drainage: { src: drainSrc, ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
+    area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value },
+    commit: appCommit,
+  };
 }
+/** Hash of the fine model a run used (the design's grids; existing conditions once per model). */
+const gridHash = () => (model.f === model.base ? (model.baseHash ??= hashFine(model.base)) : (model.design.hash ??= hashFine(model.f)));
+/**
+ * After a run: the 1 m output grids (max depth, max water surface, max speed, max depth × speed, first wetting, time
+ * above 15 cm, final depth; the worst ARR hazard class), the control-line books and the new buildings, kept as a
+ * record for comparisons. An existing-conditions run is also the baseline for its forcing (its max water surface feeds
+ * the floodplain-fill report); a scenario run checks its new buildings against their FFE.
+ */
+async function finishRecord() {
+  const r = run, { c, F } = r, s = r.solver, fine = model.fine, W = fine.nx, Nf = W * fine.ny, z = model.f.z;
+  const hz = await s.readHazard(), L = r.lines.faces.length ? await s.readLines() : null;
+  if (run !== r) return;
+  const maxD = F === 1 && !c.sg ? Float32Array.from(r.hmax) : Float32Array.from(toFine(c, r.hmax, 1));
+  const finD = F === 1 && !c.sg ? Float32Array.from({ length: Nf }, (_, k) => r.out[2 * k]) : Float32Array.from(toFine(c, r.out, 2));
+  const cellOf = (k) => (F === 1 ? k : (((k / W) | 0) / F | 0) * c.nx + ((k % W) / F | 0));
+  const inModel = (K) => c.mask[K] && !(c.inside && !c.inside[K]);
+  const wall = (k) => !inModel(cellOf(k)) || (model.f.bld[k] && !c.sg); // outside the model, or a building wall at 1 m
+  // a solver-cell value on its 1 m pixels that got wet; `dry` elsewhere (0 for peaks, NaN for times that never came)
+  const per = (v, dry) => { const o = new Float32Array(Nf); for (let k = 0; k < Nf; k++) o[k] = wall(k) ? NaN : maxD[k] > 0.005 ? v[cellOf(k)] : dry; return o; };
+  const grids = {
+    max_depth: maxD.map((v, k) => (wall(k) ? NaN : v)),
+    max_wse: maxD.map((v, k) => (v > 0.005 && !wall(k) ? z[k] + v : NaN)),
+    max_speed: per(hz.vmax, 0), max_dv: per(hz.dv, 0), t_wet: per(hz.tWet, NaN), t_above15: per(hz.duration, 0),
+    final_depth: finD.map((v, k) => (wall(k) ? NaN : v)),
+  };
+  const hazard = new Float32Array(Nf); for (let k = 0; k < Nf; k++) hazard[k] = wall(k) ? NaN : maxD[k] > 0.005 ? hz.cls.arr[cellOf(k)] : 0;
+  if (L) r.lines.samples.forEach((sm, l) => { if (sm.at(-1)[0] < s.t - 1e-6) sm.push([s.t, L.net[l], L.plus[l], L.minus[l]]); });
+  const lines = r.lines.defs.map((d, l) => ({ id: d.id, name: d.name, faces: d.faces, volume: L ? L.net[l] : NaN, plus: L ? L.plus[l] : NaN, minus: L ? L.minus[l] : NaN, series: r.lines.samples[l] }));
+  const m = r.mass ?? {}, outfalls = r.swmm && r.netMass ? r.netMass.externalOutflow * 1000 - (r.coupler?.totals.latOut ?? 0) : null;
+  const newBuildings = (model.f.designBuildings ?? []).map(b => ({ id: b.id, name: b.name, ffe: b.ffe, critical: b.foundation === 'basement' ? b.opening : b.ffe, foundation: b.foundation, cells: b.cells, ring: b.ring }));
+  const when = new Date(), forcing = CMP.fingerprint(forcingRecord(r));
+  const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+    saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
+    grids, hazard, lines, newBuildings, books: { rain: m.rain, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
+  r.record = rec; records.push(rec);
+  if (!rec.scenario) { baselines.set(forcing.hash, rec); model.baseWse = grids.max_wse; if (baselines.size > 3) baselines.delete(baselines.keys().next().value); }
+  while (records.length > 6) { const i = records.findIndex(x => ![...baselines.values()].includes(x)); records.splice(i < 0 ? 0 : i, 1); }
+  design.setLineResults(new Map(lines.map(l => { const st = CMP.lineStats(l); return [l.id, { volume: l.volume, plus: l.plus, minus: l.minus, peak: st.peak, tPeak: st.tPeak }]; })));
+  if (rec.scenario) {
+    const fl = floodedBuildings(model.f, grids.max_wse); r.flooded = fl; design.setResults(fl);
+    if (fl.some(b => b.flooded)) log(`${fl.filter(b => b.flooded).length} of ${fl.length} new buildings flooded above the FFE (${r.scenario})`, 'warn');
+  }
+  compareUI.refresh();
+}
+let recordSeq = 0;
+/** A record from a saved run folder (summary.json, grids/*.f32, lines.json, buildings.json). */
+async function loadSaved(dir) {
+  const folder = projects.current?.folder; if (!folder) throw new Error('no project open');
+  const path = (p) => `runs/${dir}/${p}`, sm = JSON.parse(await readProjectFile(folder, path('summary.json')));
+  if (!sm.grids) throw new Error(`run ${dir} was saved without 1 m grids`);
+  const head = CMP.parseHeader(await readProjectFile(folder, path('grids/max_depth.hdr'))), grids = {};
+  await Promise.all([...Object.keys(CMP.GRIDS), 'hazard_arr'].map(async k => { grids[k] = CMP.decodeF32(await readBytes(folder, path(`grids/${k}.f32`))); }));
+  const json = async (p, d) => { try { return JSON.parse(await readProjectFile(folder, path(p))); } catch { return d; } };
+  const lines = await json('lines.json', []), newBuildings = await json('buildings.json', []);
+  return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
+    storm: sm.storm?.label, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null };
+}
+async function savedRuns() {
+  const folder = projects.current?.folder; if (!folder) return [];
+  return (await (await fetch('/api/projects/runs?' + new URLSearchParams({ folder }), { headers: { 'x-floodsim': '1' } })).json()).runs;
+}
+/** Run existing conditions (unless a run with these settings is cached) and then the active scenario, with the same
+ *  storm, gauge readings and settings, at full speed. → [before, after] records */
+async function runPair(note) {
+  if (!model || !device) throw new Error('Build a model first.');
+  const sc = design.active; if (!sc || !sc.design.features.length) throw new Error('Pick a proposed scenario with features first (Site design).');
+  const speed = $('speed').value; $('speed').value = 100; $('speed').dispatchEvent(new Event('input'));
+  const toEnd = async (label) => {
+    note(`Running ${label}…`); ensureSolver(); run.playing = true; $('runBtn').textContent = 'Pause'; run.lastWall = performance.now(); run.wall0 ??= run.lastWall; loop(run.gen);
+    const e = await run.done; if (e) throw e; return run.record;
+  };
+  try {
+    design.activate(null); applyScenario(); drawDesign(); resetRun();
+    if (!(await prepareRun(run))) throw new Error('the run was replaced');
+    pairPrep = { levelsReady: run.levelsReady, inflowReady: run.inflowReady };
+    const fp = CMP.fingerprint(forcingRecord(run)).hash;
+    const before = baselines.get(fp) ?? await toEnd('existing conditions');
+    if (before === baselines.get(fp) && !run.record) note('Existing conditions with these settings already ran: reusing it.');
+    design.activate(sc.name); applyScenario(); drawDesign(); resetRun();
+    if (!(await prepareRun(run))) throw new Error('the run was replaced');
+    const after = await toEnd(sc.name);
+    note(`Done: ${before.label} and ${after.label}.`);
+    return [before, after];
+  } finally { pairPrep = null; $('speed').value = speed; $('speed').dispatchEvent(new Event('input')); }
+}
+const compareUI = initCompare(map, {
+  records: () => [...records].reverse(), savedRuns, loadSaved, runPair, units: () => design.units,
+  ctx: () => model && { geo: { nx: model.fine.nx, ny: model.fine.ny, x0: model.fine.x0, y0: model.fine.y1 - model.fine.ny * model.fine.dx, dx: model.fine.dx },
+    z: model.base.z, bld: model.base.bld, toCell: llCell, prj: utmPRJ(model.fine.zone),
+    siteRing: design.analysis.features.find(f => f.properties.type === 'site')?.geometry.coordinates[0] ?? null },
+  setOverlay: (canvas, visible) => { if (model) setCanvasLayer('cmp', canvas, model.fine.corners(), 'area-line', visible, 0.9); },
+  async exportFiles(files, name, bytes) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/zip' })); a.download = name + '.zip'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    if (projects.current) { const dir = `comparisons/${stamp()}_${name.slice(0, 40)}`; for (const f of files) await writeProjectFile(projects.current.folder, `${dir}/${f.name}`, f.data); }
+  },
+});
 /** Surface mass balance plus exact max depths (the GPU tracks them every step). One at a time: each read folds the GPU's
  *  running totals into the books and restarts them, so two overlapping reads (a save during a run) would count twice. */
 function readMass() {
@@ -1897,10 +2036,10 @@ function applyInputs(inputs) {
   }
   for (const id of linkFields) $(id).dispatchEvent(new Event('change')); // remember linked URLs
 }
-async function restoreProject(pj, layer, scenarios = []) {
+async function restoreProject(pj, layer, scenarios = [], analysis = null) {
   stopRun(); model = null; logEl.textContent = '';
   applyInputs(pj.inputs); infra.setLayer(layer); S.obs = pj.obs ?? []; drawObs(); obsNote();
-  design.setScenarios(loadScenarios(scenarios), pj.activeScenario);
+  design.setScenarios(loadScenarios(scenarios), pj.activeScenario); design.setAnalysis(analysis); compareUI.clear();
   setStormSource(pj.stormSrc ?? 'a14'); setDrainSource(pj.drainSrc ?? 'network');
   if (!pj.area) { log(`Opened ${pj.name}: no area saved yet`, 'warn'); return; }
   cancelPoly(); setArea(pj.area, pj.poly);
@@ -1958,7 +2097,9 @@ async function runFiles() {
     site: model.site, extent: S.area, polygon: S.poly, grid: { nx: c.nx, ny: c.ny, cellM: F, epsg: model.fine.epsg, mode: c.sg ? 'subgrid speed mode (1 m tables; max_depth.asc at 1 m, other grids per solver cell)' : 'standard' },
     storm: { label: stormLabel(run.storm), ...stormMeta(run.storm) }, drainage: plain(drainLabel()), greenInfrastructure: plain(giLabel()),
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
-    scenario: run.scenario ?? 'Existing conditions', designHash: run.scenario ? hashFine(model.f) : null,
+    scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
+    forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), commit: appCommit, grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
+    books: run.record?.books ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
     hazard: Object.fromEntries(Object.entries(STANDARDS).map(([k, st]) => [k, { name: st.name, note: st.note,
@@ -1981,6 +2122,7 @@ async function runFiles() {
     { path: 'max_speed.asc', data: ascGrid(run.smax) }, { path: 'max_speed.prj', data: prj },
     { path: 'hyetograph.csv', data: csv }, { path: 'infrastructure.geojson', data: JSON.stringify(infra.layer) },
     ...(run.scenario && design.active ? [{ path: 'design.geojson', data: JSON.stringify(design.active.design) }] : []),
+    ...(design.analysis.features.length ? [{ path: 'analysis.geojson', data: JSON.stringify(design.analysis) }] : []),
   ];
   const hz = run.haz, grid = (name, v) => files.push({ path: name + '.asc', data: ascGrid(v) }, { path: name + '.prj', data: prj });
   grid('hazard_arr', hz.cls.arr); grid('hazard_fd2320', hz.cls.defra); grid('hazard_fd2320_urban', hz.cls.defraUrban);
@@ -2002,6 +2144,12 @@ async function runFiles() {
   if (run.watch) files.push({ path: 'barriers.csv', data: barrierCSV(run.watch.results()) });
   if (calSc) files.push({ path: 'calibration.csv', data: calCSV(calSc) });
   if (run.swmmReport) files.push({ path: 'swmm_report.rpt', data: run.swmmReport });
+  if (run.record) { // the 1 m comparison grids (.f32 + ESRI header), control-line hydrographs, new buildings
+    const rec = run.record, hdr = CMP.gridHeader(rec.geo);
+    for (const [k, v] of [...Object.entries(rec.grids), ['hazard_arr', rec.hazard]]) files.push({ path: `grids/${k}.f32`, data: CMP.encodeF32(v) }, { path: `grids/${k}.hdr`, data: hdr });
+    files.push({ path: 'lines.json', data: JSON.stringify(rec.lines) }, { path: 'buildings.json', data: JSON.stringify(rec.newBuildings) });
+    if (rec.lines.length) files.push({ path: 'control_lines.csv', data: CMP.toCSV(rec.lines.flatMap(l => CMP.hydrograph(l.series).map(([t, q], m) => ({ line: l.id, name: l.name, t, q, out: CMP.hydrograph(l.series, 2)[m]?.[1], back: CMP.hydrograph(l.series, 3)[m]?.[1] }))), [['line', 'line'], ['name', 'name'], ['t', 'time_s', 0], ['q', 'net_flow_m3s', 5], ['out', 'flow_to_plus_m3s', 5], ['back', 'flow_to_minus_m3s', 5]]) });
+  }
   return files.map(f => ({ path: f.path, data: typeof f.data === 'string' ? enc.encode(f.data) : f.data }));
 }
 function barrierCSV(rs) {
@@ -2011,7 +2159,7 @@ function barrierCSV(rs) {
     ...rs.map(r => [r.id, JSON.stringify(name(r)), r.type, n(r.length, 1), n(r.crestMin), n(r.crestMax), r.deployAt == null ? 'never' : min(r.deployAt), n(r.minFreeboard), n(r.maxLevel), r.overtopped ? 'yes' : 'no',
       min(r.tOver), n(r.overVol, 2), n(r.peakRate), min(r.tPeakRate), n(r.peakUnitQ), n(r.peakLoad, 2), min(r.tLoad), n(r.fill, 1)].join(','))].join('\n');
 }
-const projects = initProjects({ capture: captureProject, layer: () => infra.layer, restore: restoreProject, runFiles, scenarios: scenarioFiles });
+const projects = initProjects({ capture: captureProject, layer: () => infra.layer, restore: restoreProject, runFiles, scenarios: scenarioFiles, analysis: () => design.analysis });
 
-window.__floodsim = { get run() { return run; }, get model() { return model; }, map, infra, design, projects, buildPackage, runFiles }; // console debugging
+window.__floodsim = { get run() { return run; }, get model() { return model; }, get records() { return records; }, map, infra, design, projects, buildPackage, runFiles }; // console debugging
 gpuReady.then(() => updateSizeNote());

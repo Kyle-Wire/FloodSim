@@ -6,6 +6,7 @@ import { cloudburst, dambreak, MMHR } from '../src/scenarios.js';
 import { buildSubgrid, fineDepth, cellVolume, CT } from '../src/subgrid.js';
 import { settling, bedSize } from '../src/sediment.js';
 import { bankFS } from '../src/banks.js';
+import { lineFaces } from '../src/compare.js';
 
 export async function runGpuSuite(device, log = console.log) {
   const results = {};
@@ -227,15 +228,17 @@ export async function runGpuSuite(device, log = console.log) {
     for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = 3 - 0.03 * i + 0.2 * Math.sin(i / 5) * Math.cos(j / 4);
     const opts = { nx, ny, dx, z, manning: 0.035, bc: { west: 'wall', east: 'outflow', south: 'wall', north: 'wall' } };
     const r = await both(opts, s => s.setDepth((x, y, zz) => (x < 30 ? Math.max(0, 4.5 - zz) : 0)), 240);
-    const G = await r.g.readHazard(), C = r.c.readHazard(); let cls = 0, wet = 0, dF = 0, dDV = 0, dDur = 0, dArr = 0;
+    const G = await r.g.readHazard(), C = r.c.readHazard(); let cls = 0, wet = 0, dF = 0, dDV = 0, dDur = 0, dArr = 0, dV = 0, dWet = 0, wetMiss = 0;
     for (let k = 0; k < nx * ny; k++) {
       if (C.cls.arr[k] || G.cls.arr[k]) wet++;
       for (const s of ['arr', 'defra', 'defraUrban']) if (C.cls[s][k] !== G.cls[s][k]) cls++;
       dF = Math.max(dF, Math.abs(C.force[k] - G.force[k])); dDV = Math.max(dDV, Math.abs(C.dv[k] - G.dv[k])); dDur = Math.max(dDur, Math.abs(C.duration[k] - G.duration[k]));
       if (!Number.isNaN(C.arrival[k]) || !Number.isNaN(G.arrival[k])) dArr = Math.max(dArr, Math.abs(C.arrival[k] - G.arrival[k]));
+      dV = Math.max(dV, Math.abs(C.vmax[k] - G.vmax[k]));
+      if (Number.isNaN(C.tWet[k]) !== Number.isNaN(G.tWet[k])) wetMiss++; else if (!Number.isNaN(C.tWet[k])) dWet = Math.max(dWet, Math.abs(C.tWet[k] - G.tWet[k]));
     }
-    results.hazard = { wetCells: wet, classMismatches: cls, maxForceDiff: dF, maxDvDiff: dDV, maxDurationDiffS: dDur, maxArrivalDiffS: dArr, maxH: r.dmax };
-    log(`hazard every step: ${wet} cells reached, class mismatches vs CPU ${cls} (of ${3 * wet})  max|Δforce| ${dF.toExponential(1)} kN/m  max|Δd·v| ${dDV.toExponential(1)} m²/s  max|Δduration| ${dDur.toFixed(2)} s  max|Δarrival| ${dArr.toFixed(2)} s`);
+    results.hazard = { wetCells: wet, classMismatches: cls, maxForceDiff: dF, maxDvDiff: dDV, maxDurationDiffS: dDur, maxArrivalDiffS: dArr, maxSpeedDiff: dV, maxFirstWetDiffS: dWet, firstWetMismatches: wetMiss, maxH: r.dmax };
+    log(`hazard every step: ${wet} cells reached, class mismatches vs CPU ${cls} (of ${3 * wet})  max|Δforce| ${dF.toExponential(1)} kN/m  max|Δd·v| ${dDV.toExponential(1)} m²/s  max|Δduration| ${dDur.toFixed(2)} s  max|Δarrival| ${dArr.toFixed(2)} s  max|Δpeak speed| ${dV.toExponential(1)} m/s  max|Δfirst wetting| ${dWet.toFixed(2)} s (${wetMiss} cells wet in one only)`);
     r.g.destroy();
   }
 
@@ -368,6 +371,62 @@ export async function runGpuSuite(device, log = console.log) {
     const js = bankFS(hb, 3, 3000, Math.tan(28 * Math.PI / 180), hp, hw);
     results.banks = { fsStart: r0.fsNow[b], minFS: r.minFS[b], tMinFS: r.tMinFS[b], fsEnd: r.fsNow[b], fsJs: js.fs, fsRel: Math.abs(r.fsNow[b] / js.fs - 1), maxPf: r.maxPf[b], hwMax: r.hwMax[b], table: r.table[b], H };
     log(`banks: FS at the start ${r0.fsNow[b].toFixed(2)} (channel full), lowest ${r.minFS[b].toFixed(2)} at ${(r.tMinFS[b] / 60).toFixed(0)} min (rapid drawdown), end ${r.fsNow[b].toFixed(2)} vs src/banks.js ${js.fs.toFixed(2)} (rel ${results.banks.fsRel.toExponential(1)}), peak probability of failure ${(r.maxPf[b] * 100).toFixed(0)} %`);
+  }
+
+  // Control lines (site design, phase 2): the volume booked across a line every stage equals the books. A dam break down
+  // a walled channel with an outflow end: water past a line across the channel = storage downstream of it + edge
+  // outflow. Rain on a tilted basin open on every side: water out across a ring one cell inside the edge = edge
+  // outflow + what the outer ring still holds (no rain falls on the ring). Tiled and untiled.
+  for (const tiles of [true, false]) {
+    const nx = 120, ny = 16, dx = 1, z = new Float64Array(nx * ny);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = 2 - 0.01 * i + 0.05 * Math.sin(i / 7) * Math.cos(j / 3);
+    const cut = 80, { faces } = lineFaces([[[cut, ny + 1], [cut, -1]]], nx, ny); // drawn northward: + = eastward
+    const g = new GPUSolver(device, { nx, ny, dx, z, manning: 0.03, bc: { west: 'wall', east: 'outflow', south: 'wall', north: 'wall' }, lines: faces, tiles });
+    g.setDepth((x, y, zz) => (x < 30 ? Math.max(0, 2.6 - zz) : 0));
+    await g.advance(240);
+    const s = await g.readState(), L = await g.readLines(); let east = 0;
+    for (let j = 0; j < ny; j++) for (let i = cut; i < nx; i++) east += s.h[j * nx + i];
+    const books = east * dx * dx + s.mass.outflow, rel = (L.net[0] - books) / books;
+    results[`lineChannel${tiles ? '' : 'Untiled'}`] = { line: L.net[0], back: L.minus[0], storageDownstream: east * dx * dx, edgeOutflow: s.mass.outflow, rel };
+    log(`control line across a channel${tiles ? '' : ' (untiled)'}: ${L.net[0].toFixed(3)} m³ past it (${L.minus[0].toFixed(3)} back) vs downstream storage ${(east * dx * dx).toFixed(3)} + edge outflow ${s.mass.outflow.toFixed(3)} = ${books.toFixed(3)} m³, rel ${rel.toExponential(1)}`);
+    g.destroy();
+  }
+  {
+    const nx = 90, ny = 70, dx = 2, N = nx * ny, z = new Float64Array(N), rf = new Float64Array(N).fill(1);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      z[j * nx + i] = 5 - 0.02 * Math.abs(i - 40) * dx - 0.015 * Math.abs(j - 30) * dx - 0.3 * Math.exp(-((i - 60) ** 2 + (j - 20) ** 2) / 50); // a dome: water runs off every edge
+      if (i === 0 || j === 0 || i === nx - 1 || j === ny - 1) rf[j * nx + i] = 0;
+    }
+    const { faces } = lineFaces([[[1, 1], [nx - 1, 1], [nx - 1, ny - 1], [1, ny - 1], [1, 1]]], nx, ny);
+    const g = new GPUSolver(device, { nx, ny, dx, z, manning: 0.035, rainField: rf, bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, lines: faces });
+    g.setDepth(() => 0); g.rainRate = 120 * MMHR;
+    await g.advance(900);
+    const s = await g.readState(), L = await g.readLines(); let ring = 0;
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) if (i === 0 || j === 0 || i === nx - 1 || j === ny - 1) ring += s.h[j * nx + i];
+    const books = s.mass.outflow + ring * dx * dx, rel = (L.net[0] - books) / books;
+    results.lineAroundDomain = { line: L.net[0], edgeOutflow: s.mass.outflow, ringStorage: ring * dx * dx, rel, relToEdge: (L.net[0] - s.mass.outflow) / s.mass.outflow, faces: faces.length };
+    log(`control line around the domain (${faces.length} faces): ${L.net[0].toFixed(3)} m³ out vs edge outflow ${s.mass.outflow.toFixed(3)} + outer ring ${(ring * dx * dx).toFixed(3)} = ${books.toFixed(3)} m³, rel ${rel.toExponential(1)} (vs the edge outflow alone ${(100 * results.lineAroundDomain.relToEdge).toFixed(2)} %)`);
+    g.destroy();
+  }
+
+  // Rerunning a run gives Δ = 0: the same inputs and the same stop times give bit-identical depths, peak depths, hazard
+  // products and control-line books, whatever the batch size (steps are cut only at the stop times)
+  {
+    const sc = cloudburst(96), opts = { nx: sc.nx, ny: sc.ny, dx: sc.dx, z: sc.z, mask: sc.mask, manning: sc.manning, infil: sc.infil, bc: sc.bc,
+      lines: lineFaces([[[48, -1], [48, 97]]], sc.nx, sc.ny).faces };
+    const go = async (K) => {
+      const g = new GPUSolver(device, opts); sc.init(g); g.rainRate = 150 * MMHR;
+      for (const t of [60, 120, 300, 420, 600]) await g.advance(t, K);
+      const s = await g.readState(), hz = await g.readHazard(), L = await g.readLines(); g.destroy();
+      return { s, hz, L };
+    };
+    const a = await go(64), b = await go(64), c = await go(7);
+    const cmp = (x, y) => { let n = 0, m = 0; for (const key of ['h', 'hu', 'hv', 'hmax']) for (let k = 0; k < x.s[key].length; k++) { const d = Math.abs(x.s[key][k] - y.s[key][k]); if (d > 0) n++; if (d > m) m = d; }
+      for (const key of ['dv', 'force', 'duration', 'vmax']) for (let k = 0; k < x.hz[key].length; k++) { const d = Math.abs(x.hz[key][k] - y.hz[key][k]); if (d > 0) n++; if (d > m) m = d; }
+      return { cells: n, max: m, line: Math.abs(x.L.net[0] - y.L.net[0]), out: Math.abs(x.s.mass.outflow - y.s.mass.outflow) }; };
+    const same = cmp(a, b), batch = cmp(a, c);
+    results.rerun = { same, batch };
+    log(`rerun (urban cloudburst, 600 s): Δ between two runs: ${same.cells} values differ (max ${same.max.toExponential(1)}), line Δ ${same.line.toExponential(1)} m³, outflow Δ ${same.out.toExponential(1)} m³;  batch of 7 vs 64 steps: ${batch.cells} differ (max ${batch.max.toExponential(1)}), line Δ ${batch.line.toExponential(1)} m³`);
   }
 
   return results;

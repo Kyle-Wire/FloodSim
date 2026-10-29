@@ -85,12 +85,65 @@ FloodSim turns it into edits to the 1 m layers and runs it through the same pipe
 - **Saved** in the project folder as `scenarios/<name>/design.geojson` plus `scenario.json`. The JSON holds the
   settings, the presets used and every resolved value (each building's HAG, FFE and pad, cut and fill). Opening a
   project keeps each building's saved FFE and pad until that building is edited.
-- Not yet: the run comparison, control lines, ponds and outlet structures (phases 2–3). The street-network estimate is
-  rebuilt on the proposed model; the spec's "proposed network = baseline layer + design features" comes with phase 3.
+- Not yet: ponds and outlet structures, drawn stormwater and the return-period sweep (phase 3). The street-network
+  estimate is rebuilt on the proposed model; the spec's "proposed network = baseline layer + design features" comes
+  with phase 3.
 - `npm run test:design`: the distance transform against brute force; a pad on a tilted plane is flat and daylights at
   exactly 3:1 and 2:1; cut and fill match the analytic frustum volumes (within 0.3 %); the apron; the FFE rules (HAG,
   BFE, balanced); demolish; the layer updates; floodplain fill = footprint × depth in a pond; no features → the same
   model and bit-identical solver inputs; roof routing per building id.
+
+**Comparing runs** (map button *Compare*; `src/compare.js`, `app/compare-ui.js`; phase 2 of the site-design spec).
+Two runs compare only when they differ in nothing but the design.
+- **Forcing fingerprint.** Every run hashes everything that is not the design:
+  - the storm (hyetograph, or the historic event and its rain source), river inflow, tide and surge;
+  - the gauge readings used for start levels, antecedent soil moisture and the water table;
+  - grid size and speed mode, solver settings, run length;
+  - sediment, debris and bank options;
+  - drainage, green-infrastructure and calibration settings, the infrastructure layer, the area;
+  - the app commit (`/api/version`).
+  The compare panel refuses two runs with different fingerprints and names the parts that differ.
+- **Repeatable runs.** Steps are cut only at multiples of 10 s of simulated time and at the storm's own stop times, never
+  at a wall-clock time. Green roofs, cisterns and the tide switch on those quanta. The speed setting only decides how
+  far to step per frame. Rerunning a run therefore gives Δ = 0 exactly: in the app, two existing-conditions runs of a
+  Meyerland block gave 0 differing cells, and the GPU suite checks it, whatever the batch size.
+- **Baseline cache.** Each finished existing-conditions run is kept per fingerprint (this session).
+  *Run both* runs existing conditions, unless a run with the same fingerprint is cached, and then the active scenario.
+  Both use the same gauge readings, at full speed. A new storm misses the cache; a design change does not.
+- **1 m grids per run**, kept in memory and saved in the run folder as `grids/<name>.f32` (float32, little-endian,
+  row 0 north) plus an ESRI `.hdr`:
+  - max depth, max water surface, max speed and max depth × speed;
+  - first wetting (deeper than 5 cm), time above 15 cm, final depth;
+  - the worst ARR hazard class.
+  Peak speed and first wetting are new every-step GPU products (`hzRecord`), and match the CPU solver.
+- **Control lines** (Site design → *Control line*, shared by all scenarios):
+  - Faces come from `barrierFaces()`. Kernel `lineFlux` books the volume across each face every stage, both ways and
+    compensated, exactly as `edgeOut` books the domain edge.
+  - + is water crossing to the right of the line as drawn, or outward for a closed line.
+  - Each line's cumulative volumes are sampled every 10 s, giving its hydrograph.
+  - Checks: a line across a channel equals the downstream storage plus the edge outflow to 9e-9. A ring around the
+    domain equals the edge outflow plus what the outer ring holds to 1e-9.
+- **Site boundary** (Site design → *Site*) splits results into on-site and off-site.
+- **Compare panel:**
+  - Δ maps (after − before) of max water surface, max depth, time above 15 cm, first wetting and hazard class, with a
+    no-change band (3 mm; 1 min for times). There is also a newly wet / newly dry map at 15 cm.
+  - Off-site adverse impact: cells and area with a higher max water surface, the largest rise, newly wet cells and the
+    existing buildings among them.
+  - Building table: every building within 100 m of the site. New buildings carry their FFE (the lowest opening for a
+    basement); existing ones an FFE estimated as HAG + 6 in, marked est. Each shows the max water surface around it
+    before and after, and flooded before / after.
+  - Outlet table per control line: peak outflow, net volume and time to peak, pre vs post, with the post ≤ pre check.
+  - Totals: Δ runoff off the edge and to the outfalls, Δ infiltration, Δ impervious, cut / fill, floodplain fill.
+- **Export:** a zip with the Δ grids (`.asc` + `.prj`), newly wet / dry, `buildings.csv`, `control_lines.csv`, the
+  hydrographs, `comparison.json` and a one-page `summary.html`. With a project open, it is also saved under
+  `comparisons/`.
+- `summary.json` of every saved run gains `scenario`, `designHash` (the grid hash of the model it ran), `forcingHash`
+  with the per-part `forcing` hashes, `commit`, the books and the control lines. The compare panel lists the project's
+  saved runs (`/api/projects/runs`) next to this session's runs.
+- `npm run test:compare` covers:
+  - the fingerprint (stable, names the difference, ignores the design);
+  - the `.f32` grids, Δ with the band, newly wet / dry, the off-site impact;
+  - the building and outlet tables, control-line faces and their signs, the CSV and the summary page.
 
 **Flood barriers** (drawer tools *Flood wall*, *Levee / berm*, *Deployable*; `src/barriers.js`). Each is a line with
 a crest, set either as a height above the lidar ground under it (so it follows the ground) or as a fixed elevation
@@ -358,10 +411,12 @@ Each project is a folder in `Documents\FloodSim Projects` (override with `FLOODS
 - `project.json` holds the area and every setting.
 - `infrastructure.geojson` holds the drawer layer.
 - `scenarios/<name>/` holds each site-design scenario: `design.geojson` and `scenario.json` (settings, presets used,
-  resolved FFE / pad and cut / fill per feature).
+  resolved FFE / pad and cut / fill per feature). `analysis.geojson` holds the control lines and the site boundary.
+- `comparisons/<date_time>/` gets each exported comparison.
 - `runs/<date_time>/` gets one folder per finished run: `summary.json`, `max_depth.asc` and `max_speed.asc` (ESRI ASCII
-  + `.prj`, open in QGIS / ArcGIS), the SWMM `.inp` and report, the hyetograph, and the layer as run. A run of a
-  design scenario also records the scenario, its grid hash and its features (`design.geojson`).
+  + `.prj`, open in QGIS / ArcGIS), the SWMM `.inp` and report, the hyetograph, and the layer as run. Every run also
+  saves its 1 m comparison grids (`grids/*.f32` + `.hdr`), its forcing fingerprint and its control lines. A run of a
+  design scenario records the scenario, its grid hash and its features (`design.geojson`).
 
 Opening a project rebuilds the model from the saved settings, and reloads a historic event if one was used.
 
@@ -624,6 +679,9 @@ Bed elevations are stored relative to the domain minimum for fp32 headroom.
 | Starting water levels: parallel rise, flat lake fill, datum rules | exact | – |
 | Green-Ampt and scour vs CPU (infiltrated volume, shear, scour depth) | ponded GA within 0.3 % of analytic | 1e-7, 1e-4, 3e-4 mm |
 | Subgrid speed mode vs 1 m run, 320 m urban cloudburst (4 m / 8 m) | – | peak depth MAE 2.6 / 5.6 cm, CSI 0.80 / 0.63, 15× / 36× faster |
+| Control lines: across a channel vs downstream storage + edge outflow; around the domain vs edge outflow + outer ring | – | 9e-9, 1e-9 (tiled = untiled) |
+| Rerun of the same run (urban cloudburst; batches of 7 vs 64 steps): depths, peaks, hazard, line books | – | 0 values differ |
+| Peak speed and first wetting (> 5 cm) every step vs CPU | – | 3.6e-6 m/s, 0 s |
 
 Full numbers: `tests/results-cpu.json`, `tests/results-gpu.json`.
 
@@ -698,10 +756,11 @@ src/banks.js          bank tops next to water, Culmann bank stability, probabili
 src/sediment.js       sediment transport inputs (4 grain classes, settling, erodible stores, skin roughness, soil strength)
 src/gi.js             green infrastructure layers (permeable pavement, rain gardens) and green-roof retention
 src/design.js         site design: proposed buildings, pads, paved areas, demolitions → edited 1 m layers; grading engine, cut / fill log
+src/compare.js        paired-run comparison: forcing fingerprint, .f32 grids, Δ maps, off-site impact, building and outlet tables
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)
-app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/projects.js project folders
+app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/projects.js project folders
 app/                  Phase 0 lab template + voxel shell, build script
 tests/                CPU suite, Phase 1 suite, shared GPU suite, browser + Dawn runners, results JSON
 benchmarks/ea/        Gate B: EA 2D benchmark cases, browser runner, scorer, results (data/ is the GOV.UK archive)

@@ -3,9 +3,10 @@
 // POST /api/fetch {url, method?, body?, contentType?} → upstream response, cached on disk by request hash.
 // Only allowlisted hosts are proxied; responses are cached in .cache/ so re-running an area is offline-fast.
 // /api/projects…: project folders on this computer (loopback only), under FLOODSIM_PROJECTS or Documents\FloodSim Projects.
+// GET /api/version → { commit, dirty }: the app commit, part of every run's forcing fingerprint.
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, stat, readdir } from 'node:fs/promises';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { extname, join, normalize } from 'node:path';
@@ -112,6 +113,20 @@ async function projects(req, res, p) {
   if (req.headers['x-floodsim'] !== '1') return send(res, 403, 'missing x-floodsim header');
   if (!LOCAL.test(req.socket.remoteAddress ?? '')) return send(res, 403, 'local only');
   const q = new URL(req.url, 'http://x').searchParams;
+  if (p === '/api/projects/runs' && req.method === 'GET') { // a project's saved runs with their summaries' key facts, newest first
+    const dir = projectPath(q.get('folder'), 'runs'); if (!dir) return send(res, 400, 'bad project name');
+    const runs = [];
+    for (const d of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
+      if (!d.isDirectory()) continue;
+      try {
+        const sm = JSON.parse(await readFile(join(dir, d.name, 'summary.json'), 'utf8'));
+        runs.push({ dir: d.name, savedUTC: sm.savedUTC ?? null, scenario: sm.scenario ?? 'Existing conditions', designHash: sm.designHash ?? null, forcingHash: sm.forcingHash ?? null,
+          forcing: sm.forcing ?? null, commit: sm.commit ?? null, storm: sm.storm?.label ?? null, finished: sm.finished ?? null, grids: !!sm.grids });
+      } catch { /* no summary */ }
+    }
+    runs.sort((a, b) => String(b.dir).localeCompare(String(a.dir)));
+    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); return res.end(JSON.stringify({ runs }));
+  }
   if (p === '/api/projects' && req.method === 'GET') { // list, newest first
     await mkdir(projectsDir, { recursive: true });
     const list = [];
@@ -144,6 +159,17 @@ async function projects(req, res, p) {
   return send(res, 404, 'not found');
 }
 
+/** The commit the server's checkout is on, and whether it has uncommitted changes (null outside a git checkout). */
+let version = null;
+function appVersion() {
+  if (version) return version;
+  const git = (...a) => spawnSync('git', a, { cwd: root, encoding: 'utf8' });
+  const head = git('rev-parse', '--short=12', 'HEAD'), st = git('status', '--porcelain', '--untracked-files=no');
+  version = { commit: head.status === 0 ? head.stdout.trim() : null, dirty: st.status === 0 ? st.stdout.trim().length > 0 : null };
+  setTimeout(() => { version = null; }, 10000); // re-read now and then: commits made while it runs
+  return version;
+}
+
 function send(res, code, msg) { res.writeHead(code, { 'content-type': 'text/plain' }); res.end(msg); }
 
 /** POST /api/bench-results?name=test1 (JSON body) → benchmarks/ea/results/test1.json (gatec-* → benchmarks/gatec/results). Names are [a-z0-9-] only. */
@@ -161,6 +187,7 @@ async function saveBench(req, res) {
 createServer((req, res) => {
   const p = req.url.split('?')[0];
   (req.method === 'POST' && p === '/api/fetch' ? proxy(req, res) : req.method === 'POST' && p === '/api/bench-results' ? saveBench(req, res)
+    : p === '/api/version' ? Promise.resolve().then(() => { res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(appVersion())); })
     : p.startsWith('/api/projects') ? projects(req, res, p) : serveStatic(req, res))
     .catch((e) => { console.error(e); if (!res.headersSent) send(res, 500, String(e.message)); });
 }).listen(port, () => console.log(`FloodSim at http://localhost:${port}/app/map.html

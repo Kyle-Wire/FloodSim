@@ -2,8 +2,10 @@
 // Each scenario is a lon/lat GeoJSON FeatureCollection in SI units over the frozen existing-conditions model; the drawer
 // shows US or SI units. "Existing conditions" is always there and has no features. Every edit calls `onChange`, which
 // applies the active scenario to the fine model (src/design.js applyDesign) and rebuilds the run inputs.
+// Control lines and the site boundary are not part of any scenario: they sit in a shared analysis layer, so both runs of
+// a comparison book the same lines (`onAnalysis` rebuilds the run inputs).
 import { PRESETS, DEFAULTS, SETTINGS, FOUNDATIONS, ROOFS, LEVEL_HEIGHT, designFeature, applyPreset, bumpDesignIds } from '../src/design.js';
-import { ringArea } from '../src/infra.js';
+import { ringArea, lineLength } from '../src/infra.js';
 
 const $ = (id) => document.getElementById(id);
 const UNITS = {
@@ -11,7 +13,8 @@ const UNITS = {
   si: { elev: ['m', 1, 2], len: ['m', 1, 2], size: ['mm', 0.001, 0], area: ['m²', 1, 0], vol: ['m³', 1, 1], cvol: ['m³', 1, 1] },
 };
 const CONVERT = new Set(['elev', 'len', 'size', 'cvol']);
-const NAMES = { building: 'Building', grade: 'Pad', paved: 'Paved area', demolish: 'Demolish' };
+const NAMES = { building: 'Building', grade: 'Pad', paved: 'Paved area', demolish: 'Demolish', cline: 'Control line', site: 'Site boundary' };
+const ANALYSIS = new Set(['cline', 'site']);
 const COLORS = { building: '#f2a65a', grade: '#9ad17b', paved: '#9aa7b1', demolish: '#ff5d5d' };
 const HINTS = {
   select: 'Click a feature to edit it. Delete removes the selection. Features apply in list order: later ones override earlier ones where they overlap.',
@@ -19,18 +22,24 @@ const HINTS = {
   grade: 'Click the corners of the pad. Flat at an elevation, a plane through three spot elevations (the first three corners), or flat where cut and fill balance.',
   paved: 'Click the corners of the driveway, parking, sidewalk or road. Impervious; optionally graded to an elevation with a cross slope or crown, and a curb.',
   demolish: 'Click a mapped building to remove it (or draw a polygon around several). The lidar is bare earth, so the ground under it is already there.',
+  cline: 'Click along a control line (a property line, a site outlet, across a culvert or a street); double-click or Enter finishes. Every run books the flow across it each step; + is water crossing to the right of the line as drawn (outward for a closed line). Shared by all scenarios.',
+  site: 'Click the corners of the site boundary; Enter, double-click, or a click on the first corner finishes. Comparisons split results into on-site and off-site with it. One per project, shared by all scenarios.',
 };
 const PCT = 'pct';
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-export function initDesign(map, { onChange, groundAt, manholes, buildingAt, ready }) {
+export function initDesign(map, { onChange, onAnalysis = () => {}, groundAt, manholes, buildingAt, ready }) {
   let scenarios = [], active = -1, tool = 'select', sel = null, draft = null, units = 'us', log = null, results = null, roofLinks = new Map();
+  let analysis = { type: 'FeatureCollection', features: [] }; // control lines and the site boundary
+  let lineResults = null; // control-line books of the last run: Map(id → { volume, plus, minus, peak, tPeak })
   try {
     const st = JSON.parse(localStorage.getItem('floodsim.design'));
     if (st?.scenarios) { scenarios = st.scenarios; active = st.active ?? -1; }
+    analysis = JSON.parse(localStorage.getItem('floodsim.analysis')) ?? analysis;
     units = localStorage.getItem('floodsim.designUnits') ?? 'us';
   } catch { /* storage off */ }
   for (const s of scenarios) bumpDesignIds(s.design);
+  bumpDesignIds(analysis);
   const defaults = structuredClone(DEFAULTS);
   const u = () => UNITS[units];
   const cur = () => scenarios[active] ?? null;
@@ -46,22 +55,30 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
     const lineColor = selW(['match', ['get', 'type'], ...Object.entries(COLORS).flat(), '#ffffff'], '#ffffff');
     map.addLayer({ id: 'design-line', type: 'line', source: 'design', filter: ['!=', ['get', 'type'], 'grade'], paint: { 'line-color': lineColor, 'line-width': selW(1.6, 3.2) } });
     map.addLayer({ id: 'design-grade-line', type: 'line', source: 'design', filter: T('grade'), paint: { 'line-color': lineColor, 'line-width': selW(1.6, 3.2), 'line-dasharray': [2, 1] } });
+    map.addSource('analysis', { type: 'geojson', data: analysis });
+    map.addLayer({ id: 'analysis-site', type: 'line', source: 'analysis', filter: T('site'), paint: { 'line-color': selW('#f2c94c', '#ffffff'), 'line-width': selW(2, 3.5), 'line-dasharray': [4, 2] } });
+    map.addLayer({ id: 'analysis-cline', type: 'line', source: 'analysis', filter: T('cline'), layout: { 'line-cap': 'round' }, paint: { 'line-color': selW('#5ce1e6', '#ffffff'), 'line-width': selW(3, 5) } });
     map.addLayer({ id: 'design-draft-line', type: 'line', source: 'design-draft', paint: { 'line-color': '#ffffff', 'line-width': 2, 'line-dasharray': [2, 1.5] } });
     map.addLayer({ id: 'design-draft-pts', type: 'circle', source: 'design-draft', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 3, 'circle-color': '#ffffff' } });
     refresh(false);
   });
-  const LAYERS = ['design-fill', 'design-line', 'design-grade-line'];
+  const LAYERS = ['design-fill', 'design-line', 'design-grade-line', 'analysis-cline', 'analysis-site'];
   const open = () => !$('design').hidden;
 
   function persist() { try { localStorage.setItem('floodsim.design', JSON.stringify({ scenarios, active })); } catch { /* too big or storage off */ } }
+  function refreshAnalysis(changed = true) {
+    map.getSource('analysis')?.setData(analysis); if (sel != null) mark(sel, true);
+    if (changed) { try { localStorage.setItem('floodsim.analysis', JSON.stringify(analysis)); } catch { /* storage off */ } onAnalysis(); }
+  }
   function refresh(changed = true) {
     map.getSource('design')?.setData(fc());
     if (sel != null) mark(sel, true);
     renderScenarios(); renderLog();
     if (changed) { persist(); results = null; onChange(); }
   }
-  const byId = (id) => fc().features.find(f => f.id === id);
-  const mark = (id, on) => { if (map.getSource('design')) map.setFeatureState({ source: 'design', id }, { sel: on }); };
+  const byId = (id) => fc().features.find(f => f.id === id) ?? analysis.features.find(f => f.id === id);
+  const isAnalysis = (id) => analysis.features.some(f => f.id === id);
+  const mark = (id, on) => { const src = isAnalysis(id) ? 'analysis' : 'design'; if (map.getSource(src)) map.setFeatureState({ source: src, id }, { sel: on }); };
   /** An edit drops the FFE / pad a saved scenario locked for that feature. */
   const unlock = (id) => { if (cur()?.locked?.[id]) delete cur().locked[id]; };
 
@@ -115,7 +132,7 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
   function drawDraft(cursor) {
     if (!draft) return;
     const pts = cursor ? [...draft.pts, cursor] : draft.pts, F = [];
-    if (pts.length > 1) F.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: pts.length > 2 ? [...pts, pts[0]] : pts }, properties: {} });
+    if (pts.length > 1) F.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: pts.length > 2 && draft.type !== 'cline' ? [...pts, pts[0]] : pts }, properties: {} });
     for (const p of draft.pts) F.push({ type: 'Feature', geometry: { type: 'Point', coordinates: p }, properties: {} });
     map.getSource('design-draft')?.setData({ type: 'FeatureCollection', features: F });
   }
@@ -126,7 +143,15 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
     s.design.features.push(f); refresh(); select(f.id); return f;
   }
   function finishDraft() {
-    const d = draft; cancelDraft(); if (!d || d.pts.length < 3) return;
+    const d = draft; cancelDraft();
+    if (d && ANALYSIS.has(d.type)) { // control line (2+ points) or site boundary (3+); one site per project
+      if (d.pts.length < (d.type === 'cline' ? 2 : 3)) return;
+      if (d.type === 'site') analysis.features = analysis.features.filter(f => f.properties.type !== 'site');
+      const n = analysis.features.filter(f => f.properties.type === 'cline').length + 1;
+      const f = designFeature(d.type, d.type === 'cline' ? { type: 'LineString', coordinates: d.pts } : { type: 'Polygon', coordinates: [[...d.pts, d.pts[0]]] }, { name: d.type === 'cline' ? `Line ${n}` : 'Site' });
+      analysis.features.push(f); refreshAnalysis(); select(f.id); $('designHint').textContent = HINTS[tool]; return;
+    }
+    if (!d || d.pts.length < 3) return;
     const props = d.type === 'grade' && defaults.grade.mode === 'plane' ? { spots: d.pts.slice(0, 3).map(p => groundAt(p)) } : {};
     add(d.type, { type: 'Polygon', coordinates: [[...d.pts, d.pts[0]]] }, props);
     $('designHint').textContent = HINTS[tool];
@@ -140,7 +165,7 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
       if (b) { add('demolish', b.geometry, { name: 'Demolish' + (b.properties?.h ? ` (${Math.round(b.properties.h)} m tall)` : '') }); return; }
     }
     draft ??= { type: tool, pts: [] };
-    if (draft.pts.length >= 3) { const a = map.project(draft.pts[0]); if (Math.hypot(a.x - e.point.x, a.y - e.point.y) < 10) { finishDraft(); return; } }
+    if (draft.pts.length >= 3 && draft.type !== 'cline') { const a = map.project(draft.pts[0]); if (Math.hypot(a.x - e.point.x, a.y - e.point.y) < 10) { finishDraft(); return; } }
     const last = draft.pts.at(-1), q = last && map.project(last);
     if (!q || Math.hypot(q.x - e.point.x, q.y - e.point.y) > 3) draft.pts.push(ll);
     drawDraft();
@@ -161,7 +186,9 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
     if ((e.key === 'Delete' || e.key === 'Backspace') && sel != null) { e.preventDefault(); remove(sel); }
     if (e.key === 'Escape') { if (tool !== 'select') setTool('select'); else select(null); }
   });
-  function remove(id) { const s = cur(); if (!s) return; s.design.features = s.design.features.filter(f => f.id !== id); unlock(id); sel = null; refresh(); renderProps(); }
+  function remove(id) {
+    if (isAnalysis(id)) { analysis.features = analysis.features.filter(f => f.id !== id); sel = null; refreshAnalysis(); renderProps(); return; }
+    const s = cur(); if (!s) return; s.design.features = s.design.features.filter(f => f.id !== id); unlock(id); sel = null; refresh(); renderProps(); }
   function move(id, by) {
     const F = cur()?.design.features, i = F?.findIndex(f => f.id === id); if (i == null || i < 0) return;
     const j = Math.max(0, Math.min(F.length - 1, i + by)); if (i === j) return;
@@ -193,6 +220,8 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
       ['crossSlope', 'Cross slope', PCT, when(p => p.elev != null)], ['crown', 'Crowned (falls both ways from the long axis)', 'bool', when(p => p.elev != null)],
       ['slopeDir', 'Falls toward (degrees from north)', 'num', when(p => p.elev != null && !p.crown)], ['curb', 'Curb height', 'size'], ...SLOPES],
     demolish: [['name', 'Name', 'text']],
+    cline: [['name', 'Name', 'text']],
+    site: [['name', 'Name', 'text']],
   };
   function field(p, [k, label, kind, x]) {
     const id = 'dp-' + k, ph = x?.ph ?? '';
@@ -212,15 +241,15 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
     const box = $('designProps'), f = sel != null ? byId(sel) : null;
     const type = f ? f.properties.type : tool !== 'select' ? tool : null;
     if (!type) { box.innerHTML = ''; return; }
-    const p = f ? f.properties : defaults[type];
-    const rows = SPEC[type].filter(([, , , x]) => !x?.when || x.when(p)).map(s => field(p, s));
+    const p = f ? f.properties : defaults[type] ?? {};
+    const rows = ANALYSIS.has(type) && !f ? [] : SPEC[type].filter(([, , , x]) => !x?.when || x.when(p)).map(s => field(p, s));
     const info = f ? featureInfo(f) : type === 'building' ? ['Confirm the preset values against the local code.'] : [];
-    const F = cur()?.design.features ?? [], i = f ? F.indexOf(f) : -1;
-    box.innerHTML = `<h3>${f ? (p.name ? esc(p.name) : NAMES[type]) : 'New ' + NAMES[type].toLowerCase() + ' defaults'}${f ? ` <i>${i + 1} of ${F.length}</i>` : ''}</h3>${rows.join('')}` +
+    const an = ANALYSIS.has(type), F = cur()?.design.features ?? [], i = f && !an ? F.indexOf(f) : -1;
+    box.innerHTML = `<h3>${f ? (p.name ? esc(p.name) : NAMES[type]) : an ? 'New ' + NAMES[type].toLowerCase() : 'New ' + NAMES[type].toLowerCase() + ' defaults'}${i >= 0 ? ` <i>${i + 1} of ${F.length}</i>` : an && f ? ' <i>all scenarios</i>' : ''}</h3>${rows.join('')}` +
       (info.length ? `<p class="iinfo">${info.join('<br>')}</p>` : '') +
-      (f ? '<div class="row"><button class="btn" id="dpUp" type="button" title="Apply earlier">↑</button><button class="btn" id="dpDown" type="button" title="Apply later (overrides)">↓</button><button class="btn" id="dpDelete" type="button">Delete</button></div>' : '');
+      (f ? `<div class="row">${an ? '' : '<button class="btn" id="dpUp" type="button" title="Apply earlier">↑</button><button class="btn" id="dpDown" type="button" title="Apply later (overrides)">↓</button>'}<button class="btn" id="dpDelete" type="button">Delete</button></div>` : '');
     for (const el of box.querySelectorAll('[data-k]')) el.addEventListener('change', () => setProp(f, type, el));
-    if (f) { $('dpDelete').onclick = () => remove(f.id); $('dpUp').onclick = () => move(f.id, -1); $('dpDown').onclick = () => move(f.id, 1); }
+    if (f) { $('dpDelete').onclick = () => remove(f.id); if (!an) { $('dpUp').onclick = () => move(f.id, -1); $('dpDown').onclick = () => move(f.id, 1); } }
   }
   function setProp(f, type, el) {
     const p = f ? f.properties : defaults[type], k = el.dataset.k, kind = el.dataset.kind;
@@ -239,14 +268,21 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
       if (k === 'levels' && val) p.height = val * LEVEL_HEIGHT;
       if (k === 'ffe' && val != null) p.ffeMode = 'fixed';
     }
-    if (f) { unlock(f.id); refresh(); }
+    if (f && ANALYSIS.has(type)) refreshAnalysis(); else if (f) { unlock(f.id); refresh(); }
     renderProps();
   }
   /** What the model made of a feature: resolved FFE and pad, cut and fill, impervious change, warnings. */
   function featureInfo(f) {
     const p = f.properties, out = [], L = log?.features.find(l => l.id === f.id), r = L?.resolved ?? {};
+    if (p.type === 'cline') {
+      out.push(`Length ${fmt('len', lineLength(f.geometry.coordinates))} ${unit('len')}. + is water crossing to the right of the line as drawn${f.geometry.coordinates.length > 3 && f.geometry.coordinates[0].join() === f.geometry.coordinates.at(-1).join() ? ' (closed: outward)' : ''}.`);
+      const q = lineResults?.get(f.id);
+      if (q) out.push(`Last run: <b>${fmt('vol', q.volume)} ${unit('vol')}</b> net (${fmt('vol', q.plus)} +, ${fmt('vol', q.minus)} −), peak ${Number.isFinite(q.peak) ? (q.peak / UNITS[units].vol[1]).toFixed(units === 'us' ? 1 : 3) : '–'} ${unit('vol')}/s${Number.isFinite(q.tPeak) ? ` at ${Math.round(q.tPeak / 60)} min` : ''}`);
+      return out;
+    }
     const area = ringArea(f.geometry.coordinates[0]);
-    out.push(`Footprint ${fmt('area', area)} ${unit('area')}`);
+    out.push(`${p.type === 'site' ? 'Area' : 'Footprint'} ${fmt('area', area)} ${unit('area')}`);
+    if (p.type === 'site') { out.push('Comparisons split every result into on-site and off-site with it.'); return out; }
     if (p.type === 'building') {
       out.push(`<span class="muted">${PRESETS[p.preset]?.label ?? 'Custom'}: confirm against the local code.</span>`);
       if (Number.isFinite(r.ffe)) {
@@ -310,6 +346,13 @@ export function initDesign(map, { onChange, groundAt, manholes, buildingAt, read
     },
     /** After applyDesign: the log of the active scenario (shown in the drawer and the feature form). */
     setLog(l) { log = l; renderLog(); renderProps(); },
+    /** Make a scenario active by name (null: existing conditions) without the change callback (the caller applies it). */
+    activate(name) { active = name == null ? -1 : scenarios.findIndex(s => s.name === name); sel = null; refresh(false); persist(); renderProps(); },
+    /** Control lines and the site boundary (shared by all scenarios). */
+    get analysis() { return analysis; },
+    setAnalysis(next) { analysis = next?.features ? next : { type: 'FeatureCollection', features: [] }; bumpDesignIds(analysis); lineResults = null; refreshAnalysis(false); try { localStorage.setItem('floodsim.analysis', JSON.stringify(analysis)); } catch { /* storage off */ } },
+    /** After a run: each control line's books (Map id → { volume, plus, minus, peak, tPeak }). */
+    setLineResults(m) { lineResults = m; renderProps(); },
     /** After the run inputs are built: where each roof drain goes (id → text). */
     setRoofLinks(m) { roofLinks = m; renderProps(); },
     /** After a run: new buildings flooded or dry. */

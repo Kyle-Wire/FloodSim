@@ -8,6 +8,7 @@ struct Params {
   secondOrder: u32, limiter: u32, bcW: u32, bcE: u32,
   bcS: u32, bcN: u32, nInlets: u32, stage: f32,
   tilesX: u32, tilesY: u32, tiles: u32, nBar: u32,
+  nLine: u32, pad1: u32, pad2: u32, pad3: u32,
 };
 const GH: i32 = 2;
 override STAGE: u32 = 0u;
@@ -45,8 +46,9 @@ override STAGE: u32 = 0u;
 @group(0) @binding(24) var<storage, read> CR: array<vec4f>;          // x crest, x weir C, y crest, y weir C
 @group(0) @binding(25) var<storage, read> BF: array<u32>;            // padded cell index x 2 + (1 for a y-face)
 @group(0) @binding(26) var<storage, read_write> BQ: array<vec4f>;  // [3m] volume over +, −, Kahan +, −; [3m+1] peak |q| (m²/s), highest water, peak load (kN/m), ground; [3m+2] their times, first overtopping (−1 = never)
-@group(0) @binding(27) var<storage, read_write> HZ: array<vec4f>;  // [3c] peak d·v, peak force, time deeper than 15 cm, arrival (−1 = never); [3c+1] worst class ARR, FD2320, FD2320 urban;
-                                                                    // [3c+2] peak bed shear (Pa), excess shear × time (Pa·s), potential erosion (m), time of peak shear
+@group(0) @binding(27) var<storage, read_write> HZ: array<vec4f>;  // [4c] peak d·v, peak force, time deeper than 15 cm, arrival (−1 = never); [4c+1] worst class ARR, FD2320, FD2320 urban
+                                                                    // [4c+2] peak bed shear (Pa), excess shear × time (Pa·s), potential erosion (m), time of peak shear;
+                                                                    // [4c+3] peak speed where deeper than 5 cm, first time deeper than 5 cm (−1 = never)
 @group(0) @binding(32) var<storage, read> SCR: array<vec4f>;       // scour: critical shear of the erodible ground (Pa; 1e9 = paved / not erodible), Manning n; sediment: sand and gravel sizes (m)
 // sediment state, 4 vec4 per cell (ping-pong: each pass reads SDI and writes SDO, and the host swaps them; see sedAdvect)
 @group(0) @binding(33) var<storage, read> SDI: array<vec4f>;
@@ -349,21 +351,24 @@ fn hazardAt(x: u32, y: u32) {
   hzRecord(c, d, v, dt);
 }
 fn hzRecord(c: i32, d: f32, v: f32, dt: f32) {
-  var h0 = HZ[3 * c]; var h1 = HZ[3 * c + 1];
+  var h0 = HZ[4 * c]; var h1 = HZ[4 * c + 1];
   h0.x = max(h0.x, d * v); h0.y = max(h0.y, d * v * v + 0.5 * P.g * d * d);
   if (d > HZ_THR) { h0.z += dt; if (h0.w < 0.0) { h0.w = DT[1]; } }
+  var h3 = HZ[4 * c + 3]; // peak speed (where deeper than HZ_VCUT) and the first time deeper than HZ_VCUT
+  if (d > HZ_VCUT) { h3.x = max(h3.x, v); if (h3.y < 0.0) { h3.y = DT[1]; } }
+  HZ[4 * c + 3] = h3;
   let hr = d * (v + 0.5);
   h1.x = max(h1.x, arrClass(d, v)); h1.y = max(h1.y, hrClass(hr)); h1.z = max(h1.z, hrClass(hr + select(0.0, 1.0, d > 0.25)));
-  HZ[3 * c] = h0; HZ[3 * c + 1] = h1;
+  HZ[4 * c] = h0; HZ[4 * c + 1] = h1;
   // bed shear τ = ρg·n²·v²/h^⅓ (Manning); over the ground's critical shear it scours at ε = k_d·(τ − τc), with the
   // erodibility k_d = 0.2·τc^−½ cm³/(N·s) (Hanson & Simon 2001). Indicative depths: no supply limit, no deposition.
   let tc = SCR[c];
   if (d >= HZ_VCUT && tc.y > 0.0) {
     let tau = 1000.0 * P.g * tc.y * tc.y * v * v / pow(d, 1.0 / 3.0);
-    var h2 = HZ[3 * c + 2];
+    var h2 = HZ[4 * c + 2];
     if (tau > h2.x) { h2.x = tau; h2.w = DT[1]; }
     if (tau > tc.x) { h2.y += (tau - tc.x) * dt; h2.z += 0.2e-6 * inverseSqrt(tc.x) * (tau - tc.x) * dt; }
-    HZ[3 * c + 2] = h2;
+    HZ[4 * c + 2] = h2;
   }
 }
 
@@ -768,6 +773,29 @@ fn edgeOut(@builtin(global_invocation_id) gid: vec3u) {
   f = f * TH[select(c, g, (f > 0.0) == (sgn < 0.0))]; // the donor: the edge cell for outflow, the ghost for inflow
   let v = sgn * f * P.dx * dt * select(1.0, 0.5, P.secondOrder == 1u);
   var e = EO[m]; let y = v - e.y; let t = e.x + y; e.y = (t - e.x) - y; e.x = t; EO[m] = e;
+}
+
+// ---- control lines (src/compare.js lineFaces): the volume across each listed face, booked every stage exactly as
+// edgeOut books the domain edge, so a line around the domain matches the edge outflow and a line across a channel the
+// water that passed it. + = from cell i−1 (j−1) into cell i (j); the host signs each face to its line.
+@group(0) @binding(39) var<storage, read> LF: array<u32>;          // per control face: padded cell · 2 + axis (1 = y-face)
+@group(0) @binding(40) var<storage, read_write> CL: array<vec4f>;  // per control face: volume in +, Kahan residual, volume in −, residual (m³)
+@compute @workgroup_size(64)
+fn lineFlux(@builtin(global_invocation_id) gid: vec3u) {
+  let m = gid.x;
+  if (m >= P.nLine) { return; }
+  let dt = DT[0];
+  if (dt <= 0.0) { return; }
+  let code = LF[m]; let c = i32(code / 2u);
+  var g = c - 1; var f = FX[c * 9];
+  if (code % 2u == 1u) { g = c - i32(P.NX); f = FY[c * 9]; }
+  if (W[c].x <= 0.0 && W[g].x <= 0.0) { return; } // a face of a skipped (dry) tile can hold a stale flux
+  f = f * TH[select(c, g, f > 0.0)]; // the donor's draining-time scale, as the update applies it
+  let v = f * P.dx * dt * select(1.0, 0.5, P.secondOrder == 1u);
+  var e = CL[m];
+  if (v > 0.0) { let y = v - e.y; let t = e.x + y; e.y = (t - e.x) - y; e.x = t; }
+  else if (v < 0.0) { let y = -v - e.w; let t = e.z + y; e.w = (t - e.z) - y; e.z = t; }
+  CL[m] = e;
 }
 
 // ---- sediment transport (src/sediment.js) in four grain classes: clay (as flocs), silt, sand and gravel, each carried

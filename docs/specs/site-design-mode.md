@@ -1,7 +1,8 @@
 # Site design mode: proposed buildings, grading and stormwater, compared against existing conditions
 
-Status: phase 1 built (`src/design.js`, `app/design-ui.js`, `npm run test:design`); phases 2–4 not started. Written
-against main at `bd26a32`.
+Status: phases 1 and 2 built (`src/design.js`, `src/compare.js`, the Site design and Compare drawers;
+`npm run test:design`, `npm run test:compare`, GPU browser suite); phases 3–4 not started. Written against main at
+`bd26a32`.
 
 ## Goal
 

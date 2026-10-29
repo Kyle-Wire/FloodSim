@@ -26,6 +26,8 @@ export class GPUSolver {
    * the packed depth is the depth at the lowest point, and readState's hmax is the peak water level (absolute).
    * o.tiles: active-tile dispatch (fluxes and updates only on 8×8 tiles near water; identical results). Default: on
    * when the device allows TILED_STORAGE_BUFFERS storage buffers per stage.
+   * o.lines: control-line faces [{ i, j, axis, line, sign }] (src/compare.js lineFaces): the volume across each line is
+   * booked every step (readLines); sign maps the face's + direction (from cell i−1 / j−1 into i / j) to the line's.
    */
   constructor(device, o) {
     this.device = device;
@@ -132,6 +134,10 @@ export class GPUSolver {
     this.BQh = new Float32Array(this.BFh.length * 12); // highest water starts at −1e30, first overtopping at −1 (never)
     this.crest.forEach((f, m) => { this.BQh[12 * m + 5] = -1e30; this.BQh[12 * m + 7] = Number.isFinite(f.ground) ? f.ground - this.zref : -1e30; this.BQh[12 * m + 11] = -1; });
     this._fillCrest(this.crest.map(f => f.z));
+    // control lines: faces to book, each with its line and sign
+    this.lines = (o.lines ?? []).map(f => ({ ...f, c: this.idx(f.i, f.j) })); this.nLine = this.lines.length;
+    this.nLines = this.lines.reduce((n, f) => Math.max(n, f.line + 1), 0);
+    this.LFh = new Uint32Array(Math.max(4, this.nLine)); this.lines.forEach((f, m) => { this.LFh[m] = f.c * 2 + (f.axis ? 1 : 0); });
     if (this.sg) this._subgridTables();
     this._build();
   }
@@ -155,7 +161,7 @@ export class GPUSolver {
     const SB = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST;
     const mk = (size, usage = SB) => d.createBuffer({ size: Math.max(16, size), usage });
     this.buf = {
-      params: mk(96, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST),
+      params: mk(112, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST),
       U: mk(N * 16), U0: mk(N * 16), S: mk(N * 16), W: mk(N * 16),
       FX: mk(N * 36), FY: mk(N * 36), A: mk(N * 16), DT: mk(16), RED: mk(4),
       OUT: mk(this.nx * this.ny * 8), TH: mk(N * 4), RF: mk(N * 4),
@@ -163,7 +169,7 @@ export class GPUSolver {
       TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 8), TC: mk(8),
       TA: mk(24, GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
       GI: mk(N * 16), GS: mk(N * 16), GAP: mk(N * 16),
-      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 48), SCR: mk(N * 16), SDA: mk(this.sed ? N * 64 : 16), SDB: mk(this.sed ? N * 64 : 16), SDP: mk(this.sed ? N * 16 : 16), SE0: mk(this.sed ? N * 32 : 16), BK: mk(this.BKh.byteLength), BR: mk(this.BRh.byteLength),
+      CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 64), LF: mk(this.LFh.byteLength), CL: mk(this.LFh.length * 16), SCR: mk(N * 16), SDA: mk(this.sed ? N * 64 : 16), SDB: mk(this.sed ? N * 64 : 16), SDP: mk(this.sed ? N * 16 : 16), SE0: mk(this.sed ? N * 32 : 16), BK: mk(this.BKh.byteLength), BR: mk(this.BRh.byteLength),
       SGC: mk(this.sg ? N * CT * 4 : 16), SGF: mk(this.sg ? 2 * N * FT * 4 : 16), EO: mk(2 * (this.nx + this.ny) * 8),
     };
     this.read = {
@@ -185,7 +191,8 @@ export class GPUSolver {
     d.queue.writeBuffer(this.buf.BF, 0, this.BFh);
     d.queue.writeBuffer(this.buf.BQ, 0, this.BQh);
     if (this.sg) { d.queue.writeBuffer(this.buf.SGC, 0, this.SGCh); d.queue.writeBuffer(this.buf.SGF, 0, this.SGFh); }
-    const hz = new Float32Array(N * 12); for (let c = 0; c < N; c++) hz[12 * c + 3] = -1; d.queue.writeBuffer(this.buf.HZ, 0, hz);
+    const hz = new Float32Array(N * 16); for (let c = 0; c < N; c++) { hz[16 * c + 3] = -1; hz[16 * c + 13] = -1; } d.queue.writeBuffer(this.buf.HZ, 0, hz);
+    d.queue.writeBuffer(this.buf.LF, 0, this.LFh);
     d.queue.writeBuffer(this.buf.SCR, 0, this.TCh);
     if (this.nBank) { d.queue.writeBuffer(this.buf.BK, 0, this.BKh); d.queue.writeBuffer(this.buf.BR, 0, this.BRh); }
     if (this.sed) { d.queue.writeBuffer(this.buf.SDA, 0, this.SDh); d.queue.writeBuffer(this.buf.SDB, 0, this.SDh); d.queue.writeBuffer(this.buf.SDP, 0, this.SDPh); d.queue.writeBuffer(this.buf.SE0, 0, this.SE0h); }
@@ -194,7 +201,7 @@ export class GPUSolver {
     const mod = d.createShaderModule({ code: KERNELS_WGSL });
     this.module = mod;
     const B = [this.buf.params, this.buf.U, this.buf.U0, this.buf.S, this.buf.W, this.buf.FX, this.buf.FY, this.buf.A, this.buf.DT, this.buf.RED, this.buf.OUT, this.buf.TH, this.buf.RF, this.buf.INC, this.buf.INQ, this.buf.INX, this.buf.STG,
-      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP, this.buf.SE0, this.buf.BK, this.buf.BR];
+      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP, this.buf.SE0, this.buf.BK, this.buf.BR, this.buf.LF, this.buf.CL];
     const uses = {
       prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27, 32], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
       sgPrim: [0, 1, 4, 16, 28], sgFluxX: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgFluxY: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgUpdate: [0, 1, 3, 5, 6, 7, 8, 11],
@@ -217,6 +224,7 @@ export class GPUSolver {
       dtFinal: make('dtFinal', uses.dtFinal), pack: make('pack', uses.pack),
       exchange: make('exchange', uses.exchange), barrier0: make('barrier', uses.barrier, { STAGE: 0 }), barrier1: make('barrier', uses.barrier, { STAGE: 1 }),
       hazard: make('hazard', uses.hazard), resetTotals: make('resetTotals', uses.resetTotals), edgeOut: make('edgeOut', uses.edgeOut),
+      ...(this.nLine ? { lineFlux: make('lineFlux', [0, 4, 5, 6, 8, 11, 39, 40]) } : {}),
     };
     if (this.tiled) Object.assign(this.k, {
       tileClear: make('tileClear', uses.tileClear), tileWet: make('tileWet', uses.tileWet),
@@ -255,13 +263,13 @@ export class GPUSolver {
   }
 
   _writeParams(tEnd) {
-    const ab = new ArrayBuffer(96), u = new Uint32Array(ab), f = new Float32Array(ab);
+    const ab = new ArrayBuffer(112), u = new Uint32Array(ab), f = new Float32Array(ab);
     u[0] = this.nx; u[1] = this.ny; u[2] = this.NX; u[3] = this.NY;
     f[4] = this.dx; f[5] = this.g; f[6] = this.hdry; f[7] = this.hfront;
     f[8] = this.cfl; f[9] = this.rainRate; f[10] = tEnd; f[11] = this.dtDry;
     u[12] = this.secondOrder ? 1 : 0; u[13] = this.limiter;
     u[18] = this.nInlets; f[19] = this.stage - this.zref; u[14] = BC[this.bc.west]; u[15] = BC[this.bc.east]; u[16] = BC[this.bc.south]; u[17] = BC[this.bc.north];
-    u[20] = this.tilesX; u[21] = this.tilesY; u[22] = this.tiles; u[23] = this.nBar;
+    u[20] = this.tilesX; u[21] = this.tilesY; u[22] = this.tiles; u[23] = this.nBar; u[24] = this.nLine;
     this.device.queue.writeBuffer(this.buf.params, 0, ab);
   }
 
@@ -305,6 +313,7 @@ export class GPUSolver {
           this._indirect(pass, k.faceXT, 2); this._indirect(pass, k.faceYT, 2); this._indirect(pass, k.thetaT, 2);
           if (this.nBar) this._dispatch(pass, st ? k.barrier1 : k.barrier0, Math.ceil(this.nBar / 64));
           this._dispatch(pass, k.edgeOut, Math.ceil(2 * (this.nx + this.ny) / 64));
+          if (this.nLine) this._dispatch(pass, k.lineFlux, Math.ceil(this.nLine / 64));
           if (this.sed) this._sed(pass, k.sedAdvect);
           this._indirect(pass, st ? k.updateT1 : k.updateT0, 1);
         } else {
@@ -313,6 +322,7 @@ export class GPUSolver {
           this._dispatch(pass, k.theta, w(nx), w(ny));
           if (this.nBar) this._dispatch(pass, st ? k.barrier1 : k.barrier0, Math.ceil(this.nBar / 64));
           this._dispatch(pass, k.edgeOut, Math.ceil(2 * (this.nx + this.ny) / 64));
+          if (this.nLine) this._dispatch(pass, k.lineFlux, Math.ceil(this.nLine / 64));
           if (this.sed) this._sed(pass, k.sedAdvect);
           this._dispatch(pass, st ? k.update1 : k.update0, w(nx), w(ny));
         }
@@ -387,6 +397,7 @@ export class GPUSolver {
       else { this._dispatch(pass, k.sgFluxX, w(nx + 1), w(ny)); this._dispatch(pass, k.sgFluxY, w(nx), w(ny + 1)); this._dispatch(pass, k.theta, w(nx), w(ny)); }
       if (this.nBar) this._dispatch(pass, k.barrier0, Math.ceil(this.nBar / 64));
       this._dispatch(pass, k.edgeOut, Math.ceil(2 * (nx + ny) / 64));
+      if (this.nLine) this._dispatch(pass, k.lineFlux, Math.ceil(this.nLine / 64));
       if (this.tiled) { this._indirect(pass, k.sgUpdateT, 1); this._indirect(pass, k.sgSourcesT, 1); this._indirect(pass, k.sgHazardT, 1); }
       else { this._dispatch(pass, k.sgUpdate, w(nx), w(ny)); this._dispatch(pass, k.sgSources, w(nx), w(ny)); this._dispatch(pass, k.sgHazard, w(nx), w(ny)); }
       if (this.nInlets) this._dispatch(pass, k.sgExchange, Math.ceil(this.nInlets / 64));
@@ -440,16 +451,31 @@ export class GPUSolver {
   }
 
   async readHazard() {
-    const a = await this._readBuffer(this.buf.HZ, this.N * 48), n = this.nx * this.ny;
-    const o = { dv: new Float32Array(n), force: new Float32Array(n), duration: new Float32Array(n), arrival: new Float32Array(n),
+    const a = await this._readBuffer(this.buf.HZ, this.N * 64), n = this.nx * this.ny;
+    const o = { dv: new Float32Array(n), force: new Float32Array(n), duration: new Float32Array(n), arrival: new Float32Array(n), vmax: new Float32Array(n), tWet: new Float32Array(n),
       shear: new Float32Array(n), excess: new Float32Array(n), erosion: new Float32Array(n), tShear: new Float32Array(n),
       cls: { arr: new Uint8Array(n), defra: new Uint8Array(n), defraUrban: new Uint8Array(n) } };
     for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) {
-      const k = j * this.nx + i, q = 12 * this.idx(i, j);
+      const k = j * this.nx + i, q = 16 * this.idx(i, j);
       o.dv[k] = a[q]; o.force[k] = a[q + 1]; o.duration[k] = a[q + 2]; o.arrival[k] = a[q + 3] >= 0 ? a[q + 3] : NaN;
       o.cls.arr[k] = a[q + 4]; o.cls.defra[k] = a[q + 5]; o.cls.defraUrban[k] = a[q + 6];
       o.shear[k] = a[q + 8]; o.excess[k] = a[q + 9]; o.erosion[k] = a[q + 10]; o.tShear[k] = a[q + 11];
+      o.vmax[k] = a[q + 12]; o.tWet[k] = a[q + 13] >= 0 ? a[q + 13] : NaN;
     }
+    return o;
+  }
+
+  /** Control lines (o.lines) since the start, per line: volume crossing to its + side and to its − side (m³, both
+   *  ≥ 0) and the net (plus − minus). Booked every stage on the GPU, compensated; read any time without resetting. */
+  async readLines() {
+    const n = this.nLines, o = { plus: new Float64Array(n), minus: new Float64Array(n), net: new Float64Array(n) };
+    if (!this.nLine) return o;
+    const a = await this._readBuffer(this.buf.CL, this.nLine * 16);
+    this.lines.forEach((f, m) => {
+      const p = a[4 * m] - a[4 * m + 1], q = a[4 * m + 2] - a[4 * m + 3];
+      if (f.sign >= 0) { o.plus[f.line] += p; o.minus[f.line] += q; } else { o.plus[f.line] += q; o.minus[f.line] += p; }
+    });
+    for (let l = 0; l < n; l++) o.net[l] = o.plus[l] - o.minus[l];
     return o;
   }
 
