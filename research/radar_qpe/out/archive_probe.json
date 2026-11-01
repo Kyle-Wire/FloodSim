@@ -1,0 +1,283 @@
+{
+ "nodd_bucket": "https://noaa-mrms-pds.s3.amazonaws.com/",
+ "mtarchive": "https://mtarchive.geol.iastate.edu",
+ "nodd_product_first_partition": {
+  "PrecipRate_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "PrecipFlag_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "RadarOnly_QPE_01H_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "RadarOnly_QPE_15M_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "MultiSensor_QPE_01H_Pass1_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "MultiSensor_QPE_01H_Pass2_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "MergedReflectivityQCComposite_00.50": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "RadarQualityIndex_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "SeamlessHSRHeight_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "BrightBandTopHeight_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "GaugeInflIndex_01H_Pass2_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "Model_0degC_Height_00.50": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  },
+  "SyntheticPrecipRateID_00.00": {
+   "first_partition": "20201014",
+   "n_listed_first_page": 1000
+  }
+ },
+ "mtarchive_by_date": {
+  "20160730": {
+   "label": "Ellicott City 2016 (flood peak 2016-07-30 23:30Z - 07-31 01:30Z)",
+   "url": "https://mtarchive.geol.iastate.edu/2016/07/30/mrms/ncep/",
+   "fields": [
+    "GaugeCorr_QPE_01H",
+    "PrecipFlag",
+    "PrecipRate",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "SeamlessHSR"
+   ],
+   "n_fields": 6,
+   "precip_rate": {
+    "frames_present": 719,
+    "frames_expected": 720,
+    "missing_frames_utc": [
+     "000600"
+    ]
+   }
+  },
+  "20160731": {
+   "label": "Ellicott City 2016, second UTC day",
+   "url": "https://mtarchive.geol.iastate.edu/2016/07/31/mrms/ncep/",
+   "fields": [
+    "GaugeCorr_QPE_01H",
+    "PrecipFlag",
+    "PrecipRate",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "SeamlessHSR"
+   ],
+   "n_fields": 6,
+   "precip_rate": {
+    "frames_present": 720,
+    "frames_expected": 720,
+    "missing_frames_utc": []
+   }
+  },
+  "20180527": {
+   "label": "Ellicott City 2018 (flood 2018-05-27 18:00-21:00Z)",
+   "url": "https://mtarchive.geol.iastate.edu/2018/05/27/mrms/ncep/",
+   "fields": [
+    "GaugeCorr_QPE_01H",
+    "PrecipFlag",
+    "PrecipRate",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "RadarQualityIndex",
+    "SeamlessHSR"
+   ],
+   "n_fields": 7,
+   "precip_rate": {
+    "frames_present": 720,
+    "frames_expected": 720,
+    "missing_frames_utc": []
+   }
+  },
+  "20170826": {
+   "label": "Harvey over Brays Bayou, day 1",
+   "url": "https://mtarchive.geol.iastate.edu/2017/08/26/mrms/ncep/",
+   "fields": [
+    "GaugeCorr_QPE_01H",
+    "PrecipFlag",
+    "PrecipRate",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "RadarQualityIndex",
+    "SeamlessHSR"
+   ],
+   "n_fields": 7,
+   "precip_rate": {
+    "frames_present": 720,
+    "frames_expected": 720,
+    "missing_frames_utc": []
+   }
+  },
+  "20170827": {
+   "label": "Harvey over Brays Bayou, day 2",
+   "url": "https://mtarchive.geol.iastate.edu/2017/08/27/mrms/ncep/",
+   "fields": [
+    "GaugeCorr_QPE_01H",
+    "PrecipFlag",
+    "PrecipRate",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "RadarQualityIndex",
+    "SeamlessHSR"
+   ],
+   "n_fields": 7,
+   "precip_rate": {
+    "frames_present": 720,
+    "frames_expected": 720,
+    "missing_frames_utc": []
+   }
+  },
+  "20210901": {
+   "label": "Ida over Philadelphia, first UTC day",
+   "url": "https://mtarchive.geol.iastate.edu/2021/09/01/mrms/ncep/",
+   "fields": [
+    "FLASH",
+    "MESH",
+    "MESH_Max_1440min",
+    "MultiSensor_QPE_01H_Pass2",
+    "MultiSensor_QPE_24H_Pass2",
+    "MultiSensor_QPE_72H_Pass2",
+    "PrecipFlag",
+    "PrecipRate",
+    "ProbSevere",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "RadarOnly_QPE_72H",
+    "RadarQualityIndex",
+    "RotationTrack1440min",
+    "SeamlessHSR"
+   ],
+   "n_fields": 15,
+   "precip_rate": {
+    "frames_present": 718,
+    "frames_expected": 720,
+    "missing_frames_utc": [
+     "042400",
+     "142400"
+    ]
+   }
+  },
+  "20210902": {
+   "label": "Ida over Philadelphia, flood peak",
+   "url": "https://mtarchive.geol.iastate.edu/2021/09/02/mrms/ncep/",
+   "fields": [
+    "FLASH",
+    "MESH",
+    "MESH_Max_1440min",
+    "MultiSensor_QPE_01H_Pass2",
+    "MultiSensor_QPE_24H_Pass2",
+    "MultiSensor_QPE_72H_Pass2",
+    "PrecipFlag",
+    "PrecipRate",
+    "ProbSevere",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "RadarOnly_QPE_72H",
+    "RadarQualityIndex",
+    "RotationTrack1440min",
+    "SeamlessHSR"
+   ],
+   "n_fields": 15,
+   "precip_rate": {
+    "frames_present": 718,
+    "frames_expected": 720,
+    "missing_frames_utc": [
+     "082400",
+     "102400"
+    ]
+   }
+  },
+  "20161008": {
+   "label": "Matthew over Hampton Roads, day 1",
+   "url": "https://mtarchive.geol.iastate.edu/2016/10/08/mrms/ncep/",
+   "fields": [
+    "GaugeCorr_QPE_01H",
+    "PrecipFlag",
+    "PrecipRate",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "SeamlessHSR"
+   ],
+   "n_fields": 6,
+   "precip_rate": {
+    "frames_present": 720,
+    "frames_expected": 720,
+    "missing_frames_utc": []
+   }
+  },
+  "20161009": {
+   "label": "Matthew over Hampton Roads, day 2",
+   "url": "https://mtarchive.geol.iastate.edu/2016/10/09/mrms/ncep/",
+   "fields": [
+    "GaugeCorr_QPE_01H",
+    "PrecipFlag",
+    "PrecipRate",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "SeamlessHSR"
+   ],
+   "n_fields": 6,
+   "precip_rate": {
+    "frames_present": 720,
+    "frames_expected": 720,
+    "missing_frames_utc": []
+   }
+  },
+  "20151003": {
+   "label": "October 2015 South Carolina flood, Charleston",
+   "url": "https://mtarchive.geol.iastate.edu/2015/10/03/mrms/ncep/",
+   "fields": [
+    "GaugeCorr_QPE_01H",
+    "PrecipRate",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H",
+    "SeamlessHSR"
+   ],
+   "n_fields": 5,
+   "precip_rate": {
+    "frames_present": 720,
+    "frames_expected": 720,
+    "missing_frames_utc": []
+   }
+  },
+  "20141101": {
+   "label": "first day of the public MRMS archive",
+   "url": "https://mtarchive.geol.iastate.edu/2014/11/01/mrms/ncep/",
+   "fields": [
+    "PrecipRate",
+    "RadarOnly_QPE_01H",
+    "RadarOnly_QPE_24H"
+   ],
+   "n_fields": 3,
+   "precip_rate": {
+    "frames_present": 720,
+    "frames_expected": 720,
+    "missing_frames_utc": []
+   }
+  }
+ }
+}
