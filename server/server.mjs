@@ -3,7 +3,8 @@
 // POST /api/fetch {url, method?, body?, contentType?} → upstream response, cached on disk by request hash.
 // Only allowlisted hosts are proxied; responses are cached in .cache/ so re-running an area is offline-fast.
 // /api/projects…: project folders on this computer (loopback only), under FLOODSIM_PROJECTS or Documents\FloodSim Projects.
-// GET /api/version → { commit, dirty }: the app commit, part of every run's forcing fingerprint.
+// GET /api/version → { version, commit, dirty }: the release version in package.json and the app commit (which is
+//   part of every run's forcing fingerprint). Every run output cites both.
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, stat, readdir } from 'node:fs/promises';
 import { spawn, spawnSync } from 'node:child_process';
@@ -161,13 +162,25 @@ async function projects(req, res, p) {
   return send(res, 404, 'not found');
 }
 
-/** The commit the server's checkout is on, and whether it has uncommitted changes (null outside a git checkout). */
+/** The release version in package.json; read once, since the server restarts with the checkout. */
+let pkgVersion;
+async function releaseVersion() {
+  if (pkgVersion === undefined) {
+    try { pkgVersion = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version ?? null; } catch { pkgVersion = null; }
+  }
+  return pkgVersion;
+}
+
+/**
+ * The provenance every run output cites: the release version, the commit the server's checkout is on, and whether it
+ * has uncommitted changes (commit and dirty are null outside a git checkout; version is null if package.json has none).
+ */
 let version = null;
-function appVersion() {
+async function appVersion() {
   if (version) return version;
   const git = (...a) => spawnSync('git', a, { cwd: root, encoding: 'utf8' });
   const head = git('rev-parse', '--short=12', 'HEAD'), st = git('status', '--porcelain', '--untracked-files=no');
-  version = { commit: head.status === 0 ? head.stdout.trim() : null, dirty: st.status === 0 ? st.stdout.trim().length > 0 : null };
+  version = { version: await releaseVersion(), commit: head.status === 0 ? head.stdout.trim() : null, dirty: st.status === 0 ? st.stdout.trim().length > 0 : null };
   setTimeout(() => { version = null; }, 10000); // re-read now and then: commits made while it runs
   return version;
 }
@@ -189,7 +202,7 @@ async function saveBench(req, res) {
 createServer((req, res) => {
   const p = req.url.split('?')[0];
   (req.method === 'POST' && p === '/api/fetch' ? proxy(req, res) : req.method === 'POST' && p === '/api/bench-results' ? saveBench(req, res)
-    : p === '/api/version' ? Promise.resolve().then(() => { res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(appVersion())); })
+    : p === '/api/version' ? appVersion().then((v) => { res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(v)); })
     : p.startsWith('/api/projects') ? projects(req, res, p) : serveStatic(req, res))
     .catch((e) => { console.error(e); if (!res.headersSent) send(res, 500, String(e.message)); });
 }).listen(port, () => console.log(`FloodSim at http://localhost:${port}/app/map.html

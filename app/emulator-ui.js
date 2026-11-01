@@ -96,7 +96,7 @@ export function initEmulator(map, api) {
     if (list.includes(name)) throw new Error(`A study called "${name}" exists: pick another name.`);
     const n = Number($('emuN').value) || E.planSize(params.length), hold = Math.max(0, Math.min(10, Number($('emuHold').value) || 0));
     study = { name, scenario: $('emuScn').value || null, params, plan: E.trainingPlan(params.length, { n: Math.max(4, Math.min(120, n)), holdout: hold, seed: 1 + list.length }),
-      runs: {}, walls: {}, fixed: null, F: null, commit: api.commit(), created: new Date().toISOString() };
+      runs: {}, walls: {}, fixed: null, F: null, version: api.version(), commit: api.commit(), created: new Date().toISOString() };
     api.resetPrep(); await saveStudy(); await fillStudies(name); values = Object.fromEntries(params.map(p => [p.key, p.value])); em = null; val = null; render();
     note(`Study created: ${study.plan.length} runs to do. Press Run training.`);
   }
@@ -189,7 +189,7 @@ export function initEmulator(map, api) {
     const pick = (kind) => rows.filter(r => r.kind === kind), med = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : NaN; };
     const basis = ho.length ? pick('held out') : pick('leave-one-out'), worst = basis.reduce((a, r) => (r.rmse > (a?.rmse ?? -1) ? r : a), null);
     val = { rows, summary: { basis: ho.length ? 'held-out runs' : 'leave-one-out (no held-out runs)', typical: med(basis.map(r => r.rmse)), worst: worst?.rmse ?? NaN, worstId: worst?.id ?? null, csi: Math.min(...basis.map(r => r.csi)), peak: ((a) => (a.length ? Math.max(...a) : NaN))(basis.map(r => r.peakErr).filter(Number.isFinite)) },
-      components: model.fields.wse.K, kept: model.fields.wse.kept, cells: M, runs: runs.length, ms: performance.now() - t0, trained: new Date().toISOString(), commit: api.commit() };
+      components: model.fields.wse.K, kept: model.fields.wse.kept, cells: M, runs: runs.length, ms: performance.now() - t0, trained: new Date().toISOString(), version: api.version(), commit: api.commit() };
     em = { ...model, mask, noData, lines: Object.fromEntries(lineIds), buildings: Object.fromEntries(bldRings) };
     // save
     const d = dirOf(study.name), { json, blobs } = E.serialize(model);
@@ -294,7 +294,7 @@ export function initEmulator(map, api) {
     const newBuildings = (f.designBuildings ?? []).map(b => ({ id: b.id, name: b.name, ffe: b.ffe, critical: b.foundation === 'basement' ? b.opening : b.ffe, foundation: b.foundation, cells: b.cells, ring: b.ring }));
     const when = new Date();
     api.addRecord({ id: 'emu:' + when.getTime(), emulated: { study: study.name, values: { ...values }, error: val ? fmtLen(val.summary.typical) + ' depth RMSE' : null, sd: g.sd }, scenario: study.scenario,
-      label: `EMULATED ${study.scenario ?? 'Existing conditions'} · ${valuesText(values)}`, saved: when.toISOString(), forcing, commit: api.commit(), designHash: null, storm: valuesText(values), geo,
+      label: `EMULATED ${study.scenario ?? 'Existing conditions'} · ${valuesText(values)}`, saved: when.toISOString(), forcing, version: api.version(), commit: api.commit(), designHash: null, storm: valuesText(values), geo,
       grids: Object.fromEntries(Object.keys(C.GRIDS).map(k => [k, g[k]])), hazard: new Float32Array(geo.nx * geo.ny).fill(NaN), lines, newBuildings, books: null,
       design: log ? { name: study.scenario, totals: { ...log.totals, ...(api.model().baseWse || log.settings?.bfe != null ? {} : { floodFill: NaN, compCut: NaN }) } } : null }); // floodplain fill needs a flood level
     note('Sent to Compare (marked emulated). Send the other scenario at the same values to compare the two.');

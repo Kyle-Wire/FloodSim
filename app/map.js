@@ -142,7 +142,8 @@ const map = new maplibregl.Map({
 });
 const gpuReady = initGPU();
 let appCommit = 'unknown'; // the server's checkout: part of every run's forcing fingerprint
-fetch('/api/version', { cache: 'no-store' }).then(r => r.json()).then(v => { if (v.commit) appCommit = v.commit + (v.dirty ? '+dirty' : ''); }).catch(() => {}); // Build awaits it: a project opened at page load can finish building before the GPU is up
+let appVersion = 'unknown'; // the release in package.json: cited by every run output, and not part of the fingerprint (the commit already pins the code)
+fetch('/api/version', { cache: 'no-store' }).then(r => r.json()).then(v => { if (v.commit) appCommit = v.commit + (v.dirty ? '+dirty' : ''); if (v.version) appVersion = v.version; }).catch(() => {}); // Build awaits it: a project opened at page load can finish building before the GPU is up
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 map.on('moveend', () => { try { localStorage.setItem('floodsim.view', JSON.stringify({ center: map.getCenter().toArray(), zoom: map.getZoom() })); } catch { /* storage off */ } });
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
@@ -1416,7 +1417,7 @@ async function finishRecord() {
   const newBuildings = (model.f.designBuildings ?? []).map(b => ({ id: b.id, name: b.name, ffe: b.ffe, critical: b.foundation === 'basement' ? b.opening : b.ffe, foundation: b.foundation, cells: b.cells, ring: b.ring }));
   const when = new Date(), forcing = CMP.fingerprint(forcingRecord(r));
   const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-    saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
+    saved: when.toISOString(), forcing, version: appVersion, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
     grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
   rec.wall = r.wall;
   if (r.window?.mode === 'record') rec.window = { rect: r.window.rect, segs: winLines, inlets: books.hgl?.inletSeries ? { fineCells: (books.inlets ?? []).map(g => g.fineCell), series: books.hgl.inletSeries } : null };
@@ -1470,7 +1471,7 @@ async function loadSaved(dir) {
   const lines = await json('lines.json', []), newBuildings = await json('buildings.json', []);
   const [network, hgl, inlets] = await Promise.all([json('network.json', null), json('hgl.json', null), json('inlets.json', null)]);
   let ground = null; try { ground = CMP.decodeF32(await readBytes(folder, path('grids/ground.f32'))); } catch { /* existing conditions: the base DEM */ }
-  return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
+  return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, version: sm.version ?? null, commit: sm.commit, designHash: sm.designHash,
     storm: sm.storm?.label, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null,
     ponds: sm.ponds ?? null, network, hgl, inlets, ground };
 }
@@ -1641,7 +1642,7 @@ function emuParams(scName) {
 }
 const emulatorUI = initEmulator(map, {
   ready: () => !!model && !!device, model: () => model, project: () => projects.current, scenarios: () => design.scenarios.map(s => s.name), activeScenario: () => design.active?.name ?? null,
-  params: emuParams, runAt, forcingAt, designAt, resetPrep: () => { emuPrep = null; }, units: () => design.units, commit: () => appCommit,
+  params: emuParams, runAt, forcingAt, designAt, resetPrep: () => { emuPrep = null; }, units: () => design.units, commit: () => appCommit, version: () => appVersion,
   fixedForcing: () => (run?.record?.forcing ?? null), readBytes: (path) => readBytes(projects.current.folder, path), readText: (path) => readProjectFile(projects.current.folder, path),
   writeFile: (path, data) => writeProjectFile(projects.current.folder, path, data), savedRuns, cancelRun: () => { if (run && !run.record) { const r = run; r.finish?.(new Error('Study cancelled')); stopRun(); resetRun(); } },
   addRecord: (rec) => { records.push(rec); while (records.length > 8) records.splice(records.findIndex(x => ![...baselines.values()].includes(x)), 1); compareUI.refresh(); },
@@ -1962,7 +1963,7 @@ async function buildPackage() {
   }
   const corners = fine.corners();
   const meta = {
-    generator: 'FloodSim Phase 1', created: new Date().toISOString(),
+    generator: 'FloodSim Phase 1', version: appVersion, commit: appCommit, created: new Date().toISOString(),
     crs: `EPSG:${fine.epsg}`, utmZone: fine.zone,
     terrainGrid: { ...fine.toJSON(), originSW: [fine.x0, fine.y0], cornersLonLat: { nw: corners[0], ne: corners[1], se: corners[2], sw: corners[3] } },
     solverGrid: run ? { dx: run.F, nx: run.c.nx, ny: run.c.ny } : null,
@@ -2475,7 +2476,12 @@ function ascFine(v) {
   return L.join('\n') + '\n';
 }
 const plain = (html) => { const d = document.createElement('div'); d.innerHTML = html.replace(/<span class="pill/g, ' · <span class="pill'); return d.textContent; };
-/** The finished (or paused) run as files for the project's runs folder. */
+/**
+ * The finished (or paused) run as files for the project's runs folder. `summary.json` cites the FloodSim release
+ * version and the app commit that produced the run: the version is what a report or model archive quotes, the commit
+ * is what re-runs it. The version is deliberately not in the forcing fingerprint — the commit already pins the code,
+ * and adding it would change every fingerprint already saved.
+ */
 async function runFiles() {
   if (!run?.solver || !run.hmax || !model) return null;
   await readMass();
@@ -2493,7 +2499,7 @@ async function runFiles() {
     storm: { label: stormLabel(run.storm), ...stormMeta(run.storm) }, drainage: plain(drainLabel()), greenInfrastructure: plain(giLabel()),
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
-    forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), commit: appCommit, grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
+    forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), version: appVersion, commit: appCommit, grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
     books: run.record?.books ?? null, ponds: run.record?.ponds ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],

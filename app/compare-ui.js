@@ -159,7 +159,7 @@ export function initCompare(map, api) {
     const name = `comparison_${(c.b.scenario ?? 'existing').replace(/[^\w-]+/g, '-')}_vs_${(c.a.scenario ?? 'existing').replace(/[^\w-]+/g, '-')}`;
     await api.exportFiles(files, name, zip(files));
   }
-  const meta = (r) => ({ label: r.label, scenario: r.scenario ?? 'Existing conditions', saved: r.saved, forcing: r.forcing, designHash: r.designHash, commit: r.commit, storm: r.storm });
+  const meta = (r) => ({ label: r.label, scenario: r.scenario ?? 'Existing conditions', saved: r.saved, forcing: r.forcing, designHash: r.designHash, version: r.version ?? null, commit: r.commit, storm: r.storm });
 
   // ---------------------------------------------------------------- return-period sweep and the detention check
   let sweepRes = [];

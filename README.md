@@ -10,17 +10,28 @@ npm start                        # → http://localhost:8766  (static files + ca
 
 ## Status
 
+FloodSim **0.1.0** (see [`CHANGELOG.md`](CHANGELOG.md); every run's `summary.json` carries the version and the commit
+that produced it).
+
 Phase 1 is closed and **Gate B passed** for the published tests: on the UK Environment Agency 2D benchmarks
-(Néelz & Pender 2013) 88 of 94 measures fall inside the spread of the established packages, and every probe series in
-Tests 1, 2, 4 and 5 sits inside the envelope of seven independently run codes (HEC-RAS, LISFLOOD-FP ×3, TELEMAC-2D,
-ANUGA). Test 7 (1D river ↔ 2D floodplains, the first Phase 2 capability) scores 18 of 22. Tests 8A/8B need data the
-EA supplies on request. Details, deviations and how to reproduce: [`benchmarks/ea/README.md`](benchmarks/ea/README.md).
+(Néelz & Pender 2013, report SC120002) 88 of 94 scored measures fall inside the spread of the packages in that report
+— 81 of 94 inside the raw bands, the rest passing on the stated reading precision of bands read from its figures —
+and every probe series in Tests 1, 2, 4 and 5 sits inside the envelope of seven third-party runs of four packages
+(HEC-RAS 7.0.1 and 6.6, LISFLOOD-FP ACC/FV1/DG2, TELEMAC-2D, ANUGA) within a 2 cm margin (10 cm for Test 5).
+Test 7 (1D river ↔ 2D floodplains, the first Phase 2 capability) scores 18 of 22. Tests 8A/8B need data the
+EA supplies on request. **Not validated against an observed flood**: no such comparison exists in this repository.
+Details, deviations and how to reproduce: [`benchmarks/ea/README.md`](benchmarks/ea/README.md).
 
 **Phase 2 (urban physics) is under way:** rivers, culverts, channel conditioning, storage and green infrastructure
 are in (below). **Gate C prep** ([`benchmarks/gatec/README.md`](benchmarks/gatec/README.md)): the combined mass balance
 closes on four sites with every exchange model on (surface ≤ 6e-6, combined ≤ 0.26 %, the residual being SWMM's own
 continuity); FloodSim matches four HEC-RAS 2D runs on EA Tests 1, 2, 4, 5 to a median 0.1–0.8 cm and HEC-RAS's
 rain-on-a-plane case to 1.2 %. The storm-sewer comparison needs HEC-RAS installed.
+
+**Documentation.** This README is still the theory manual and the user manual at once. The plan for splitting it into
+a theory manual, a user manual and a validation report — with each section mapped to its source, and the house style
+all three follow — is [`docs/documentation-plan.md`](docs/documentation-plan.md). Release history and the versioning
+and tag scheme are in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Working in the app: infrastructure drawer and projects
 
@@ -718,7 +729,7 @@ Flooded area and max depth are reported inside the polygon only; the export meta
 | Buildings | OpenStreetMap footprints (Overpass, three mirrors) | Wall cells (reflective); roof rain routed to the open cells around each building (connected fraction slider) |
 | Streets | OSM drivable highways, width by class | Manning's n = 0.016, zero infiltration; optional 15 cm curb burn (auto: only when the DEM source is coarser than 1 m, because 1 m lidar already resolves curbs) |
 | Land cover | NLCD via MRLC WMS (2021 CONUS; 2016 AK; 2001 HI, PR), colour-matched to classes | Manning's n table and impervious fraction (`src/terrain.js`) |
-| Soils | SSURGO via Soil Data Access (dominant hydrologic soil group) | Constant infiltration capacity: A 10, B 5, C 2.5, D 1 mm/hr × (1 − impervious); "Urban land" = compacted fill 2 mm/hr; dual groups use the undrained letter |
+| Soils | SSURGO via Soil Data Access (map-unit horizon properties, and the dominant hydrologic soil group) | Green-Ampt capacity per cell by default (K, ψ, effective porosity, depth to water table or bedrock — see *Infiltration* above). *Constant rate by soil group* is the alternative: A 10, B 5, C 2.5, D 1 mm/hr × (1 − impervious); "Urban land" = compacted fill 2 mm/hr; dual groups use the undrained letter |
 | Rainfall | NOAA Atlas 14 PFDS at the domain centre (partial-duration series, median + 90% bounds) | Design-storm hyetograph, uniform in space (see below) |
 | Basemap | USGS orthoimagery (public domain) or Esri World Imagery | Display only |
 
@@ -840,9 +851,13 @@ an area is instant and works offline. Overpass is the least reliable source (pub
 - Rain is uniform over the domain (no areal reduction factor, no MRMS radar replay yet); Atlas 14 temporal distributions not yet offered
 - Rivers come from hydro-flattened lidar: the channel below the flight-day water surface is missing unless you estimate it
   (Channel bathymetry; regional curves, not surveyed sections)
-- No catchment delineation: water from upstream of the drawn area is ignored (draw the polygon around the catchment);
-  the drainage network is built over the polygon's bounding box, so inlets outside the polygon sit in dry sink cells
-- Max speed in exports is sampled at the display frame rate, not every solver step
+- Water from upstream of the drawn area is ignored unless you bring it in: *Area → Watershed* delineates the
+  contributing ground and can run the model on it, and a river from a basin too large to model enters from a USGS
+  gauge. Both are opt-in; an area drawn without either is open at its edge. The drainage network is built over the
+  polygon's bounding box, so inlets outside the polygon sit in dry sink cells
+- `max_speed.asc` and the EXR speed grid are sampled at the display frame rate, not every solver step. The per-step
+  peak speed (where deeper than 5 cm) is tracked on the GPU and is what the hazard products and the comparison grids
+  (`grids/max_speed.f32`) use
 - OSM footprint completeness varies by city; Microsoft/Overture footprints and lidar nDSM heights are the upgrade
 
 ## Phase 0 — solver core
@@ -858,11 +873,12 @@ One scheme, written twice: a fp64 CPU reference (`src/solver-cpu.js`) and WGSL c
   where any stencil cell is shallower than `hfront` (1 mm)
 - Hydrostatic reconstruction (Audusse et al. 2004): well-balanced, handles wet/dry
 - HLLC Riemann solver (Toro), dry-bed wave speeds
-- SSP-RK2 (Heun); CFL on λx + λy (0.48 second order, 0.9 first order)
+- SSP-RK2 (Heun); CFL on λx + λy (0.48 second order, 0.9 first order, 0.5 in the subgrid speed mode)
 - Draining-time flux limiter: a cell never exports more water than it holds → positivity with exact mass
 - Semi-implicit point-wise Manning friction
-- Rainfall (with optional per-cell multiplier for roof routing) and constant-capacity infiltration sources;
-  buildings as reflective wall cells; wall / open (transmissive) / outflow-only boundaries
+- Rainfall (with optional per-cell multiplier for roof routing) and infiltration sources — Green-Ampt capacity
+  K·(1 + ψΔθ/F) per cell by default, or a constant capacity; buildings as reflective wall cells;
+  wall / open (transmissive) / outflow-only boundaries
 - Full mass accounting: rain, infiltration, boundary outflow, storage (and clipped volume, which is now zero). Depth
   carries a Kahan residual and per-cell totals are folded into fp64 on every read, so fp32 round-off in cells that
   exchange water every step for hours does not accumulate. A read copies the depths and totals and restarts the
@@ -946,13 +962,17 @@ node tests/run-fema-tests.mjs     # FEMA NFHL: zone codes, BFE between lines, zo
 node tests/run-bathymetry-tests.mjs # channel bathymetry: regional curves, flattened surface, carved section
 node tests/run-window-tests.mjs   # window reruns: the window, its edge segments (+ outward), inflow rates, the edge check, merging
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
+node tests/run-design-tests.mjs   # site design: the grading engine (pads, daylighting, analytic cut / fill), FFE rules, demolish, floodplain fill, roof routing
+node tests/run-stormwater-tests.mjs # outlet ratings, stage–storage, modified Puls vs analytic drawdowns, ponds and drawn GI, underdrains, the detention check
+node tests/run-compare-tests.mjs  # paired runs: forcing fingerprint, .f32 grids, Δ maps and the no-change band, newly wet / dry, off-site impact, tables
+node tests/run-swmm-tests.mjs     # the EPA SWMM WebAssembly engine through the coupler's API: inflow, heads, overflow, link flows, SWMM's continuity (needs npm run build:swmm)
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
-# log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8770
-# reuses a running server, --timeout 20 (minutes), --probe prints the adapter and exits, --headed shows the window;
-# CHROME_PATH picks a browser.
+# log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8766
+# reuses a running server, --page drives another page (e.g. the EA benchmark runner), --timeout 20 (minutes),
+# --probe prints the adapter and exits, --headed shows the window; CHROME_PATH picks a browser, else Chrome, else Edge.
 npm run test:gpu
-# or in your own browser: npm start, then open http://localhost:8770/tests/gpu-browser.html
+# or in your own browser: npm start, then open http://localhost:8766/tests/gpu-browser.html
 # The old Dawn-for-Node runner (npm run test:gpu:dawn) crashes compiling the solver's shaders on some Windows/NVIDIA setups.
 
 # Gate B: npm start, open http://localhost:8766/benchmarks/ea/run.html, then:
@@ -960,8 +980,6 @@ node benchmarks/ea/score.mjs
 
 node app/build.mjs               # bundles dist/floodsim.html (single self-contained page)
 ```
-
-Note: `tests/run-gpu-browser.mjs` points at a Playwright Chromium install path; edit it for your machine.
 
 ## Layout
 
@@ -1022,4 +1040,6 @@ dist/floodsim.html    built Phase 0 solver lab and verification page
 - Uniform grid; porosity and subgrid tables only in the opt-in speed mode (the 1 m run uses buildings as walls)
 - Inflow hydrographs go through the inlet exchange (cells on a line); no momentum-carrying inflow boundary
 - No turbulence (eddy viscosity) term
-- Infiltration is a constant capacity, not Green-Ampt
+- Infiltration is a one-dimensional Green-Ampt column per cell (the default; *Constant rate by soil group* is the
+  alternative): no lateral subsurface flow, and the wetting front does not recede during a run, so the infiltrated
+  depth only grows and a storm is never followed by recovery
