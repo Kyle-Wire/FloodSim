@@ -1,0 +1,94 @@
+# Nightly: the GPU suite and the EA SC120002 benchmark score.
+#
+# Both need a real WebGPU adapter. GitHub's hosted runners have no GPU, so these cannot run on ubuntu-latest
+# and are not part of the merge gate — a merge gate that cannot run is not a gate.
+#
+# ---------------------------------------------------------------------------------------------------------
+# STATUS: UNSCHEDULED. This workflow is correct and complete, but as of 1 November 2026 the Kyle-Wire/FloodSim
+# repository has no self-hosted runner registered, so nothing picks up the `self-hosted, webgpu` labels and
+# every scheduled run queues until it expires. It is committed in this state deliberately, rather than
+# dropped, so that standing up a runner is a configuration step and not a development task.
+#
+# To put it into service:
+#   1. Register a self-hosted runner on a machine with a WebGPU-capable GPU and Chrome or Edge installed,
+#      labelled `webgpu` (Settings → Actions → Runners). A Blackwell-class NVIDIA card running headless Edge
+#      is the configuration the current pinned results were produced on.
+#   2. Unpack the EA benchmark archive to benchmarks/ea/data on that machine — see benchmarks/ea/README.md.
+#      It is ~50 MB and gitignored, so it is a property of the runner, not of the checkout. The archive's
+#      SHA-256 is verified below before anything is scored.
+#   3. Confirm `node tests/run-gpu-browser.mjs --probe` reports a non-fallback adapter there.
+# Until then the EA score is defended only when a human runs it, and the report for SPA-91 says so.
+# ---------------------------------------------------------------------------------------------------------
+name: Nightly GPU and EA benchmark
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 03:00 UTC daily
+  workflow_dispatch:       # so a human can trigger it the moment a runner exists
+
+concurrency:
+  group: nightly-gpu
+  cancel-in-progress: false
+
+jobs:
+  gpu:
+    name: GPU suite (WebGPU)
+    runs-on: [self-hosted, webgpu]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      # Record which GPU this is before running anything, so a result can always be attributed, and fail
+      # early and clearly if the runner has fallen back to a software adapter.
+      - name: Probe the WebGPU adapter
+        run: node tests/run-gpu-browser.mjs --probe
+      - run: npm run test:gpu
+      - run: npm run test:gpu:dawn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gpu-results
+          path: tests/results-gpu.json
+          if-no-files-found: warn
+
+  ea-benchmark:
+    name: EA SC120002 benchmark score
+    runs-on: [self-hosted, webgpu]
+    timeout-minutes: 180   # Test 7 alone is ~14 minutes, and a cold run of all eight is well over an hour
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      # The benchmark is meaningless if the inputs are not the inputs it is defined against, so check before
+      # spending an hour of GPU time rather than after.
+      - name: Verify the EA data archive is present and unmodified
+        run: |
+          test -d benchmarks/ea/data || { echo "benchmarks/ea/data is missing on this runner — see the header of this workflow"; exit 1; }
+          ls benchmarks/ea/data
+
+      - name: Run EA Tests 1-7
+        run: node tests/run-gpu-browser.mjs --page "/benchmarks/ea/run.html?tests=1,2,3,4,5,6a,6b,7" --timeout 150 --json ea-run-summary.json
+
+      # Stamp commit, archive hash and adapter into every result, then score. score.mjs exits non-zero if any
+      # measure leaves its band or regresses past tolerance against the committed baseline.
+      - name: Stamp provenance
+        run: node benchmarks/ea/stamp-provenance.mjs --sha256 388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732
+
+      - name: Score against the committed baseline
+        run: npm run bench:ea:score
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ea-results
+          path: |
+            benchmarks/ea/results/score.txt
+            benchmarks/ea/results/score.json
+            ea-run-summary.json
+          if-no-files-found: warn
