@@ -1,0 +1,112 @@
+[
+ {
+  "case": "Ellicott City 2016",
+  "rows": [
+   {
+    "hourly_file_stamp": "2016-07-30T22:00Z",
+    "hourly_file_mm": 0.27,
+    "rate_integral_prev_hour_mm": null,
+    "n_frames_prev": 0,
+    "rate_integral_next_hour_mm": 25.17,
+    "n_frames_next": 30
+   },
+   {
+    "hourly_file_stamp": "2016-07-30T23:00Z",
+    "hourly_file_mm": 25.5,
+    "rate_integral_prev_hour_mm": 25.17,
+    "n_frames_prev": 30,
+    "rate_integral_next_hour_mm": 68.22,
+    "n_frames_next": 30
+   },
+   {
+    "hourly_file_stamp": "2016-07-31T00:00Z",
+    "hourly_file_mm": 70.05,
+    "rate_integral_prev_hour_mm": 68.22,
+    "n_frames_prev": 30,
+    "rate_integral_next_hour_mm": 49.5,
+    "n_frames_next": 30
+   },
+   {
+    "hourly_file_stamp": "2016-07-31T01:00Z",
+    "hourly_file_mm": 47.45,
+    "rate_integral_prev_hour_mm": 49.5,
+    "n_frames_prev": 30,
+    "rate_integral_next_hour_mm": 5.79,
+    "n_frames_next": 30
+   },
+   {
+    "hourly_file_stamp": "2016-07-31T02:00Z",
+    "hourly_file_mm": 5.64,
+    "rate_integral_prev_hour_mm": 5.79,
+    "n_frames_prev": 30,
+    "rate_integral_next_hour_mm": 0.0,
+    "n_frames_next": 1
+   }
+  ],
+  "hours_fully_covered_both_ways": 3,
+  "mean_abs_error_mm": {
+   "end_of_window_stamp": 1.4,
+   "start_of_window_stamp": 34.98
+  },
+  "verdict": "end-of-window"
+ },
+ {
+  "case": "Ida / Philadelphia 2021",
+  "rows": [
+   {
+    "hourly_file_stamp": "2021-09-01T23:00Z",
+    "hourly_file_mm": 39.46,
+    "rate_integral_prev_hour_mm": null,
+    "n_frames_prev": 0,
+    "rate_integral_next_hour_mm": 15.08,
+    "n_frames_next": 30
+   },
+   {
+    "hourly_file_stamp": "2021-09-02T00:00Z",
+    "hourly_file_mm": 15.07,
+    "rate_integral_prev_hour_mm": 15.08,
+    "n_frames_prev": 30,
+    "rate_integral_next_hour_mm": 3.01,
+    "n_frames_next": 30
+   },
+   {
+    "hourly_file_stamp": "2021-09-02T01:00Z",
+    "hourly_file_mm": 2.88,
+    "rate_integral_prev_hour_mm": 3.01,
+    "n_frames_prev": 30,
+    "rate_integral_next_hour_mm": 9.59,
+    "n_frames_next": 30
+   },
+   {
+    "hourly_file_stamp": "2021-09-02T02:00Z",
+    "hourly_file_mm": 9.43,
+    "rate_integral_prev_hour_mm": 9.59,
+    "n_frames_prev": 30,
+    "rate_integral_next_hour_mm": 1.72,
+    "n_frames_next": 30
+   },
+   {
+    "hourly_file_stamp": "2021-09-02T03:00Z",
+    "hourly_file_mm": 1.72,
+    "rate_integral_prev_hour_mm": 1.72,
+    "n_frames_prev": 30,
+    "rate_integral_next_hour_mm": 0.56,
+    "n_frames_next": 30
+   },
+   {
+    "hourly_file_stamp": "2021-09-02T04:00Z",
+    "hourly_file_mm": 0.5,
+    "rate_integral_prev_hour_mm": 0.56,
+    "n_frames_prev": 30,
+    "rate_integral_next_hour_mm": 0.0,
+    "n_frames_next": 1
+   }
+  ],
+  "hours_fully_covered_both_ways": 4,
+  "mean_abs_error_mm": {
+   "end_of_window_stamp": 0.07,
+   "start_of_window_stamp": 6.91
+  },
+  "verdict": "end-of-window"
+ }
+]

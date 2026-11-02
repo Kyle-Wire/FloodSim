@@ -1,0 +1,2722 @@
+[
+ {
+  "label": "Ellicott City 2016",
+  "window": [
+   "2016-07-30T22:00Z",
+   "2016-07-31T02:00Z"
+  ],
+  "box": [
+   39.255,
+   39.315,
+   -76.845,
+   -76.785
+  ],
+  "wet_threshold_mm_h": 1.0,
+  "weak_update_threshold": 0.25,
+  "pairs_scored": 117,
+  "pairs_bit_identical": 17,
+  "frac_wet_changed": {
+   "mean": 0.619,
+   "median": 0.917,
+   "p10": 0.0,
+   "p90": 1.0,
+   "min": 0.0,
+   "max": 1.0
+  },
+  "pct_pairs_weak_update": 32.5,
+  "pct_pairs_over_90pct_changed": 53.8,
+  "max_consecutive_weak_pairs": 1,
+  "implied_new_observation_interval_min": 2.96,
+  "pairs": [
+   {
+    "pair": "22:00->22:02",
+    "n_wet": 22,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 2.2
+   },
+   {
+    "pair": "22:02->22:04",
+    "n_wet": 34,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.97,
+    "peak_mm_h": 4.4
+   },
+   {
+    "pair": "22:04->22:06",
+    "n_wet": 32,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 4.4
+   },
+   {
+    "pair": "22:06->22:08",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.15,
+    "peak_mm_h": 13.7
+   },
+   {
+    "pair": "22:08->22:10",
+    "n_wet": 34,
+    "frac_wet_changed": 0.059,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.13,
+    "peak_mm_h": 13.7
+   },
+   {
+    "pair": "22:10->22:12",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.54,
+    "peak_mm_h": 30.8
+   },
+   {
+    "pair": "22:12->22:14",
+    "n_wet": 36,
+    "frac_wet_changed": 0.25,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.29,
+    "peak_mm_h": 31.9
+   },
+   {
+    "pair": "22:14->22:16",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 7.68,
+    "peak_mm_h": 44.4
+   },
+   {
+    "pair": "22:16->22:18",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 14.9,
+    "peak_mm_h": 71.7
+   },
+   {
+    "pair": "22:18->22:20",
+    "n_wet": 36,
+    "frac_wet_changed": 0.056,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.05,
+    "peak_mm_h": 71.7
+   },
+   {
+    "pair": "22:20->22:22",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 26.48,
+    "peak_mm_h": 92.8
+   },
+   {
+    "pair": "22:22->22:24",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 92.8
+   },
+   {
+    "pair": "22:24->22:26",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 19.46,
+    "peak_mm_h": 92.8
+   },
+   {
+    "pair": "22:26->22:28",
+    "n_wet": 36,
+    "frac_wet_changed": 0.028,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.02,
+    "peak_mm_h": 66.6
+   },
+   {
+    "pair": "22:28->22:30",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 22.78,
+    "peak_mm_h": 66.6
+   },
+   {
+    "pair": "22:30->22:32",
+    "n_wet": 36,
+    "frac_wet_changed": 0.139,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.13,
+    "peak_mm_h": 60.7
+   },
+   {
+    "pair": "22:32->22:34",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 12.96,
+    "peak_mm_h": 60.7
+   },
+   {
+    "pair": "22:34->22:36",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 19.68,
+    "peak_mm_h": 99.9
+   },
+   {
+    "pair": "22:36->22:38",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 27.86,
+    "peak_mm_h": 99.9
+   },
+   {
+    "pair": "22:38->22:40",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 50.11,
+    "peak_mm_h": 127.8
+   },
+   {
+    "pair": "22:40->22:42",
+    "n_wet": 36,
+    "frac_wet_changed": 0.028,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.03,
+    "peak_mm_h": 127.8
+   },
+   {
+    "pair": "22:42->22:44",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 79.4,
+    "peak_mm_h": 133.6
+   },
+   {
+    "pair": "22:44->22:46",
+    "n_wet": 36,
+    "frac_wet_changed": 0.111,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.62,
+    "peak_mm_h": 133.6
+   },
+   {
+    "pair": "22:46->22:48",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 66.62,
+    "peak_mm_h": 133.6
+   },
+   {
+    "pair": "22:48->22:50",
+    "n_wet": 36,
+    "frac_wet_changed": 0.111,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.14,
+    "peak_mm_h": 97.5
+   },
+   {
+    "pair": "22:50->22:52",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.58,
+    "peak_mm_h": 97.5
+   },
+   {
+    "pair": "22:52->22:54",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 17.38,
+    "peak_mm_h": 90.5
+   },
+   {
+    "pair": "22:54->22:56",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 4.26,
+    "peak_mm_h": 59.9
+   },
+   {
+    "pair": "22:56->22:58",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 12.23,
+    "peak_mm_h": 55.6
+   },
+   {
+    "pair": "22:58->23:00",
+    "n_wet": 36,
+    "frac_wet_changed": 0.167,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.1,
+    "peak_mm_h": 26.5
+   },
+   {
+    "pair": "23:00->23:02",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 34.81,
+    "peak_mm_h": 93.5
+   },
+   {
+    "pair": "23:02->23:04",
+    "n_wet": 36,
+    "frac_wet_changed": 0.111,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.12,
+    "peak_mm_h": 93.5
+   },
+   {
+    "pair": "23:04->23:06",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 36.38,
+    "peak_mm_h": 127.2
+   },
+   {
+    "pair": "23:06->23:08",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 127.2
+   },
+   {
+    "pair": "23:08->23:10",
+    "n_wet": 36,
+    "frac_wet_changed": 0.889,
+    "bit_identical": false,
+    "rms_diff_over_wet": 6.82,
+    "peak_mm_h": 127.2
+   },
+   {
+    "pair": "23:10->23:12",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 24.23,
+    "peak_mm_h": 127.4
+   },
+   {
+    "pair": "23:12->23:14",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 127.4
+   },
+   {
+    "pair": "23:14->23:16",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 34.79,
+    "peak_mm_h": 127.4
+   },
+   {
+    "pair": "23:16->23:18",
+    "n_wet": 36,
+    "frac_wet_changed": 0.028,
+    "bit_identical": false,
+    "rms_diff_over_wet": 6.57,
+    "peak_mm_h": 109.4
+   },
+   {
+    "pair": "23:18->23:20",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 37.66,
+    "peak_mm_h": 121.7
+   },
+   {
+    "pair": "23:20->23:22",
+    "n_wet": 36,
+    "frac_wet_changed": 0.083,
+    "bit_identical": false,
+    "rms_diff_over_wet": 12.26,
+    "peak_mm_h": 121.7
+   },
+   {
+    "pair": "23:22->23:24",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 41.12,
+    "peak_mm_h": 135.6
+   },
+   {
+    "pair": "23:24->23:26",
+    "n_wet": 36,
+    "frac_wet_changed": 0.083,
+    "bit_identical": false,
+    "rms_diff_over_wet": 12.38,
+    "peak_mm_h": 135.6
+   },
+   {
+    "pair": "23:26->23:28",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 29.26,
+    "peak_mm_h": 135.6
+   },
+   {
+    "pair": "23:28->23:30",
+    "n_wet": 36,
+    "frac_wet_changed": 0.056,
+    "bit_identical": false,
+    "rms_diff_over_wet": 8.04,
+    "peak_mm_h": 130.8
+   },
+   {
+    "pair": "23:30->23:32",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 13.34,
+    "peak_mm_h": 134.4
+   },
+   {
+    "pair": "23:32->23:34",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 42.07,
+    "peak_mm_h": 136.5
+   },
+   {
+    "pair": "23:34->23:36",
+    "n_wet": 36,
+    "frac_wet_changed": 0.806,
+    "bit_identical": false,
+    "rms_diff_over_wet": 19.02,
+    "peak_mm_h": 136.5
+   },
+   {
+    "pair": "23:36->23:38",
+    "n_wet": 36,
+    "frac_wet_changed": 0.75,
+    "bit_identical": false,
+    "rms_diff_over_wet": 32.25,
+    "peak_mm_h": 136.5
+   },
+   {
+    "pair": "23:38->23:40",
+    "n_wet": 36,
+    "frac_wet_changed": 0.111,
+    "bit_identical": false,
+    "rms_diff_over_wet": 27.57,
+    "peak_mm_h": 136.5
+   },
+   {
+    "pair": "23:40->23:42",
+    "n_wet": 36,
+    "frac_wet_changed": 0.778,
+    "bit_identical": false,
+    "rms_diff_over_wet": 41.96,
+    "peak_mm_h": 136.5
+   },
+   {
+    "pair": "23:42->23:44",
+    "n_wet": 36,
+    "frac_wet_changed": 0.139,
+    "bit_identical": false,
+    "rms_diff_over_wet": 24.15,
+    "peak_mm_h": 136.5
+   },
+   {
+    "pair": "23:44->23:46",
+    "n_wet": 36,
+    "frac_wet_changed": 0.583,
+    "bit_identical": false,
+    "rms_diff_over_wet": 23.26,
+    "peak_mm_h": 135.2
+   },
+   {
+    "pair": "23:46->23:48",
+    "n_wet": 36,
+    "frac_wet_changed": 0.417,
+    "bit_identical": false,
+    "rms_diff_over_wet": 33.83,
+    "peak_mm_h": 134.0
+   },
+   {
+    "pair": "23:48->23:50",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 119.1
+   },
+   {
+    "pair": "23:50->23:52",
+    "n_wet": 36,
+    "frac_wet_changed": 0.389,
+    "bit_identical": false,
+    "rms_diff_over_wet": 31.37,
+    "peak_mm_h": 152.3
+   },
+   {
+    "pair": "23:52->23:54",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 152.3
+   },
+   {
+    "pair": "23:54->23:56",
+    "n_wet": 36,
+    "frac_wet_changed": 0.25,
+    "bit_identical": false,
+    "rms_diff_over_wet": 9.82,
+    "peak_mm_h": 152.3
+   },
+   {
+    "pair": "23:56->23:58",
+    "n_wet": 36,
+    "frac_wet_changed": 0.139,
+    "bit_identical": false,
+    "rms_diff_over_wet": 31.87,
+    "peak_mm_h": 152.3
+   },
+   {
+    "pair": "23:58->00:00",
+    "n_wet": 36,
+    "frac_wet_changed": 0.278,
+    "bit_identical": false,
+    "rms_diff_over_wet": 23.43,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:00->00:02",
+    "n_wet": 36,
+    "frac_wet_changed": 0.472,
+    "bit_identical": false,
+    "rms_diff_over_wet": 50.63,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:02->00:04",
+    "n_wet": 36,
+    "frac_wet_changed": 0.528,
+    "bit_identical": false,
+    "rms_diff_over_wet": 24.93,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:04->00:06",
+    "n_wet": 36,
+    "frac_wet_changed": 0.861,
+    "bit_identical": false,
+    "rms_diff_over_wet": 59.66,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:06->00:08",
+    "n_wet": 36,
+    "frac_wet_changed": 0.111,
+    "bit_identical": false,
+    "rms_diff_over_wet": 23.67,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:08->00:10",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 45.48,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:10->00:12",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 20.17,
+    "peak_mm_h": 135.0
+   },
+   {
+    "pair": "00:12->00:14",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 25.23,
+    "peak_mm_h": 122.6
+   },
+   {
+    "pair": "00:14->00:16",
+    "n_wet": 36,
+    "frac_wet_changed": 0.917,
+    "bit_identical": false,
+    "rms_diff_over_wet": 15.19,
+    "peak_mm_h": 115.8
+   },
+   {
+    "pair": "00:16->00:18",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 15.04,
+    "peak_mm_h": 113.6
+   },
+   {
+    "pair": "00:18->00:20",
+    "n_wet": 36,
+    "frac_wet_changed": 0.083,
+    "bit_identical": false,
+    "rms_diff_over_wet": 11.76,
+    "peak_mm_h": 111.4
+   },
+   {
+    "pair": "00:20->00:22",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 37.07,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:22->00:24",
+    "n_wet": 36,
+    "frac_wet_changed": 0.139,
+    "bit_identical": false,
+    "rms_diff_over_wet": 32.31,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:24->00:26",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 19.41,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:26->00:28",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 51.07,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:28->00:30",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:30->00:32",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 50.86,
+    "peak_mm_h": 148.6
+   },
+   {
+    "pair": "00:32->00:34",
+    "n_wet": 36,
+    "frac_wet_changed": 0.056,
+    "bit_identical": false,
+    "rms_diff_over_wet": 17.23,
+    "peak_mm_h": 147.4
+   },
+   {
+    "pair": "00:34->00:36",
+    "n_wet": 36,
+    "frac_wet_changed": 0.917,
+    "bit_identical": false,
+    "rms_diff_over_wet": 21.48,
+    "peak_mm_h": 147.4
+   },
+   {
+    "pair": "00:36->00:38",
+    "n_wet": 36,
+    "frac_wet_changed": 0.028,
+    "bit_identical": false,
+    "rms_diff_over_wet": 13.78,
+    "peak_mm_h": 136.5
+   },
+   {
+    "pair": "00:38->00:40",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 28.3,
+    "peak_mm_h": 136.5
+   },
+   {
+    "pair": "00:40->00:42",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 4.37,
+    "peak_mm_h": 82.9
+   },
+   {
+    "pair": "00:42->00:44",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 75.3
+   },
+   {
+    "pair": "00:44->00:46",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 16.93,
+    "peak_mm_h": 75.3
+   },
+   {
+    "pair": "00:46->00:48",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 24.3
+   },
+   {
+    "pair": "00:48->00:50",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 8.75,
+    "peak_mm_h": 44.8
+   },
+   {
+    "pair": "00:50->00:52",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 44.8
+   },
+   {
+    "pair": "00:52->00:54",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 13.82,
+    "peak_mm_h": 44.8
+   },
+   {
+    "pair": "00:54->00:56",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.72,
+    "peak_mm_h": 9.3
+   },
+   {
+    "pair": "00:56->00:58",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.15,
+    "peak_mm_h": 7.5
+   },
+   {
+    "pair": "00:58->01:00",
+    "n_wet": 36,
+    "frac_wet_changed": 0.917,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.56,
+    "peak_mm_h": 7.0
+   },
+   {
+    "pair": "01:00->01:02",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 6.8
+   },
+   {
+    "pair": "01:02->01:04",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.6,
+    "peak_mm_h": 8.4
+   },
+   {
+    "pair": "01:04->01:06",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.62,
+    "peak_mm_h": 8.5
+   },
+   {
+    "pair": "01:06->01:08",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.22,
+    "peak_mm_h": 10.2
+   },
+   {
+    "pair": "01:08->01:10",
+    "n_wet": 36,
+    "frac_wet_changed": 0.917,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.09,
+    "peak_mm_h": 11.9
+   },
+   {
+    "pair": "01:10->01:12",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 8.04,
+    "peak_mm_h": 26.9
+   },
+   {
+    "pair": "01:12->01:14",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.76,
+    "peak_mm_h": 27.5
+   },
+   {
+    "pair": "01:14->01:16",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 7.31,
+    "peak_mm_h": 27.5
+   },
+   {
+    "pair": "01:16->01:18",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 24.0
+   },
+   {
+    "pair": "01:18->01:20",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.91,
+    "peak_mm_h": 24.9
+   },
+   {
+    "pair": "01:20->01:22",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.7,
+    "peak_mm_h": 28.0
+   },
+   {
+    "pair": "01:22->01:24",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.11,
+    "peak_mm_h": 28.0
+   },
+   {
+    "pair": "01:24->01:26",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 14.09,
+    "peak_mm_h": 27.0
+   },
+   {
+    "pair": "01:26->01:28",
+    "n_wet": 36,
+    "frac_wet_changed": 0.556,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.11,
+    "peak_mm_h": 5.0
+   },
+   {
+    "pair": "01:28->01:30",
+    "n_wet": 36,
+    "frac_wet_changed": 0.917,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.35,
+    "peak_mm_h": 5.3
+   },
+   {
+    "pair": "01:30->01:32",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 5.3
+   },
+   {
+    "pair": "01:32->01:34",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.01,
+    "peak_mm_h": 5.3
+   },
+   {
+    "pair": "01:34->01:36",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 5.0
+   },
+   {
+    "pair": "01:36->01:38",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.06,
+    "peak_mm_h": 5.0
+   },
+   {
+    "pair": "01:38->01:40",
+    "n_wet": 36,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 4.6
+   },
+   {
+    "pair": "01:40->01:42",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.4,
+    "peak_mm_h": 4.6
+   },
+   {
+    "pair": "01:42->01:44",
+    "n_wet": 36,
+    "frac_wet_changed": 0.361,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.12,
+    "peak_mm_h": 4.1
+   },
+   {
+    "pair": "01:44->01:46",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.94,
+    "peak_mm_h": 4.1
+   },
+   {
+    "pair": "01:46->01:48",
+    "n_wet": 26,
+    "frac_wet_changed": 0.615,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.1,
+    "peak_mm_h": 2.0
+   },
+   {
+    "pair": "01:48->01:50",
+    "n_wet": 26,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.76,
+    "peak_mm_h": 1.9
+   },
+   {
+    "pair": "01:50->01:52",
+    "n_wet": 6,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 1.2
+   },
+   {
+    "pair": "01:52->01:54",
+    "n_wet": 6,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.67,
+    "peak_mm_h": 1.2
+   }
+  ],
+  "key": "ec2016"
+ },
+ {
+  "label": "Ellicott City 2018",
+  "window": [
+   "2018-05-27T17:30Z",
+   "2018-05-27T21:00Z"
+  ],
+  "box": [
+   39.255,
+   39.315,
+   -76.845,
+   -76.785
+  ],
+  "wet_threshold_mm_h": 1.0,
+  "weak_update_threshold": 0.25,
+  "pairs_scored": 93,
+  "pairs_bit_identical": 5,
+  "frac_wet_changed": {
+   "mean": 0.677,
+   "median": 0.833,
+   "p10": 0.078,
+   "p90": 1.0,
+   "min": 0.0,
+   "max": 1.0
+  },
+  "pct_pairs_weak_update": 19.4,
+  "pct_pairs_over_90pct_changed": 39.8,
+  "max_consecutive_weak_pairs": 2,
+  "implied_new_observation_interval_min": 2.48,
+  "pairs": [
+   {
+    "pair": "17:30->17:32",
+    "n_wet": 15,
+    "frac_wet_changed": 0.933,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.23,
+    "peak_mm_h": 3.4
+   },
+   {
+    "pair": "17:32->17:34",
+    "n_wet": 9,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.57,
+    "peak_mm_h": 3.4
+   },
+   {
+    "pair": "17:34->17:36",
+    "n_wet": 7,
+    "frac_wet_changed": 0.857,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.28,
+    "peak_mm_h": 2.9
+   },
+   {
+    "pair": "17:36->17:38",
+    "n_wet": 7,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.92,
+    "peak_mm_h": 2.6
+   },
+   {
+    "pair": "17:38->17:40",
+    "n_wet": 1,
+    "frac_wet_changed": 0.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 1.5
+   },
+   {
+    "pair": "17:40->17:42",
+    "n_wet": 6,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.18,
+    "peak_mm_h": 2.1
+   },
+   {
+    "pair": "17:42->17:44",
+    "n_wet": 5,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 2.1
+   },
+   {
+    "pair": "17:44->17:46",
+    "n_wet": 8,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.5,
+    "peak_mm_h": 2.1
+   },
+   {
+    "pair": "17:46->17:48",
+    "n_wet": 3,
+    "frac_wet_changed": 0.333,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.06,
+    "peak_mm_h": 1.6
+   },
+   {
+    "pair": "17:48->17:50",
+    "n_wet": 3,
+    "frac_wet_changed": 0.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 1.6
+   },
+   {
+    "pair": "17:50->17:52",
+    "n_wet": 15,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.19,
+    "peak_mm_h": 2.3
+   },
+   {
+    "pair": "17:52->17:54",
+    "n_wet": 12,
+    "frac_wet_changed": 0.417,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.06,
+    "peak_mm_h": 2.3
+   },
+   {
+    "pair": "17:54->17:56",
+    "n_wet": 12,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.75,
+    "peak_mm_h": 4.5
+   },
+   {
+    "pair": "17:56->17:58",
+    "n_wet": 1,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 4.5
+   },
+   {
+    "pair": "17:58->18:00",
+    "n_wet": 1,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 4.5
+   },
+   {
+    "pair": "18:00->18:02",
+    "n_wet": 4,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.42,
+    "peak_mm_h": 4.5
+   },
+   {
+    "pair": "18:02->18:04",
+    "n_wet": 4,
+    "frac_wet_changed": 0.5,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.07,
+    "peak_mm_h": 3.1
+   },
+   {
+    "pair": "18:04->18:06",
+    "n_wet": 5,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.47,
+    "peak_mm_h": 3.1
+   },
+   {
+    "pair": "18:06->18:08",
+    "n_wet": 1,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.3,
+    "peak_mm_h": 1.0
+   },
+   {
+    "pair": "18:32->18:34",
+    "n_wet": 3,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.04,
+    "peak_mm_h": 4.1
+   },
+   {
+    "pair": "18:34->18:36",
+    "n_wet": 3,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 4.1
+   },
+   {
+    "pair": "18:36->18:38",
+    "n_wet": 3,
+    "frac_wet_changed": 0.0,
+    "bit_identical": true,
+    "rms_diff_over_wet": 0.0,
+    "peak_mm_h": 4.1
+   },
+   {
+    "pair": "18:38->18:40",
+    "n_wet": 12,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.3,
+    "peak_mm_h": 4.1
+   },
+   {
+    "pair": "18:40->18:42",
+    "n_wet": 12,
+    "frac_wet_changed": 0.167,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.12,
+    "peak_mm_h": 4.0
+   },
+   {
+    "pair": "18:42->18:44",
+    "n_wet": 12,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.51,
+    "peak_mm_h": 4.7
+   },
+   {
+    "pair": "18:44->18:46",
+    "n_wet": 12,
+    "frac_wet_changed": 0.083,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.09,
+    "peak_mm_h": 4.7
+   },
+   {
+    "pair": "18:46->18:48",
+    "n_wet": 12,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.64,
+    "peak_mm_h": 4.7
+   },
+   {
+    "pair": "18:48->18:50",
+    "n_wet": 12,
+    "frac_wet_changed": 0.833,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.01,
+    "peak_mm_h": 4.4
+   },
+   {
+    "pair": "18:50->18:52",
+    "n_wet": 12,
+    "frac_wet_changed": 0.25,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.65,
+    "peak_mm_h": 4.4
+   },
+   {
+    "pair": "18:52->18:54",
+    "n_wet": 13,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.27,
+    "peak_mm_h": 17.3
+   },
+   {
+    "pair": "18:54->18:56",
+    "n_wet": 13,
+    "frac_wet_changed": 0.846,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.89,
+    "peak_mm_h": 17.3
+   },
+   {
+    "pair": "18:56->18:58",
+    "n_wet": 23,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.39,
+    "peak_mm_h": 17.3
+   },
+   {
+    "pair": "18:58->19:00",
+    "n_wet": 25,
+    "frac_wet_changed": 0.92,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.65,
+    "peak_mm_h": 15.2
+   },
+   {
+    "pair": "19:00->19:02",
+    "n_wet": 34,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 4.95,
+    "peak_mm_h": 18.8
+   },
+   {
+    "pair": "19:02->19:04",
+    "n_wet": 35,
+    "frac_wet_changed": 0.086,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.31,
+    "peak_mm_h": 18.8
+   },
+   {
+    "pair": "19:04->19:06",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.16,
+    "peak_mm_h": 21.8
+   },
+   {
+    "pair": "19:06->19:08",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 7.01,
+    "peak_mm_h": 31.6
+   },
+   {
+    "pair": "19:08->19:10",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 6.91,
+    "peak_mm_h": 47.2
+   },
+   {
+    "pair": "19:10->19:12",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 21.78,
+    "peak_mm_h": 62.4
+   },
+   {
+    "pair": "19:12->19:14",
+    "n_wet": 36,
+    "frac_wet_changed": 0.722,
+    "bit_identical": false,
+    "rms_diff_over_wet": 9.47,
+    "peak_mm_h": 68.8
+   },
+   {
+    "pair": "19:14->19:16",
+    "n_wet": 36,
+    "frac_wet_changed": 0.778,
+    "bit_identical": false,
+    "rms_diff_over_wet": 36.96,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "19:16->19:18",
+    "n_wet": 36,
+    "frac_wet_changed": 0.167,
+    "bit_identical": false,
+    "rms_diff_over_wet": 15.45,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "19:18->19:20",
+    "n_wet": 36,
+    "frac_wet_changed": 0.333,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.44,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "19:20->19:22",
+    "n_wet": 36,
+    "frac_wet_changed": 0.639,
+    "bit_identical": false,
+    "rms_diff_over_wet": 29.87,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "19:22->19:24",
+    "n_wet": 36,
+    "frac_wet_changed": 0.389,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.64,
+    "peak_mm_h": 64.4
+   },
+   {
+    "pair": "19:24->19:26",
+    "n_wet": 36,
+    "frac_wet_changed": 0.722,
+    "bit_identical": false,
+    "rms_diff_over_wet": 17.8,
+    "peak_mm_h": 61.3
+   },
+   {
+    "pair": "19:26->19:28",
+    "n_wet": 36,
+    "frac_wet_changed": 0.667,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.07,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "19:28->19:30",
+    "n_wet": 36,
+    "frac_wet_changed": 0.611,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.31,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "19:30->19:32",
+    "n_wet": 36,
+    "frac_wet_changed": 0.861,
+    "bit_identical": false,
+    "rms_diff_over_wet": 15.98,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "19:32->19:34",
+    "n_wet": 36,
+    "frac_wet_changed": 0.167,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.34,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "19:34->19:36",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 22.26,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "19:36->19:38",
+    "n_wet": 29,
+    "frac_wet_changed": 0.862,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.02,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "19:38->19:40",
+    "n_wet": 26,
+    "frac_wet_changed": 0.923,
+    "bit_identical": false,
+    "rms_diff_over_wet": 12.71,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "19:40->19:42",
+    "n_wet": 17,
+    "frac_wet_changed": 0.941,
+    "bit_identical": false,
+    "rms_diff_over_wet": 4.81,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "19:42->19:44",
+    "n_wet": 17,
+    "frac_wet_changed": 0.941,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.35,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "19:44->19:46",
+    "n_wet": 26,
+    "frac_wet_changed": 0.962,
+    "bit_identical": false,
+    "rms_diff_over_wet": 20.47,
+    "peak_mm_h": 66.6
+   },
+   {
+    "pair": "19:46->19:48",
+    "n_wet": 26,
+    "frac_wet_changed": 0.077,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.28,
+    "peak_mm_h": 66.6
+   },
+   {
+    "pair": "19:48->19:50",
+    "n_wet": 29,
+    "frac_wet_changed": 0.931,
+    "bit_identical": false,
+    "rms_diff_over_wet": 20.77,
+    "peak_mm_h": 94.1
+   },
+   {
+    "pair": "19:50->19:52",
+    "n_wet": 23,
+    "frac_wet_changed": 0.739,
+    "bit_identical": false,
+    "rms_diff_over_wet": 9.65,
+    "peak_mm_h": 94.1
+   },
+   {
+    "pair": "19:52->19:54",
+    "n_wet": 23,
+    "frac_wet_changed": 0.826,
+    "bit_identical": false,
+    "rms_diff_over_wet": 15.54,
+    "peak_mm_h": 76.0
+   },
+   {
+    "pair": "19:54->19:56",
+    "n_wet": 26,
+    "frac_wet_changed": 0.846,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.83,
+    "peak_mm_h": 77.2
+   },
+   {
+    "pair": "19:56->19:58",
+    "n_wet": 26,
+    "frac_wet_changed": 0.192,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.48,
+    "peak_mm_h": 77.2
+   },
+   {
+    "pair": "19:58->20:00",
+    "n_wet": 35,
+    "frac_wet_changed": 0.886,
+    "bit_identical": false,
+    "rms_diff_over_wet": 14.78,
+    "peak_mm_h": 77.2
+   },
+   {
+    "pair": "20:00->20:02",
+    "n_wet": 35,
+    "frac_wet_changed": 0.8,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.85,
+    "peak_mm_h": 64.4
+   },
+   {
+    "pair": "20:02->20:04",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 25.17,
+    "peak_mm_h": 97.2
+   },
+   {
+    "pair": "20:04->20:06",
+    "n_wet": 36,
+    "frac_wet_changed": 0.833,
+    "bit_identical": false,
+    "rms_diff_over_wet": 8.72,
+    "peak_mm_h": 97.2
+   },
+   {
+    "pair": "20:06->20:08",
+    "n_wet": 36,
+    "frac_wet_changed": 0.75,
+    "bit_identical": false,
+    "rms_diff_over_wet": 7.68,
+    "peak_mm_h": 91.0
+   },
+   {
+    "pair": "20:08->20:10",
+    "n_wet": 36,
+    "frac_wet_changed": 0.806,
+    "bit_identical": false,
+    "rms_diff_over_wet": 27.85,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:10->20:12",
+    "n_wet": 36,
+    "frac_wet_changed": 0.722,
+    "bit_identical": false,
+    "rms_diff_over_wet": 12.28,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:12->20:14",
+    "n_wet": 36,
+    "frac_wet_changed": 0.639,
+    "bit_identical": false,
+    "rms_diff_over_wet": 16.46,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:14->20:16",
+    "n_wet": 36,
+    "frac_wet_changed": 0.306,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.05,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:16->20:18",
+    "n_wet": 36,
+    "frac_wet_changed": 0.389,
+    "bit_identical": false,
+    "rms_diff_over_wet": 18.04,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:18->20:20",
+    "n_wet": 36,
+    "frac_wet_changed": 0.222,
+    "bit_identical": false,
+    "rms_diff_over_wet": 8.58,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:20->20:22",
+    "n_wet": 36,
+    "frac_wet_changed": 0.056,
+    "bit_identical": false,
+    "rms_diff_over_wet": 10.17,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:22->20:24",
+    "n_wet": 36,
+    "frac_wet_changed": 0.417,
+    "bit_identical": false,
+    "rms_diff_over_wet": 24.83,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:24->20:26",
+    "n_wet": 36,
+    "frac_wet_changed": 0.333,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.24,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:26->20:28",
+    "n_wet": 36,
+    "frac_wet_changed": 0.833,
+    "bit_identical": false,
+    "rms_diff_over_wet": 32.67,
+    "peak_mm_h": 103.8
+   },
+   {
+    "pair": "20:28->20:30",
+    "n_wet": 35,
+    "frac_wet_changed": 0.857,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.47,
+    "peak_mm_h": 64.4
+   },
+   {
+    "pair": "20:30->20:32",
+    "n_wet": 35,
+    "frac_wet_changed": 0.086,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.61,
+    "peak_mm_h": 64.4
+   },
+   {
+    "pair": "20:32->20:34",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 19.31,
+    "peak_mm_h": 97.2
+   },
+   {
+    "pair": "20:34->20:36",
+    "n_wet": 36,
+    "frac_wet_changed": 0.917,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.41,
+    "peak_mm_h": 97.2
+   },
+   {
+    "pair": "20:36->20:38",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 24.13,
+    "peak_mm_h": 94.1
+   },
+   {
+    "pair": "20:38->20:40",
+    "n_wet": 36,
+    "frac_wet_changed": 0.722,
+    "bit_identical": false,
+    "rms_diff_over_wet": 4.95,
+    "peak_mm_h": 53.8
+   },
+   {
+    "pair": "20:40->20:42",
+    "n_wet": 36,
+    "frac_wet_changed": 0.833,
+    "bit_identical": false,
+    "rms_diff_over_wet": 7.75,
+    "peak_mm_h": 73.5
+   },
+   {
+    "pair": "20:42->20:44",
+    "n_wet": 36,
+    "frac_wet_changed": 0.778,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.53,
+    "peak_mm_h": 73.5
+   },
+   {
+    "pair": "20:44->20:46",
+    "n_wet": 36,
+    "frac_wet_changed": 0.861,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.02,
+    "peak_mm_h": 73.5
+   },
+   {
+    "pair": "20:46->20:48",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 12.66,
+    "peak_mm_h": 76.0
+   },
+   {
+    "pair": "20:48->20:50",
+    "n_wet": 36,
+    "frac_wet_changed": 0.833,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.01,
+    "peak_mm_h": 76.0
+   },
+   {
+    "pair": "20:50->20:52",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 14.44,
+    "peak_mm_h": 76.0
+   },
+   {
+    "pair": "20:52->20:54",
+    "n_wet": 34,
+    "frac_wet_changed": 0.029,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.15,
+    "peak_mm_h": 51.2
+   },
+   {
+    "pair": "20:54->20:56",
+    "n_wet": 36,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.54,
+    "peak_mm_h": 52.9
+   },
+   {
+    "pair": "20:56->20:58",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.84,
+    "peak_mm_h": 52.9
+   },
+   {
+    "pair": "20:58->21:00",
+    "n_wet": 36,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 8.54,
+    "peak_mm_h": 64.4
+   }
+  ],
+  "key": "ec2018"
+ },
+ {
+  "label": "Ida / Philadelphia",
+  "window": [
+   "2021-09-02T00:00Z",
+   "2021-09-02T04:00Z"
+  ],
+  "box": [
+   39.91,
+   40.01,
+   -75.23,
+   -75.11
+  ],
+  "wet_threshold_mm_h": 1.0,
+  "weak_update_threshold": 0.25,
+  "pairs_scored": 118,
+  "pairs_bit_identical": 0,
+  "frac_wet_changed": {
+   "mean": 0.977,
+   "median": 0.984,
+   "p10": 0.946,
+   "p90": 1.0,
+   "min": 0.856,
+   "max": 1.0
+  },
+  "pct_pairs_weak_update": 0.0,
+  "pct_pairs_over_90pct_changed": 97.5,
+  "max_consecutive_weak_pairs": 0,
+  "implied_new_observation_interval_min": 2.0,
+  "pairs": [
+   {
+    "pair": "00:00->00:02",
+    "n_wet": 120,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 7.14,
+    "peak_mm_h": 43.2
+   },
+   {
+    "pair": "00:02->00:04",
+    "n_wet": 120,
+    "frac_wet_changed": 0.992,
+    "bit_identical": false,
+    "rms_diff_over_wet": 7.34,
+    "peak_mm_h": 43.2
+   },
+   {
+    "pair": "00:04->00:06",
+    "n_wet": 120,
+    "frac_wet_changed": 0.992,
+    "bit_identical": false,
+    "rms_diff_over_wet": 6.68,
+    "peak_mm_h": 34.6
+   },
+   {
+    "pair": "00:06->00:08",
+    "n_wet": 120,
+    "frac_wet_changed": 0.992,
+    "bit_identical": false,
+    "rms_diff_over_wet": 6.37,
+    "peak_mm_h": 31.6
+   },
+   {
+    "pair": "00:08->00:10",
+    "n_wet": 120,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 7.13,
+    "peak_mm_h": 58.1
+   },
+   {
+    "pair": "00:10->00:12",
+    "n_wet": 102,
+    "frac_wet_changed": 0.98,
+    "bit_identical": false,
+    "rms_diff_over_wet": 6.81,
+    "peak_mm_h": 58.1
+   },
+   {
+    "pair": "00:12->00:14",
+    "n_wet": 96,
+    "frac_wet_changed": 0.979,
+    "bit_identical": false,
+    "rms_diff_over_wet": 6.03,
+    "peak_mm_h": 36.7
+   },
+   {
+    "pair": "00:14->00:16",
+    "n_wet": 96,
+    "frac_wet_changed": 0.979,
+    "bit_identical": false,
+    "rms_diff_over_wet": 4.57,
+    "peak_mm_h": 34.9
+   },
+   {
+    "pair": "00:16->00:18",
+    "n_wet": 88,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.54,
+    "peak_mm_h": 32.2
+   },
+   {
+    "pair": "00:18->00:20",
+    "n_wet": 78,
+    "frac_wet_changed": 0.974,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.34,
+    "peak_mm_h": 22.8
+   },
+   {
+    "pair": "00:20->00:22",
+    "n_wet": 65,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.92,
+    "peak_mm_h": 8.6
+   },
+   {
+    "pair": "00:22->00:24",
+    "n_wet": 44,
+    "frac_wet_changed": 0.977,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.6,
+    "peak_mm_h": 4.9
+   },
+   {
+    "pair": "00:24->00:26",
+    "n_wet": 27,
+    "frac_wet_changed": 0.963,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.61,
+    "peak_mm_h": 8.3
+   },
+   {
+    "pair": "00:26->00:28",
+    "n_wet": 25,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.29,
+    "peak_mm_h": 9.1
+   },
+   {
+    "pair": "00:28->00:30",
+    "n_wet": 20,
+    "frac_wet_changed": 0.95,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.1,
+    "peak_mm_h": 9.1
+   },
+   {
+    "pair": "00:30->00:32",
+    "n_wet": 9,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.79,
+    "peak_mm_h": 4.3
+   },
+   {
+    "pair": "00:32->00:34",
+    "n_wet": 2,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.33,
+    "peak_mm_h": 1.6
+   },
+   {
+    "pair": "00:38->00:40",
+    "n_wet": 5,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.46,
+    "peak_mm_h": 1.8
+   },
+   {
+    "pair": "00:40->00:42",
+    "n_wet": 12,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.39,
+    "peak_mm_h": 2.0
+   },
+   {
+    "pair": "00:42->00:44",
+    "n_wet": 14,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.76,
+    "peak_mm_h": 9.6
+   },
+   {
+    "pair": "00:44->00:46",
+    "n_wet": 22,
+    "frac_wet_changed": 0.955,
+    "bit_identical": false,
+    "rms_diff_over_wet": 10.99,
+    "peak_mm_h": 42.8
+   },
+   {
+    "pair": "00:46->00:48",
+    "n_wet": 30,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 10.24,
+    "peak_mm_h": 42.8
+   },
+   {
+    "pair": "00:48->00:50",
+    "n_wet": 57,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 7.62,
+    "peak_mm_h": 29.8
+   },
+   {
+    "pair": "00:50->00:52",
+    "n_wet": 54,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.0,
+    "peak_mm_h": 12.1
+   },
+   {
+    "pair": "00:52->00:54",
+    "n_wet": 55,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 5.18,
+    "peak_mm_h": 22.7
+   },
+   {
+    "pair": "00:54->00:56",
+    "n_wet": 79,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 17.52,
+    "peak_mm_h": 69.4
+   },
+   {
+    "pair": "00:56->00:58",
+    "n_wet": 74,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 16.95,
+    "peak_mm_h": 69.4
+   },
+   {
+    "pair": "00:58->01:00",
+    "n_wet": 76,
+    "frac_wet_changed": 0.974,
+    "bit_identical": false,
+    "rms_diff_over_wet": 14.61,
+    "peak_mm_h": 74.8
+   },
+   {
+    "pair": "01:00->01:02",
+    "n_wet": 87,
+    "frac_wet_changed": 0.977,
+    "bit_identical": false,
+    "rms_diff_over_wet": 15.56,
+    "peak_mm_h": 74.8
+   },
+   {
+    "pair": "01:02->01:04",
+    "n_wet": 86,
+    "frac_wet_changed": 0.988,
+    "bit_identical": false,
+    "rms_diff_over_wet": 14.22,
+    "peak_mm_h": 62.3
+   },
+   {
+    "pair": "01:04->01:06",
+    "n_wet": 88,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 9.45,
+    "peak_mm_h": 45.4
+   },
+   {
+    "pair": "01:06->01:08",
+    "n_wet": 109,
+    "frac_wet_changed": 0.991,
+    "bit_identical": false,
+    "rms_diff_over_wet": 11.24,
+    "peak_mm_h": 59.9
+   },
+   {
+    "pair": "01:08->01:10",
+    "n_wet": 119,
+    "frac_wet_changed": 0.983,
+    "bit_identical": false,
+    "rms_diff_over_wet": 9.86,
+    "peak_mm_h": 59.9
+   },
+   {
+    "pair": "01:10->01:12",
+    "n_wet": 120,
+    "frac_wet_changed": 0.992,
+    "bit_identical": false,
+    "rms_diff_over_wet": 14.35,
+    "peak_mm_h": 55.8
+   },
+   {
+    "pair": "01:12->01:14",
+    "n_wet": 113,
+    "frac_wet_changed": 0.991,
+    "bit_identical": false,
+    "rms_diff_over_wet": 12.31,
+    "peak_mm_h": 55.1
+   },
+   {
+    "pair": "01:14->01:16",
+    "n_wet": 114,
+    "frac_wet_changed": 0.982,
+    "bit_identical": false,
+    "rms_diff_over_wet": 8.8,
+    "peak_mm_h": 42.4
+   },
+   {
+    "pair": "01:16->01:18",
+    "n_wet": 120,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 23.09,
+    "peak_mm_h": 88.1
+   },
+   {
+    "pair": "01:18->01:20",
+    "n_wet": 118,
+    "frac_wet_changed": 0.992,
+    "bit_identical": false,
+    "rms_diff_over_wet": 18.9,
+    "peak_mm_h": 106.4
+   },
+   {
+    "pair": "01:20->01:22",
+    "n_wet": 118,
+    "frac_wet_changed": 0.992,
+    "bit_identical": false,
+    "rms_diff_over_wet": 14.88,
+    "peak_mm_h": 106.4
+   },
+   {
+    "pair": "01:22->01:24",
+    "n_wet": 120,
+    "frac_wet_changed": 0.983,
+    "bit_identical": false,
+    "rms_diff_over_wet": 18.9,
+    "peak_mm_h": 105.1
+   },
+   {
+    "pair": "01:24->01:26",
+    "n_wet": 120,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 19.98,
+    "peak_mm_h": 121.7
+   },
+   {
+    "pair": "01:26->01:28",
+    "n_wet": 120,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 22.38,
+    "peak_mm_h": 121.7
+   },
+   {
+    "pair": "01:28->01:30",
+    "n_wet": 120,
+    "frac_wet_changed": 0.992,
+    "bit_identical": false,
+    "rms_diff_over_wet": 19.13,
+    "peak_mm_h": 109.5
+   },
+   {
+    "pair": "01:30->01:32",
+    "n_wet": 118,
+    "frac_wet_changed": 0.983,
+    "bit_identical": false,
+    "rms_diff_over_wet": 18.72,
+    "peak_mm_h": 109.5
+   },
+   {
+    "pair": "01:32->01:34",
+    "n_wet": 119,
+    "frac_wet_changed": 0.975,
+    "bit_identical": false,
+    "rms_diff_over_wet": 23.48,
+    "peak_mm_h": 107.5
+   },
+   {
+    "pair": "01:34->01:36",
+    "n_wet": 109,
+    "frac_wet_changed": 0.936,
+    "bit_identical": false,
+    "rms_diff_over_wet": 10.15,
+    "peak_mm_h": 91.1
+   },
+   {
+    "pair": "01:36->01:38",
+    "n_wet": 104,
+    "frac_wet_changed": 0.923,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.07,
+    "peak_mm_h": 33.3
+   },
+   {
+    "pair": "01:38->01:40",
+    "n_wet": 106,
+    "frac_wet_changed": 0.981,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.25,
+    "peak_mm_h": 19.1
+   },
+   {
+    "pair": "01:40->01:42",
+    "n_wet": 106,
+    "frac_wet_changed": 0.953,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.72,
+    "peak_mm_h": 11.5
+   },
+   {
+    "pair": "01:42->01:44",
+    "n_wet": 112,
+    "frac_wet_changed": 0.973,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.44,
+    "peak_mm_h": 11.5
+   },
+   {
+    "pair": "01:44->01:46",
+    "n_wet": 120,
+    "frac_wet_changed": 0.967,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.56,
+    "peak_mm_h": 11.6
+   },
+   {
+    "pair": "01:46->01:48",
+    "n_wet": 119,
+    "frac_wet_changed": 0.992,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.37,
+    "peak_mm_h": 11.6
+   },
+   {
+    "pair": "01:48->01:50",
+    "n_wet": 115,
+    "frac_wet_changed": 0.974,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.35,
+    "peak_mm_h": 8.9
+   },
+   {
+    "pair": "01:50->01:52",
+    "n_wet": 108,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.45,
+    "peak_mm_h": 15.0
+   },
+   {
+    "pair": "01:52->01:54",
+    "n_wet": 94,
+    "frac_wet_changed": 0.989,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.01,
+    "peak_mm_h": 18.3
+   },
+   {
+    "pair": "01:54->01:56",
+    "n_wet": 90,
+    "frac_wet_changed": 0.967,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.92,
+    "peak_mm_h": 18.3
+   },
+   {
+    "pair": "01:56->01:58",
+    "n_wet": 94,
+    "frac_wet_changed": 0.968,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.7,
+    "peak_mm_h": 11.6
+   },
+   {
+    "pair": "01:58->02:00",
+    "n_wet": 98,
+    "frac_wet_changed": 0.969,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.42,
+    "peak_mm_h": 11.6
+   },
+   {
+    "pair": "02:00->02:02",
+    "n_wet": 100,
+    "frac_wet_changed": 0.97,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.22,
+    "peak_mm_h": 6.9
+   },
+   {
+    "pair": "02:02->02:04",
+    "n_wet": 111,
+    "frac_wet_changed": 0.982,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.51,
+    "peak_mm_h": 8.5
+   },
+   {
+    "pair": "02:04->02:06",
+    "n_wet": 107,
+    "frac_wet_changed": 0.944,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.21,
+    "peak_mm_h": 8.5
+   },
+   {
+    "pair": "02:06->02:08",
+    "n_wet": 109,
+    "frac_wet_changed": 0.945,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.14,
+    "peak_mm_h": 6.0
+   },
+   {
+    "pair": "02:08->02:10",
+    "n_wet": 106,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.02,
+    "peak_mm_h": 6.0
+   },
+   {
+    "pair": "02:10->02:12",
+    "n_wet": 114,
+    "frac_wet_changed": 0.956,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.96,
+    "peak_mm_h": 6.2
+   },
+   {
+    "pair": "02:12->02:14",
+    "n_wet": 115,
+    "frac_wet_changed": 0.965,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.34,
+    "peak_mm_h": 6.6
+   },
+   {
+    "pair": "02:14->02:16",
+    "n_wet": 118,
+    "frac_wet_changed": 0.958,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.61,
+    "peak_mm_h": 8.3
+   },
+   {
+    "pair": "02:16->02:18",
+    "n_wet": 117,
+    "frac_wet_changed": 0.957,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.99,
+    "peak_mm_h": 8.3
+   },
+   {
+    "pair": "02:18->02:20",
+    "n_wet": 106,
+    "frac_wet_changed": 0.972,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.41,
+    "peak_mm_h": 7.9
+   },
+   {
+    "pair": "02:20->02:22",
+    "n_wet": 101,
+    "frac_wet_changed": 0.99,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.45,
+    "peak_mm_h": 9.2
+   },
+   {
+    "pair": "02:22->02:24",
+    "n_wet": 78,
+    "frac_wet_changed": 0.962,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.65,
+    "peak_mm_h": 9.2
+   },
+   {
+    "pair": "02:24->02:26",
+    "n_wet": 78,
+    "frac_wet_changed": 0.987,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.06,
+    "peak_mm_h": 8.0
+   },
+   {
+    "pair": "02:26->02:28",
+    "n_wet": 76,
+    "frac_wet_changed": 0.987,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.19,
+    "peak_mm_h": 6.3
+   },
+   {
+    "pair": "02:28->02:30",
+    "n_wet": 81,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.94,
+    "peak_mm_h": 4.2
+   },
+   {
+    "pair": "02:30->02:32",
+    "n_wet": 96,
+    "frac_wet_changed": 0.979,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.83,
+    "peak_mm_h": 4.2
+   },
+   {
+    "pair": "02:32->02:34",
+    "n_wet": 97,
+    "frac_wet_changed": 0.856,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.5,
+    "peak_mm_h": 2.6
+   },
+   {
+    "pair": "02:34->02:36",
+    "n_wet": 90,
+    "frac_wet_changed": 0.922,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.57,
+    "peak_mm_h": 2.3
+   },
+   {
+    "pair": "02:36->02:38",
+    "n_wet": 71,
+    "frac_wet_changed": 0.901,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.48,
+    "peak_mm_h": 2.1
+   },
+   {
+    "pair": "02:38->02:40",
+    "n_wet": 60,
+    "frac_wet_changed": 0.917,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.47,
+    "peak_mm_h": 2.1
+   },
+   {
+    "pair": "02:40->02:42",
+    "n_wet": 43,
+    "frac_wet_changed": 0.953,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.43,
+    "peak_mm_h": 2.0
+   },
+   {
+    "pair": "02:42->02:44",
+    "n_wet": 29,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.59,
+    "peak_mm_h": 2.7
+   },
+   {
+    "pair": "02:44->02:46",
+    "n_wet": 20,
+    "frac_wet_changed": 0.95,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.89,
+    "peak_mm_h": 2.7
+   },
+   {
+    "pair": "02:46->02:48",
+    "n_wet": 36,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.97,
+    "peak_mm_h": 6.7
+   },
+   {
+    "pair": "02:48->02:50",
+    "n_wet": 57,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.48,
+    "peak_mm_h": 10.9
+   },
+   {
+    "pair": "02:50->02:52",
+    "n_wet": 80,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.16,
+    "peak_mm_h": 13.6
+   },
+   {
+    "pair": "02:52->02:54",
+    "n_wet": 94,
+    "frac_wet_changed": 0.979,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.6,
+    "peak_mm_h": 16.6
+   },
+   {
+    "pair": "02:54->02:56",
+    "n_wet": 99,
+    "frac_wet_changed": 0.98,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.37,
+    "peak_mm_h": 16.8
+   },
+   {
+    "pair": "02:56->02:58",
+    "n_wet": 90,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 3.26,
+    "peak_mm_h": 16.8
+   },
+   {
+    "pair": "02:58->03:00",
+    "n_wet": 81,
+    "frac_wet_changed": 0.975,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.09,
+    "peak_mm_h": 13.8
+   },
+   {
+    "pair": "03:00->03:02",
+    "n_wet": 68,
+    "frac_wet_changed": 0.985,
+    "bit_identical": false,
+    "rms_diff_over_wet": 2.91,
+    "peak_mm_h": 13.5
+   },
+   {
+    "pair": "03:02->03:04",
+    "n_wet": 49,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.76,
+    "peak_mm_h": 5.8
+   },
+   {
+    "pair": "03:04->03:06",
+    "n_wet": 31,
+    "frac_wet_changed": 0.968,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.33,
+    "peak_mm_h": 5.1
+   },
+   {
+    "pair": "03:06->03:08",
+    "n_wet": 19,
+    "frac_wet_changed": 0.947,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.52,
+    "peak_mm_h": 2.1
+   },
+   {
+    "pair": "03:08->03:10",
+    "n_wet": 22,
+    "frac_wet_changed": 0.955,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.72,
+    "peak_mm_h": 2.2
+   },
+   {
+    "pair": "03:10->03:12",
+    "n_wet": 18,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.73,
+    "peak_mm_h": 2.2
+   },
+   {
+    "pair": "03:12->03:14",
+    "n_wet": 13,
+    "frac_wet_changed": 0.923,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.72,
+    "peak_mm_h": 2.1
+   },
+   {
+    "pair": "03:14->03:16",
+    "n_wet": 13,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.73,
+    "peak_mm_h": 2.1
+   },
+   {
+    "pair": "03:16->03:18",
+    "n_wet": 18,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.75,
+    "peak_mm_h": 2.5
+   },
+   {
+    "pair": "03:18->03:20",
+    "n_wet": 24,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.66,
+    "peak_mm_h": 2.5
+   },
+   {
+    "pair": "03:20->03:22",
+    "n_wet": 27,
+    "frac_wet_changed": 0.963,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.7,
+    "peak_mm_h": 2.2
+   },
+   {
+    "pair": "03:22->03:24",
+    "n_wet": 24,
+    "frac_wet_changed": 0.958,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.63,
+    "peak_mm_h": 1.7
+   },
+   {
+    "pair": "03:24->03:26",
+    "n_wet": 21,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.63,
+    "peak_mm_h": 1.6
+   },
+   {
+    "pair": "03:26->03:28",
+    "n_wet": 13,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.73,
+    "peak_mm_h": 1.5
+   },
+   {
+    "pair": "03:28->03:30",
+    "n_wet": 11,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.45,
+    "peak_mm_h": 1.2
+   },
+   {
+    "pair": "03:30->03:32",
+    "n_wet": 30,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.49,
+    "peak_mm_h": 1.6
+   },
+   {
+    "pair": "03:32->03:34",
+    "n_wet": 34,
+    "frac_wet_changed": 0.941,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.38,
+    "peak_mm_h": 1.6
+   },
+   {
+    "pair": "03:34->03:36",
+    "n_wet": 22,
+    "frac_wet_changed": 0.955,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.49,
+    "peak_mm_h": 1.4
+   },
+   {
+    "pair": "03:36->03:38",
+    "n_wet": 32,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.75,
+    "peak_mm_h": 1.8
+   },
+   {
+    "pair": "03:38->03:40",
+    "n_wet": 28,
+    "frac_wet_changed": 0.893,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.63,
+    "peak_mm_h": 1.8
+   },
+   {
+    "pair": "03:40->03:42",
+    "n_wet": 19,
+    "frac_wet_changed": 0.947,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.55,
+    "peak_mm_h": 1.6
+   },
+   {
+    "pair": "03:42->03:44",
+    "n_wet": 20,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.69,
+    "peak_mm_h": 2.2
+   },
+   {
+    "pair": "03:44->03:46",
+    "n_wet": 33,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.78,
+    "peak_mm_h": 2.5
+   },
+   {
+    "pair": "03:46->03:48",
+    "n_wet": 34,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.77,
+    "peak_mm_h": 2.5
+   },
+   {
+    "pair": "03:48->03:50",
+    "n_wet": 27,
+    "frac_wet_changed": 0.963,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.87,
+    "peak_mm_h": 2.4
+   },
+   {
+    "pair": "03:50->03:52",
+    "n_wet": 17,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.93,
+    "peak_mm_h": 2.4
+   },
+   {
+    "pair": "03:52->03:54",
+    "n_wet": 8,
+    "frac_wet_changed": 0.875,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.85,
+    "peak_mm_h": 1.9
+   },
+   {
+    "pair": "03:54->03:56",
+    "n_wet": 5,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.96,
+    "peak_mm_h": 1.6
+   },
+   {
+    "pair": "03:56->03:58",
+    "n_wet": 1,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 0.5,
+    "peak_mm_h": 1.0
+   },
+   {
+    "pair": "03:58->04:00",
+    "n_wet": 1,
+    "frac_wet_changed": 1.0,
+    "bit_identical": false,
+    "rms_diff_over_wet": 1.6,
+    "peak_mm_h": 1.6
+   }
+  ],
+  "key": "ida"
+ }
+]
