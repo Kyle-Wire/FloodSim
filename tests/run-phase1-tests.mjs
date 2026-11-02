@@ -128,7 +128,7 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
 // ---- Atlas 14 design storms (fixture: real PFDS response for Eastwick, Philadelphia)
 {
   const { readFileSync } = await import('node:fs');
-  const { parsePFDS, ddf, hyetograph, constantStorm, rainAt, A14_DURATIONS } = await import('../src/storm.js');
+  const { parsePFDS, ddf, hyetograph, constantStorm, rainAt, rainDepthTo, A14_DURATIONS } = await import('../src/storm.js');
   const pf = parsePFDS(readFileSync(new URL('./fixtures/atlas14-eastwick-pds-metric.txt', import.meta.url), 'utf8'));
   check('PFDS parse', pf.median.length === 19 && pf.median[4][6] === 73 && pf.upper && pf.lower && pf.volume === '2', `100-yr 1-hr = ${pf.median[4][6]} mm, ${pf.region} vol ${pf.volume} v${pf.version}`);
   check('DDF hits table values', A14_DURATIONS.every((d, i) => Math.abs(ddf(pf, 100, d) - pf.median[i][6]) < 1e-9));
@@ -156,6 +156,9 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   check('uniform pattern', u.intensity.every(v => Math.abs(v - pf.median[4][4]) < 1e-9));
   const k = constantStorm(75, 60);
   check('rain schedule blocks', rainAt(k, 0).mmhr === 75 && rainAt(k, 299.9).until === 300 && rainAt(k, 3600).mmhr === 0 && Math.abs(k.total - 75) < 1e-12);
+  const near = (x, y) => Math.abs(x - y) < 1e-9;
+  check('rain fallen by a time (the hyetograph integral)', near(rainDepthTo(k, 0), 0) && near(rainDepthTo(k, 450), 9.375) && near(rainDepthTo(k, 3600), 75) && near(rainDepthTo(k, 9e9), 75) &&
+    near(rainDepthTo(c, c.durationMin * 60), c.total) && near(rainDepthTo(c, 13 * c.blockMin * 60), c.depth.slice(0, 13).reduce((x, y) => x + y, 0)));
 }
 
 // ---- historic storms (synthetic inputs; live services are exercised in --live)

@@ -151,6 +151,13 @@ export function wettest24(series) {
   return sum > 0 ? win.map(v => v / sum) : new Array(24).fill(1 / 24);
 }
 
+/** Rain fallen by time t (s), mm: the hyetograph's depth to t (over the area: with radar rain, its mean). */
+export function rainDepthTo(storm, t) {
+  const bs = storm.blockMin * 60, n = Math.min(storm.intensity.length, Math.floor(t / bs + 1e-9));
+  let d = 0; for (let i = 0; i < n; i++) d += storm.intensity[i] * bs / 3600; // as the solver applies it (rainAt)
+  return n < storm.intensity.length ? d + storm.intensity[n] * Math.max(0, t - n * bs) / 3600 : d;
+}
+
 /** Rain rate (mm/hr) at time t (s), and the end of the block containing t (s) so a solver frame never straddles a change. */
 export function rainAt(storm, t) {
   const bs = storm.blockMin * 60, i = Math.floor(t / bs + 1e-9);

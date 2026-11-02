@@ -279,8 +279,11 @@ on, lower 48).
 - Ellicott City, 30 July 2016: 165 mm over the area in about 4 h, peak 131 mm/hr over 2 minutes at 23:36 UTC (7:36 pm
   EDT); the gridded site record (IEM reanalysis) has 94 mm over the same hours. NWS reported about 6.6 in (168 mm),
   most of it in 2 h. `npm run test:mrms` (`--live`: Ida over Philadelphia).
-- Not yet: storm drains' roof downspouts take the area-mean rate, and the reported rain depth is the books' volume
-  over the rain area (both exact for uniform rain); the emulator and comparison reruns use the area mean.
+- Downspouts into the sewer take the radar rain at their manhole (the coupler's per-node roof rain), so the pipes see
+  the storm cell where it falls. The rain readout and the green-roof and cistern stages count rain fallen as the
+  hyetograph's (the area mean), not the books' volume over a rain area that changes as roofs fill.
+- Comparison pairs, window reruns and emulator training runs use the same run loop, so they get the radar field too;
+  the emulator's rain-depth factor scales it.
 
 **Channel bathymetry (estimated)** (Area → *Channel bathymetry*; `src/bathymetry.js`; off by default). Lidar flattens
 rivers at the flight-day water surface; the channel below is missing. The estimate:

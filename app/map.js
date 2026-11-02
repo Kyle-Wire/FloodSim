@@ -7,7 +7,7 @@ import { buildFine, coarsen, coarseIds, hillshade, roofConnections, roofRouting,
 import { applyDesign, floodedBuildings, resolvedValues, hashFine, withValues, designVariables } from '../src/design.js';
 import { downscaleDepth, volumeRatio } from '../src/downscale.js';
 import { zip, png16, exr, buildingsGLB } from '../src/export.js';
-import { fetchAtlas14, hyetograph, constantStorm, rainAt, ddf, fitGEV, annualMaxima24h, recordStorm, wettest24, gevQuantile, pdsToAms } from '../src/storm.js';
+import { fetchAtlas14, hyetograph, constantStorm, rainAt, rainDepthTo, ddf, fitGEV, annualMaxima24h, recordStorm, wettest24, gevQuantile, pdsToAms } from '../src/storm.js';
 import { synthNetwork, toINP, lumpedInfil, addTanks } from '../src/drainage.js';
 import { giLayers, GI } from '../src/gi.js';
 import { drawnGI, OutletLinks, UnderdrainLinks, detentionTable } from '../src/stormwater.js';
@@ -893,13 +893,18 @@ function radarRainField(r, s) {
   const R = r.storm.radar, k = Math.floor(s.t / (r.storm.blockMin * 60) + 1e-9);
   if (k === r.radarK) return; r.radarK = k;
   const c = r.c, N = c.nx * c.ny, base = r.rainBase, f = R.frames[k], m = R.mean[k];
-  if (!f || !(m > 0)) { s.setRainField(base ?? new Float32Array(N).fill(1)); return; }
+  if (!f || !(m > 0)) { s.setRainField(base ?? new Float32Array(N).fill(1)); if (r.coupler) r.coupler.roofRain = null; return; }
   const W = r.radarW ??= radarWeights(R.win, c), field = new Float32Array(N);
   for (let q = 0; q < N; q++) {
     const o = 4 * q, v = W.w[o] * f[W.idx[o]] + W.w[o + 1] * f[W.idx[o + 1]] + W.w[o + 2] * f[W.idx[o + 2]] + W.w[o + 3] * f[W.idx[o + 3]];
     field[q] = (base ? base[q] : 1) * v / m;
   }
   s.setRainField(field);
+  if (r.coupler?.roofArea) { // downspouts: each manhole's roofs take the radar rain at the manhole
+    const fine = model.fine;
+    r.radarNodeW ??= r.net.nodes.map(n => MR.sampleWeights(R.win, ...fromUTM(fine.x0 + n.p[0] * fine.dx, fine.y1 - n.p[1] * fine.dx, fine.zone)));
+    r.coupler.roofRain = Float64Array.from(r.radarNodeW, ws => ws.reduce((a, [p, w]) => a + w * f[p], 0) / m);
+  }
 }
 /** Water level at simulation time t (s), or null. */
 const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, st.t0 + t * 1000) + (emu?.tide ?? 0) : null);
@@ -1273,7 +1278,7 @@ function ensureSolver() {
   run.solver.setDepth((x, y) => Math.max(w ? w.h[at(x, y)] : start ? start.depth[at(x, y)] : 0, pool.get(at(x, y)) ?? 0, bf ? bf[at(x, y)] : 0));
   if (w) run.solver.setVelocity((x, y) => { const k = at(x, y), h = w.h[k]; return h > 1e-4 && !pool.has(k) ? [w.hu[k] / h, w.hv[k] / h] : [0, 0]; });
   run.storm = currentStorm(); lockStorm(true);
-  run.rainBase = rainBase0(run, c); run.radarK = -1; run.radarW = null;
+  run.rainBase = rainBase0(run, c); run.radarK = -1; run.radarW = run.radarNodeW = null;
   if (coupled) {
     run.swmm = swmmEngine; run.swmmClosed = false;
     run.twoWay = $('twoWay').checked;
@@ -1377,13 +1382,13 @@ async function loop(gen) {
       run.lines.samples.forEach((sm, l) => sm.push([s.t, L.net[l], L.plus[l], L.minus[l]])); run.lines.last = L;
     }
     if (!atQ) { /* roof stages and the stage boundary switch on quanta only */ } else if (run.roofStages) { // new buildings' green roofs and cisterns (and the area's green roofs) fill one after another
-      const depth = s.vol.rain / Math.max(1, s.rainArea);
+      const depth = rainDepthTo(run.storm, s.t) / 1000; // m of rain so far (the hyetograph's: the solver's rain area changes as roofs fill)
       while (run.stage < run.roofStages.length && depth >= run.roofStages[run.stage].until) {
         const next = run.roofStages[++run.stage] ?? { rainField: run.c.rainField, roofArea: run.roof?.roofArea };
         setRainBase(run, s, next.rainField); if (run.coupler && next.roofArea) run.coupler.roofArea = next.roofArea;
         if (run.roofEarly && !run.greenFull && depth >= GI.greenRoofRetention) run.greenFull = s.t;
       }
-    } else if (run.roofEarly && !run.greenFull && s.vol.rain / Math.max(1, s.rainArea) >= GI.greenRoofRetention) {
+    } else if (run.roofEarly && !run.greenFull && rainDepthTo(run.storm, s.t) / 1000 >= GI.greenRoofRetention) {
       run.greenFull = s.t; setRainBase(run, s, run.c.rainField); if (run.coupler && run.roof) run.coupler.roofArea = run.roof.roofArea;
     }
     const rr = rainAt(run.storm, s.t); // piecewise-constant hyetograph: never let a frame straddle a block change
@@ -1813,7 +1818,7 @@ function readouts() {
   const s = run.solver, m = run.mass, A = run.F * run.F, out = run.out;
   $('roDt').textContent = s.lastDt ? (s.lastDt < 0.1 ? (s.lastDt * 1000).toFixed(1) + ' ms' : s.lastDt.toFixed(2) + ' s') : '–';
   $('roSteps').textContent = Math.round(s.steps).toLocaleString();
-  const rainMM = s.vol.rain / s.rainArea * 1000;
+  const rainMM = rainDepthTo(run.storm, s.t);
   $('roRain').textContent = `${rainMM.toFixed(1)} of ${run.storm.total.toFixed(0)} mm`; $('hudRain').textContent = rainMM.toFixed(0) + ' mm';
   drawHyetoNow(s.t);
   let a = 0, mx = 0;

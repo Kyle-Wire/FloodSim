@@ -24,6 +24,7 @@ export class Coupler {
     // what its pipes deliver, so SWMM is never asked for water a nearly empty node does not hold.
     this.twoWay = twoWay;
     this.roofArea = roofArea; // m² of roof whose downspouts feed each node (rain goes straight into the pipes)
+    this.roofRain = null;     // per node, × the solver's rain rate: the rain on those roofs over the area mean (radar rain); null = 1
     this.inletNodes = net.inlets.map(g => g.node);
     this.grates = net.inlets.map(g => g.grates);
     this.swIdx = net.nodes.map(n => swmm.index('NODE', n.name));
@@ -67,7 +68,7 @@ export class Coupler {
     }
     if (this.roofArea) { // roof rain over the interval (rain is constant within an exchange interval: blocks align with it)
       const r = solver.rainRate;
-      for (let i = 0; i < lat.length; i++) if (this.roofArea[i]) { lat[i] += r * this.roofArea[i]; this.totals.roofToSewer += r * this.roofArea[i] * interval; }
+      for (let i = 0; i < lat.length; i++) if (this.roofArea[i]) { const q = r * (this.roofRain ? this.roofRain[i] : 1) * this.roofArea[i]; lat[i] += q; this.totals.roofToSewer += q * interval; }
     }
     // SWMM books a negative lateral flow (water back up through an inlet) as external outflow; keep the total so the
     // combined balance can take it out of SWMM's outflow (it is on the street, not gone through an outfall)
