@@ -14,6 +14,7 @@ import { drawnGI, OutletLinks, UnderdrainLinks, detentionTable } from '../src/st
 import { loadSWMM, SWMM } from '../src/swmm.js';
 import * as H from '../src/history.js';
 import * as R from '../src/radar.js';
+import { labelImage } from './labels.js';
 import { Coupler } from '../src/coupler.js';
 import { fetchUtility, utilityFor } from '../src/utilities.js';
 import { describeSource, fetchFeatures, detectPipeFields, pipeRecords, pointRecords } from '../src/linked.js';
@@ -1989,12 +1990,14 @@ function drawFema(corners) {
   if (!fe) { if (map.getLayer('ov-fema')) map.setLayoutProperty('ov-fema', 'visibility', 'none'); return; }
   cv.width = fine.nx; cv.height = fine.ny; cv.getContext('2d').putImageData(new ImageData(FEMA.zoneImage(fe.grids, fine.nx, fine.ny), fine.nx, fine.ny), 0, 0);
   setCanvasLayer('fema', cv, corners, 'bld-fill', $('tFema').checked, 0.8);
-  const fc = { type: 'FeatureCollection', features: fe.data.lines.map(l => ({ type: 'Feature', geometry: { type: 'LineString', coordinates: l.line }, properties: { label: `${l.kind === 'xs' ? 'XS ' : ''}${(l.elev / 0.3048).toFixed(1)} ft` } })) };
+  const fc = { type: 'FeatureCollection', features: fe.data.lines.map(l => ({ type: 'Feature', geometry: { type: 'LineString', coordinates: l.line },
+    properties: { icon: labelImage(map, `${l.kind === 'xs' ? 'XS ' : ''}${(l.elev / 0.3048).toFixed(1)} ft`, { halo: '#0b2a4a' }) } })) };
   const vis = $('tFema').checked ? 'visible' : 'none';
   if (!map.getSource('fema-bfe')) {
     map.addSource('fema-bfe', { type: 'geojson', data: fc });
     map.addLayer({ id: 'fema-bfe', type: 'line', source: 'fema-bfe', layout: { visibility: vis }, paint: { 'line-color': '#9fd0ff', 'line-width': 1.5, 'line-dasharray': [3, 2] } });
-    map.addLayer({ id: 'fema-bfe-label', type: 'symbol', source: 'fema-bfe', layout: { visibility: vis, 'symbol-placement': 'line', 'text-field': ['get', 'label'], 'text-size': 11 }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#0b2a4a', 'text-halo-width': 1.4 } });
+    map.addLayer({ id: 'fema-bfe-label', type: 'symbol', source: 'fema-bfe', layout: { visibility: vis, 'symbol-placement': 'line', 'icon-image': ['get', 'icon'],
+      'icon-rotation-alignment': 'map', 'icon-keep-upright': true } });
   } else { map.getSource('fema-bfe').setData(fc); for (const l of ['fema-bfe', 'fema-bfe-label']) map.setLayoutProperty(l, 'visibility', vis); }
 }
 $('tBld').onchange = () => { for (const l of ['bld-fill', 'bld-line']) map.setLayoutProperty(l, 'visibility', $('tBld').checked ? 'visible' : 'none'); };

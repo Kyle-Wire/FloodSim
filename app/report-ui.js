@@ -7,6 +7,7 @@ import * as R from '../src/report.js';
 import * as C from '../src/compare.js';
 import { zip } from '../src/export.js';
 import * as FEMA from '../src/fema.js';
+import { labelImage } from './labels.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -253,11 +254,12 @@ export function initReport(map, api) {
   }
   function drawMarkers(rows) {
     if (!map.isStyleLoaded()) return;
-    const fc = { type: 'FeatureCollection', features: rows.filter(r => r.ll).map(r => ({ type: 'Feature', geometry: { type: 'Point', coordinates: r.ll }, properties: { fail: r.fail ? 1 : 0, label: Number.isFinite(r.spread) ? `${fmtNum(r.spread, 1)}` : '' } })) };
+    const fc = { type: 'FeatureCollection', features: rows.filter(r => r.ll).map(r => ({ type: 'Feature', geometry: { type: 'Point', coordinates: r.ll },
+      properties: { fail: r.fail ? 1 : 0, ...(Number.isFinite(r.spread) ? { icon: labelImage(map, fmtNum(r.spread, 1)) } : {}) } })) };
     if (!map.getSource('rep-inlets')) {
       map.addSource('rep-inlets', { type: 'geojson', data: fc });
       map.addLayer({ id: 'rep-inlets', type: 'circle', source: 'rep-inlets', paint: { 'circle-radius': 5, 'circle-color': ['case', ['==', ['get', 'fail'], 1], '#d03b3b', '#0ca30c'], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5 } });
-      map.addLayer({ id: 'rep-inlets-label', type: 'symbol', source: 'rep-inlets', layout: { 'text-field': ['get', 'label'], 'text-size': 11, 'text-offset': [0, 1.1] }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#000000', 'text-halo-width': 1.2 } });
+      map.addLayer({ id: 'rep-inlets-label', type: 'symbol', source: 'rep-inlets', filter: ['has', 'icon'], layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'top', 'icon-offset': [0, 6] } });
     } else map.getSource('rep-inlets').setData(fc);
     const vis = $('repDrawer').hidden ? 'none' : 'visible'; for (const id of ['rep-inlets', 'rep-inlets-label']) map.setLayoutProperty(id, 'visibility', vis);
   }
