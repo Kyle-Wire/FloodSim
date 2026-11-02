@@ -66,15 +66,21 @@ const L1_CEIL = {
 };
 // Observed order of each refinement pair (100→200, 200→400, 400→800).
 //   stoker measured: 0.871  1.095  1.011
-//   ritter measured: 1.008  1.014  0.999
+//   ritter measured: 1.008  1.014  0.998
 // L1 convergence of a second-order scheme is capped at 1 by the shock, so ~1.0 is the correct target and
-// 0.95 (the programme's starting point) leaves 5 % on the two refined pairs.
-// The coarsest pair is the exception: Stoker measures 0.871 there, because at nx=100 the wet dam break is
-// not yet in the asymptotic range — 100 cells over a 100 m domain puts only a handful of cells across the
-// rarefaction. That is a property of the grid, not a defect, so the coarse pair is gated at 0.80 (8 % below
-// the measured 0.871) rather than at 0.95. Reported to the programme as a deviation from the 0.95 starting
-// point; the two refined pairs, which are the ones the baseline table quotes, hold 0.95.
-const ORDER_FLOOR = [0.80, 0.95, 0.95];
+// 0.95 (the programme's starting point) leaves ~5 % below every measured pair but one.
+// The single exception is Stoker's coarsest pair, which measures 0.871, because at nx=100 the wet dam break
+// is not yet in the asymptotic range — 100 cells over a 100 m domain puts only a handful of cells across the
+// rarefaction. That is a property of the grid, not a defect, so that one pair is gated at 0.80 (8 % below
+// the measured 0.871). Reported to the programme as a deviation from the 0.95 starting point and confirmed
+// by the programme lead on 2 November 2026.
+// The floors are per case, not per pair index: Ritter's dry break is in range from nx=100 (measured 1.008),
+// so relaxing its coarse pair to 0.80 would have bought nothing and hidden a 20 % loss of convergence
+// there. Ritter holds 0.95 on all three pairs; only Stoker 100→200 gets 0.80.
+const ORDER_FLOOR = {
+  stoker: [0.80, 0.95, 0.95],
+  ritter: [0.95, 0.95, 0.95],
+};
 
 for (const [name, hR] of [['stoker', 0.5], ['ritter', 0]]) {
   const levels = [100, 200, 400, 800].map(nx => damBreakRun(hR, nx));
@@ -90,7 +96,7 @@ for (const [name, hR] of [['stoker', 0.5], ['ritter', 0]]) {
   // Mass is conserved to round-off here: the domain is walled, so the only loss channel is fp64 summation.
   // Measured |rel| <= 2.3e-15 over all eight runs; 1e-12 is ~400x that floor and ~6 orders below a real leak.
   levels.forEach(r => atMost(`${name} nx=${r.nx} mass balance`, r.mass.rel, 1e-12));
-  orders.forEach((o, k) => atLeast(`${name} order ${levels[k].nx}→${levels[k + 1].nx}`, o, ORDER_FLOOR[k]));
+  orders.forEach((o, k) => atLeast(`${name} order ${levels[k].nx}→${levels[k + 1].nx}`, o, ORDER_FLOOR[name][k]));
 }
 // first-order comparison at nx=400
 results.stoker.firstOrderL1 = damBreakRun(0.5, 400, false).L1rel;
