@@ -41,7 +41,7 @@ import { findBanks, bankClass, BANK_CLASSES, UNRATED } from '../src/banks.js';
 import { scourCells, scourClass, SCOUR_CLASSES, NOT_ERODIBLE } from '../src/scour.js';
 import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/calibrate.js';
 import { gaugeScore, matchEvent } from '../src/validate.js';
-import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, InflowLinks, CFS, basinAreaKm2, areaRatioScale } from '../src/inflow.js';
+import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, entryEdge, InflowLinks, CFS, basinAreaKm2, areaRatioScale } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
 import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge } from '../src/waterlevels.js';
 import * as FEMA from '../src/fema.js';
@@ -1318,12 +1318,13 @@ function ensureSolver() {
     const R = wr.rect, inR = (e) => { const I = Math.floor(e.at[0] / F), J = Math.floor(e.at[1] / F); return I >= R.i0 && I <= R.i1 && J >= R.j0 && J <= R.j1; };
     entries = [...entries.filter(inR), ...wr.segs.map((s, q) => ({ label: 'window edge ' + q, site: null, at: null, cells: s.cells.filter(k => c.mask[k] && !used.has(k)), flow: WIN.rateOf(wr.base.window.segs[q]?.series ?? [[0, 0, 0, 0]], 3) }))];
   }
-  const inflows = entries.map(e => ({ ...e, cells: e.cells ?? entryCells(c, e.at, { used }) })).filter(e => e.cells.length);
+  const { entries: inflows, mask } = edgeEntries(c, entries, used);
   inflows.forEach(e => e.cells.forEach(k => used.add(k)));
+  for (const e of inflows.filter(e => e.edgeWidth)) log(`${e.name || e.label}: enters across the model edge over ${e.edgeWidth} m of channel; the edge is closed across it and the flow goes in just inside`, 'ok');
   run.inflow = inflows.length ? new InflowLinks(inflows) : null;
   const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
   run.solver = new GPUSolver(device, {
-    nx: c.nx, ny: c.ny, dx: F, z: c.z, mask: c.mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
+    nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
     sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, underdrains: coupled && run.sw.under.length ? run.sw.under.flatMap(g => g.cells) : undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: rainBase0(run, c),
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
   });
@@ -1437,6 +1438,24 @@ async function fillGauges(r, v) {
 const hwmOf = (sc) => sc && { n: sc.n, bias: sc.bias, mae: sc.mae, rmse: sc.rmse, within15: sc.within15, calls: sc.calls, hits: sc.hits, misses: sc.misses, falseAlarms: sc.falseAlarms, skipped: sc.skipped ?? 0,
   points: sc.points.map(p => ({ name: p.name, lon: p.lon, lat: p.lat, kind: p.kind, observed: p.wse ?? p.depth ?? null, model: p.model ?? null, error: p.error ?? null, call: p.skip ?? p.call ?? null })) };
 /**
+ * River entries' cells, and the solver mask: a river entering across the domain edge has the edge closed across it and
+ * its flow put in over the channel just inside (entryEdge), else the edge's free outfall sends much of it straight back
+ * out; one entering inside the area takes the open cells around its entry point (entryCells). Entries with cells of
+ * their own (a window's edge segments) keep them. → { entries (those with cells), mask (c.mask, or a copy with the closures) }
+ */
+function edgeEntries(c, entries, used) {
+  let mask = c.mask;
+  const out = entries.map(e => {
+    if (e.cells || !e.at) return e;
+    const ed = entryEdge(c, e.at, { used });
+    if (!ed?.cells.length) return { ...e, cells: entryCells(c, e.at, { used }) };
+    if (mask === c.mask) mask = c.mask.slice();
+    for (const k of ed.closed) mask[k] = 0;
+    return { ...e, cells: ed.cells, edgeWidth: ed.width };
+  });
+  return { entries: out.map(e => ({ ...e, cells: (e.cells ?? []).filter(k => mask[k]) })).filter(e => e.cells.length), mask };
+}
+/**
  * Baseflow warm-up: before the storm, the rivers run at their flow at the storm's start (the design base, or the
  * recorded flow then) for the set hours, with no rain, from the start levels; the storm run starts from that state, so
  * its peaks, times and books all start with the storm. Skipped in the subgrid speed mode and without river inflow.
@@ -1445,9 +1464,9 @@ async function warmUp(r) {
   const hours = Number($('warmUp').value) || 0; r.warm = null;
   if (!(hours > 0) || !r.inflowReady?.length || r.c.sg || !device) return;
   const { c, F } = r, T = hours * 3600, t0 = performance.now();
-  const entries = r.inflowReady.map(e => { const q0 = Math.max(0, typeof e.flow === 'function' ? e.flow(0) : e.flow) ; return { ...e, flow: () => q0, cells: entryCells(c, e.at) }; }).filter(e => e.cells.length);
+  const { entries, mask } = edgeEntries(c, r.inflowReady.map(e => { const q0 = Math.max(0, typeof e.flow === 'function' ? e.flow(0) : e.flow); return { ...e, flow: () => q0 }; }), new Set());
   if (!entries.length) return;
-  const s = new GPUSolver(device, { nx: c.nx, ny: c.ny, dx: F, z: c.z, mask: c.mask, manning: c.manning, inlets: entries.flatMap(e => e.cells), sink: c.inside?.map(v => 1 - v),
+  const s = new GPUSolver(device, { nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, inlets: entries.flatMap(e => e.cells), sink: c.inside?.map(v => 1 - v),
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2 });
   try {
     const start = startWater(c, F), at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));

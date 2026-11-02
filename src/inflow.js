@@ -114,6 +114,37 @@ export function entryCells(c, at, { r = 8, max = 12, used = new Set() } = {}) {
   return cand.filter(k => c.z[k] <= lo + 1.5).slice(0, max); // the channel, not the banks
 }
 
+/**
+ * A river entering across the domain edge: the edge is closed across it (`closed`, cells to take out of the solver's mask,
+ * so the faces there are walls) and its flow goes in over the channel's width just inside (`cells`, `band` rows deep).
+ * The edges are free outfalls, and a flow put into a few cells at the edge mounds up and pours straight back out: on Ida
+ * at Fairmount Dam 1,540 of the Schuylkill's 3,520 m³/s left through the upstream edge, and the pool sat 0.6 m low.
+ * The channel is the run of edge cells, on the lidar water surface (zSurf: not a carved bed), within `rise` m of the
+ * lowest one within `reach` m of the entry; the closure runs `margin` m past it each side. Null when the entry is not
+ * within `reach` of the edge. → { closed: [k], cells: [k], width (m) } | null
+ */
+export function entryEdge(c, at, { reach = 8, rise = 1.5, band = 2, margin = 10, maxWidth = 1000, used = new Set() } = {}) {
+  const F = c.F, nx = c.nx, ny = c.ny, I = at[0] / F, J = at[1] / F, zs = c.zSurf ?? c.z, R = reach / F;
+  // the nearest side: a cell along it at position p, d cells in
+  const sides = [
+    { d: I, at: (p, d) => [d, p], n: ny, p: J }, { d: nx - I, at: (p, d) => [nx - 1 - d, p], n: ny, p: J },
+    { d: J, at: (p, d) => [p, d], n: nx, p: I }, { d: ny - J, at: (p, d) => [p, ny - 1 - d], n: nx, p: I }];
+  const s = sides.reduce((a, b) => (b.d < a.d ? b : a));
+  if (s.d > R + 1) return null;
+  const k = (p, d) => { const [i, j] = s.at(p, d); return j * nx + i; }, open = (p) => p >= 0 && p < s.n && c.mask[k(p, 0)];
+  let lo = -1;
+  for (let p = Math.floor(s.p - R); p <= Math.ceil(s.p + R); p++) if (open(p) && (lo < 0 || zs[k(p, 0)] < zs[k(lo, 0)])) lo = p;
+  if (lo < 0) return null;
+  const top = zs[k(lo, 0)] + rise, wet = (p) => open(p) && zs[k(p, 0)] <= top, wMax = Math.round(maxWidth / F);
+  let a = lo, b = lo;
+  while (wet(a - 1) && b - a < wMax) a--;
+  while (wet(b + 1) && b - a < wMax) b++;
+  const m = Math.ceil(margin / F), closed = [], cells = [];
+  for (let p = Math.max(0, a - m); p <= Math.min(s.n - 1, b + m); p++) if (c.mask[k(p, 0)]) closed.push(k(p, 0));
+  for (let p = a; p <= b; p++) for (let d = 1; d <= band; d++) { const q = k(p, d); if (c.mask[q] && !used.has(q) && !(c.inside && !c.inside[q])) cells.push(q); }
+  return { closed, cells, width: (b - a + 1) * F };
+}
+
 /** A LinkHub member: each entry's flow at the middle of the next interval, spread over its cells (negative = in). */
 export class InflowLinks {
   constructor(entries) {

@@ -930,6 +930,11 @@ Two earlier designs failed on real terrain and are kept as tests: plain zero-gra
 slopes into the domain (~3,000 m³ and a 6.8 m mound on the first Philadelphia run), and zero-gradient-with-reflection
 edges let still water drain through the boundary from round-off. Open-water edges can instead carry an observed water
 level (`stage`), which is well-balanced: still water at the stage stays at rest to the fp32 floor.
+Where a river enters across the edge, the edge is closed across it, the channel plus 10 m each side. The channel is
+the run of edge cells within 1.5 m of the lowest lidar water surface near the entry. The flow goes in over that width,
+two rows inside. Before this, the flow went into the 12 lowest cells at the entry point. There it mounded up and poured
+back out through the edge's outfall. In a test channel 53% of the inflow left that way. On Ida at Fairmount Dam,
+1,540 of the Schuylkill's 3,520 m³/s went straight back out, and the pool ran 0.6 m low at the crest.
 
 **Views** (2D, synced to the map): depth, max depth, velocity, hazard rating HR = d·(v + 0.5) in DEFRA/EA FD2320 classes.
 Hover any cell for elevation, land cover, depth, speed and max depth.

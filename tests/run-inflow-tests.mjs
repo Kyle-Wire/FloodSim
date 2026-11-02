@@ -1,8 +1,9 @@
 // River inflow tests: normal quantiles, log-Pearson III (zero skew = log-normal; rarer floods are bigger), the design
 // hydrograph peaks on time, recorded flows interpolate, river entries from a waterway crossing the area, the inflow link
-// books the water it adds, and the STN high-water-mark import keeps only marks with a usable datum.
+// books the water it adds, a river entering at the edge stays in (the edge closed across it), and the STN high-water-mark import keeps only marks with a usable datum.
 // Usage: node tests/run-inflow-tests.mjs  (--live: also fits the Patapsco at Hollofield record through the local server)
-import { normInv, lp3, designHydrograph, recordedHydrograph, riverEntries, InflowLinks, CFS, polygonAreaKm2, areaRatioScale, basinAreaKm2 } from '../src/inflow.js';
+import { normInv, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, entryEdge, InflowLinks, CFS, polygonAreaKm2, areaRatioScale, basinAreaKm2 } from '../src/inflow.js';
+import { CPUSolver } from '../src/solver-cpu.js';
 import { fromSTN } from '../src/calibrate.js';
 import { GridRef, fromUTM } from '../src/geo.js';
 
@@ -47,6 +48,23 @@ check('normal quantiles', Math.abs(normInv(0.99) - 2.326348) < 1e-5 && Math.abs(
   check('STN marks: NAVD88 elevations, height above ground otherwise, no other datums, inside the box only', marks.length === 2 && Math.abs(a.wse - 20 * 0.3048) < 1e-9 && b.depth === 1.5 * 0.3048 && b.wse == null, JSON.stringify(marks.map(m => m.name)));
 }
 
+{ // a river entering across the edge (row 0, a free outfall) into a 24 m channel; the far end is a wall, so whatever
+  // leaves the domain went back out through the edge it came in by
+  const nx = 40, ny = 60, F = 2, z = new Float64Array(nx * ny), mask = new Uint8Array(nx * ny).fill(1);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = (i >= 14 && i < 26 ? 0 : 3) - 0.002 * F * j;
+  const c = { nx, ny, F, z, mask }, at = [20 * F, 0.1], Q = 30, T = 200;
+  const leak = (cells, m) => {
+    const s = new CPUSolver({ nx, ny, dx: F, z, mask: m, manning: 0.035, bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'wall' } });
+    s.rainRate = 1; s.rainField = new Float64Array(s.NX * s.NY);
+    for (const k of cells) s.rainField[s.idx(k % nx, (k / nx) | 0)] = Q / cells.length / (F * F);
+    s.run(T); return s.vol.outflow / (Q * T);
+  };
+  const e = entryEdge(c, at), m = mask.slice(); for (const k of e.closed) m[k] = 0;
+  check('entry edge: the channel’s width, closed past it, the flow in just inside', e.width === 24 && e.closed.length === 22 && e.cells.length === 24 && e.cells.every(k => ((k / nx) | 0) >= 1 && m[k]), `${e.width} m, ${e.closed.length} closed, ${e.cells.length} cells`);
+  const before = leak(entryCells(c, at), mask), after = leak(e.cells, m);
+  check('a river put in at a free-outfall edge pours back out; closed across it, it stays in', before > 0.05 && after < 1e-3, `${(100 * before).toFixed(1)}% → ${(100 * after).toFixed(2)}% of the inflow left by the edge`);
+  check('entry edge: none away from the edge', entryEdge(c, [20 * F, 30 * F]) === null);
+}
 if (process.argv.includes('--live')) {
   const fetcher = (url) => fetch('http://localhost:8770/api/fetch', { method: 'POST', headers: { 'x-floodsim': '1' }, body: JSON.stringify({ url }) });
   const { annualPeaks } = await import('../src/inflow.js');
