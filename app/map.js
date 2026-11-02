@@ -14,6 +14,7 @@ import { drawnGI, OutletLinks, UnderdrainLinks, detentionTable } from '../src/st
 import { loadSWMM, SWMM } from '../src/swmm.js';
 import * as H from '../src/history.js';
 import * as R from '../src/radar.js';
+import * as MR from '../src/mrms.js';
 import { labelImage } from './labels.js';
 import { Coupler } from '../src/coupler.js';
 import { fetchUtility, utilityFor } from '../src/utilities.js';
@@ -697,7 +698,7 @@ function stormBase() {
 function stormLabel(st) {
   if (!st) return 'none';
   if (st.pattern === 'constant') return `custom constant ${st.peakIntensity} mm/hr for ${fmtDur(st.durationMin)} (${st.total.toFixed(0)} mm)`;
-  if (st.pattern === 'historic') return `historic: ${st.name}, ${st.total.toFixed(0)} mm over ${fmtDur(st.durationMin)} from ${new Date(st.t0).toISOString().slice(0, 16).replace('T', ' ')} UTC (${st.source})` +
+  if (st.pattern === 'historic') return `historic: ${st.name}, ${st.total.toFixed(0)} mm over ${fmtDur(st.durationMin)} from ${new Date(st.t0).toISOString().slice(0, 16).replace('T', ' ')} UTC (${st.source}${st.radar ? '; the radar pattern varies the rain cell by cell, total is the area mean' : ''})` +
     (st.wl ? `; water level from NOAA CO-OPS ${st.wl.station} (${st.wl.name}), peak ${Math.max(...st.wl.v).toFixed(2)} m ${st.wl.datum} on ${run?.stageCells ?? 0} open-water edge cells` : '');
   if (st.pattern === 'record') return `site-record ${st.ari}-yr 24 h: ${st.total.toFixed(0)} mm from a GEV fitted to ${st.gev.years} annual maxima (${hist.recordSource}), shaped like the largest recorded storm with an hourly record (${hist.patternFrom})` +
     `${st.factor !== 1 ? `, +${Math.round((st.factor - 1) * 100)}% uplift` : ''}<span class="pill warn">no Atlas 14</span>`;
@@ -711,7 +712,9 @@ function stormMeta(st) {
   if (st.pattern === 'record') return { source: 'site-record GEV (L-moments) on annual-maximum daily rainfall × 1.13; pattern of the largest recorded storm with a real hourly record', record: hist.recordSource,
     patternFrom: hist.patternFrom, ari: st.ari, gev: st.gev, climateFactor: st.factor, ...base };
   if (st.pattern === 'historic') return { source: st.source, event: st.name, startUTC: new Date(st.t0).toISOString(), returnPeriods: st.rp, ...base,
-    waterLevel: st.wl ? { station: st.wl.station, name: st.wl.name, datum: st.wl.datum, tUTC: st.wl.t.map(t => new Date(t).toISOString()), m: st.wl.v } : null };
+    waterLevel: st.wl ? { station: st.wl.station, name: st.wl.name, datum: st.wl.datum, tUTC: st.wl.t.map(t => new Date(t).toISOString()), m: st.wl.v } : null,
+    ...(st.radar ? { radar: { product: 'NOAA MRMS RadarOnly_QPE_01H shaped by PrecipRate (2 min), IEM archive; per cell, bilinear from 0.01° pixels', hash: st.radar.hash,
+      pixelWindow: { c0: st.radar.win.c0, c1: st.radar.win.c1, r0: st.radar.win.r0, r1: st.radar.win.r1 }, areaPixels: st.radar.pixels, siteGriddedMM: st.radar.siteMM, stats: st.radar.stats } } : {}) };
   const p = model.atlas14;
   return { source: 'NOAA Atlas 14 (PFDS, partial-duration series)', volume: p.volume, version: p.version, region: p.region, siteLonLat: [p.lon, p.lat],
     ari: st.ari, estimate: st.which, climateFactor: st.factor, peakPosition: st.pattern === 'block' ? st.peak : null, ...base };
@@ -775,6 +778,7 @@ async function loadHistory() {
   if (!asos) $('histSrc').value = 'hourly';
   $('histSrc').querySelector('[value=hourly]').disabled = $('histSrc').querySelector('[value=blend]').disabled = !hist.gridded || $('histSrc').querySelector('[value=blend]').disabled;
   if (!hist.gridded) $('histSrc').value = 'gauge';
+  $('histSrc').querySelector('[value=radar]').disabled = !hist.gridded; // MRMS covers the lower 48 only, as the gridded record does
   $('histSrc').querySelector('[value=gauge]').textContent = asos ? `Airport gauge ${asos.id}, ${asos.km.toFixed(1)} km (5 min)` : 'Airport gauge (none within 30 km)';
   $('coastRow').hidden = !gauge;
   if (gauge) $('coastLabel').textContent = `Observed water level at ${gauge.name} (${gauge.km.toFixed(0)} km) on open-water edges`;
@@ -792,11 +796,11 @@ $('histLoad').onclick = async () => {
     if (!hist.gridded && !hist.asos) throw new Error('no hourly rainfall here: no gridded record and no airport gauge with a 1-minute archive within 30 km');
     const hourly = hist.gridded ? await H.fetchHourly(lon, lat, d0, d1, fetcher) : { t0: Date.parse(d0 + 'T00:00Z'), stepMin: 60, mm: new Array(24 * (1 + (Date.parse(d1) - Date.parse(d0)) / 864e5)).fill(0) };
     let series = hourly, blockMin = 60;
-    if (src !== 'hourly' && hist.asos) {
+    if (src !== 'hourly' && src !== 'radar' && hist.asos) {
       const g = await H.fetchASOS1min(hist.asos.id, hourly.t0, hourly.t0 + hourly.mm.length * 3600e3, fetcher);
       series = src === 'gauge' ? g : H.blendSeries(hourly, g); blockMin = 5;
     }
-    let st = H.seriesStorm(series, { blockMin, name: e.name ?? `Storm of ${e.peakDate}` });
+    let st = src === 'radar' ? await radarStorm(e, hourly) : H.seriesStorm(series, { blockMin, name: e.name ?? `Storm of ${e.peakDate}` });
     if (!st) st = { blockMin: 60, depth: [0], intensity: [0], total: 0, peakIntensity: 0, durationMin: 60, pattern: 'historic', name: e.name, source: series.source, t0: Date.parse(e.peakDate + 'T00:00Z') };
     if ($('tCoast').checked && hist.gauge) {
       const wl = await H.fetchWaterLevel(hist.gauge.id, Date.parse(d0 + 'T00:00Z'), Date.parse(d1 + 'T23:59Z'), fetcher);
@@ -814,13 +818,88 @@ function padForSurge(st, wl) {
   let pk = 0; wl.v.forEach((v, i) => { if (v > wl.v[pk]) pk = i; });
   const bs = st.blockMin * 60e3, a = Math.min(st.t0, wl.t[pk] - 12 * 3600e3), b = Math.max(st.t0 + st.depth.length * bs, wl.t[pk] + 6 * 3600e3);
   const pre = Math.max(0, Math.round((st.t0 - a) / bs)), total = Math.max(pre + st.depth.length, Math.round((b - st.t0) / bs) + pre);
-  const depth = [...new Array(pre).fill(0), ...st.depth, ...new Array(total - pre - st.depth.length).fill(0)];
-  return { ...st, depth, intensity: depth.map(d => d * 60 / st.blockMin), durationMin: depth.length * st.blockMin, t0: st.t0 - pre * bs };
+  const pad = (arr, v) => [...new Array(pre).fill(v), ...arr, ...new Array(total - pre - st.depth.length).fill(v)];
+  const depth = pad(st.depth, 0);
+  const radar = st.radar && { ...st.radar, frames: pad(st.radar.frames, null), mean: Float64Array.from(pad(Array.from(st.radar.mean), 0)) };
+  return { ...st, depth, intensity: depth.map(d => d * 60 / st.blockMin), durationMin: depth.length * st.blockMin, t0: st.t0 - pre * bs, ...(radar ? { radar } : {}) };
 }
 function histSummary(st) {
   const rp = st.rp ? Object.entries(st.rp).map(([m, r]) => `${fmtDur(Number(m))} ${r.mm.toFixed(0)} mm ${r.label}`).join(' · ') : '';
   const wl = st.wl ? ` Water level peaks at ${Math.max(...st.wl.v).toFixed(2)} m NAVD88 (${st.wl.name}).` : '';
-  return `${st.name}: ${st.total.toFixed(0)} mm, peak ${st.peakIntensity.toFixed(0)} mm/hr over ${st.blockMin} min. ${rp ? 'Against Atlas 14 at the site: ' + rp + '.' : ''}${wl} Source: ${st.source}.`;
+  return `${st.name}: ${st.total.toFixed(0)} mm${st.radar ? ' (mean over the area)' : ''}, peak ${st.peakIntensity.toFixed(0)} mm/hr over ${st.blockMin} min. ${rp ? 'Against Atlas 14 at the site: ' + rp + '.' : ''}${wl} Source: ${st.source}.` +
+    (st.radar ? ' ' + radarNoteText(st.radar) : '');
+}
+
+/**
+ * A historic storm's rain from radar (src/mrms.js): NOAA MRMS radar-only, 1 km and 2 min over the model area, from the
+ * IEM archive. Window: the site record's wettest stretch of the event, 2 h either side. The storm's hyetograph is the
+ * area mean; `radar` keeps the frames, and the run spreads each one over the solver cells (radarRainField).
+ */
+async function radarStorm(e, hourly) {
+  const site = H.seriesStorm(hourly, { blockMin: 60 });
+  const t0 = (site?.t0 ?? Date.parse(e.peakDate + 'T00:00Z')) - 2 * 3600e3, t1 = site ? site.t0 + site.durationMin * 60e3 + 2 * 3600e3 : t0 + 28 * 3600e3;
+  const fine = model.fine, cs = fine.corners(), bbox = [Math.min(...cs.map(p => p[0])), Math.min(...cs.map(p => p[1])), Math.max(...cs.map(p => p[0])), Math.max(...cs.map(p => p[1]))];
+  const win = MR.pixelWindow(bbox), ring = model.poly, stride = Math.max(1, Math.round(Math.sqrt(fine.nx * fine.ny / 2500))), samples = [];
+  for (let j = stride >> 1; j < fine.ny; j += stride) for (let i = stride >> 1; i < fine.nx; i += stride) {
+    const [lon, lat] = fromUTM(fine.x0 + (i + 0.5) * fine.dx, fine.y1 - (j + 0.5) * fine.dx, fine.zone);
+    if (!ring || insideRing(lon, lat, ring)) samples.push(MR.sampleWeights(win, lon, lat));
+  }
+  const used = [...new Set(samples.flat().map(([k]) => k))];
+  const getBytes = async (u) => { const r = await fetcher(u); if (r.status === 404) return null; if (!r.ok) throw new Error(`IEM radar archive ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
+  const note = $('histNote').textContent;
+  const rr = await MR.radarRain(t0, t1, bbox, getBytes, { isWet: (g) => used.some(k => g[k] > 0), onProgress: (i, n, what) => { $('histNote').textContent = `Radar: ${what} ${i} / ${n}…`; } });
+  let mean = MR.areaMean(rr.frames, samples), a = 0, b = mean.length;
+  while (a < b && !(mean[a] > 0)) a++;
+  while (b > a && !(mean[b - 1] > 0)) b--;
+  $('histNote').textContent = note;
+  if (a === b) return null;
+  const frames = rr.frames.slice(a, b); mean = mean.slice(a, b);
+  const st0 = rr.t0 + a * rr.blockMin * 60e3, st1 = st0 + frames.length * rr.blockMin * 60e3;
+  let siteMM = 0; hourly.mm.forEach((v, h) => { const t = hourly.t0 + h * 3600e3; if (t + 3600e3 > st0 && t < st1) siteMM += v; }); // hours overlapping the radar window
+  const depth = Array.from(mean), intensity = depth.map(d => d * 60 / rr.blockMin);
+  return { blockMin: rr.blockMin, depth, intensity, total: depth.reduce((x, y) => x + y, 0), peakIntensity: Math.max(...intensity), durationMin: depth.length * rr.blockMin,
+    pattern: 'historic', name: e.name ?? `Storm of ${e.peakDate}`, source: 'NOAA MRMS radar-only (hourly RadarOnly_QPE_01H, shaped by 2-minute PrecipRate), 1 km, IEM archive', t0: st0,
+    radar: { win: rr.win, frames, mean, hash: MR.framesHash(frames), stats: rr.stats, siteMM, pixels: used.length } };
+}
+function radarNoteText(R) {
+  const s = R.stats, fb = s.areaShape + s.uniform;
+  return `Radar over ${R.pixels} pixels of 1 km; site gridded record over the same hours ${R.siteMM.toFixed(0)} mm (radar-only rain is not adjusted to gauges).` +
+    (fb ? ` ${fb} of ${s.wetPixelHours} wet pixel-hours timed by the area's shape or evenly (2-minute frames missing or overflowed).` : '') +
+    (s.missingHours.length ? ` Missing hours (no rain assumed): ${s.missingHours.join(', ')}.` : '') + (s.noCoverage ? ` ${s.noCoverage} pixel-hours without radar coverage.` : '');
+}
+
+/** The rain multiplier a run starts with: roof routing (and its green-roof / cistern stages). */
+const rainBase0 = (r, c) => (r.roofStages ? r.roofStages[0].rainField : r.roofEarly ? r.roofEarly.rainField : c.rainField);
+/** A new roof-routing field mid-run (a roof store filled); with radar rain, the radar pattern goes over it. */
+function setRainBase(r, s, field) {
+  r.rainBase = field;
+  if (r.storm?.radar) { r.radarK = -1; radarRainField(r, s); } else s.setRainField(field);
+}
+/** Per solver cell, its interpolation weights in the radar window (4 per cell; Float32 weights, Int32 pixel). */
+function radarWeights(win, c) {
+  const fine = model.fine, cs = fine.dx * fine.nx / c.nx, N = c.nx * c.ny, idx = new Int32Array(4 * N), w = new Float32Array(4 * N);
+  for (let j = 0; j < c.ny; j++) for (let i = 0; i < c.nx; i++) {
+    const k = j * c.nx + i, [lon, lat] = fromUTM(fine.x0 + (i + 0.5) * cs, fine.y1 - (j + 0.5) * cs, fine.zone);
+    MR.sampleWeights(win, lon, lat).forEach(([p, v], m) => { idx[4 * k + m] = p; w[4 * k + m] = v; });
+  }
+  return { idx, w };
+}
+/**
+ * At each radar block: the solver's rain multiplier becomes roof routing × the radar depth at the cell ÷ the area mean,
+ * so s.rainRate (the area mean, scaled by the emulator's rain factor if any) × the multiplier is the radar's own rate
+ * at each cell. setRainField re-totals the rain area, so the mass books stay exact.
+ */
+function radarRainField(r, s) {
+  const R = r.storm.radar, k = Math.floor(s.t / (r.storm.blockMin * 60) + 1e-9);
+  if (k === r.radarK) return; r.radarK = k;
+  const c = r.c, N = c.nx * c.ny, base = r.rainBase, f = R.frames[k], m = R.mean[k];
+  if (!f || !(m > 0)) { s.setRainField(base ?? new Float32Array(N).fill(1)); return; }
+  const W = r.radarW ??= radarWeights(R.win, c), field = new Float32Array(N);
+  for (let q = 0; q < N; q++) {
+    const o = 4 * q, v = W.w[o] * f[W.idx[o]] + W.w[o + 1] * f[W.idx[o + 1]] + W.w[o + 2] * f[W.idx[o + 2]] + W.w[o + 3] * f[W.idx[o + 3]];
+    field[q] = (base ? base[q] : 1) * v / m;
+  }
+  s.setRainField(field);
 }
 /** Water level at simulation time t (s), or null. */
 const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, st.t0 + t * 1000) + (emu?.tide ?? 0) : null);
@@ -1183,7 +1262,7 @@ function ensureSolver() {
   const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
   run.solver = new GPUSolver(device, {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask: c.mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
-    sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, underdrains: coupled && run.sw.under.length ? run.sw.under.flatMap(g => g.cells) : undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: run.roofStages ? run.roofStages[0].rainField : run.roofEarly ? run.roofEarly.rainField : c.rainField,
+    sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, underdrains: coupled && run.sw.under.length ? run.sw.under.flatMap(g => g.cells) : undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: rainBase0(run, c),
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
   });
   const start = startWater(c, F, stageCells); // rivers, lakes and tidal water from the gauges (or dry: the lidar surface)
@@ -1194,6 +1273,7 @@ function ensureSolver() {
   run.solver.setDepth((x, y) => Math.max(w ? w.h[at(x, y)] : start ? start.depth[at(x, y)] : 0, pool.get(at(x, y)) ?? 0, bf ? bf[at(x, y)] : 0));
   if (w) run.solver.setVelocity((x, y) => { const k = at(x, y), h = w.h[k]; return h > 1e-4 && !pool.has(k) ? [w.hu[k] / h, w.hv[k] / h] : [0, 0]; });
   run.storm = currentStorm(); lockStorm(true);
+  run.rainBase = rainBase0(run, c); run.radarK = -1; run.radarW = null;
   if (coupled) {
     run.swmm = swmmEngine; run.swmmClosed = false;
     run.twoWay = $('twoWay').checked;
@@ -1300,14 +1380,15 @@ async function loop(gen) {
       const depth = s.vol.rain / Math.max(1, s.rainArea);
       while (run.stage < run.roofStages.length && depth >= run.roofStages[run.stage].until) {
         const next = run.roofStages[++run.stage] ?? { rainField: run.c.rainField, roofArea: run.roof?.roofArea };
-        s.setRainField(next.rainField); if (run.coupler && next.roofArea) run.coupler.roofArea = next.roofArea;
+        setRainBase(run, s, next.rainField); if (run.coupler && next.roofArea) run.coupler.roofArea = next.roofArea;
         if (run.roofEarly && !run.greenFull && depth >= GI.greenRoofRetention) run.greenFull = s.t;
       }
     } else if (run.roofEarly && !run.greenFull && s.vol.rain / Math.max(1, s.rainArea) >= GI.greenRoofRetention) {
-      run.greenFull = s.t; s.setRainField(run.c.rainField); if (run.coupler && run.roof) run.coupler.roofArea = run.roof.roofArea;
+      run.greenFull = s.t; setRainBase(run, s, run.c.rainField); if (run.coupler && run.roof) run.coupler.roofArea = run.roof.roofArea;
     }
     const rr = rainAt(run.storm, s.t); // piecewise-constant hyetograph: never let a frame straddle a block change
     s.rainRate = rr.mmhr * MMHR; tEnd = Math.min(tEnd, rr.until);
+    if (run.storm.radar) radarRainField(run, s); // radar rain: this block's pattern over the cells
     const stage = atQ ? stageAt(run.storm, s.t) : null; // observed water level on open-water edges, refreshed every quantum
     if (stage != null) { s.setStage(stage); if (run.coupler) run.coupler.stage = stage; }
     if (run.exchanger) tEnd = Math.min(tEnd, run.exchanger.tNext);          // stop exactly at each 1D–2D / culvert exchange
