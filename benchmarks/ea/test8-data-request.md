@@ -1,6 +1,9 @@
 # EA Tests 8A/8B — route to the data, licence finding, and the request to send
 
-**Status:** route established; request drafted and ready for a human to send. Nothing has been sent.
+**Status: NOT SENT, by board decision (2 November 2026).** No request goes to the Environment Agency or anyone
+outside SPARC Labs. This file is kept as the record of the route, the drafted text and the licence findings, so the
+work does not have to be redone if that decision ever changes. Until it does, Tests 8A/8B are unavailable to the
+programme, and the OGL v3 reading of the Tests 1-7 inputs stays unconfirmed (finding A).
 **Owner:** Validation & Benchmarking Lead. **Ticket:** SPA-92. **Date of research:** 1 November 2026.
 **Nobody outside SPARC Labs has been contacted.**
 
