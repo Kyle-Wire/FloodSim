@@ -1,8 +1,15 @@
 # Phase 3a: NOAA Atlas 15 ingestion, Bulletin 17C, and the design-storm method
 
 Status: **specification only — no code in this change.** Every `file:line` reference below was read against `main` at
-`2fa1b85`. `main` has since taken one commit (`c178700`, adding a LICENSE and a `package.json` license field) which
-touches no hydrology file, so the references hold.
+`2fa1b85` and re-verified against `c178700`, which is this document's base. The only commit between the two
+(`c178700`, adding a LICENSE and a `package.json` license field) touches no hydrology file, so the references hold.
+
+Dates in this document are absolute, not relative to the day of reading. Where a date is NOAA's or USGS's own
+published wording it is quoted as such and attributed; where it is my reading of two sources that do not agree, §0
+says so explicitly rather than averaging them.
+
+Revision 2 (2 November 2026) closes the review gap on `src/waterlevels.js` (§0 finding 2, §10) and records the three
+programme decisions returned on 2 November 2026 (§9).
 
 Scope: design-storm hydrology and gauged-river flood frequency. Out of scope and deliberately untouched here:
 spatial radar rainfall (Phase 3e), the per-jurisdiction criteria matrix (SPA-95), and solver numerics.
@@ -19,26 +26,38 @@ and two other things surfaced that change it more.
 
 **1. Atlas 15 is roughly a year later than the ticket assumes.** The ticket's understanding was "publication expected
 2026–2027 and non-CONUS in 2027". NOAA's own schedule page says CONUS *published* estimates are available for use
-**no earlier than September 2027**, and non-CONUS **no earlier than September 2028**. As of today (1 November 2026)
-there is no public CONUS Atlas 15 dataset; the only public Atlas 15 data is still the Montana pilot from September
-2024. Details and sources in §1.
+**no earlier than September 2027**, and non-CONUS **no earlier than September 2028**. As of **1 November 2026**, the
+date the schedule page was read, there is no public CONUS Atlas 15 dataset; the only public Atlas 15 data is still the
+Montana pilot from September 2024. Details and sources in §1. This statement was not re-checked for revision 2 — one
+day would not change it, and §9.2 item 5 is the standing re-check.
 
 Consequence: Atlas 15 ingestion cannot be built against real national data in this work cycle, and an Atlas 15 number
 cannot go into a submittal before late 2027 at the very earliest — later in practice, because publication by NOAA does
 not itself change any jurisdiction's criteria. The *interface* work is still worth doing early; the *ingestion* work
 has nothing to ingest.
 
-**2. The USGS endpoints the gauged-flow path depends on are being switched off in early 2027, with degradation
-starting this month.** All three endpoints in `src/inflow.js` are on the decommission list:
+**2. The USGS endpoints the gauged-flow and starting-water-level paths depend on are being switched off in early 2027,
+with degradation beginning November 2026.** **Five** calls across **two** files are on the decommission list — revision
+1 of this document listed only the three in `src/inflow.js`, which was the gap the review caught:
 
-| `src/inflow.js` | Legacy endpoint | Dies | Replacement (verified live) |
+| Call | Legacy endpoint | Dies | Replacement (verified live) |
 |---|---|---|---|
-| `findGauges()` :21 | `waterservices.usgs.gov/nwis/site` | WaterServices: **22 February 2027** | `api.waterdata.usgs.gov/ogcapi/v0/collections/monitoring-locations` |
-| `gaugeFlows()` :32 | `waterservices.usgs.gov/nwis/iv` | WaterServices: **22 February 2027** | `.../collections/continuous` |
-| `annualPeaks()` :40 | `nwis.waterdata.usgs.gov/nwis/peak` | NWISWeb: **by March 2027** | `.../collections/peaks` |
+| `inflow.js` `findGauges()` :21 | `waterservices.usgs.gov/nwis/site` | WaterServices: **22 February 2027** | `api.waterdata.usgs.gov/ogcapi/v0/collections/monitoring-locations` |
+| `inflow.js` `gaugeFlows()` :32 | `waterservices.usgs.gov/nwis/iv` | WaterServices: **22 February 2027** | `.../collections/continuous` |
+| `inflow.js` `annualPeaks()` :40 | `nwis.waterdata.usgs.gov/nwis/peak` | NWISWeb: **by March 2027** | `.../collections/peaks` |
+| `waterlevels.js` `findLevelGauges()` :26 | `waterservices.usgs.gov/nwis/site` | WaterServices: **22 February 2027** | `.../collections/latest-continuous` + `monitoring-locations` join (§10) |
+| `waterlevels.js` `readLevels()` :43 | `waterservices.usgs.gov/nwis/iv` | WaterServices: **22 February 2027** | `.../collections/latest-continuous` (latest) / `continuous` (windowed) |
 
-Two precision notes on that table, because the dates are doing work. The 22 February 2027 date is USGS's announced
-WaterServices decommission date and covers the first two rows directly. The peak file is served from NWISWeb
+Both `waterlevels.js` calls go through the same `NWIS` constant at `src/waterlevels.js:14`, so they die on the same
+date as the first two rows. What they feed is not flood frequency — it is the **starting water level** in every river,
+lake and tidal boundary in the model, which is upstream of every result the two target workflows produce. §10 is the
+verified per-call replacement mapping for all five, written for SPA-100's owner; it includes one failure mode that
+returns a wrong answer silently rather than erroring, which is the reason I queried the service rather than reading
+migration notes.
+
+Two precision notes on the dates in that table, because the dates are doing work. The 22 February 2027 date is USGS's
+announced WaterServices decommission date and covers the four `waterservices.usgs.gov` rows directly. The peak file is
+served from NWISWeb
 (`nwis.waterdata.usgs.gov`), which USGS is retiring on a parallel track — reported as decommissioned by March 2027,
 with the final migration campaign running November 2026 to February 2027. I did not find a single primary page giving
 one date for both, so treat the peak endpoint as dying in the same window rather than on a date certain. The
@@ -47,12 +66,25 @@ is referenced in third-party migration notes. **Confirm the version path at impl
 
 This is not an aside. `annualPeaks()` is the exact function Bulletin 17C work has to rewrite, and the replacement
 `peaks` collection has a *different and better* schema for 17C purposes (§5.2) — it carries the historic-peak
-"peak since" field that EMA perception thresholds need. So the 17C work and the migration are the same work, and the
-migration has a hard external deadline inside the ticket's horizon. Doing 17C first means writing that fetch once
-instead of twice.
+"peak since" field that EMA perception thresholds need.
 
-I have not treated the migration as licence to do it — it is adjacent work this ticket does not name. §9 asks for a
-decision on whether it folds into the 17C ticket or gets its own.
+**Decided 2 November 2026: the migration is its own ticket, [SPA-100](/SPA/issues/SPA-100), owned by the Geospatial
+Engineer, due 15 January 2027.** 17C then builds on the new `peaks` endpoint rather than migrating it. I had
+recommended folding the two together on the grounds that they rewrite the same function; the programme call went the
+other way, and on the evidence of this revision that is the better call — the gap this review caught is that the
+migration surface is five calls across two files, and **four** of the five (`findGauges`, `gaugeFlows`, and both
+`waterlevels.js` calls) have nothing to do with 17C. Only `annualPeaks()` does. Tying a 22 February 2027 hard deadline
+to the slower statistics work is how the deadline gets missed.
+
+What that split means for the 17C ticket, concretely:
+
+- 17C **consumes** the new `peaks` fetcher; it does not write it. §5.2's schema analysis and qualifier mapping are the
+  data requirements SPA-100 must satisfy, so they are an input to SPA-100, not duplicated work.
+- 17C therefore has a **dependency** on SPA-100 for the `peaks` row only. If SPA-100 slips, 17C can still be built
+  against vendored fixtures (§5.5) — the 17C acceptance test is 17C Appendix 10 example data, not live gauge data, so
+  the statistics work is not actually blocked by the endpoint.
+- The one thing that would be lost by the split is writing the `peaks` fetch once instead of twice. The fix is that
+  17C does not write it at all. §5.2 is addressed to SPA-100.
 
 **3. Areal reduction factors have almost no purchase on FloodSim as it is built.** `MAX_FINE` at `app/map.js:56` caps
 a model at 3000 × 3000 m of 1 m cells — 9 km², or 3.5 mi². Published fixed-area ARFs at that size are about 0.95–0.99
@@ -65,7 +97,7 @@ it is the one item that makes the design storm *smaller*. §7 specifies it as as
 
 ---
 
-## 1. Atlas 15: what is actually available, as of 1 November 2026
+## 1. Atlas 15: what is actually available, read 1 November 2026
 
 ### 1.1 Schedule
 
@@ -177,6 +209,13 @@ fits log-Pearson III by method of moments on log₁₀ flows with **station skew
 factor, requiring n ≥ 10. The module header (:5-6) is already honest that this is Bulletin 17B and that "17C's EMA
 adds regional skew and low-outlier tests, so treat these as planning numbers". Called from `app/map.js:2254`, shaped
 by `designHydrograph()` into an NRCS gamma unit hydrograph.
+
+**The starting-water-level path**, listed here because it shares the dying `waterservices.usgs.gov/nwis` host and
+revision 1 omitted it. `findLevelGauges()` (`src/waterlevels.js:25`) and `readLevels()` (:39) pull the level gauges in
+the model box and their readings, which `gaugeSurface()` (:70) turns into a NAVD88 water surface — the level every
+river, lake and tidal boundary starts at, on top of the hydro-flattened lidar surface. No item in this ticket changes
+it, and its hydrology is not in question. What is in question is that both calls stop working on 22 February 2027:
+§0 finding 2 and §10.
 
 ---
 
@@ -441,7 +480,12 @@ mishandled regulated peak is exactly the error that makes a design flow indefens
 `gage_ht_cd`. If stage-based perception thresholds are wanted later, that is a separate data source. For this ticket,
 thresholds come from discharge qualifiers and `peak_since` only — say so in the output.
 
-### 5.3 Regional skew — the specification decision, and my recommendation
+### 5.3 Regional skew — settled 2 November 2026
+
+**Confirmed by the programme lead:** the engineer supplies the regional skew *and its MSE* with a required citation;
+station-skew-only EMA is the clearly labelled fallback; **Plate I is not to be digitised.** The analysis below stands
+as written — what changed is that the first row of the options table is now a closed door rather than a
+recommendation, so an implementation ticket should not reopen it.
 
 **There is no national regional-skew dataset to ship.** 17B's Plate I national skew map is superseded, and 17C does
 not replace it with another map: it points to published regional studies, which are per-region Bayesian weighted /
@@ -453,7 +497,7 @@ Three options, and what I recommend:
 
 | Option | Verdict |
 |---|---|
-| Digitise 17B Plate I as a national skew grid | **No.** It is superseded; shipping it would put a 1982 number behind a "Bulletin 17C" label, which is worse than having no regional skew. |
+| Digitise 17B Plate I as a national skew grid | **No — closed by decision, 2 November 2026.** It is superseded; shipping it would put a 1982 number behind a "Bulletin 17C" label, which is worse than having no regional skew. |
 | User supplies regional skew + its MSE from the applicable published study, cited | **Yes — the primary path.** This is what PeakFQ requires of its users, so it matches what the reviewing engineer already expects to supply and defend. |
 | EMA with station skew only, no regional weighting | **Yes — as the labelled fallback**, and it is still a real improvement over `lp3()`: MGBT low-outlier censoring, interval data, historic peaks and confidence limits all apply without any regional skew. |
 
@@ -481,7 +525,8 @@ hydrograph plot is the thing that gets printed and detached from its metadata.
 This item has a published gold standard and the test should use it.
 
 1. **Bulletin 17C worked examples.** 17C's Appendix 10 publishes Examples 3–7 with results computed by PeakFQ v7.1.
-   Vendor those input datasets as fixtures under `tests/fixtures/` and assert FloodSim's quantiles match the published
+   Vendor those input datasets as fixtures under `tests/fixtures/` — approved, with the provenance README entry
+   §9.1 decision 3 requires — and assert FloodSim's quantiles match the published
    values. State the tolerance in the test and **report the achieved agreement, including for any example that misses
    it** — a documented 3% disagreement on one example is worth far more than a tolerance widened until everything
    passes. These examples are the reason this item can be defended at all.
@@ -552,8 +597,9 @@ none for Volume 5, Pacific Islands).
 
 The access consequence matters: **these are not available from the PFDS point query.** Selecting the right curve needs
 the temporal-area polygon for the site, so this is a vendored-static-data decision, not a fetch: bundle the CSVs and
-area polygons for the volumes we support, versioned, with the Atlas 14 volume and version recorded in `cite`. §9 asks
-for a decision on bundling.
+area polygons for the volumes we support, versioned, with the Atlas 14 volume and version recorded in `cite`.
+Bundling is approved (§9.1 decision 3); because the runtime reads these to build the storm, they live in `data/`, not
+under `tests/`, with their source URL, edition, retrieval date and sha256 in the `data/` provenance README.
 
 **(b) NRCS distributions.** Offer the NRCS regional distributions where they exist — NEH 630 Ch 4 records them for
 California, Nevada, the Midwest states, the Southeast states, the Ohio Valley and neighbouring states, and New York
@@ -574,7 +620,8 @@ should be built as an open list so an Atlas 15 pattern source can be added witho
 
 `src/storm.js` — `hyetograph()` gains `pattern: 'block' | 'uniform' | 'a14temporal' | 'nrcs'` (the plumbing already
 exists: `app/map.js:691` splits `pattern:peak`, and `stormMeta()` records `pattern` and `peakPosition`), plus a
-`temporal.js`-style table reader; `tests/fixtures/` for the vendored curves; `app/map.html` (the pattern select);
+`temporal.js`-style table reader; `data/` for the vendored curves and temporal-area polygons, with its provenance
+README (§9.1 decision 3); `app/map.html` (the pattern select);
 `app/map.js:694-715` (label and meta must name the distribution, its case/decile and the source volume).
 
 ### 6.4 Acceptance test — extends `tests/run-storm-tests.mjs`
@@ -638,7 +685,8 @@ already exists.
   choice.
 - **Hard-refuse outside the published curves' range** (TP-40's are drawn for roughly 30 minutes to 24 hours and up to
   about 400 mi²) rather than extrapolating. Digitise from the published figure at implementation time and vendor the
-  digitised table as a fixture so it can be checked against the source.
+  digitised table in `data/` — the runtime applies it, so it is not a fixture (§9.1 decision 3) — with the read-off
+  points used to check it against the published figure vendored separately under `tests/fixtures/`.
 - Report the factor, the area, the duration and the method as separate fields — never fold it into the depth.
 
 ### 7.3 Acceptance test
@@ -667,13 +715,20 @@ already exists.
 
 Ordered by what is buildable, what is defensible, and what has a deadline — not by what the ticket lists first.
 
-**1. Item C, Bulletin 17C, together with the USGS endpoint migration.** First for four independent reasons that point
-the same way: it is the only item whose standard is published and whose data exists today; it has a **hard external
-deadline of 22 February 2027** with degradation already beginning; the function it has to rewrite is the function the
-deadline kills, so doing both at once costs less than doing either alone; and it has a published gold-standard
-acceptance test (17C Appendix 10 Examples 3–7 against PeakFQ v7.1), which is a stronger validation basis than anything
-else in this ticket. It is also the item that most directly serves the two target workflows: a gauged design flow an
-engineer has to defend.
+**0. The USGS endpoint migration — [SPA-100](/SPA/issues/SPA-100), not this ticket, not this role.** It is listed here
+only because it sets the floor under item C. Hard external deadline **22 February 2027**, degradation beginning
+November 2026, five calls across two files (§0 finding 2, §10). Owned by the Geospatial Engineer, due 15 January 2027.
+Nothing in items A–E should wait on it except the one dependency named below.
+
+**1. Item C, Bulletin 17C.** First for three independent reasons that point the same way: it is the only item whose
+standard is published and whose data exists today; it has a published gold-standard acceptance test (17C Appendix 10
+Examples 3–7 against PeakFQ v7.1), a stronger validation basis than anything else in this ticket; and it is the item
+that most directly serves the two target workflows — a gauged design flow an engineer has to defend.
+
+Its only dependency on SPA-100 is the live `peaks` fetch. Because the acceptance test runs on vendored 17C Appendix 10
+fixtures rather than live gauge data (§5.5), the statistics work can start and finish without waiting: build `ema()`
+against fixtures, then wire it to whatever `peaks` fetcher SPA-100 lands. Treat §5.2 as the data requirement handed to
+SPA-100.
 
 **2. Item A's interface, without the Atlas 15 fetcher.** The source contract (§3.2) is testable today against Atlas 14
 alone, the no-op refactor test (§3.5.1) makes it safe, and every later item is cheaper behind it. Items B and D both
@@ -703,30 +758,157 @@ items D and E until their measurements (§6.4.5, §7.3.4) justify them.
 
 ---
 
-## 9. Decisions I need before the implementation tickets
+## 9. Decisions
 
-Flagged rather than assumed. None of these block the specification; each shapes an implementation ticket.
+Flagged rather than assumed. The first three were returned by the programme lead on **2 November 2026** and are now
+settled; 4 and 5 remain open and shape implementation tickets rather than this specification.
 
-1. **Does the USGS endpoint migration fold into the 17C ticket, or get its own?** It is adjacent work this ticket does
-   not name, and the ground rules say to ask rather than improvise. My recommendation is to fold it in, because the
-   migration and 17C rewrite the same function and the 17C data requirements determine what the new fetcher must
-   request. It also has a deadline that does not wait for ticket hygiene.
-2. **Regional skew: confirm the user-supplied-plus-citation path (§5.3).** It puts a required input in front of the
-   engineer rather than guessing a defensible default. I believe that is correct for a submittal tool, but it is a
-   product decision as much as a technical one.
-3. **Vendoring static data.** Item D needs Atlas 14 temporal CSVs and temporal-area shapefiles bundled; item E needs
-   a digitised TP-40 table; item C needs the 17C Appendix 10 example datasets as fixtures. All are public-domain
-   federal data. Confirm bundling versioned copies in the repo is acceptable and where they should live.
-4. **Sub-hourly durations under Atlas 15 (§3.3).** If the national release keeps the pilot's 1-hour floor, should a
-   mixed-source storm be allowed at all, or should Atlas 15 sites simply refuse to size storm sewers? I have specified
-   mixed-source-with-labelling as the more useful behaviour, but refusing is the more conservative one.
-5. **Who re-checks the Atlas 15 schedule, and when?** §1.2 is the one input here with a short shelf life. It should be
-   re-read immediately before item A step 4 is scheduled, and I would not trust this document's §1 after about
-   February 2027.
+### 9.1 Settled, 2 November 2026
+
+**1. The USGS endpoint migration gets its own ticket — [SPA-100](/SPA/issues/SPA-100), Geospatial Engineer, due 15
+January 2027.** Not folded into 17C. 17C builds on the new `peaks` endpoint. My recommendation had been to fold them;
+the reasoning for the split is recorded at §0 finding 2 and the consequences for sequencing at §8. This revision's
+`waterlevels.js` finding strengthens the split rather than weakening it.
+
+**2. Regional skew: user-supplied with a required citation — confirmed, and do not digitise Plate I.** The engineer
+supplies the regional skew *and its MSE* from the applicable published study, cited. EMA with station skew only is the
+clearly labelled fallback. §5.3 stands as written; the "digitise 17B Plate I" option is now closed, not merely
+disrecommended.
+
+**3. Vendoring federal datasets: acceptable, in two places, with provenance.** All of it is US-government public
+domain. The split is by *who needs it at run time*, which matters because anything under `tests/` must not become a
+runtime dependency:
+
+| What | Where | Why |
+|---|---|---|
+| 17C Appendix 10 Examples 3–7 input datasets (§5.5) | `tests/fixtures/` | test-only; the gold-standard acceptance test |
+| PFDS depth–duration–frequency fixture for the no-op refactor test (§3.5.1) | `tests/fixtures/` | test-only |
+| Atlas 14 temporal distribution CSVs and temporal-area polygons (§6.2) | `data/` | **the runtime needs these** — `hyetograph()` reads the curve to build the storm |
+| Digitised TP-40 depth–area table (§7.2) | `data/` | **the runtime needs this** — the ARF is applied to the design depth |
+| The digitisation read-off points used to check the TP-40 table against the figure (§7.3.1) | `tests/fixtures/` | test-only; this is the check, not the table |
+
+Both locations carry a **provenance README** recording, per dataset: source URL, edition/version, retrieval date, and
+sha256. The README also records that public-domain federal inputs are compatible with the repository's licence. The
+sha256 is not decoration — §6.4.3 and §7.3.1 are round-trip tests whose whole purpose is that a silent data-file
+update fails loudly, and a recorded hash is what lets a reviewer confirm the file in the repo is the file that was
+tested.
+
+Note the consequence for item E's wording in §7.2, which revision 1 described as vendoring the digitised table "as a
+fixture": the table itself is runtime data and belongs in `data/`. Only the check points are a fixture.
+
+### 9.2 Still open
+
+**4. Sub-hourly durations under Atlas 15 (§3.3).** If the national release keeps the pilot's 1-hour floor, should a
+mixed-source storm be allowed at all, or should Atlas 15 sites simply refuse to size storm sewers? I have specified
+mixed-source-with-labelling as the more useful behaviour, but refusing is the more conservative one. Not urgent — it
+cannot bind before Atlas 15 publishes (§1).
+
+**5. Who re-checks the Atlas 15 schedule, and when?** §1.2 is the one input here with a short shelf life. It should be
+re-read immediately before item A step 4 is scheduled, and I would not trust this document's §1 after about
+February 2027. This needs an owner, not an answer.
 
 ---
 
-## 10. Sources
+## 10. Appendix — the WaterServices migration surface, verified (input to SPA-100)
+
+This section is not Phase 3a work. It exists because the review of revision 1 correctly found that the migration list
+was incomplete, and an incomplete list is worse than none: it invites someone to migrate three calls, declare the
+deadline met, and leave the starting-water-level path to go dark on 22 February 2027. It is written as an input to
+[SPA-100](/SPA/issues/SPA-100), whose owner should treat it as evidence to re-verify, not as a finished design — it is
+the hydrology view of what the replacement must preserve, from someone who does not own that ticket.
+
+Everything below was read from `https://api.waterdata.usgs.gov/ogcapi/v0/` on **1–2 November 2026** by querying the
+service, not from migration notes. The `v0` path is what responded; a `v1` is referenced in third-party notes, so
+confirm the version at implementation time (§0).
+
+### 10.1 What `src/waterlevels.js` actually needs preserved
+
+`findLevelGauges()` and `readLevels()` feed `gaugeSurface()`, which converts a gauge reading to a NAVD88 water
+surface. That conversion needs three things the legacy `site` service returned only under `siteOutput=expanded`:
+
+| `waterlevels.js` use | Legacy RDB field | New field on `monitoring-locations` | Verified |
+|---|---|---|---|
+| `datumM` — the surveyed gauge datum | `alt_va` (ft) | `altitude` (ft) | yes — e.g. `USGS-02336240` returns `811.83` |
+| `datum` — its vertical datum | `alt_datum_cd` | `vertical_datum` | yes — returns `NAVD88` |
+| `acyM` — stated datum accuracy, the ±0.5 ft gate at `waterlevels.js:68` | `alt_acy_va` (ft) | `altitude_accuracy` (ft) | yes — returns `0.02` |
+
+All three are **default properties** on `monitoring-locations`; there is no `siteOutput=expanded` equivalent to
+remember. Units are still feet, so the `FT` constant and every conversion in the file stand unchanged. The collection
+also carries `drainage_area` and `contributing_drainage_area`, which is the field `src/inflow.js` drainage-area
+scaling uses — relevant to that file's rows, not this one.
+
+All five `LEVEL_PARAMS` codes plus discharge return data from the `continuous` family, so **nothing in
+`LEVEL_PARAMS` is lost**: `00065`, `62614`, `62615`, `62620`, `63160` and `00060` each returned records, in `ft` and
+`ft^3/s` respectively. This matters because §5.2 found that the `peaks` collection *drops* gage height; that finding
+does not generalise to `continuous`, and it would be a mistake to carry the pessimism across.
+
+### 10.2 Four traps, one of which is silent
+
+**1. `site_type_code` comma lists return zero rows instead of an error.** This is the one that returns a wrong answer
+quietly. Measured in a Florida bbox, querying `latest-continuous` with `parameter_code=00065`:
+
+| Filter | Rows |
+|---|---|
+| `site_type_code=ST` | 50 |
+| `site_type_code=LK` | 3 |
+| `site_type_code=ES` | 6 |
+| `site_type_code=ST,LK` | **0** |
+| `site_type_code=ST,LK,ES` | **0** |
+| `filter=site_type_code IN ('ST','LK','ES')`, `filter-lang=cql2-text` | returns rows |
+
+`waterlevels.js:26` passes exactly `siteType=ST,LK,ES` today. A literal port of that string to `site_type_code`
+returns an empty gauge list, no error, and FloodSim then starts every river, lake and tidal boundary **dry at the
+hydro-flattened lidar surface** — a silently low starting water level in every result. Confusingly, comma lists *do*
+work for `parameter_code` (`00065,00060` returned both codes), so the behaviour is per-field and cannot be inferred
+from one field to another. Use CQL2 `IN` — the service declares `basic-cql2` and `cql2-text` conformance — and
+**assert a non-empty gauge list** for a bbox known to contain gauges, so this failure mode cannot pass a test suite.
+
+**2. Site ids are agency-prefixed.** `monitoring_location_id` is `USGS-02336240`, not `02336240`. `readLevels()` keys
+its returned `Map` by bare `site_no` and `findLevelGauges()` sets `site: o.site_no`; callers join those into a query
+string. Strip or add the prefix in exactly one place, and keep the bare number as the map key so callers do not
+change.
+
+**3. The metadata fields are queryable but not returned.** `latest-continuous` and `continuous` accept `altitude`,
+`vertical_datum`, `site_type_code` and the rest as *filters* — they appear in `/queryables` — but the returned feature
+properties come back empty for them. Verified: a `latest-continuous` query filtered by `site_type_code=ST` returns
+rows whose `site_type_code`, `altitude` and `vertical_datum` are all blank. So the gauge datum cannot be had from the
+reading alone; it needs a second request to `monitoring-locations?id=...` joined on `monitoring_location_id`. Budget
+two round trips, not one, and do not infer from `/queryables` that a field will be populated.
+
+**4. The response shape changes, so `readLevels()` is rewritten, not re-pointed.** Legacy `iv` returns nested
+`value.timeSeries[]` with a values array per variable; `continuous` returns a flat feature list, one feature per
+observation, each carrying `parameter_code`, `time`, `value`, `statistic_id` and `qualifier`. The whole parsing loop at
+`waterlevels.js:45-54` goes. The nearest-reading-to-`at` selection and the `v > -999` sentinel filter still have to
+happen, just on a flat list.
+
+### 10.3 The collection choice, and one thing worth taking
+
+`readLevels()` has two modes, and they map onto two different collections:
+
+| Mode | Collection |
+|---|---|
+| `at == null` — latest reading, the design-storm path | `latest-continuous` (this *is* "latest"; no sorting needed) |
+| `at` given — the reading nearest `at` within ±2 h, the historic-storm path | `continuous` with a `time` window |
+
+Worth taking rather than merely porting: `continuous` carries **`approval_status`**, which came back `Provisional` on
+every record I sampled. FloodSim has no equivalent today. A provisional gauge reading sitting under a design water
+level is exactly the kind of thing the report module should name, and the two target workflows are the reason — an
+off-site adverse-impact screening whose starting water level rests on an unapproved reading should say so on its face.
+I am not specifying that here; it is capability this ticket does not name, and the programme's standing position is to
+add none. Recording it so the field is not thrown away during a mechanical port.
+
+### 10.4 What I did not verify
+
+- The `peaks` rows are from §5.2, read on 1 November 2026; I did not re-read them for this revision.
+- The `inflow.js` `findGauges()` / `gaugeFlows()` rows: I verified the replacement collections exist and carry the
+  fields named above, but I did not re-derive `inflow.js`'s own field-by-field needs the way I did for
+  `waterlevels.js`. SPA-100 should.
+- Rate limits, authentication requirements and pagination defaults on the new API. All three bear on a bbox query that
+  may return many gauges, and none of them are a hydrology question.
+
+---
+
+## 11. Sources
 
 Atlas 15 status and method:
 - NOAA Atlas 15 information page (schedule, volumes, pilot) — https://water.noaa.gov/about/atlas15
@@ -751,8 +933,14 @@ Flood frequency:
 - USGS StreamStats flood-frequency reports (regional skew studies index) — https://www.usgs.gov/streamstats/science/flood-frequency-reports
 
 USGS data routes:
-- USGS Water Data APIs, OGC API collections (`peaks`, `monitoring-locations`, `continuous`) — https://api.waterdata.usgs.gov/ogcapi/v0/collections
-  (`peaks` schema and `qualifier` vocabulary in §5.2 read directly from this service on 1 November 2026)
+- USGS Water Data APIs, OGC API collections (`peaks`, `monitoring-locations`, `continuous`, `latest-continuous`) — https://api.waterdata.usgs.gov/ogcapi/v0/collections
+  (`peaks` schema and `qualifier` vocabulary in §5.2 read directly from this service on 1 November 2026; the
+  `monitoring-locations` and `continuous` field mappings, filter behaviour and response shapes in §10 read on
+  1–2 November 2026)
+- Queryable fields per collection — https://api.waterdata.usgs.gov/ogcapi/v0/collections/monitoring-locations/queryables
+  and `.../collections/continuous/queryables` (§10.2 trap 3: these list filterable fields, not returned ones)
+- CQL2 support, declared conformance (`basic-cql2`, `cql2-text`) — https://api.waterdata.usgs.gov/ogcapi/v0/conformance
+  (the route §10.2 trap 1 recommends in place of comma-separated filter values)
 - "WaterServices APIs will be decommissioned early 2027" — https://waterdata.usgs.gov/blog/api-waterservices-decom/
 - Peak discharge and gage height qualification codes (legacy `peak_cd` table) — https://pubs.usgs.gov/wdr/2005/wdr-il-05/misc/peakcods.htm
 
