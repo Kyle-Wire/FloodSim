@@ -162,26 +162,21 @@ async function projects(req, res, p) {
   return send(res, 404, 'not found');
 }
 
-/** The release version in package.json; read once, since the server restarts with the checkout. */
-let pkgVersion;
-async function releaseVersion() {
-  if (pkgVersion === undefined) {
-    try { pkgVersion = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version ?? null; } catch { pkgVersion = null; }
-  }
-  return pkgVersion;
-}
-
 /**
  * The provenance every run output cites: the release version, the commit the server's checkout is on, and whether it
  * has uncommitted changes (commit and dirty are null outside a git checkout; version is null if package.json has none).
+ * Version and commit are read together and expire together, so a release bump can never be stamped with the commit of
+ * a different tree — a run citing 0.1.0 against 0.2.0's commit would be a provenance record that identifies nothing.
  */
 let version = null;
 async function appVersion() {
   if (version) return version;
   const git = (...a) => spawnSync('git', a, { cwd: root, encoding: 'utf8' });
   const head = git('rev-parse', '--short=12', 'HEAD'), st = git('status', '--porcelain', '--untracked-files=no');
-  version = { version: await releaseVersion(), commit: head.status === 0 ? head.stdout.trim() : null, dirty: st.status === 0 ? st.stdout.trim().length > 0 : null };
-  setTimeout(() => { version = null; }, 10000); // re-read now and then: commits made while it runs
+  let release = null;
+  try { release = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version ?? null; } catch { /* no readable package.json: unversioned */ }
+  version = { version: release, commit: head.status === 0 ? head.stdout.trim() : null, dirty: st.status === 0 ? st.stdout.trim().length > 0 : null };
+  setTimeout(() => { version = null; }, 10000); // re-read now and then: commits and bumps made while it runs
   return version;
 }
 

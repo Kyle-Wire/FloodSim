@@ -197,7 +197,7 @@ export function initEmulator(map, api) {
     await api.writeFile(`${d}/mask.u8`, mask); await api.writeFile(`${d}/nodata.u8`, noData);
     await api.writeFile(`${d}/model.json`, JSON.stringify({ model: json, blobs: Object.keys(blobs), lines: em.lines, buildings: em.buildings }));
     await api.writeFile(`${d}/validation.json`, JSON.stringify(val, null, 1));
-    study.trained = { at: val.trained, commit: val.commit, runs: runs.length, components: val.components }; await saveStudy();
+    study.trained = { at: val.trained, version: val.version, commit: val.commit, runs: runs.length, components: val.components }; await saveStudy();
     note(`Trained on ${runs.length} runs in ${(val.ms / 1000).toFixed(1)} s: typical depth error ${fmtLen(val.summary.typical)}, worst ${fmtLen(val.summary.worst)} (${val.summary.basis}).`);
     render(); await show();
   }
