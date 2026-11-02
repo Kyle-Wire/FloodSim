@@ -292,6 +292,23 @@ on, lower 48).
   hyetograph's (the area mean), not the books' volume over a rain area that changes as roofs fill.
 - Comparison pairs, window reruns and emulator training runs use the same run loop, so they get the radar field too;
   the emulator's rain-depth factor scales it.
+- A 2-minute frame that maxed out (or reads as missing) is filled from the raw 16-bit `PrecipRate` (GRIB2) where the
+  archive has it, so the cloudburst core keeps its own timing; the summary counts those frames.
+
+**Live radar** (Storm → Historic storm → *Load live radar*; `src/nowcast.js`). A run that starts in the last 1, 3 or 6
+hours and goes past now: the radar rain observed over the area to the latest 2-minute frame, then 0–90 minutes of
+nowcast. Same per-cell rain, books and outputs as a historic radar storm; click again to refresh.
+- **Observed:** whole hours as above (gauge-corrected once the archive has them, about 1.5 h behind; radar-only p1h
+  until then, about 30 min behind), then the current part hour straight from the 2-minute frames (about 6 min behind).
+- **Nowcast:** the storm's motion from two 10-minute rain totals 20 minutes apart over a box 1.5° round the area,
+  matched by correlation of √rain (coarse to fine, sub-pixel); the last 10 minutes' mean rate then moves at that
+  velocity, without growth or decay (Lagrangian persistence). The summary gives the speed, heading and the match's
+  correlation (below 0.6 is flagged as poor); with too little rain to match, the latest rain stays where it is. The
+  hyetograph draws the nowcast in amber after a marker.
+- **Screening only:** storms grow, decay and turn, and skill of this kind of nowcast falls off within the hour. It
+  answers "if this keeps coming, what floods next", not "what will happen". No tide or surge on a live run yet.
+- Fort Pierce FL, 2 November 2026, 14:38 UTC: loads in about 7 s; 3 h observed (60 mm over the area) and 60 min of
+  nowcast (48 mm), motion 23 km/h toward 323° (r = 0.85). `npm run test:nowcast` (`--live`: Philadelphia now).
 
 **Channel bathymetry (estimated)** (Area → *Channel bathymetry*; `src/bathymetry.js`; off by default). Lidar flattens
 rivers at the flight-day water surface; the channel below is missing. The estimate:
@@ -994,6 +1011,7 @@ node tests/run-window-tests.mjs   # window reruns: the window, its edge segments
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
 node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and listing URLs, frame at a time (--live: Ida's frames)
 node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (8 and 16 bit, all filters), GRIB2, value tables, gauge-corrected totals, timing (--live: Ida)
+node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pixels), advection, a live build with a cell arriving in the nowcast, PrecipRate fill
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
 # log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8770
@@ -1028,6 +1046,7 @@ src/storm.js          Atlas 14 fetch/parse, DDF, alternating-block hyetographs, 
 src/history.js        event catalog (IEM record + HURDAT2), rainfall replay, ASOS blend, CO-OPS water levels
 src/radar.js          NEXRAD composite overlay: IEM tile URLs, frame listing, frame at a time
 src/mrms.js           MRMS radar rainfall: archive PNG and GRIB2 decoding, gauge-corrected hourly totals timed by 2-minute rates
+src/nowcast.js        live radar: recent MRMS rain to the latest frame, storm motion by correlation, nowcast by advection
 src/drainage.js       synthetic network, rational-method sizing, SWMM .inp writer, inlet hydraulics, lumped tier
 src/coupler.js        1D–2D exchange loop (GPU inlets ↔ SWMM), roof downspout inflow
 src/utilities.js      registry of open utility layers (Philadelphia Water is the first entry)

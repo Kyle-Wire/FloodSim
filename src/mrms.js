@@ -9,8 +9,9 @@
 //                     with no clamp, so a rate over ~152 mm/hr overflows: to 255 (read as missing) or wrapped to a
 //                     small value. That is the cloudburst core, where it matters most.
 // So each pixel's hourly total comes from p1h, and a2m only shapes it within the hour, where that hour's 30 frames are
-// clean: none missing, and their sum within a factor 2 of p1h (an overflowed frame loses most of its rain). Elsewhere
-// the hour takes the mean shape of the clean wet pixels in the area, or failing that, a uniform rate. Both are counted.
+// clean: none missing, and their sum within a factor 2 of p1h (an overflowed frame loses most of its rain). A frame
+// that reads as missing anywhere is first filled from the raw 16-bit PrecipRate (below) where the archive has it. Still
+// unclean, the hour takes the mean shape of the clean wet pixels in the area, or failing that, a uniform rate. Counted.
 //
 // Gauge-corrected hourly totals, where the archive has them: IEM's raw MRMS archive (mtarchive.geol.iastate.edu,
 // YYYY/MM/DD/mrms/ncep/PROD/, GRIB2, gzipped) keeps GaugeCorr_QPE_01H from 6 May 2015 and MultiSensor_QPE_01H_Pass2
@@ -40,6 +41,12 @@ export function gaugeURL(t) {
   const g = GAUGE.find(g => t >= g.from); if (!g) return null;
   const d = new Date(t).toISOString(), day = d.slice(0, 10).replace(/-/g, '');
   return `${MTARCHIVE}/${d.slice(0, 4)}/${d.slice(5, 7)}/${d.slice(8, 10)}/mrms/ncep/${g.prod}/${g.prod}_00.00_${day}-${d.slice(11, 13)}0000.grib2.gz`;
+}
+
+/** Archive URL of the raw PrecipRate (mm/hr, GRIB2) at t (ms UTC): 16 bits, so no overflow where a2m has one. */
+export function rateURL(t) {
+  const d = new Date(t).toISOString(), day = d.slice(0, 10).replace(/-/g, '');
+  return `${MTARCHIVE}/${d.slice(0, 4)}/${d.slice(5, 7)}/${d.slice(8, 10)}/mrms/ncep/PrecipRate/PrecipRate_00.00_${day}-${d.slice(11, 13)}${d.slice(14, 16)}00.grib2.gz`;
 }
 
 /** p1h index → mm (bin centre; NaN for no coverage). */
@@ -149,6 +156,23 @@ export async function decodeGribWindow(bytes, win) {
   return Float32Array.from(X, x => { const v = (R + x * e2) / d10; return v < 0 ? NaN : v; });
 }
 
+/**
+ * One 2-minute frame (mm) over the window, for the 2 minutes ending at t: a2m, with its overflowed or missing pixels
+ * from the raw PrecipRate where the archive has that file (stats.filledFrames counts those). → Float32Array (NaN = no
+ * value either way) or null when neither file exists.
+ */
+export async function frameAt(t, win, getBytes, stats = {}) {
+  const b = await getBytes(fileURL('a2m', t));
+  let g = b ? Float32Array.from(await decodeWindow(b, win), a2mMM) : null;
+  if (g && !g.some(Number.isNaN)) return g;
+  const r = await getBytes(rateURL(t)); if (!r) return g;
+  const rate = await decodeGribWindow(r, win);
+  g ??= new Float32Array(rate.length).fill(NaN);
+  for (let p = 0; p < g.length; p++) if (Number.isNaN(g[p]) && Number.isFinite(rate[p])) g[p] = rate[p] / 30; // mm/hr over 2 min
+  stats.filledFrames = (stats.filledFrames ?? 0) + 1;
+  return g;
+}
+
 /** Bilinear weights of a point between pixel centres of a window: [index, weight] × up to 4. */
 export function sampleWeights(win, lon, lat) {
   const clamp = (v, hi) => Math.min(Math.max(v, 0), hi);
@@ -202,7 +226,7 @@ export async function radarRain(t0, t1, bbox, getBytes, { isWet = (g) => g.some(
   if (t1 < FROM) throw new Error('the MRMS archive at IEM starts in September 2013');
   const win = pixelWindow(bbox), first = Math.floor(t0 / HOUR) * HOUR + HOUR, last = Math.ceil(t1 / HOUR) * HOUR;
   const stats = { hours: 0, wetHours: 0, missingHours: [], missingFrames: 0, wetPixelHours: 0, areaShape: 0, uniform: 0, noCoverage: 0,
-    gaugeHours: 0, radarOnlyHours: [], gaugeGaps: 0, products: [] };
+    gaugeHours: 0, radarOnlyHours: [], gaugeGaps: 0, products: [], filledFrames: 0 };
   const grid = async (prod, t, conv) => {
     const b = await getBytes(fileURL(prod, t)); if (!b) return null;
     return Float32Array.from(await decodeWindow(b, win), conv);
@@ -232,7 +256,7 @@ export async function radarRain(t0, t1, bbox, getBytes, { isWet = (g) => g.some(
     if (!isWet(P)) { frames.push(...new Array(FRAMES).fill(null)); continue; }
     stats.wetHours++;
     const times = Array.from({ length: FRAMES }, (_, k) => ends[h] - HOUR + (k + 1) * 120e3); done = 0;
-    const two = await pool(times, async (t) => { const g = await grid('a2m', t, a2mMM); if (!g) stats.missingFrames++; onProgress(++done, FRAMES, `2-minute frames, hour ${h + 1} of ${ends.length}`); return g; });
+    const two = await pool(times, async (t) => { const g = await frameAt(t, win, getBytes, stats); if (!g) stats.missingFrames++; onProgress(++done, FRAMES, `2-minute frames, hour ${h + 1} of ${ends.length}`); return g; });
     frames.push(...shapeHour(P, two, stats, ro ?? P));
   }
   return { win, t0: first - HOUR, blockMin: 2, frames, stats, hours: totals };

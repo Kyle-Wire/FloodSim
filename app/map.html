@@ -188,6 +188,10 @@ section h2 em { font-style: normal; font-family: var(--mono); letter-spacing: 0;
 .hyeto-plot .bar { fill: var(--accent); }
 .hyeto-plot .bar.future { fill: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
 .hyeto-plot .bar.hot { fill: var(--ink); }
+.hyeto-plot .bar.fcst { fill: color-mix(in srgb, var(--warn) 70%, var(--surface)); }
+.hyeto-plot .bar.fcst.future { fill: color-mix(in srgb, var(--warn) 35%, var(--surface)); }
+.hyeto-plot .obs-end { stroke: var(--warn); stroke-width: 1.5; }
+.hyeto-plot .obs-end-label { fill: var(--warn); }
 .hyeto-plot .now { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 2; }
 .hyeto-plot .wl { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
 .hyeto-tip { position: absolute; pointer-events: none; font-family: var(--mono); font-size: 11px; padding: 3px 7px; border-radius: 4px;
@@ -428,6 +432,9 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <label class="toggle" id="coastRow" hidden><input type="checkbox" id="tCoast" checked> <span id="coastLabel">Observed water level as boundary</span></label>
         <div class="row"><button class="btn" id="histLoad" disabled>Load event</button></div>
         <p class="note" id="histNote">Searches the site's rainfall record since 1995 and every hurricane track that passed within 250 km.</p>
+        <div class="field"><label for="liveObs">Live radar</label><span class="row" style="gap:6px"><select id="liveObs" aria-label="Observed hours"><option value="1">last 1 h</option><option value="3" selected>last 3 h</option><option value="6">last 6 h</option></select>
+          <select id="liveLead" aria-label="Nowcast"><option value="0">no nowcast</option><option value="30">+30 min nowcast</option><option value="60" selected>+60 min nowcast</option><option value="90">+90 min nowcast</option></select></span></div>
+        <div class="row"><button class="btn" id="liveLoad" disabled title="NOAA MRMS radar rain over the area to the latest 2-minute frame (about 6 min old), then the last 10 minutes' rain carried along the storm's motion">Load live radar</button></div>
       </div>
       <div id="a14Ctl">
         <div class="field"><label for="ari">Return period</label>

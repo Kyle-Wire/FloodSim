@@ -15,6 +15,7 @@ import { loadSWMM, SWMM } from '../src/swmm.js';
 import * as H from '../src/history.js';
 import * as R from '../src/radar.js';
 import * as MR from '../src/mrms.js';
+import * as NC from '../src/nowcast.js';
 import { labelImage } from './labels.js';
 import { Coupler } from '../src/coupler.js';
 import { fetchUtility, utilityFor } from '../src/utilities.js';
@@ -715,6 +716,8 @@ function stormMeta(st) {
     waterLevel: st.wl ? { station: st.wl.station, name: st.wl.name, datum: st.wl.datum, tUTC: st.wl.t.map(t => new Date(t).toISOString()), m: st.wl.v } : null,
     ...(st.radar ? { radar: { product: `NOAA MRMS ${st.radar.gauged ? st.radar.products + ' hourly' : 'RadarOnly_QPE_01H'}, timed by PrecipRate (2 min), IEM archive; per cell, bilinear from 0.01° pixels`, hash: st.radar.hash,
       areaMM: { used: st.radar.hoursMM, radarOnly: st.radar.radarMM },
+      ...(st.radar.live ? { live: { observedUntilUTC: new Date(st.radar.live.observedUntil).toISOString(), nowcastMin: st.radar.live.leadMin, motion: st.radar.live.motion,
+        method: 'Lagrangian persistence: the last 10 min mean rate moved at the velocity matched between 10-min totals 20 min apart' } } : {}),
       pixelWindow: { c0: st.radar.win.c0, c1: st.radar.win.c1, r0: st.radar.win.r0, r1: st.radar.win.r1 }, areaPixels: st.radar.pixels, siteGriddedMM: st.radar.siteMM, stats: st.radar.stats } } : {}) };
   const p = model.atlas14;
   return { source: 'NOAA Atlas 14 (PFDS, partial-duration series)', volume: p.volume, version: p.version, region: p.region, siteLonLat: [p.lon, p.lat],
@@ -785,7 +788,7 @@ async function loadHistory() {
   if (gauge) $('coastLabel').textContent = `Observed water level at ${gauge.name} (${gauge.km.toFixed(0)} km) on open-water edges`;
   $('histNote').textContent = `${daily.length.toLocaleString()} days of rainfall since ${daily[0].date.slice(0, 4)} (${daily.source}), ${hist.catalog.filter(e => e.cyclone).length} hurricane tracks within 250 km (NOAA HURDAT2)` +
     (gauge ? `, tide gauge ${gauge.id} ${gauge.name} ${gauge.km.toFixed(0)} km away.` : '. No tide gauge within 60 km.');
-  $('histLoad').disabled = false;
+  $('histLoad').disabled = false; $('liveLoad').disabled = !hist.gridded; // MRMS: the lower 48
 }
 $('histLoad').onclick = async () => {
   const e = hist.catalog?.[Number($('histEvent').value)]; if (!e) return;
@@ -808,12 +811,24 @@ $('histLoad').onclick = async () => {
       wl.name = hist.gauge.name;
       st = padForSurge(st, wl); st.wl = wl;
     }
-    st.rp = model.atlas14 ? Object.fromEntries([5, 15, 60, 180, 360, 1440].map(m => [m, H.maxWindow(st, m)]).filter(([, d]) => d != null && d > 0)
-      .map(([m, d]) => [m, { mm: d, ...H.returnPeriod(model.atlas14, m, d) }])) : null;
+    st.rp = stormRP(st);
     hist.storm = st; updateStorm(); if (model && !(run?.solver)) resetRun();
   } catch (err) { console.error(err); $('histNote').textContent = 'Could not load this event: ' + err.message; }
   finally { btn.disabled = false; btn.textContent = 'Load event'; }
 };
+$('liveLoad').onclick = async () => {
+  const btn = $('liveLoad'); btn.disabled = true; btn.textContent = 'Loading…';
+  try {
+    const obs = Number($('liveObs').value), lead = Number($('liveLead').value), st = await liveStorm(obs, lead);
+    if (!st) { $('histNote').textContent = `No rain over the area in the last ${obs} h${lead ? ' or the nowcast' : ''} (NOAA MRMS).`; return; }
+    st.rp = stormRP(st);
+    hist.storm = st; updateStorm(); if (model && !(run?.solver)) resetRun();
+  } catch (err) { console.error(err); $('histNote').textContent = 'Could not load live radar: ' + err.message; }
+  finally { btn.disabled = false; btn.textContent = 'Load live radar'; }
+};
+/** Each window's maximum depth in a storm against Atlas 14 at the site. */
+const stormRP = (st) => (model.atlas14 ? Object.fromEntries([5, 15, 60, 180, 360, 1440].map(m => [m, H.maxWindow(st, m)]).filter(([, d]) => d != null && d > 0)
+  .map(([m, d]) => [m, { mm: d, ...H.returnPeriod(model.atlas14, m, d) }])) : null);
 /** Extend a rain window with dry blocks so the run spans the surge peak (12 h before to 6 h after). */
 function padForSurge(st, wl) {
   let pk = 0; wl.v.forEach((v, i) => { if (v > wl.v[pk]) pk = i; });
@@ -839,6 +854,23 @@ function histSummary(st) {
 async function radarStorm(e, hourly) {
   const site = H.seriesStorm(hourly, { blockMin: 60 });
   const t0 = (site?.t0 ?? Date.parse(e.peakDate + 'T00:00Z')) - 2 * 3600e3, t1 = site ? site.t0 + site.durationMin * 60e3 + 2 * 3600e3 : t0 + 28 * 3600e3;
+  const A = radarArea(), note = $('histNote').textContent;
+  try {
+    const rr = await MR.radarRain(t0, t1, A.bbox, radarBytes, { isWet: A.isWet, onProgress: radarProgress });
+    return stormFromRadar(rr, A, { name: e.name ?? `Storm of ${e.peakDate}`, hourly });
+  } finally { $('histNote').textContent = note; }
+}
+/** Live radar (src/nowcast.js): the last few hours as observed, then a nowcast past now. */
+async function liveStorm(obsHours, leadMin) {
+  const A = radarArea(), note = $('histNote').textContent;
+  try {
+    const rr = await NC.liveRain(Date.now(), A.bbox, radarBytes, { obsHours, leadMin, isWet: A.isWet, onProgress: radarProgress });
+    const stamp = new Date(rr.live.observedUntil).toISOString().slice(0, 16).replace('T', ' ');
+    return stormFromRadar(rr, A, { name: `Live radar to ${stamp} UTC${leadMin ? ` + ${leadMin} min nowcast` : ''}`, live: rr.live });
+  } finally { $('histNote').textContent = note; }
+}
+/** The model area for radar rain: its lon/lat box, sample points inside the polygon (≤ ~2500) and their pixel weights. */
+function radarArea() {
   const fine = model.fine, cs = fine.corners(), bbox = [Math.min(...cs.map(p => p[0])), Math.min(...cs.map(p => p[1])), Math.max(...cs.map(p => p[0])), Math.max(...cs.map(p => p[1]))];
   const win = MR.pixelWindow(bbox), ring = model.poly, stride = Math.max(1, Math.round(Math.sqrt(fine.nx * fine.ny / 2500))), samples = [];
   for (let j = stride >> 1; j < fine.ny; j += stride) for (let i = stride >> 1; i < fine.nx; i += stride) {
@@ -846,33 +878,46 @@ async function radarStorm(e, hourly) {
     if (!ring || insideRing(lon, lat, ring)) samples.push(MR.sampleWeights(win, lon, lat));
   }
   const used = [...new Set(samples.flat().map(([k]) => k))];
-  const getBytes = async (u) => { const r = await fetcher(u); if (r.status === 404) return null; if (!r.ok) throw new Error(`IEM radar archive ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
-  const note = $('histNote').textContent;
-  const rr = await MR.radarRain(t0, t1, bbox, getBytes, { isWet: (g) => used.some(k => g[k] > 0), onProgress: (i, n, what) => { $('histNote').textContent = `Radar: ${what} ${i} / ${n}…`; } });
+  return { bbox, samples, used, isWet: (g) => used.some(k => g[k] > 0) };
+}
+const radarBytes = async (u) => { const r = await fetcher(u); if (r.status === 404) return null; if (!r.ok) throw new Error(`IEM radar archive ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
+const radarProgress = (i, n, what) => { $('histNote').textContent = `Radar: ${what} ${i} / ${n}…`; };
+/**
+ * A storm from radar frames (radarRain or liveRain): the area-mean hyetograph, and `radar` for the run to spread over
+ * the cells. Leading dry frames are trimmed; trailing ones too, except live (the run should reach the nowcast's end).
+ */
+function stormFromRadar(rr, A, { name, hourly = null, live = null }) {
+  const { samples, used } = A;
   let mean = MR.areaMean(rr.frames, samples), a = 0, b = mean.length;
   while (a < b && !(mean[a] > 0)) a++;
-  while (b > a && !(mean[b - 1] > 0)) b--;
-  $('histNote').textContent = note;
+  if (!live) while (b > a && !(mean[b - 1] > 0)) b--;
   if (a === b) return null;
+  if (live && a >= mean.length - rr.stats.forecastFrames) a = Math.max(0, mean.length - rr.stats.forecastFrames - 15); // rain only in the nowcast: start half an hour before now
   const frames = rr.frames.slice(a, b); mean = mean.slice(a, b);
   const st0 = rr.t0 + a * rr.blockMin * 60e3, st1 = st0 + frames.length * rr.blockMin * 60e3;
-  let siteMM = 0; hourly.mm.forEach((v, h) => { const t = hourly.t0 + h * 3600e3; if (t + 3600e3 > st0 && t < st1) siteMM += v; }); // hours overlapping the radar window
+  let siteMM = null; if (hourly) { siteMM = 0; hourly.mm.forEach((v, h) => { const t = hourly.t0 + h * 3600e3; if (t + 3600e3 > st0 && t < st1) siteMM += v; }); } // hours overlapping the radar window
   // area totals over the same whole hours: the radar's own (p1h) beside the totals used (gauge-corrected where there were some)
   const areaMM = (g) => (g ? samples.reduce((a, ws) => a + ws.reduce((b, [i, w]) => b + w * (g[i] || 0), 0), 0) / samples.length : 0);
   const hrs = rr.hours.filter(h => h.end > st0 && h.end - 3600e3 < st1), radarMM = hrs.reduce((a, h) => a + areaMM(h.radar), 0), hoursMM = hrs.reduce((a, h) => a + areaMM(h.total), 0);
   const depth = Array.from(mean), intensity = depth.map(d => d * 60 / rr.blockMin), gauged = rr.stats.gaugeHours > 0;
   const products = MR.GAUGE.filter(g => rr.stats.products.includes(g.prod)).map(g => g.label).join(' and ');
+  const src = gauged ? `NOAA ${products}, hourly, timed by the 2-minute radar rain rate; 1 km, IEM archive` : 'NOAA MRMS radar-only (hourly RadarOnly_QPE_01H, timed by the 2-minute PrecipRate), 1 km, IEM archive';
   return { blockMin: rr.blockMin, depth, intensity, total: depth.reduce((x, y) => x + y, 0), peakIntensity: Math.max(...intensity), durationMin: depth.length * rr.blockMin,
-    pattern: 'historic', name: e.name ?? `Storm of ${e.peakDate}`, t0: st0,
-    source: gauged ? `NOAA ${products}, hourly, timed by the 2-minute radar rain rate; 1 km, IEM archive` : 'NOAA MRMS radar-only (hourly RadarOnly_QPE_01H, timed by the 2-minute PrecipRate), 1 km, IEM archive',
-    radar: { win: rr.win, frames, mean, hash: MR.framesHash(frames), stats: rr.stats, siteMM, radarMM, hoursMM, gauged, products, pixels: used.length } };
+    pattern: 'historic', name, t0: st0,
+    source: live ? `${src}; then a nowcast: the last 10 minutes' radar rain moved along the storm's motion (no growth or decay)` : src,
+    radar: { win: rr.win, frames, mean, hash: MR.framesHash(frames), stats: rr.stats, siteMM, radarMM, hoursMM, gauged, products, pixels: used.length,
+      ...(live ? { live: { ...live, forecastFrom: Math.round((live.observedUntil - st0) / (rr.blockMin * 60e3)) } } : {}) } };
 }
 function radarNoteText(R) {
   const s = R.stats, fb = s.areaShape + s.uniform;
-  const g = R.gauged ? `Hourly totals adjusted to rain gauges for ${s.gaugeHours} of ${s.hours} hours (${R.hoursMM.toFixed(0)} mm over the area; the radar alone gives ${R.radarMM.toFixed(0)} mm).` +
+  const g = R.gauged ? `Hourly totals adjusted to rain gauges for ${s.gaugeHours} of ${s.hours} whole hours (${R.hoursMM.toFixed(0)} mm over the area in those hours; the radar alone gives ${R.radarMM.toFixed(0)} mm).` +
       (s.radarOnlyHours.length ? ` Radar-only, no gauge-corrected file: ${s.radarOnlyHours.join(', ')}.` : '') + (s.gaugeGaps ? ` ${s.gaugeGaps} wet pixel-hours in the radar window radar-only (no gauge-corrected value).` : '')
     : `Radar-only (gauge-corrected totals are archived from May 2015): not adjusted to rain gauges.`;
-  return `Rain over ${R.pixels} pixels of 1 km. ${g} Site gridded record over the same hours: ${R.siteMM.toFixed(0)} mm.` +
+  const L = R.live, M = L?.motion, fc = L ? R.mean.slice(L.forecastFrom).reduce((x, y) => x + y, 0) : 0;
+  const lv = !L ? '' : ` Observed to ${new Date(L.observedUntil).toISOString().slice(11, 16)} UTC; ` + (L.leadMin ? `then ${L.leadMin} min of nowcast (${fc.toFixed(1)} mm over the area), ` +
+    (M ? `storm motion ${M.kmh.toFixed(0)} km/h toward ${M.toward.toFixed(0)}° (match r = ${M.score.toFixed(2)}${M.score < 0.6 ? ', poor: treat the nowcast as rough' : ''}).` : 'no motion found (too little rain near the area): the latest rain held in place.') +
+    ' A nowcast is screening only: storms grow, decay and turn, and skill falls off within the hour.' : 'no nowcast.');
+  return `Rain over ${R.pixels} pixels of 1 km.${lv} ${g}${R.siteMM != null ? ` Site gridded record over the same hours: ${R.siteMM.toFixed(0)} mm.` : ''}` +
     (fb ? ` ${fb} of ${s.wetPixelHours} wet pixel-hours timed by the area's shape or evenly (2-minute frames missing or overflowed).` : '') +
     (s.missingHours.length ? ` Missing hours (no rain assumed): ${s.missingHours.join(', ')}.` : '') + (s.noCoverage ? ` ${s.noCoverage} pixel-hours without radar coverage.` : '');
 }
@@ -958,18 +1003,20 @@ function drawHyeto() {
   const st = run?.storm ?? currentStorm(), box = $('hyeto');
   drawWL(null);
   if (!st) { box.innerHTML = ''; $('hyetoFig').hidden = true; hy = null; return; }
-  $('hyetoFig').hidden = false;
+  $('hyetoFig').hidden = false; $('hyetoTitle').textContent = `Rain intensity, mm/hr per ${fmtDur(st.blockMin)}${st.radar ? ' (mean over the area)' : ''}`;
   const W = Math.max(240, box.clientWidth || 340), H = 132, L = 34, R = 6, T = 8, B = 112, n = st.intensity.length;
   const step = [5, 10, 20, 25, 50, 100, 200, 250, 500].find(s => st.peakIntensity / s <= 4) ?? 1000, ymax = Math.ceil(st.peakIntensity / step) * step;
   const slot = (W - L - R) / n, gap = slot >= 4 ? 2 : slot >= 2 ? 1 : 0, bw = Math.max(0.5, slot - gap), y = (v) => B - (B - T) * v / ymax;
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Hyetograph: ${stormLabel(st)}">`;
   for (let v = 0; v <= ymax + 1e-9; v += step) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 5}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
+  const fc = st.radar?.live?.leadMin ? st.radar.live.forecastFrom : Infinity; // live radar: the nowcast's bars
   st.intensity.forEach((v, i) => {
     const x = L + i * slot + gap / 2, top = y(v), r = Math.min(4, bw / 2, B - top);
-    s += `<path class="bar" data-i="${i}" d="M${x},${B}V${top + r}Q${x},${top} ${x + r},${top}H${x + bw - r}Q${x + bw},${top} ${x + bw},${top + r}V${B}Z"/>`;
+    s += `<path class="bar${i >= fc ? ' fcst' : ''}" data-i="${i}" d="M${x},${B}V${top + r}Q${x},${top} ${x + r},${top}H${x + bw - r}Q${x + bw},${top} ${x + bw},${top + r}V${B}Z"/>`;
   });
   const lab = (min) => min >= 120 ? `${+(min / 60).toFixed(1)} h` : `${min} min`;
   for (const f of [0, 0.5, 1]) s += `<text x="${L + f * (W - L - R)}" y="${B + 14}" text-anchor="${f === 0 ? 'start' : f === 1 ? 'end' : 'middle'}">${lab(Math.round(f * st.durationMin))}</text>`;
+  if (Number.isFinite(fc)) s += `<line class="obs-end" x1="${L + fc * slot}" x2="${L + fc * slot}" y1="${T}" y2="${B}"/><text class="obs-end-label" x="${L + fc * slot + 3}" y="${T + 9}">nowcast</text>`;
   s += `<line class="now" id="hyNow" x1="0" x2="0" y1="${T}" y2="${B}" visibility="hidden"/><rect id="hyHit" x="${L}" y="${T}" width="${W - L - R}" height="${B - T}" fill="transparent"/></svg>`;
   box.innerHTML = s;
   hy = { st, bars: [...box.querySelectorAll('.bar')], L, slot, W, B, lastBlock: -2 };
@@ -978,7 +1025,7 @@ function drawHyeto() {
     const r = box.querySelector('svg').getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width, i = Math.min(n - 1, Math.max(0, Math.floor((x - L) / slot)));
     hy.bars.forEach((b, k) => b.classList.toggle('hot', k === i));
     tip.hidden = false; tip.style.left = (e.clientX - r.left) + 'px'; tip.style.top = (r.height * y(st.intensity[i]) / H + 18) + 'px';
-    tip.textContent = `${i * st.blockMin}–${(i + 1) * st.blockMin} min · ${st.intensity[i].toFixed(0)} mm/hr · ${st.depth[i].toFixed(1)} mm`;
+    tip.textContent = `${i * st.blockMin}–${(i + 1) * st.blockMin} min · ${st.intensity[i].toFixed(0)} mm/hr · ${st.depth[i].toFixed(1)} mm${i >= fc ? ' · nowcast' : ''}`;
   };
   hit.onmouseleave = () => { tip.hidden = true; hy.bars.forEach(b => b.classList.remove('hot')); };
 }
