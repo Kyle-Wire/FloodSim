@@ -159,7 +159,8 @@ CASES = {
 }
 
 
-WHICH = ("ec2016", "ec2018", "harvey", "harvey_rate", "ida", "norfolk", "matthew_rate")
+WHICH = ("ec2016", "ec2018", "ec2018_full", "harvey", "harvey_rate", "ida",
+         "ida_full", "norfolk", "matthew_rate")
 
 
 def main():
@@ -180,12 +181,32 @@ def main():
         run_hourly_case("ellicott_city_2018_hourly", CASES["ellicott_city_tiber"],
                         U(2018, 5, 27, 16, 0), U(2018, 5, 27, 23, 0),
                         "RadarOnly_QPE_01H", "GaugeCorr_QPE_01H", out)
+    elif which == "ec2018_full":
+        # SPA-93 review item 1. The first census ran 17:00-21:30Z, but the hourly
+        # products put 42.6 mm in 21-22Z and 15.4 mm in 22-23Z, i.e. outside it.
+        # Every rate-cap number for 2018 has to be re-measured over the whole storm.
+        run_rate_case("ellicott_city_2018_rate_full", CASES["ellicott_city_tiber"],
+                      U(2018, 5, 27, 19, 0), U(2018, 5, 27, 23, 30), out)
+        run_hourly_case("ellicott_city_2018_hourly_full", CASES["ellicott_city_tiber"],
+                        U(2018, 5, 27, 16, 0), U(2018, 5, 28, 2, 0),
+                        "RadarOnly_QPE_01H", "GaugeCorr_QPE_01H", out)
     elif which == "harvey_rate":
         run_rate_case("harvey_brays_rate", CASES["brays_bayou_meyerland"],
                       U(2017, 8, 27, 9, 0), U(2017, 8, 27, 13, 0), out)
+    elif which == "ida_full":
+        # The hourly QPE files are stamped with the END of their accumulation
+        # window (hour_label_test.py). Ida's peak hour is therefore the file
+        # stamped 23:00Z = 22:00-23:00Z, which the original 23:00Z-04:00Z rate
+        # window missed entirely. Same defect as review item 1, found while
+        # fixing it.
+        run_rate_case("ida_philadelphia_rate_full", CASES["philadelphia_center"],
+                      U(2021, 9, 1, 21, 0), U(2021, 9, 2, 1, 0), out)
     elif which == "matthew_rate":
+        # Narrowed from 20:00-02:00Z to stay inside the per-host transfer cap.
+        # Covers the two heaviest hours (files stamped 22:00Z = 21-22Z at
+        # 38.29 mm and 23:00Z = 22-23Z at 34.97 mm) plus margin either side.
         run_rate_case("matthew_norfolk_rate", CASES["norfolk_hampton_roads"],
-                      U(2016, 10, 8, 20, 0), U(2016, 10, 9, 2, 0), out)
+                      U(2016, 10, 8, 20, 0), U(2016, 10, 8, 23, 30), out)
     elif which == "harvey":
         run_hourly_case("harvey_brays_hourly", CASES["brays_bayou_meyerland"],
                         U(2017, 8, 26, 0, 0), U(2017, 8, 28, 23, 0),

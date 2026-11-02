@@ -1,0 +1,236 @@
+{
+ "host": "https://mtarchive.geol.iastate.edu",
+ "note": "SPA-93 review items 5 and 6",
+ "seamless_hsr": {
+  "ellicott_city_2016": {
+   "field": {
+    "valid_time_requested": "2016-07-30T23:52:00Z",
+    "grid_shape": [
+     6,
+     6
+    ],
+    "packing": {
+     "R": -9990.0,
+     "E": 0,
+     "D": 1,
+     "nbits": 16,
+     "min_representable": -999.0,
+     "max_representable": 5554.5,
+     "step": 0.1
+    },
+    "negative_value_histogram": {},
+    "min": 48.2,
+    "max": 53.5,
+    "mean": 50.71,
+    "n_pixels": 36,
+    "file_bytes": 1351932
+   },
+   "day_availability": {
+    "frames_probed": 48,
+    "frames_present": 48,
+    "missing": [],
+    "bytes_per_frame": 1089789
+   }
+  },
+  "ellicott_city_2018": {
+   "field": {
+    "valid_time_requested": "2018-05-27T21:00:00Z",
+    "grid_shape": [
+     6,
+     6
+    ],
+    "packing": {
+     "R": -9990.0,
+     "E": 0,
+     "D": 1,
+     "nbits": 16,
+     "min_representable": -999.0,
+     "max_representable": 5554.5,
+     "step": 0.1
+    },
+    "negative_value_histogram": {},
+    "min": 34.6,
+    "max": 50.1,
+    "mean": 42.4,
+    "n_pixels": 36,
+    "file_bytes": 1330443
+   },
+   "day_availability": {
+    "frames_probed": 48,
+    "frames_present": 48,
+    "missing": [],
+    "bytes_per_frame": 1264078
+   }
+  },
+  "harvey_brays_2017": {
+   "field": {
+    "valid_time_requested": "2017-08-27T10:00:00Z",
+    "grid_shape": [
+     10,
+     12
+    ],
+    "packing": {
+     "R": -9990.0,
+     "E": 0,
+     "D": 1,
+     "nbits": 16,
+     "min_representable": -999.0,
+     "max_representable": 5554.5,
+     "step": 0.1
+    },
+    "negative_value_histogram": {},
+    "min": 34.6,
+    "max": 49.9,
+    "mean": 40.72,
+    "n_pixels": 120,
+    "file_bytes": 968051
+   },
+   "day_availability": {
+    "frames_probed": 48,
+    "frames_present": 48,
+    "missing": [],
+    "bytes_per_frame": 1120327
+   }
+  },
+  "matthew_norfolk_2016": {
+   "field": {
+    "valid_time_requested": "2016-10-08T22:00:00Z",
+    "grid_shape": [
+     12,
+     14
+    ],
+    "packing": {
+     "R": -9990.0,
+     "E": 0,
+     "D": 1,
+     "nbits": 16,
+     "min_representable": -999.0,
+     "max_representable": 5554.5,
+     "step": 0.1
+    },
+    "negative_value_histogram": {},
+    "min": 34.2,
+    "max": 46.4,
+    "mean": 41.46,
+    "n_pixels": 168,
+    "file_bytes": 1323362
+   },
+   "day_availability": {
+    "frames_probed": 48,
+    "frames_present": 48,
+    "missing": [],
+    "bytes_per_frame": 1201436
+   }
+  }
+ },
+ "seamless_hsr_cadence_2016_07_30": [
+  {
+   "t": "23:00:00",
+   "bytes": 1438302
+  },
+  {
+   "t": "23:02:00",
+   "bytes": 1430023
+  },
+  {
+   "t": "23:04:00",
+   "bytes": 1435451
+  },
+  {
+   "t": "23:06:00",
+   "bytes": 1433535
+  },
+  {
+   "t": "23:08:00",
+   "bytes": 1433732
+  },
+  {
+   "t": "23:10:00",
+   "bytes": 1433221
+  },
+  {
+   "t": "23:12:00",
+   "bytes": 1432090
+  },
+  {
+   "t": "23:14:00",
+   "bytes": 1427716
+  },
+  {
+   "t": "23:16:00",
+   "bytes": 1424958
+  },
+  {
+   "t": "23:18:00",
+   "bytes": 1426831
+  }
+ ],
+ "PrecipRate_packing_2016": {
+  "valid_time_requested": "2016-07-30T23:52:00Z",
+  "grid_shape": [
+   6,
+   6
+  ],
+  "packing": {
+   "R": -30.0,
+   "E": 0,
+   "D": 1,
+   "nbits": 16,
+   "min_representable": -3.0,
+   "max_representable": 6550.5,
+   "step": 0.1
+  },
+  "negative_value_histogram": {},
+  "min": 47.2,
+  "max": 152.3,
+  "mean": 66.04,
+  "n_pixels": 36,
+  "file_bytes": 1019632
+ },
+ "PrecipFlag_packing_2016": {
+  "valid_time_requested": "2016-07-30T23:52:00Z",
+  "grid_shape": [
+   6,
+   6
+  ],
+  "packing": {
+   "R": -3.0,
+   "E": 0,
+   "D": 0,
+   "nbits": 8,
+   "min_representable": -3.0,
+   "max_representable": 252.0,
+   "step": 1.0
+  },
+  "negative_value_histogram": {},
+  "min": 7.0,
+  "max": 96.0,
+  "mean": 19.36,
+  "n_pixels": 36,
+  "file_bytes": 289457
+ },
+ "composite_pre2020_check": {
+  "MergedReflectivityQCComposite": {
+   "present": false,
+   "http": 404
+  },
+  "MergedReflectivityQC": {
+   "present": false,
+   "http": 404
+  },
+  "SeamlessHSR": {
+   "present": true,
+   "bytes": 1351932
+  },
+  "MergedBaseReflectivityQC": {
+   "present": false,
+   "http": 404
+  }
+ },
+ "fetch_ledger": {
+  "mtarchive.geol.iastate.edu": {
+   "MB": 6.3,
+   "requests": 6
+  }
+ }
+}

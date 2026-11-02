@@ -1,0 +1,58 @@
+{
+ "frames_used": [
+  "23:52"
+ ],
+ "n_points": 36,
+ "box": [
+  39.255,
+  39.315,
+  -76.845,
+  -76.785
+ ],
+ "note": "Z from SeamlessHSR dBZ, R from PrecipRate, class from PrecipFlag",
+ "by_precip_flag": {
+  "7": {
+   "class": "hail",
+   "n": 31,
+   "dbz_range": [
+    48.2,
+    53.5
+   ],
+   "rate_range_mm_h": [
+    47.2,
+    53.8
+   ],
+   "published_relation": "Z = 300 R^1.4",
+   "predicted_over_actual_rate": {
+    "geomean": 1.357,
+    "log_sd": 0.208,
+    "min": 0.999,
+    "max": 2.095
+   },
+   "fitted_relation": {
+    "a": 0.0,
+    "b": 6.497,
+    "r2": 0.3633
+   }
+  },
+  "96": {
+   "class": "tropical convective",
+   "n": 5,
+   "dbz_range": [
+    49.0,
+    51.4
+   ],
+   "rate_range_mm_h": [
+    125.7,
+    152.3
+   ],
+   "published_relation": "Z = 250 R^1.2",
+   "predicted_over_actual_rate": {
+    "geomean": 1.05,
+    "log_sd": 0.099,
+    "min": 0.968,
+    "max": 1.266
+   }
+  }
+ }
+}

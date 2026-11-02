@@ -5,6 +5,7 @@ catchment window costs a fraction of a full-CONUS decode.
 """
 import gzip, io, os, struct, urllib.request, zlib
 import numpy as np
+import fetch_budget
 
 CACHE = os.environ.get("MRMS_CACHE", ".")
 
@@ -25,9 +26,14 @@ def _s(b):
 def fetch(url, timeout=180):
     name = os.path.join(CACHE, url.rsplit("/", 1)[-1])
     if not os.path.exists(name):
+        fetch_budget.check(url)
         req = urllib.request.Request(url, headers={"User-Agent": "floodsim-radar-assessment"})
-        with urllib.request.urlopen(req, timeout=timeout) as r, open(name, "wb") as f:
-            f.write(r.read())
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            body = r.read()
+        fetch_budget.charge(url, len(body))
+        with open(name + ".part", "wb") as f:
+            f.write(body)
+        os.replace(name + ".part", name)
     return name
 
 

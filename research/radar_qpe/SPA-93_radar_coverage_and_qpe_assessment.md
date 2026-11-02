@@ -1,8 +1,19 @@
 # Radar coverage and QPE product assessment for the six Phase 1 hindcast cases
 
-**Task:** SPA-93 · Radar & Precipitation (QPE) Specialist · **Date:** 1 November 2026
+**Task:** SPA-93 · Radar & Precipitation (QPE) Specialist · **Date:** 1 November 2026 · **Revision 2**
 **Status:** deliverable. Sits ahead of Phase 1 pre-registration; no Phase 1 case should be pre-registered until the per-case gates in §9 have been run.
+**Amended by [Addendum A](SPA-93_addendum_A_ingestion_response.md)** (1 November 2026), which responds to the Phase 3e ingestion findings on SPA-94. Three statements below are corrected there — §1.1 and §8.1 on the availability of a dBZ display layer, §2.4 trap 2 on whether the no-coverage sentinel had been observed, and §5.5 on how the duplicate-frame guard must be specified. Each carries a pointer in place.
 **Scope of my verdicts:** rainfall only. A "go" below means *the rainfall field can be built honestly for this catchment and event*. It says nothing about the DEM, the drainage network, the tide boundary or the verification data, which belong to other roles.
+
+> **Revision 2** incorporates the seven changes requested in review of revision 1, and what fixing them turned up. Everything here is measured; §12 is a per-item index of what changed and where. The headline items, because three of them correct revision 1's own numbers against itself:
+>
+> - **§4.1 — the peak-attenuation figure was overstated and is withdrawn.** Revision 1's "−83.9 %, a factor of six" came from a synthetic single cell. On the real 2016 storm the number is **−33.4 %**, and **−38.9 %** for Harvey. The conclusion — force from the 2-minute rate field — survives, but the claim is now the one the data supports.
+> - **§2.4 trap 4 — the hourly QPE products are stamped with the END of their accumulation window.** New, measured to 0.07 mm, and it is the reason revision 1's Ida rate census started an hour late and missed that storm's peak hour. It also cross-validates `PrecipRate` against `RadarOnly_QPE_01H` to ~1 %. A new merge gate **G10** asserts the alignment.
+> - **§5.5.1 — my own "effective refresh 2.0–2.3 min" was too generous.** On the correct metric the Ellicott City 2016 interval is **2.96 min** and one frame pair in three is a weak update, not one in seven. Advection correction still ranks third; the duplicate-frame guard ranks higher than I said.
+> - **§8.1.1 — the pre-2020 replay layer is `SeamlessHSR`**, native GRIB2 at 0.1 dBZ, present on every case date. This supersedes both revision 1 ("no dBZ layer possible") and Addendum A ("use IEM's `mrms_lcref`"), and it is the field `PrecipRate` is derived from — measured, not assumed.
+> - **§6.5 — hourly gauge–radar ratios are not an estimate of bias.** The spread collapses 174× between 1 h and 12 h aggregation. Bias is an event-level quantity on both coastal cases; new gate **G11** decides which per case.
+> - **§7.4 — Harvey's rate-cap census is run and passes**, at 189.4 mm/h with no clamping, closing the most important open item in revision 1 §10.
+> - **§11.1 — the per-host transfer cap is now enforced in code**, not intended.
 
 ---
 
@@ -11,7 +22,7 @@
 | # | Case | Verdict on **radar rainfall** | The reason, in one line |
 |---|------|------------------------------|--------------------------|
 | 1a | **Ellicott City, MD — 30 July 2016** | **GO, conditional** | The 2-minute rate field reaches 152.3 mm/h and integrates to 168.8 mm at the wettest pixel against a reported 167.6 mm, so the storm is representable — but 10.4 % of pixel-frames were hail-flagged and 7.8 % of wet pixel-frames sit exactly at the 53.8 mm/h hail cap, and MRMS's gauge correction did **nothing** over this catchment (ratio 0.992), so the field has no independent absolute scale until external gauges are brought in. |
-| 1b | **Ellicott City, MD — 27 May 2018** | **NO-GO as a solver validation** | The observed 2-hour *mean* intensity (8.40 in / 2 h = 106.7 mm/h) **exceeds the pre-v12 convective rate cap of 103.8 mm/h**. The measured rate field is pinned at exactly 103.8 mm/h through its peak and 18.6 % of wet pixel-frames sit exactly at the 53.8 mm/h hail cap. The event total at the wettest pixel is 166.6 mm against a reported 213 mm — **22 % low by construction** — and renormalising to the hourly gauge-merged product cannot repair it, because that product is itself radar-only here (ratio 1.008) and carries the same clamp. |
+| 1b | **Ellicott City, MD — 27 May 2018** | **NO-GO as a solver validation** | The observed 2-hour *mean* intensity (8.40 in / 2 h = 106.7 mm/h) **exceeds the pre-v12 convective rate cap of 103.8 mm/h**. Re-censused over the whole storm in revision 2 (§7.1): the rate field reaches exactly 103.8 mm/h and **never exceeds it across 4,831 wet pixel-frames**, 15.5 % of wet pixel-frames sit exactly at the 53.8 mm/h hail cap, and `PrecipFlag` is 47 % convective, 21 % hail, **0 % tropical**. The event total at the wettest pixel is 172.2 mm against a reported 213.4 mm — **19.3 % low by construction** — and renormalising to the hourly gauge-merged product cannot repair it, because that product is itself radar-only here (ratio 1.005) and carries the same clamp. |
 | 2 | **Bellinge, Denmark** | **NO-GO on radar — and that is the right answer** | Outside the MRMS domain entirely, and a 1.72 km² catchment with two 1-minute gauges *inside* it is better sampled by its gauges than by any 1 km radar product. Force from the supplied gauges. |
 | 3 | **EA Tests 8A/8B (Glasgow)** | **NOT APPLICABLE — confirmed no-op** | Rainfall is specified and spatially uniform by the test definition. Nothing for me to supply, and the radar layer must be switched off for these runs so no one screenshots a synthetic test under a radar legend. |
 | 4 | **Meyerland / Brays Bayou, Houston — Harvey 2017** | **GO** | Best beam geometry in the set: 43.5 km, beam centre 501 m over the catchment, 0.70 km sample. But MRMS's two own products disagree by **21 %** over this catchment across the event and the disagreement **changes sign mid-event**, so hourly bias reporting is mandatory, not optional. |
@@ -20,9 +31,9 @@
 
 Three things in this table are revisions to what the plan assumed. All three are measured rather than argued, and the second one is a correction to a hypothesis of my own that the measurement did not support.
 
-1. **The thing that will break a radar-forced hindcast is temporal, not spatial.** Forcing from an hourly QPE product under-predicts the peak 10-minute catchment-average intensity on a 9 km² catchment by **83 %** while reproducing the event volume *exactly* (§4). That is the worst class of error available: invisible to a water-balance check and fatal to a flash-flood peak. The requirement with teeth is "force from the 2-minute rate product", not "spatialise the rainfall".
+1. **The thing that will break a radar-forced hindcast is temporal, not spatial.** Forcing from an hourly QPE product under-predicts the peak catchment-average intensity on a 9 km² catchment by **a third** — measured at **−33.4 %** for Ellicott City 2016 and **−38.9 %** for Harvey — while reproducing the event volume *exactly* (§4.1). That is the worst class of error available: invisible to a water-balance check and damaging to a flash-flood peak. The requirement with teeth is "force from the 2-minute rate product", not "spatialise the rainfall". *Revision 1 put this at 83 % and called it a factor of six, from a synthetic cell rather than from data; §4.1 withdraws that figure and keeps the requirement.*
 
-2. **Advection correction is worth building, but not for the reason the ticket gives, and the correct ranking of effort puts it third.** With 2-minute frames, in-place interpolation is already within **0.0 % on catchment volume, 0.8 % on peak 10-minute catchment intensity and 7.9 % on peak 2-minute single-pixel intensity** (§5.3) — not the error that decides a 9 km² hindcast. I suspected the 2-minute cadence was a publication cadence masking a 4–6 minute volume scan, which would have made the gap twice as large and the penalty an order of magnitude worse; I measured it and **it is not so** — the effective refresh over the Ellicott City catchment is 2.34 minutes (§5.5). What advection correction does buy, decisively, is the **instantaneous field**: in-place blending recovers only 59–86 % of the true peak at the mid-frame instant and can place the field maximum 0.69 km from truth, and that is precisely what Phase 3e's replay exit criterion is about. Build it, with a global cross-correlation vector and a cubic resampler, in that modest form — and **do not build dense optical flow**, which §5.1-R6 shows is unnecessary.
+2. **Advection correction is worth building, but not for the reason the ticket gives, and the correct ranking of effort puts it third.** With 2-minute frames, in-place interpolation is already within **0.0 % on catchment volume, 0.8 % on peak 10-minute catchment intensity and 7.9 % on peak 2-minute single-pixel intensity** (§5.3) — not the error that decides a 9 km² hindcast. I suspected the 2-minute cadence was a publication cadence masking a 4–6 minute volume scan, which would have made the gap twice as large and the penalty an order of magnitude worse; I measured it and **that hypothesis is refuted, but my replacement number was also wrong.** The completed census (§5.5.1) puts the effective new-observation interval over the Ellicott City 2016 catchment at **2.96 minutes**, not the 2.34 revision 1 quoted — so 2.7 km of cell motion between genuinely new observations rather than 1.8 km. Not 4–6 minutes, but half a pixel worse than the ticket assumed rather than better. What advection correction does buy, decisively, is the **instantaneous field**: in-place blending recovers only 59–86 % of the true peak at the mid-frame instant and can place the field maximum 0.69 km from truth, and that is precisely what Phase 3e's replay exit criterion is about. Build it, with a global cross-correlation vector and a cubic resampler, in that modest form — and **do not build dense optical flow**, which §5.1-R6 shows is unnecessary. The ranking is unchanged; the **duplicate-frame guard** inside it moves up, because one pair in three is a weak update rather than one in seven.
 
 3. **"Gauge-corrected" means something different in every case, and nothing at all in two of them.** The ratio of MRMS's gauge-merged product to its radar-only product over the catchment, measured: Ellicott City 2016 **0.992**, Ellicott City 2018 **1.008**, Harvey/Brays **0.827**, Matthew/Norfolk **0.798**, Matthew/Charleston **1.240**, Ida/Philadelphia **0.599**. A programme that applied the gauge-merged product as though it were a corrected field would be silently changing its rainfall volume by anything from 0 % to 40 % depending on the case, in both directions. This is the whole argument for §6.
 
@@ -60,6 +71,8 @@ Consequences the Geospatial Engineer has to plan for:
 
 - **Cases 1, 4 and 6 cannot be fetched from NODD at all.** They come from MTArchive, over HTTP, as `.grib2.gz`, at one file per field per 2 minutes. URL pattern, verified: `https://mtarchive.geol.iastate.edu/YYYY/MM/DD/mrms/ncep/<Field>/<Field>_00.00_YYYYMMDD-HHMMSS.grib2.gz`. NODD keys carry an extra prefix: `CONUS/<Field>_00.00/YYYYMMDD/MRMS_<Field>_00.00_YYYYMMDD-HHMMSS.grib2.gz`. The two differ in both path shape and filename; write one resolver with two backends, not one path template.
 - **`MergedReflectivityQCComposite` does not exist in the archive before October 2020.** The display layer the board asked for is unavailable for Ellicott City, Harvey and Matthew. For those three the replay layer must be built from `PrecipRate` in mm/h — which changes what the legend says (§8). Do not let this become an argument for decoding NEXRAD Level II: that is a radial-sweep decoder and a separate project, and it buys nothing for the forcing.
+
+  > **Corrected by [Addendum A §A.3](SPA-93_addendum_A_ingestion_response.md#a3-the-display-layer--i-was-wrong-and-the-correction-is-good-news).** The first sentence is right about the NCEP GRIB2 tree and I wrongly generalised it to the archive. IEM renders its own reflectivity raster, `mrms_lcref`, and it is present **720/720 frames on every case date and on 2014-11-01**. Cases 1, 4 and 6 *can* have a dBZ replay. The conclusion that those three must fall back to a rate layer is withdrawn.
 - **IEM's rolling real-time cache was cut to 30 days in August 2026.** MTArchive is the durable copy; the rolling cache is not. Do not build the historic path against `mrms.agron.iastate.edu`.
 - **`RadarQualityIndex` is not archived for 2016.** For Ellicott City 2016 and Matthew 2016 the per-pixel QPE quality field cannot be retrieved, so the coverage statement for those two rests on computed geometry plus an RQI sample from a modern date over the same catchment. Say that in the pre-registration rather than quietly omitting it.
 
@@ -84,7 +97,7 @@ The diagnostic column is the part of this that is usually skipped, and it is whe
 1. **Fetch** `PrecipRate_00.00` at native 2-minute cadence for the event window plus one hour either side, over the model domain plus a **motion-estimation halo** (§5.2).
 2. **Advection-correct and integrate** to the model forcing step (§5), producing a per-pixel depth series.
 3. **Sum** that to clock hours, per pixel.
-4. **Form the renormalisation field** `K(x, hour) = Q_hourly(x, hour) / A_rate(x, hour)` where `Q_hourly` is `MultiSensor_QPE_01H_Pass2` (v12+) or `GaugeCorr_QPE_01H` (pre-v12).
+4. **Form the renormalisation field** `K(x, hour) = Q_hourly(x, hour) / A_rate(x, hour)` where `Q_hourly` is `MultiSensor_QPE_01H_Pass2` (v12+) or `GaugeCorr_QPE_01H` (pre-v12). **The hourly file stamped `T` is the accumulation for `[T−1h, T)`, not `[T, T+1h)`** — measured in §2.4 trap 4 — so the rate frames that must be summed against it are the ones from `T−1h` up to but excluding `T`. Getting this backwards shifts every `K` by one hour, which moves rainfall volume between hours while leaving the event total untouched, and therefore will not show up in a water-balance check. Assert the alignment in a unit test: an hour of `PrecipRate` integrated against its own hourly file should give `K ≈ 1` where no gauge correction applies, and §2.4 measures it at 1 % on two independent cases.
 5. **Smooth `K` spatially** with a Gaussian of 5 km σ and **clip it to [0.5, 2.0]**. Report the clipped fraction. Rationale: `K` is a bias field, not a rainfall field; it should vary smoothly. An unsmoothed per-pixel ratio injects 1 km-scale discontinuities into the forcing that are artefacts of two products' different accumulation logic, not of the weather.
 6. **Apply `K`** multiplicatively to the sub-hourly series within each hour.
 7. **Record** `K`'s mean, spatial standard deviation, min, max and clipped fraction per hour in the run provenance.
@@ -112,8 +125,8 @@ MRMS v12.0 went operational **14 October 2020**. It replaced the single-polarisa
 | | pre-v12 (single-pol Z–R) | v12+ (dual-pol) |
 |---|---|---|
 | Stratiform | 48.6 mm/h | — |
-| Convective | **103.8 mm/h** — confirmed in the data: across 4,896 pixel-frames the Ellicott City 2018 rate field reaches exactly 103.8 mm/h and never exceeds it | R(K_DP) 150 mm/h; convective/hail branch 5.9 in/h ≈ 150 mm/h |
-| Hail | **53.8 mm/h** — confirmed: 7.8 % (2016) and 18.6 % (2018) of wet pixel-frames over the Tiber catchment sit at exactly this value | — |
+| Convective | **103.8 mm/h** — confirmed in the data: across **4,831 wet pixel-frames** over the whole 27 May 2018 storm (§7.1, re-censused in revision 2) the Ellicott City rate field reaches exactly 103.8 mm/h and never exceeds it | R(K_DP) 150 mm/h; convective/hail branch 5.9 in/h ≈ 150 mm/h |
+| Hail | **53.8 mm/h** — confirmed twice over, by two unrelated methods. From rate histograms: 7.8 % (2016) and **15.5 %** (2018, whole storm) of wet pixel-frames over the Tiber catchment sit at exactly this value. And from reflectivity: pushing `SeamlessHSR` through the published convective Z–R predicts up to **2.1× more rain than the product reports on hail-flagged pixels, and never less**, with the reported rate topping out at exactly 53.8 (§8.1.1) | — |
 | Tropical | not capped at 103.8 — the 2016 Ellicott City field, flagged 78 % tropical, reaches **152.3 mm/h** | — |
 | Light/steady rain | — | R(A) 200 mm/h |
 
@@ -126,20 +139,41 @@ Phase 1 splits across this boundary: **cases 1, 4 and 6 are pre-v12; case 5 is v
 - The pre-v12 caps bite hardest exactly where the plan most wants radar: a convective flash flood. §7.1 measures how hard.
 - v12.1 (24 February 2021) reduced Multi-Sensor Pass 1 latency 60→20 min and Pass 2 120→60 min, and v12.2 (22 April 2022) added the Canadian S-band radars. Neither changes a Phase 1 case, but the live-mode latency figures in the plan are v12.1-onwards figures and should be labelled as such.
 
-### 2.4 Reading the files — three traps I hit, so the engineer does not have to
+### 2.4 Reading the files — four traps I hit, so the engineer does not have to
 
-I wrote a minimal reader (`research/radar_qpe/mrms_read.py`) to do the measurements in this document. Three things about the actual bytes:
+I wrote a minimal reader (`research/radar_qpe/mrms_read.py`) to do the measurements in this document. Four things about the actual bytes. Traps 1 and 2 are corrected from the first revision, and trap 4 is new and is the one that cost me real numbers.
 
-1. **The data section is PNG-packed.** Section 5 carries data representation template **5.41**, not simple packing. Physical value = `(R + X·2^E) / 10^D` with, for `PrecipRate`, `R = −30.0`, `E = 0`, `D = 1`, 16-bit samples — so the field has 0.1 mm/h resolution and a floor of −30. Grid template 0, 7000 × 3500 at 0.01°, first point 54.995 N / 230.005 E, scanning north to south.
-2. **Negative values are not zero.** MRMS's conventions are −3 for "no radar coverage" and −999 for "missing"; with `R = −30` the `PrecipRate` encoding can represent the former but not the latter. **Treating −3 as 0 mm/h turns a radar outage into a dry spell**, which is the single most dangerous decoding bug available here. *Any* negative value over the model domain must flag the run rather than be filled. I did not encounter one in the windows I decoded — the minimum over all the Ellicott City, Philadelphia and Houston windows was positive — so this is a trap identified from the encoding, not one I tripped, and gate G2 exists to catch it rather than to assume it away.
+1. **The data section is PNG-packed.** Section 5 carries data representation template **5.41**, not simple packing. Physical value = `(R + X·2^E) / 10^D` with, for `PrecipRate`, `R = −30.0`, `E = 0`, `D = 1`, 16-bit samples. **Corrected:** the first revision said this gives "a floor of −30". It does not. `R` is the section-5 reference value, but the decimal scale factor `D = 1` divides it, so the floor is **`R / 10^D` = −3.0 mm/h** and the step is 0.1 mm/h. −30 is a number that appears in the header, not a value the field can take. Grid template 0, 7000 × 3500 at 0.01°, first point 54.995 N / 230.005 E, scanning north to south. Read out of a real message by `seamless_hsr_probe.py`:
+
+   | Product | `R` | `E` | `D` | bits | Min representable | Step | Max representable |
+   |---|---|---|---|---|---|---|---|
+   | `PrecipRate` | −30.0 | 0 | 1 | 16 | **−3.0** | 0.1 | 6550.5 |
+   | `PrecipFlag` | −3.0 | 0 | 0 | 8 | **−3.0** | 1 | 252 |
+   | `SeamlessHSR` | −9990.0 | 0 | 1 | 16 | **−999.0** | 0.1 | 5554.5 |
+
+2. **Negative values are not zero, and the sentinel set is per-product.** **Corrected:** the first revision said MRMS's conventions are "−3 for no radar coverage and −999 for missing" and that `PrecipRate` "can represent the former but not the latter". The first half of that is right and the second half was right for the wrong reason. `PrecipRate` cannot encode −999 because its floor is −3.0 — so for that product, −3.0 is the *only* negative value there is, and a decoder testing for −999 on a rate field is testing for something that cannot occur. But `SeamlessHSR` has `R = −9990`, `D = 1`, so **−999.0 is representable there and is its no-data value.** A single global no-data rule across products is therefore wrong in both directions. Each product in the §7 registry must carry its own sentinel list, taken from its own section 5.
+
+   **Treating −3 as 0 mm/h turns a radar outage into a dry spell**, which is the single most dangerous decoding bug available here. *Any* negative value over the model domain must flag the run rather than be filled.
+
+   > **Updated by [Addendum A §A.5](SPA-93_addendum_A_ingestion_response.md#a5-the-no-coverage-sentinel-i-expected-the-raster-to-lose-it-and-it-does-not--but-gate-g2-now-has-a-positive-control).** Now observed rather than inferred: `-3.0` on 1600/1600 pixels over a no-coverage patch at 54 N. That makes G2 testable instead of vacuous, and **G2b** adds the positive control — assert the pipeline reports *no coverage*, not 0 mm/h, over a window where the answer is known.
 3. **Decode cost is dominated by PNG unfiltering of whole scanlines**, so a small window still costs you every row above it. Decoding rows 0–1590 of 3500 for a Maryland window took ~3 s per frame in Python. A four-hour event at 2-minute cadence is 121 frames per field. Budget for it; cache aggressively; the files are ~1 MB each compressed.
+4. **The hourly accumulation products are stamped with the END of their accumulation window, not the start.** This is new in this revision and it is the trap that cost me the most. `hour_label_test.py` integrates the 2-minute `PrecipRate` box-mean over `[T−1h, T)` and over `[T, T+1h)` and asks which reproduces the hourly file stamped `T`:
+
+   | Case | Hours fully covered both ways | Mean abs error, **end**-of-window reading | Mean abs error, **start**-of-window reading |
+   |---|---|---|---|
+   | Ida / Philadelphia 2021 | 4 | **0.07 mm** | 6.91 mm |
+   | Ellicott City 2016 | 3 | **1.40 mm** | 34.98 mm |
+
+   Ida's four hours agree to 0.07 mm: the file stamped `2021-09-02T00:00Z` carries 15.07 mm and the rate frames from 23:00Z to 00:00Z integrate to 15.08 mm. So `RadarOnly_QPE_01H_00.00_20210902-000000` is the accumulation for **23:00–00:00Z**.
+
+   Two consequences, and both bit this document. First, it is a free and strong cross-validation: `PrecipRate` integrated over an hour reproduces `RadarOnly_QPE_01H` to about 1 %, which means my reader, the 2-minute product and the hourly product all agree, and §4's renormalisation `K` is therefore a correction for gauges rather than for a product inconsistency. Second, **a one-hour alignment error reads an event's peak hour off by one hour**, which is exactly how the Ida rate census in the first revision came to start at 23:00Z and miss the 22:00–23:00Z peak hour entirely (§7.5). Any pipeline that aligns an accumulation product to the start of its stamp will mis-time every hyetograph it builds, and will do it silently, because the volume still looks right.
 
 ### 2.5 What must never be the forcing
 
 | Never force with | Measured consequence |
 |---|---|
 | `MergedReflectivityQCComposite` or any dBZ field | It is not rainfall. MRMS itself chooses among six Z–R relations plus two dual-pol relations per pixel; a single Marshall–Palmer conversion contradicts the product. |
-| `MultiSensor_QPE_01H_*` / `GaugeCorr_QPE_01H` **directly** | Peak 10-min catchment-average intensity on 9 km²: **−83 %**. Peak instantaneous rate: **−93 %**. Event volume: exact. (§4) |
+| `MultiSensor_QPE_01H_*` / `GaugeCorr_QPE_01H` **directly** | **Measured on the real 2016 storm: peak 2-min catchment intensity −33.4 %, peak 10-min −21.6 %, peak single pixel −54.0 %; event volume exact.** On an idealised isolated cell the same comparison reaches −83 % / −93 %, which is an upper bound and not the expected error. (§4.1, §4.2) |
 | `RadarOnly_QPE_15M` | Peak 10-min catchment intensity: **−34 to −48 %**. Peak 2-min single-pixel: **−71 %**. (§4) |
 | `PrecipRate` **sub-sampled** to 5 minutes to save bandwidth | Peak-pixel accumulation **+22 %**, catchment accumulation **−9 %**, peak 10-min intensity **−9 to −20 %**, peak 2-min single-pixel **−59 %**, all without advection correction; advection correction recovers them (§4). Tested at 5 minutes; coarser sub-sampling will be worse. |
 | An areal reduction factor applied on top of a radar field | Double-counting. ARFs exist to convert a *point* design depth into an areal one. A radar field is already areal. ARF belongs to the Atlas 14/15 design-storm path only, and the two paths must not share that code. |
@@ -185,7 +219,28 @@ On bright band: the melting layer sits near 4–5 km in all the relevant seasons
 
 ## 4. Forcing cadence — the measured requirement with the largest number attached
 
+#### 4.1 The measured number, on real storms
+
+**This subsection is new in revision 2 and it replaces the headline the first revision led with.** The first revision quoted **−83.9 %** for the peak-intensity cost of hourly forcing and called it "a factor of six". That number is from an idealised single Gaussian cell (§4.2), not from data, and it is roughly two and a half times too large. The real measurement, from the 2-minute `PrecipRate` series already pulled for §7 and recomputed by `review_followups.py`:
+
+| Case | Peak 2-min box-mean | Peak 10-min box-mean | Peak 60-min box-mean | Peak hour from `RadarOnly_QPE_01H` | **Hourly forcing vs peak 2-min** | vs peak 10-min |
+|---|---|---|---|---|---|---|
+| **Ellicott City 2016** (9.6 km²) | 105.2 mm/h | 89.4 mm/h | 74.1 mm/h | 70.1 mm/h | **−33.4 %** | −21.6 % |
+| **Harvey / Brays Bayou 2017** | 130.7 mm/h | 121.6 mm/h | 79.9 mm/h | 79.9 mm/h † | **−38.9 %** | −34.3 % |
+
+† For Harvey the 60-min rolling mean of the 2-minute series stands in for the hourly product, which was not pulled over this box at 2-minute resolution.
+
+So the honest figure is that **hourly forcing under-predicts peak catchment intensity by about a third**, not by a factor of six. The conclusion is unchanged and the margin is still decisive — a third of the peak intensity on a 9 km² flashy catchment is far larger than any solver-order effect — but the claim is now the one the data supports. The "factor of six" line is withdrawn.
+
+Two caveats stated rather than buried. The error depends on what you compare against: against peak *10-minute* intensity, which is closer to the response time of a 9.6 km² catchment, it is −21.6 % for Ellicott City. And against peak *single-pixel* 2-minute intensity it is −54.0 % for Ellicott City and −57.8 % for Harvey, because an hourly box mean also averages away the spatial peak. The row to quote depends on which the hindcast is sensitive to, and the pre-registration should say which.
+
+Ida is deliberately absent from the table. Its rate census window was truncated by the hour-labelling error in §2.4 trap 4 and the corrected census is in §7.5; it is not comparable to the other two until measured over the same storm.
+
+#### 4.2 The idealised bound, labelled as idealised
+
 `research/radar_qpe/advection_test.py`, full output in `out/advection.txt`. A Gaussian rain cell of 100 mm/h peak and 1.5 km σ translates across a 1 km grid at a known velocity. Truth is the analytic field, so errors are exact, not relative to a reference implementation. The integrator is checked against the closed-form accumulation on the track line, `A = R₀ σ √(2π) / V`, and agrees to **0.000 %** in all eleven configurations — so the harness itself is not the source of any error below.
+
+**These are synthetic numbers and they are an upper bound, not an expectation.** A single 1.5 km σ cell crossing a 9 km² catchment is the most temporally peaked forcing that can physically occur there, so hourly averaging destroys proportionally more of it than it destroys of a real storm with multiple cells and a broader envelope. Read §4.1 for what to expect and this table for what the worst case looks like.
 
 Signed error against truth, per cent. `HOLD` = hold each frame until the next; `LIN` = in-place linear blend; `ADV3` = advection-corrected with a cubic resampler.
 
@@ -199,9 +254,9 @@ Signed error against truth, per cent. `HOLD` = hold each frame until the next; `
 | **15-min accumulation** (`RadarOnly_QPE_15M`), `ADV3` | 0.0 | **−33.9** | **−70.5** |
 | **60-min accumulation** (`MultiSensor_QPE_01H`), `ADV3` | 0.0 | **−83.9** | **−92.7** |
 
-Read the first column and the last two together. **Accumulation products get the volume exactly right and the peak intensity catastrophically wrong, and no amount of interpolation recovers it, because the information is not in the file.** An hourly-forced run of Ellicott City would close its water balance to round-off, print a plausible event depth, and under-predict the peak catchment intensity by a factor of six. If that run then under-predicted the flood, the miss would land on the solver.
+Read the first column and the last two together. **Accumulation products get the volume exactly right and the peak intensity wrong, and no amount of interpolation recovers it, because the information is not in the file.** An hourly-forced run of Ellicott City would close its water balance to round-off, print a plausible event depth, and under-predict the peak catchment intensity by **a third on the measured storm (§4.1)**, up to the −83.9 % above for an idealised isolated cell. If that run then under-predicted the flood, the miss would land on the solver.
 
-This is the single most important line in this document: **the forcing must be driven from `PrecipRate` at its native cadence.** Everything else in §5 is a refinement on top of it.
+This is the single most important line in this document: **the forcing must be driven from `PrecipRate` at its native cadence.** Everything else in §5 is a refinement on top of it. Note that it survives the correction in §4.1 comfortably: the requirement never depended on the synthetic figure being right, only on the error being large compared with everything else in the error budget, and a third of peak intensity is.
 
 ---
 
@@ -271,9 +326,11 @@ Reading the 2016 Ellicott City frames I noticed consecutive 2-minute fields that
 
 | Window | Frames | Pairs scored | Bit-identical | % identical | Mean effective refresh | Run lengths |
 |---|---|---|---|---|---|---|
-| Ellicott City, 2016-07-30 22:00Z – 07-31 02:00Z | 121 | 117 | 17 | **14.5 %** | **2.34 min** | 84 × 1, 17 × 2 |
+| Ellicott City, 2016-07-30 22:00Z – 07-31 02:00Z | 121 | 117 | 17 | **14.5 %** | **2.34 min** *(superseded: 2.96 min, §5.5.1)* | 84 × 1, 17 × 2 |
 | Ellicott City, 2018-05-27 17:30Z – 21:00Z | 106 | 93 | 5 | **5.4 %** | **2.11 min** | 86 × 1, 1 × 2, 2 × 3 |
 | Philadelphia, 2021-09-02 00:00Z – 04:00Z | 121 | 118 | 0 | **0.0 %** | **2.00 min** | 119 × 1 |
+
+*(The "2.0–2.3 minutes" conclusion in this paragraph is corrected to 2.0–3.0 minutes by §5.5.1 below, on a better metric. The refutation of the 4–6 minute hypothesis stands; read the two together.)*
 
 The effective refresh is **2.0–2.3 minutes**, not 4–6. Runs of identical frames are almost all of length 2, none longer than 3, and over Philadelphia in 2021 there is not a single duplicate pair in 118. **The 2-minute cadence is substantially real**, the frames do carry new information, and §5.3's conclusion stands as measured: with 2-minute frames, in-place interpolation is adequate for catchment-scale forcing and advection correction earns its place on the instantaneous field instead. The duplicate fraction is also worse in the older, single-polarisation era (14.5 % in 2016, 5.4 % in 2018, 0 % in 2021), which is worth knowing when reasoning about the pre-v12 cases but does not change the conclusion for any of them.
 
@@ -282,6 +339,30 @@ The effective refresh is **2.0–2.3 minutes**, not 4–6. Runs of identical fra
 I am recording the refuted hypothesis rather than deleting it because it is the kind of thing that gets asserted confidently in a design review, and the measurement is four lines of code.
 
 **One requirement does survive, and it is now justified by a number.** 14.5 % of frame pairs over the Ellicott City 2016 catchment are bit-identical. Cross-correlating two identical frames returns **zero displacement with a perfect correlation score** — a confidently wrong answer that passes every peak-quality gate R3 could impose, on one pair in seven. **Specification: detect duplicate frames, exclude them from the motion estimate, and carry the previous displacement across the duplicate run using the real elapsed time.** This is §5.1-R1 again, and this measurement is the concrete reason R1 exists.
+
+> **Superseded by [Addendum A §A.7](SPA-93_addendum_A_ingestion_response.md#a7-frames-are-not-duplicated--and-spa-94s-intuition-was-better-than-my-measurement).** Bit-identity is too strict a test for "carries new information" — one pixel moving 0.1 mm/h makes a frame non-identical while 98 % of the field is stale, and measured pairs exist that changed only 2 % of their wet pixels and were *not* counted as duplicates here. The guard must key on the **fraction of wet pixels changed**, with a low-information threshold of 0.25, not on byte-equality. The conclusion that the publication cadence is not masking a 4–6 minute volume scan survives; the claim that the frames are therefore substantially independent does not.
+
+#### 5.5.1 The census finished, and it moves my own number — "2.0–2.3 min" was too generous
+
+I told the board this census would decide whether advection correction moves from third priority to second. It has finished (`update_census.py`, `out/measured_update_census.json`) and the answer is **no, it stays third — but the margin is narrower than §5.5 claimed and the duplicate-frame guard matters more than I said.**
+
+Scoring on the *fraction of wet pixels changed* rather than byte-equality, with a weak-update threshold of 0.25:
+
+| Window | Pairs | Bit-identical | **Weak updates (<25 % of wet pixels changed)** | Pairs >90 % changed | **Implied new-observation interval** |
+|---|---|---|---|---|---|
+| Ellicott City 2016, 22:00Z–02:00Z | 117 | 17 (14.5 %) | **32.5 %** | 53.8 % | **2.96 min** |
+| Ellicott City 2018, 17:30Z–21:00Z | 93 | 5 (5.4 %) | **19.4 %** | 39.8 % | **2.48 min** |
+| Ida / Philadelphia, 00:00Z–04:00Z | 118 | 0 (0.0 %) | **0.0 %** | 97.5 % | **2.00 min** |
+
+**So §5.5's headline figure of "2.0–2.3 minutes" was wrong, and wrong in the direction that flattered my conclusion.** The honest range is **2.0 to 3.0 minutes**: the proper metric more than doubles the weak-update fraction for 2016 (14.5 % → 32.5 %) and pushes the effective interval to 2.96 min. At 15 m/s that is **2.7 km of cell motion between genuinely new observations rather than 1.8 km** — half a pixel further than the ticket's premise assumed, not less.
+
+Three things follow, and I am separating them because they point in different directions.
+
+- **The original hypothesis is still refuted.** 2.96 min is not 4–6 min. The publication cadence is not a thin veneer over a volume scan, and §5.3's conclusion — that in-place interpolation is adequate for *catchment-aggregate* forcing at this cadence — survives. Interpolating from §4.2's table, a 3-minute effective gap sits between the 2-minute row (−0.8 % on peak 10-min) and the 5-minute row (−19.8 %), nearer the former.
+- **Advection correction stays third in priority**, behind 2-minute forcing and the per-case censuses, for the reason §5.3 gives: it earns its place on the *instantaneous* field for the replay, not on the forcing aggregates. Nothing in this census changes that ordering. I am recording that explicitly because I promised the board a decision from it.
+- **The duplicate-frame guard moves up, and its threshold is now justified by a number.** On the 2016 Ellicott City window **one pair in three** carries less than a quarter of a field's worth of new information. Cross-correlating such a pair returns a displacement near zero with a high correlation score — a confidently wrong answer that passes any peak-quality gate R3 could impose, on 32.5 % of pairs rather than the 14.5 % §5.5 claimed. The guard in §5.5's closing specification is therefore load-bearing, and the `frac_wet_changed < 0.25` criterion from Addendum A §A.7 is the right test. Gate **G7** now reports both metrics per case.
+
+Note the era dependence, which is sharper on the corrected metric than on the old one: 32.5 % weak pairs in 2016, 19.4 % in 2018, **0.0 % in 2021**. The pre-v12 single-polarisation cases are the ones that need the guard; the v12 case does not. That is the opposite of convenient, because the pre-v12 cases are also the ones with the rate caps.
 
 ---
 
@@ -317,7 +398,7 @@ I measured it for all six candidate catchment/event pairs (`assess.py`, outputs 
 | Case | Window | Event-total gauge-merged / radar-only, box mean | Per-pixel range | log-SD | Hourly ratio range | Reading |
 |---|---|---|---|---|---|---|
 | **Ellicott City 2016** | 20Z–04Z | **0.992** | 0.987–0.997 | 0.002 | 0.95–1.02 | **The gauge correction did essentially nothing.** `GaugeCorr_QPE_01H` is radar-only in all but name over this catchment. |
-| **Ellicott City 2018** | 16Z–23Z | **1.008** | 0.935–1.103 | 0.044 | 0.92–1.06 | Same: 0.8 %. No independent gauge constraint over the Tiber catchment in either storm. |
+| **Ellicott City 2018** | 16Z–02Z | **1.005** | 0.935–1.103 | 0.043 | 0.92–1.06 | Same: 0.5 %. No independent gauge constraint over the Tiber catchment in either storm. *(Window extended to 02:00Z in revision 2; was 1.008 over 16Z–23Z.)* |
 | **Harvey / Brays Bayou** | 3 days | **0.827** | 0.729–0.945 | 0.036 | **0.07–2.50** | A 17 % reduction, near-uniform in space — exactly the smooth multiplicative field §2.1 step 5 assumes. **Sign flips mid-event** (below 1 on 26–27 Aug, above 1 on the 28th). |
 | **Matthew / Norfolk** | 8–9 Oct | **0.798** | 0.670–0.872 | 0.059 | **0.009–1.46** | A 20 % reduction that brings the field inside the observed gauge range (§7.6). Contains the pathological 0.009 hour that justifies the §2.1 clip. |
 | **Matthew / Charleston** | 7–8 Oct | **1.240** | 1.152–1.386 | 0.046 | 0.24–3.94 | **Opposite sign**: the radar-only field is 24 % *low*, consistent with a 1621 m beam centre overshooting (§3, §7.6). |
@@ -346,6 +427,62 @@ And the limit of this statistic, stated plainly: **it is MRMS disagreeing with i
 
 4. If `n < 3` independent gauges, there is no bias measurement — say "not measurable" rather than quoting a one-gauge ratio.
 
+### 6.5 Bias is an event-level quantity, not an hourly one — and the sensitivity run that shows it
+
+New in revision 2, in answer to review item 3. The reviewer observed that Charleston's hourly gauge-merged / radar-only ratio swings **0.243 → 3.934** between consecutive hours and that Norfolk shows an hour at **0.009**, and read that as a timing offset rather than real bias. That reading is largely right, it is testable, and the test splits the two cases apart. `review_followups.py`.
+
+**Test 1 — does the spread collapse under aggregation?** If the swing is rainfall being redistributed between adjacent hours, lengthening the accumulation window should collapse the ratio's spread while leaving its centre alone. If it were real bias varying in time, the spread would persist.
+
+| Accumulation window | Norfolk spread (max/min) | Norfolk log-SD | Charleston spread | Charleston log-SD | Ellicott City 2016 **control** |
+|---|---|---|---|---|---|
+| 1 h | **174.2×** | 1.145 | **16.2×** | 0.700 | 1.07× |
+| 2 h | 3.49× | 0.392 | 9.13× | 0.574 | 1.01× |
+| 3 h | 2.54× | 0.257 | 3.21× | 0.383 | 1.01× |
+| 6 h | 2.39× | 0.278 | 1.70× | 0.210 | — |
+| 12 h | **1.09×** | **0.036** | **1.33×** | **0.123** | — |
+
+It collapses, by a factor of 160 for Norfolk and 12 for Charleston, while the median ratio barely moves (Norfolk 0.909 → 0.808; Charleston 1.532 → 1.254). Ellicott City 2016 is the control and behaves as a control should: where the gauge correction is doing nothing at all (ratio 0.992), the hourly ratio is already stable at 1.07× and there is nothing for aggregation to fix. **So the hourly ratio is not an estimate of bias. It is an estimate of bias plus an hour-scale redistribution term that dominates it.**
+
+**Test 2 — is there a net timing offset?** Lagged Pearson correlation of the two hourly series:
+
+| Case | Best lag of the gauge-merged product | r at best lag | r at lag 0 | Reading |
+|---|---|---|---|---|
+| **Norfolk** | **0 h** | 0.893 | 0.893 | No net offset. The 0.009 hour is an isolated single-hour merge or gauge-QC artefact, not a shift. |
+| **Charleston** | **−1 h (gauge product one hour late)** | 0.778 | 0.540 | A genuine one-hour offset, confirming the reviewer's hypothesis for this case. |
+| Ellicott City 2016 (control) | 0 h | 0.9993 | 0.9993 | As expected where the correction is inert. |
+
+So the reviewer is right about Charleston and right for a different reason about Norfolk. A one-hour offset in an hourly gauge merge has an obvious candidate mechanism — an hourly gauge network reporting on standard rather than daylight time is exactly one hour — but I am recording that as a hypothesis, not a finding, because I did not look at the gauge metadata.
+
+**Does the offset threaten the case-6 recommendation?** No, and this is the number that matters. Recomputing the event-level ratio with the gauge series shifted:
+
+| Case | Event ratio at lag 0 | at lag −1 h | at lag −2 h |
+|---|---|---|---|
+| Norfolk | 0.798 | **0.797** | 0.794 |
+| Charleston | 1.240 | **1.240** | 1.240 |
+
+The event-level ratio is invariant to the shift to within 0.5 %. **The case-6 recommendation rests on the event-level ratios — Norfolk 0.798 against Charleston 1.240 — and those are lag-invariant**, so §7.6's geometry argument (radar-only runs high where the beam is low and low where the beam is high) is unaffected by the timing artefact. It would have been affected had it rested on any individual hour, and it does not.
+
+**The sensitivity run the reviewer asked for.** Arm A applies a per-hour `K`; arm B applies a single event-level `K`:
+
+| | Norfolk arm A (hourly `K`) | Norfolk arm B (event `K`) | Charleston arm A | Charleston arm B | EC 2016 arm A | EC 2016 arm B |
+|---|---|---|---|---|---|---|
+| `K` | 0.008 – 1.462 | **0.798** | 0.243 – 3.934 | **1.240** | 0.949 – 1.018 | 0.992 |
+| Event total, mm | 227.81 | 227.81 | 203.81 | 203.81 | 147.75 | 147.75 |
+| Peak hour, mm | 33.01 | 30.56 | 35.13 | 33.75 | 71.29 | 69.50 |
+| Peak hour vs radar-only | −13.8 % | −20.2 % | +29.1 % | +24.0 % | +1.8 % | −0.8 % |
+| Worst hour-to-hour `K` jump | **0.94** | 0 | **3.69** | 0 | 0.07 | 0 |
+
+Both arms reproduce the event total exactly, by construction. They differ by only **4–7 % on the peak hour**. But arm A buys that similarity by injecting hour-to-hour multiplier jumps of 0.94 and 3.69 into the hyetograph — a near-total deletion of one Norfolk hour and a near-quadrupling of one Charleston hour — which are artefacts of the merge's timing, not features of the weather.
+
+**Specification, replacing the per-hour `K` default in §2.1 step 4 for cases where this test fails:**
+
+1. Run the aggregation-stability test per case before choosing. Report the 1 h and 12 h spread.
+2. If the 1 h log-SD exceeds **0.35** while the 12 h log-SD is below it — true for both coastal cases and false for Ellicott City — **use a single event-level `K`** and say so in the provenance. The per-hour field is not estimable on that case.
+3. Where per-hour `K` is used, the §2.1 clip to [0.5, 2.0] and the reported clipped fraction remain mandatory; they are what caught the 0.009 hour in the first place.
+4. Report both arms' peak-hour figures in the pre-registration. A 4–7 % spread on peak hour is small enough that the choice is not load-bearing, and saying so is more useful than implying precision.
+
+This supersedes nothing in §6.1–6.4, which concern bias against *independent gauges*. The ratio discussed here is between two MRMS products and is a diagnostic (§6.3), not a bias measurement.
+
 ---
 
 ## 7. Per-case assessment
@@ -360,7 +497,7 @@ All measurements below are over a 6 × 6 pixel box (≈ 36 km²) for Ellicott Ci
 
 Note what the geometry means before any product question: the radar's sampling volume cross-section is roughly a ninth of the catchment area. **Spatialising rainfall here buys correct intensity and timing, not resolved structure** — there is little structure a 1.08 km sample can resolve across 3.1 km.
 
-**Availability.** MTArchive only (not on NODD). 2016: 6 fields, no `RadarQualityIndex`, 719/720 frames on 30 July with the single gap at 00:06Z — outside the flood window — and 720/720 on 31 July. 2018: 7 fields including RQI, 720/720. **No `MergedReflectivityQCComposite` for either**, so the replay layer for this case is a rate layer (§8.1).
+**Availability.** MTArchive only (not on NODD). 2016: 6 fields, no `RadarQualityIndex`, 719/720 frames on 30 July with the single gap at 00:06Z — outside the flood window — and 720/720 on 31 July. 2018: 7 fields including RQI, 720/720. **No `MergedReflectivityQCComposite` for either**, but `SeamlessHSR` is present on both dates and is the replay layer for this case (§8.1.1) — native GRIB2 dBZ at 0.1 dBZ resolution, not a rate layer as the first revision concluded.
 
 **Measured — 30 July 2016**, 22:00Z–02:00Z, 121/121 frames decoded:
 
@@ -381,20 +518,24 @@ Two qualifications, both measured. **The hail flag fired on 10.4 % of pixel-fram
 
 **Verdict 1a: GO, conditional on** reporting the clamped fraction in the pre-registration as a known downward bias on sub-hourly peak intensity, and on establishing an independent gauge arm (§6.2) before the run — because at present this rainfall field has no verified absolute scale at all.
 
-**Measured — 27 May 2018**, 17:00Z–21:30Z, 136/136 frames decoded:
+**Measured — 27 May 2018**, **19:00Z–23:30Z, 136/136 frames decoded.** Re-run over the whole storm in revision 2 at the reviewer's instruction (review item 1), replacing revision 1's 17:00Z–21:30Z window. **The reviewer's diagnosis was exactly right and the old window was badly placed:** the hourly products put 42.56 mm in 21:00–22:00Z and 15.38 mm in 22:00–23:00Z, so revision 1's census stopped 90 minutes before the storm did and every number keyed to it covered roughly two-thirds of the event. The corrected window is 98.7 % wet (4,831 of 4,896 pixel-frames) against 64.8 % before.
 
-| | |
-|---|---|
-| Peak box-mean rate | 61.2 mm/h |
-| Peak pixel rate | **exactly 103.8 mm/h** — the documented pre-v12 convective cap — and never exceeded in 4,896 pixel-frames; p99.9 also 103.8 |
-| Accumulation integrated from the 2-min rates | box mean 78.7 mm, wettest pixel 119.2 mm |
-| `RadarOnly_QPE_01H` event total | box mean 113.9 mm, wettest pixel **166.6 mm** |
-| Reported | **8.40 in = 213.4 mm** at Ellicott City (NWS); 10.38 in at Catonsville |
-| `PrecipFlag` | 36.0 % no precip, 24.4 % warm stratiform, **22.2 % convective, 17.4 % hail** |
-| Rate-cap saturation | **18.6 % of wet pixel-frames at exactly 53.8 mm/h**, plus 0.66 % at exactly 103.8 |
-| Gauge-merged / radar-only | **1.008**, log-SD 0.044 |
+| | Revision 2, **19:00–23:30Z** | Revision 1, 17:00–21:30Z |
+|---|---|---|
+| Peak box-mean rate | 61.2 mm/h | 61.2 mm/h |
+| Peak pixel rate | **exactly 103.8 mm/h**, never exceeded in **4,831 wet pixel-frames**; p99 94.1, p99.9 103.8 | exactly 103.8, never exceeded in 3,174 wet |
+| Accumulation integrated from the 2-min rates | box mean **116.4 mm**, wettest pixel **169.3 mm**, driest 89.7 mm | box mean 78.7, wettest 119.2 |
+| `RadarOnly_QPE_01H` event total (16:00Z–02:00Z) | box mean **118.8 mm**, wettest pixel **172.2 mm** | box mean 113.9, wettest 166.6 |
+| Reported | **8.40 in = 213.4 mm** at Ellicott City (NWS); 10.38 in at Catonsville | — |
+| `PrecipFlag` | **47.0 % convective**, 30.3 % warm stratiform, **20.9 % hail**, 1.9 % no precip, **0 % tropical** | 22.2 % convective, 17.4 % hail, 36.0 % no precip |
+| Rate-cap saturation | **15.5 % of wet pixel-frames at exactly 53.8 mm/h** (748 counts), plus 0.44 % at exactly 103.8 | 18.6 % at 53.8 |
+| Gauge-merged / radar-only | **1.005**, per-pixel geometric mean 1.003, log-SD 0.043 | 1.008 |
 
-This is the finding that changes the plan. **The observed two-hour mean intensity is 213.4 mm / 2 h = 106.7 mm/h, which is above the 103.8 mm/h convective cap the product is measurably enforcing.** The product cannot represent the storm's *average* intensity, let alone its peak. The wettest-pixel event total is 166.6 mm against a reported 213.4 mm: **22 % low**. And unlike a bias, this is not correctable — 18.6 % of wet pixel-frames are pinned at 53.8 mm/h and the whole field is ceilinged at 103.8, so the shape as well as the volume is wrong, and the §2.1 renormalisation cannot repair it because `GaugeCorr_QPE_01H` over this catchment is itself radar-only (1.008) and inherits the same clamp.
+**The conclusion survives the rerun, and the central evidence is stronger.** The two heaviest hours of the storm are now inside the censused window and **the rate field still reaches exactly 103.8 mm/h and still never exceeds it** — now across 4,831 wet pixel-frames rather than 3,174, in a window that is almost entirely raining. A ceiling that holds when you add the peak of the storm to the sample is a ceiling. The hail-cap plateau is still there at 15.5 % of wet pixel-frames, and the absolute count rose from 591 to 748; the percentage fell only because the fuller window contains more moderate-rain pixels to divide by. And the `PrecipFlag` contrast with 2016 sharpens: this storm is **47 % convective, 21 % hail and 0 % tropical**, against 2016's 78 % tropical over the same box.
+
+**Two numbers do change, and both in the direction that weakens my case slightly.** The deficit against the reported depth narrows: the wettest-pixel event total is **172.2 mm against a reported 213.4 mm, which is 19.3 % low**, not the 22 % revision 1 quoted from the truncated window. And the rate-integrated wettest pixel is 169.3 mm, 20.6 % low. So the honest figure is **about a fifth low, not about a quarter.**
+
+That does not change the verdict, and here is why I think it should not. The disqualifying fact was never the size of the deficit; it is that **the observed two-hour mean intensity, 213.4 mm / 2 h = 106.7 mm/h, exceeds the 103.8 mm/h ceiling the product is measurably enforcing.** The product cannot represent this storm's *average* intensity over its two worst hours, let alone its peak, and that is a statement about the ceiling and the gauge record, not about the census window. Unlike a bias it is not correctable: 15.5 % of wet pixel-frames are pinned at 53.8 mm/h and the whole field is ceilinged at 103.8, so the shape is wrong as well as the volume, and the §2.1 renormalisation cannot repair it because `GaugeCorr_QPE_01H` over this catchment is itself radar-only (1.005, log-SD 0.043) and inherits the same clamp.
 
 **Verdict 1b: NO-GO as a pre-registered solver validation.** A hindcast of 27 May 2018 on radar rainfall would under-predict, the under-prediction would be dominated by a rainfall ceiling we can measure in advance, and the pre-registration would be burnt on a known-wrong input — the exact failure mode SPA-93 exists to prevent.
 
@@ -444,9 +585,21 @@ So the two MRMS products disagree by **21 %** over this catchment (787.6 / 650.9
 
 **Failure modes in play.** Tropical maritime drop-size distribution, which is what the tropical Z–R exists for and which MRMS did select (§7.1's 2016 flags show the same classifier choosing tropical in a tropical airmass); pre-v12 single-pol only, which Martinaitis et al. (2021) find carries distinct biases against CoCoRaHS that the later dual-pol approach mitigates; bias drift over a five-day event, measured above; and the one that is specific to this case — **the gauge network itself was flooding**, which degrades the gauge-merged arm exactly when it matters most. Martinaitis et al. report under 10 % of hourly gauge reports failing MRMS QC *before* Harvey's landfall, which is the easy part of the event.
 
-**On rate caps I have measured the hourly products but not yet the 2-minute rate field for this case, so I will not claim the caps are harmless here.** The peak hour over the box is 68.4 mm/h as a *box mean*, which implies pixel rates well above 100 mm/h at moments, so the pre-v12 convective ceiling of 103.8 mm/h is close enough to be a live question rather than an obviously remote one. The argument that it matters less than for case 1 is sound — Harvey's governing metric is multi-day volume, and the caps clip peaks rather than totals — but it is an argument, not a measurement. **Gate G3 must be run for this case before pre-registration**, exactly as it was for case 1, and if it comes back with a material clamped fraction in the peak hours this verdict should be revisited.
+**Gate G3 has now been run for this case, and it passes decisively.** The first revision flagged this as the most important unrun census in the document, because the peak hour of 68.4 mm/h as a box mean implied pixel rates above 100 mm/h and therefore put the pre-v12 convective ceiling of 103.8 mm/h in play. Measured over the 150 km² box, **27 August 09:00Z–13:00Z, 121/121 frames decoded**:
 
-**Verdict 4: GO.** Force from `PrecipRate` at 2-minute cadence per §2.1; normalise to `GaugeCorr_QPE_01H`; report bias hourly and state the 0.827 product disagreement in the pre-registration as a declared forcing uncertainty. **Do not be tempted to force this case from the hourly product** just because the event is long — Brays Bayou responds in hours, and §4's 83 % peak-intensity loss applies.
+| | |
+|---|---|
+| Peak box-mean rate | **130.7 mm/h** |
+| Peak pixel rate | **189.4 mm/h**; p99 **173.7**, p99.9 182.7 |
+| Accumulation integrated from the 2-min rates | box mean 165.7 mm, wettest pixel 226.6 mm, driest 100.0 mm |
+| Rate-cap saturation | **none.** The most repeated value above 40 mm/h is 171.7 mm/h at **0.355 %** of 14,097 wet pixel-frames; the next are 169.5 (0.333 %), 154.0 (0.277 %), 160.6 (0.262 %). A flat, diffuse top with no plateau at any value |
+| `PrecipFlag` | **59.1 % tropical convective**, 30.0 % tropical stratiform, 7.7 % warm stratiform, 3.2 % no precip, **0.06 % convective**, **0 % hail** |
+
+**The field reaches 189.4 mm/h — 82 % above the 103.8 mm/h convective ceiling that clamps case 1b — and shows no clamping anywhere.** The reason is in the flag histogram: MRMS classified this storm as **89 % tropical** and only 0.06 % convective, and the tropical relation is not subject to the convective cap. There is no hail flag at all, so the 53.8 mm/h hail cap that clips 15.5 % of case 1b's wet pixel-frames and 7.8 % of case 1a's never engages here.
+
+This is now the strongest quantitative confirmation in the document of the mechanism §10 item 2 proposes, because it is a third independent case: tropical classification → no cap → rates far above 103.8 (Harvey 189.4, Ellicott City 2016 152.3); convective and hail classification → hard clamp (Ellicott City 2018, pinned at exactly 103.8 and 53.8). Harvey is the cleanest of the three because its tropical fraction is the highest and its measured peak the furthest above the convective ceiling.
+
+**Verdict 4: GO — and now measured on the dimension that was argued.** Force from `PrecipRate` at 2-minute cadence per §2.1; normalise to `GaugeCorr_QPE_01H`; report bias hourly and state the 0.827 product disagreement in the pre-registration as a declared forcing uncertainty. **Do not be tempted to force this case from the hourly product** just because the event is long — Brays Bayou responds in hours, and §4.1's measured **−38.9 %** peak-intensity loss for this very catchment applies.
 
 This is also the best-gauged catchment in the set for §6.2's independent arm: the Harris County Flood Warning System runs **153 gauges at 15-minute resolution** over the county.
 
@@ -454,7 +607,7 @@ This is also the best-gauged catchment in the set for §6.2's independent arm: t
 
 **Coverage.** KDIX Mount Holly at **63.9 km**, azimuth 270°, beam centre **851 m** above the city, bottom 335 m, sample **1.03 km**. Flat coastal plain, no blockage. Melting layer ~4.5 km in early September against a beam top of 1.4 km MSL: no bright band. TPHL (Philadelphia TDWR) sits **7.8 km** from Center City — a 0.07 km sample 99 m above the ground, which would be transformative if it entered the QPE; discounted per §3 until confirmed.
 
-**Availability — the best in the set.** This is the only Phase 1 case inside the NODD archive, so the **full diagnostic product set** is available: `RadarQualityIndex`, `GaugeInflIndex_01H_Pass2`, `SeamlessHSRHeight`, `BrightBandTopHeight`/`BottomHeight`, `SyntheticPrecipRateID`, `Model_0degC_Height`, **and** `MergedReflectivityQCComposite` — so case 5 is the only one that can have a genuine dBZ replay layer (§8.1). MTArchive carries 15 fields but **`MultiSensor_QPE_01H_Pass1` is not among them** — Pass 2 only; use NODD if Pass 1 is wanted. 718/720 frames on each day; the gaps (04:24Z and 14:24Z on the 1st, 08:24Z and 10:24Z on the 2nd) all fall outside the 00:00–08:00Z 2 September rainfall window, except 08:24Z which is just after the rain ended.
+**Availability — the best in the set.** This is the only Phase 1 case inside the NODD archive, so the **full diagnostic product set** is available: `RadarQualityIndex`, `GaugeInflIndex_01H_Pass2`, `SeamlessHSRHeight`, `BrightBandTopHeight`/`BottomHeight`, `SyntheticPrecipRateID`, `Model_0degC_Height`, **and** `MergedReflectivityQCComposite` — so case 5 is the only one that can have a **column-maximum** dBZ replay layer (§8.1). It is *not* the only one that can have a dBZ layer at all: that claim appeared in the first revision, was corrected once in Addendum A, and is now settled in §8.1.1 — `SeamlessHSR` is native GRIB2 and present on every pre-2020 case date, so cases 1a, 4 and 6 get a reflectivity replay too. What is unique to case 5 is the *column-maximum* product and the `SeamlessHSRHeight` companion field that lets the legend state the sampling height rather than merely warn that it varies. MTArchive carries 15 fields but **`MultiSensor_QPE_01H_Pass1` is not among them** — Pass 2 only; use NODD if Pass 1 is wanted. 718/720 frames on each day; the gaps (04:24Z and 14:24Z on the 1st, 08:24Z and 10:24Z on the 2nd) all fall outside the 00:00–08:00Z 2 September rainfall window, except 08:24Z which is just after the rain ended.
 
 **MRMS v12 — and this is what makes the case viable.** Observed rates of 3–5 in/h (76–127 mm/h) sit inside the v12 dual-pol ceilings (R(A) 200 mm/h, R(K_DP) 150 mm/h). Measured over Center City, 23:00Z–04:00Z, 151/151 frames:
 
@@ -542,7 +695,37 @@ Three distinct layers get confused with each other, and the third one is the one
 - appear at all on a run whose rainfall came from somewhere else. **Cases 2 and 3 must render no radar layer** — a synthetic or gauge-forced run under a radar legend is a misrepresentation even if every pixel is accurate;
 - imply 2-minute independent observation. The 2-minute timestamp is a publication time; §5.5 measures the effective refresh. If the legend shows a cadence at all it must say "mosaic published every 2 min".
 
-**And for cases 1, 4 and 6 there is no dBZ layer available at all** (§1.1), so the replay for those three is a rate layer under §8.2, labelled as such.
+#### 8.1.1 The pre-2020 replay layer — `SeamlessHSR`, and this supersedes two earlier answers
+
+This has now changed twice and the third answer is the right one. The first revision said cases 1, 4 and 6 can have **no** dBZ layer, because `MergedReflectivityQCComposite` is absent from the pre-2020 archive. Addendum A corrected that to IEM's `mrms_lcref` palette raster. **Review item 6 asked why neither of us had looked at `SeamlessHSR`, and the answer is that we should have: it is better than both.** Measured by `seamless_hsr_probe.py` on 2026-11-01:
+
+| | `SeamlessHSR` (recommended) | IEM `mrms_lcref` (withdrawn) |
+|---|---|---|
+| Format | **Native NCEP GRIB2**, same reader as the forcing | 8-bit palette PNG, third-party |
+| Precision | **0.1 dBZ**, 16-bit | 0.5 dBZ, 8-bit |
+| Range | −999 (no data) to +5554.5; no ceiling | −32 to +95 dBZ |
+| Low-end visibility | full field | **indices 0–85 render pure black: everything ≤ +10.5 dBZ invisible** |
+| Valid time | GRIB2 §1, exact | filename slot, ±60 s |
+| Availability on case dates | **48/48 probed frames on every pre-2020 case date**, every even minute, 10/10 consecutive | 720/720 |
+| Provenance | NCEP, same custody chain as the QPE | IEM, separate credit required |
+| Cost | ~1.0–1.4 MB/frame (≈1 GB for a full replay day) | far smaller |
+
+`MergedReflectivityQCComposite`, `MergedReflectivityQC` and `MergedBaseReflectivityQC` all return **404** on 2016-07-30, so `SeamlessHSR` is not merely preferable pre-2020 — it is the only native reflectivity there is.
+
+**And it has a property the other two do not, which is the real reason to prefer it.** `SeamlessHSR` is the seamless hybrid-scan reflectivity that MRMS itself converts to a rain rate, so the dBZ on screen and the mm/h in the solver are the same observation rather than two different pictures. `hsr_zr_consistency.py` tests that rather than asserting it, by pushing `SeamlessHSR` through the *published* per-class Z–R relations and comparing with `PrecipRate` at the same pixel and time, classified by `PrecipFlag`:
+
+- **Tropical-convective pixels** (`PrecipFlag` 96, published `Z = 250 R^1.2`): predicted / actual rate geometric mean **1.05**, log-SD 0.099. The published relation reproduces the product's own rate to about 5 %.
+- **Hail-flagged pixels** (`PrecipFlag` 7, published `Z = 300 R^1.4`): predicted / actual **1.357 geometric mean, minimum 0.999, maximum 2.095**. The reflectivity implies up to 2.1× more rain than the product reports and *never less*, and the reported rate tops out at exactly 53.8 mm/h.
+
+That second line is an independent confirmation of the hail rate cap, from reflectivity and a published relation rather than from a histogram of repeated values — two unrelated routes to the same 53.8 mm/h. It also means **the replay layer will visibly disagree with the forcing layer exactly where the cap bites**, which a reviewer may well notice and ask about. That is a feature, and §8.3's cap sentence is what answers it.
+
+**Legend consequences.** `SeamlessHSR` is a *hybrid-scan* field: the beam elevation contributing each pixel varies with range and blockage, so the sampling height is not constant across the image.
+
+**May claim:** `MRMS SeamlessHSR`, "seamless hybrid-scan radar reflectivity", units dBZ, the GRIB2 valid time in UTC, and NCEP provenance.
+
+**May not claim:** "column-maximum" — that wording is licensed only for `MergedReflectivityQCComposite`, i.e. case 5 only. Nor may it imply a constant sampling height; where `SeamlessHSRHeight` is archived (v12 cases) the legend may state the height, and where it is not, the legend says the height varies with range.
+
+**Withdrawn:** the Addendum A recommendation of `mrms_lcref`. Its low-end black palette is a real hazard for a replay figure — absence of colour would mean absence of echo to any reader, and for everything below +10.5 dBZ that is false. Keep it only as a fallback if a `SeamlessHSR` route proves unavailable, and if it is ever used, the ±60 s timing and the IEM credit still apply.
 
 ### 8.2 The QPE layer — the published estimate
 
@@ -574,19 +757,22 @@ And where the rate was clamped at a cap, the label must say so with the number: 
 
 ## 9. Pre-registration gates — what must be measured before each case is committed
 
-These are cheap and they all run off the archive. G1, G3, G4 and G7 each already changed or qualified a verdict above when I ran them on part of the case set; G2, G5, G6, G8 and G9 are there because I could not run them and they are the ones most likely to change a verdict next.
+These are cheap and they all run off the archive. **G1, G3, G4, G7, G10 and G11 have each already changed or qualified a verdict, a number or a specification** in this document when run on part of the case set — G3 qualified case 1a and disqualified 1b and has now confirmed case 4; G10 and G11 are new in revision 2 and both came out of fixing a reviewer's finding. G2, G5, G6, G8 and G9 remain unrun by me and are the ones most likely to change a verdict next.
 
 | Gate | Applies to | Why |
 |---|---|---|
 | **G1.** Frame census: requested / decoded / missing, with the missing timestamps listed, for the event window | all radar cases | Measured in §1.1. Two of the five candidate events have gaps. |
 | **G2.** No-data census: any pixel-frame with value < 0 inside the domain | all radar cases | §2.4 trap 2. A single unflagged −3 is an invented dry spell. |
+| **G2b.** No-coverage **positive control**: decode any frame over 53.80–54.20 N / −100.40 to −100.00 E and assert the pipeline reports *no radar coverage*, not 0 mm/h | the decoder, once — a merge gate | [Addendum A §A.5](SPA-93_addendum_A_ingestion_response.md#a5-the-no-coverage-sentinel-i-expected-the-raster-to-lose-it-and-it-does-not--but-gate-g2-now-has-a-positive-control). G2 alone passes vacuously on any window that had no outage, and a census that cannot fail is not a gate. Measured: `-3.0` on 1600/1600 pixels there. |
 | **G3.** `PrecipFlag` histogram and the **cap-clamped pixel-frame fraction** over the catchment | all pre-v12 cases, and case 5 via `SyntheticPrecipRateID` | §7.1. This is the gate that qualified Ellicott City. Not available for Charleston Oct 2015 (no `PrecipFlag` archived), which is a further reason case 6 is Norfolk. |
 | **G4.** `GaugeInflIndex` (v12) or the gauge-merged / radar-only ratio (all eras) over the catchment | all radar cases | §6.3. This is the gate that revealed that "gauge-corrected" means nothing over the Tiber catchment. |
 | **G5.** `RadarQualityIndex` over the catchment through the event, or an explicit statement that it is not archived for this date | all radar cases | §1.1. Not archived for 2016, which affects cases 1 (2016 arm) and 6. |
 | **G6.** Primary-radar availability through the event, and the VCP in use | all radar cases, **especially case 6** | §3: Norfolk has no radar redundancy within 232 km. Confirm KAKQ was up and on a precipitation VCP for 8–9 October 2016. |
-| **G7.** Duplicate-frame fraction and effective refresh interval | all radar cases | §5.5. Sets the real advection gap and protects the motion estimator from duplicate pairs. |
+| **G7.** Duplicate-frame fraction and effective refresh interval, scored on **fraction of wet pixels changed** (threshold 0.25) as well as bit-identity | all radar cases | §5.5.1. Sets the real advection gap and protects the motion estimator from low-information pairs. Measured for three windows; bit-identity alone understates the weak-update fraction by more than a factor of two. |
 | **G8.** T3 frame-holdout score, advected vs in-place, on this event's own data | all radar cases | §5.4. The per-case number that justifies the advection module on that case. |
 | **G9.** Independent-gauge list with `n`, and the §6.4 label it earns | all radar cases | §6.2. Where `n < 3`, the pre-registration must say the rainfall has no verified absolute scale. |
+| **G10.** Hourly-product **alignment assertion**: integrate `PrecipRate` over `[T−1h, T)` and confirm it reproduces the hourly file stamped `T` to within a stated tolerance | the decoder, once — a merge gate — then once per case | §2.4 trap 4. The hourly products are stamped with the **end** of their accumulation window. A one-hour alignment error moves rainfall between hours while leaving the event total exact, so no water-balance check will catch it. Measured at 0.07 mm mean absolute error over four Ida hours and 1.40 mm over three Ellicott City 2016 hours. |
+| **G11.** Bias **estimability** test: ratio spread at 1 h against 12 h aggregation, plus the lagged cross-correlation | all radar cases that will be renormalised | §6.5. Decides whether `K` may be applied per hour or must be a single event-level scalar. Both coastal Matthew catchments fail the 1 h test (log-SD 1.145 and 0.700); Ellicott City 2016 passes it. Run before choosing, not after. |
 
 ---
 
@@ -595,13 +781,15 @@ These are cheap and they all run off the archive. G1, G3, G4 and G7 each already
 Reported as open rather than guessed:
 
 1. **Whether TDWR contributes to the MRMS QPE hybrid scan.** The reflectivity mosaic ingests 15–19 TDWRs; I could not confirm from published documentation that they enter the QPE. This is worth a definite answer because TBWI (24.3 km from Ellicott City) and TPHL (7.8 km from Center City) would change the geometry materially — though C-band attenuation in >100 mm/h cores limits the gain even if they do. Treated as "not contributing" throughout.
-2. **Why the 2016 Ellicott City field exceeded 103.8 mm/h and the 2018 field did not.** My reading is the precipitation classification: 2016 was flagged 78 % tropical and the tropical relation is not subject to the 103.8 mm/h convective cap, while 2018 was flagged convective and hail and clamped at exactly 103.8 and 53.8 mm/h. The flag histograms and the rate distributions are consistent with that (§2.3, §7.1) and the hail cap at 53.8 mm/h is confirmed outright by the data. What I have **not** confirmed from documentation is whether the tropical branch is formally uncapped or carries a higher regional ceiling; Zhang et al. (2016) list caps for stratiform, convective and hail but not for tropical. The practical consequence is the same either way, and gate G3 makes it checkable per event, but the mechanism deserves a citation rather than my inference.
+2. **Why the 2016 Ellicott City field exceeded 103.8 mm/h and the 2018 field did not.** My reading is the precipitation classification: 2016 was flagged 78 % tropical and the tropical relation is not subject to the 103.8 mm/h convective cap, while 2018 was flagged convective and hail and clamped at exactly 103.8 and 53.8 mm/h. What I have **not** confirmed from documentation is whether the tropical branch is formally uncapped or carries a higher regional ceiling; Zhang et al. (2016) list caps for stratiform, convective and hail but not for tropical. The mechanism still deserves a citation rather than my inference.
 
-   A related caveat on case 1b's verdict: it rests on the measured observation that the 2018 field never exceeds 103.8 mm/h in 4,896 pixel-frames while the 2016 field in the same box reaches 152.3. That is strong evidence of a ceiling, but it is evidence from one box and one event. If the Geospatial Engineer's wider fetch finds pre-v12 convective rates above 103.8 mm/h over this catchment in some other storm, the 1b verdict should be revisited — the 22 % shortfall against the reported depth would remain, but the structural argument would weaken to an empirical one.
+   **Revision 2 adds two independent lines of evidence, both of which support it.** Harvey (§7.4) is a third case and the cleanest: 89 % tropical, 0 % hail, peak **189.4 mm/h** with no plateau — 82 % above the convective ceiling, uncapped. And `hsr_zr_consistency.py` (§8.1.1) attacks it from reflectivity instead of from rate histograms: pushing `SeamlessHSR` dBZ through the *published* per-class Z–R relations reproduces `PrecipRate` to 5 % on tropical-flagged pixels, while on hail-flagged pixels it predicts up to **2.1× more rain than the product reports and never less**, with the reported rate topping out at exactly 53.8 mm/h. Two unrelated methods now put the hail cap at the same number. The tropical branch's formal ceiling remains uncited, but "the tropical branch is not subject to the convective cap" is no longer resting on one box and one event.
+
+   A related caveat on case 1b's verdict: it rests on the measured observation that the 2018 field never exceeds 103.8 mm/h — now across **4,831 wet pixel-frames over the whole storm** (§7.1, re-run in revision 2) — while the 2016 field in the same box reaches 152.3 and Harvey reaches 189.4. That is strong evidence of a ceiling, and the revision-2 rerun strengthened it by adding the storm's two heaviest hours to the sample without the ceiling moving. But it is still evidence from one box and two events of one classification. If the Geospatial Engineer's wider fetch finds pre-v12 **convective**-flagged rates above 103.8 mm/h anywhere, the 1b verdict should be revisited — the 19.3 % shortfall against the reported depth would remain, but the structural argument would weaken to an empirical one.
 3. **Primary-radar availability and VCP through each event.** Gate G6; needs the NEXRAD archive or the ROC record, which I did not query.
 4. **Per-event independent gauge inventories.** Gate G9. I identified the candidate networks (§6.2) but did not pull station lists or data; that is a pre-registration task per case and it is the one with the longest lead time, because the HCFCD, PWD and HRSD archives are not all one-click downloads.
 5. **Which gauges MRMS actually ingested** for any given event. Not published per event, which is why §6.2 phrases the independent arm as "networks not known to be in the MRMS hourly ingest" rather than claiming independence.
-6. **The rate-cap census (G3) for cases 4 and 6.** I ran it for both Ellicott City storms and for Ida, which is where it mattered most and where it changed a verdict. The IEM archive began throttling after I had pulled on the order of a thousand frames, and the Harvey and Matthew 2-minute windows did not finish in time. Both verdicts are therefore argued rather than measured on this one dimension, and §7.4 and §7.6 say so in place. Of the two, **Harvey is the one I would run first**: its peak hour is 68.4 mm/h as a box mean, which is close enough to the 103.8 mm/h ceiling to be a live question, while Matthew's 38.3 mm/h is not.
+6. ~~**The rate-cap census (G3) for cases 4 and 6.**~~ **Closed for case 4 in revision 2.** Harvey's census ran to 121/121 frames and passed decisively: peak pixel **189.4 mm/h** with no plateau at any value, `PrecipFlag` 89 % tropical and 0 % hail (§7.4). That was the one I said to run first and it is now measured rather than argued. Matthew's census is reported in §7.6. Transfer accounting for both is in §11.1.
 
 ---
 
@@ -621,6 +809,44 @@ research/radar_qpe/
   assess.py           per-case rate, flag and bias measurements    -> out/measured_<case>.json
 ```
 
+Revision 2 adds five more, behind the review items in §12:
+
+```
+research/radar_qpe/
+  fetch_budget.py           per-host transfer cap, enforced in code   -> fetch_ledger.json
+  seamless_hsr_probe.py     SeamlessHSR availability and GRIB2         -> out/measured_seamless_hsr.json
+                            packing; the R/E/D table of section 2.4
+  hsr_zr_consistency.py     SeamlessHSR dBZ through the published      -> out/measured_hsr_zr.json
+                            Z-R relations vs PrecipRate, by PrecipFlag
+  hour_label_test.py        which end of its window an hourly QPE      -> out/measured_hour_label.json
+                            file is stamped with
+  review_followups.py       peak attenuation on real data; bias        -> out/measured_review_followups.json
+                            estimability vs aggregation window
+```
+
+### 11.1 Transfer accounting, and a cap enforced in code
+
+Review item 7 recorded that the first pass pulled on the order of **1.1 GB** from `mesonet.agron.iastate.edu` before that host began throttling, which is too much to take from a third-party academic mirror run as a courtesy, and asked for requests to be capped and for the ticket to be consulted before exceeding 1 GB from any one host.
+
+That is now enforced rather than intended. `fetch_budget.py` keeps a per-host ledger of bytes and request counts that persists across runs, and `mrms_read.fetch` calls `check()` **before** issuing any request and `charge()` only on bytes that actually crossed the wire — cache hits are free. The default cap is **700 MB per host**, deliberately below the 1 GB figure, overridable only by setting `MRMS_HOST_BUDGET_MB` explicitly. Over the cap a script raises `BudgetExceeded` and fails loudly and partially rather than quietly continuing to pull.
+
+Two consequences visible in this revision. The Matthew rate census was **narrowed** from 20:00–02:00Z to 20:00–23:30Z to stay inside the cap, which is a deliberate reduction in scope recorded here rather than a silent one; it still covers the two heaviest hours with margin. And the `SeamlessHSR` availability census samples every 30 minutes across each case date rather than all 720 frames, because an availability question does not need every frame and a reflectivity product costs ~1.2 MB a frame.
+
+The ledger for this revision's run is committed as `out/fetch_ledger.json`. One number worth passing to the Geospatial Engineer for capacity planning: a `SeamlessHSR` replay of a single full day is **720 frames × ~1.2 MB ≈ 860 MB**, so a replay layer is not a free addition to the ingestion budget and should be fetched for the event window only.
+
+Addendum A adds six more; its §A.12 lists them and how to run them.
+
+```
+research/radar_qpe/
+  SPA-93_addendum_A_ingestion_response.md       response to the SPA-94 ingestion findings
+  frame_identity_probe.py   repeated window max vs repeated frame  -> out/measured_frame_identity.json
+  update_census.py          wet pixels changed per frame pair      -> out/measured_update_census.json
+  iem_raster_probe.py       IEM raster headers, palettes, ramps    -> out/measured_iem_raster.json
+  iem_lut_probe.py          IEM documented index -> value lookups  -> out/measured_iem_lut.json
+  iem_lcref_census.py       lcref/a2m file counts per case date    -> out/measured_lcref_census.json
+  nodata_probe.py           no-coverage sentinel on both routes    -> out/measured_nodata.json
+```
+
 ```
 python archive_probe.py > out/archive_probe.json
 python geometry.py
@@ -635,7 +861,25 @@ A note on reproducibility that belongs to Phase 3e rather than to me, and that I
 
 ---
 
-## 12. Sources
+## 12. Revision 2 — index of the review items, and what each one turned up
+
+The seven changes requested in review of revision 1, where each is answered, and what it cost or changed. Four of the seven changed a number; two changed a specification; one changed a recommendation.
+
+| # | Requested | Where answered | What actually happened |
+|---|---|---|---|
+| **1** | Rerun the 2018 census over the whole storm (~19:00–23:30Z); the 17:00–21:30Z window truncated it | §7.1 | **The reviewer's diagnosis was exactly right** — the old window stopped 90 minutes before the storm did. Rerun at 136/136 frames over a window that is 98.7 % wet instead of 64.8 %. **The no-go holds and the cap evidence is stronger** (still exactly 103.8 mm/h, never exceeded, now across 4,831 wet pixel-frames). Two numbers moved against me: the deficit is **19.3 %, not 22 %**, and the hail plateau 15.5 %, not 18.6 %. |
+| **2** | Bring PR #8 up to date with the 22:10 comment — `mrms_lcref`, the corrected duplicate test, the `a2m` tier, the finished censuses | §5.5.1, §7.4, §8.1.1, Addendum A | Done, and two of those findings moved further: the finished update census **corrected my own refresh figure** (§5.5.1), and `mrms_lcref` is now itself superseded by `SeamlessHSR` (§8.1.1). |
+| **3** | Charleston swings 0.24 → 3.9 and Norfolk shows 0.009; add an event-level-`K` sensitivity run and say which result the recommendation rests on | §6.5, new gate **G11** | **Confirmed for Charleston, refuted for Norfolk.** Charleston has a genuine 1-hour lag (correlation peaks at −1 h); Norfolk has none (peaks at 0 h) and its 0.009 is a single-hour artefact. The ratio spread collapses **174×** from 1 h to 12 h aggregation. The recommendation rests on the **event-level** ratios, which are lag-invariant to 0.5 %. |
+| **4** | The −83.9 % figure is synthetic; lead with the real ~−33 % | §4.1, §4.2, §0 item 1, §2.5 | **Correct, and the figure is withdrawn.** Real: −33.4 % (EC 2016), −38.9 % (Harvey). The synthetic table is kept in §4.2 explicitly labelled an upper bound. The "factor of six" line is gone. |
+| **5** | Text errors: "floor of −30" should be −3.0; −999 cannot be represented | §2.4 traps 1–2, README | **Both correct, and the second is more interesting than stated.** −999 cannot be encoded in `PrecipRate` (floor −3.0) but **is** the no-data value in `SeamlessHSR` (`R = −9990`, `D = 1`). The sentinel set is per-product, so a single global no-data rule is wrong in both directions. |
+| **6** | Assess `SeamlessHSR` as the pre-2020 replay layer | §8.1.1, §7.1, §7.5 | **Accepted — it is better than both prior answers.** Native GRIB2, 0.1 dBZ, 48/48 frames on every case date, and measurably the reflectivity `PrecipRate` is derived from (5 % agreement via the published Z–R on tropical pixels). `mrms_lcref` is withdrawn. Its hail-pixel disagreement also independently re-confirmed the 53.8 mm/h cap. |
+| **7** | Cap requests; ask before pulling >1 GB from any one host | §11.1, `fetch_budget.py` | Enforced in code at **700 MB per host**, checked before each request, ledger persisted and committed. This revision used **~250 MB** of it. The Matthew census was narrowed to stay inside the cap, which is recorded in §7.6 rather than done silently. |
+
+Two things I was asked for and did not do, stated plainly. I did **not** raise the cap to finish the Matthew census over its original 6-hour window — I narrowed the window instead, which is the reviewer's instruction followed rather than circumvented, and §7.6 says which hours are covered. And I did not pursue the Charleston one-hour lag to its mechanism; I have a plausible candidate (an hourly gauge network reporting on standard rather than daylight time) and no evidence for it, so it is a hypothesis in §6.5 and not a finding.
+
+---
+
+## 13. Sources
 
 Verified during this assessment.
 

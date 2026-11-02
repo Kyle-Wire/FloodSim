@@ -1,0 +1,396 @@
+{
+ "item4_peak_attenuation_real_data": [
+  {
+   "case": "Ellicott City 2016",
+   "frames": 121,
+   "window": [
+    "2016-07-30T22:00Z",
+    "2016-07-31T02:00Z"
+   ],
+   "peak_2min_box_mean_mm_h": 105.18,
+   "peak_10min_box_mean_mm_h": 89.38,
+   "peak_30min_box_mean_mm_h": 79.67,
+   "peak_60min_box_mean_mm_h": 74.07,
+   "peak_pixel_2min_mm_h": 152.3,
+   "peak_hour_radar_only_mm_h": 70.05,
+   "hourly_forcing_error_vs_2min_pct": -33.4,
+   "hourly_forcing_error_vs_10min_pct": -21.6,
+   "hourly_forcing_error_vs_peak_pixel_pct": -54.0
+  },
+  {
+   "case": "Harvey / Brays Bayou 2017",
+   "frames": 121,
+   "window": [
+    "2017-08-27T09:00Z",
+    "2017-08-27T13:00Z"
+   ],
+   "peak_2min_box_mean_mm_h": 130.65,
+   "peak_10min_box_mean_mm_h": 121.56,
+   "peak_30min_box_mean_mm_h": 92.09,
+   "peak_60min_box_mean_mm_h": 79.89,
+   "peak_pixel_2min_mm_h": 189.4,
+   "peak_hour_radar_only_mm_h": 79.88741666666668,
+   "peak_hour_source": "60-min rolling mean of the 2-min series (no hourly pull for this case)",
+   "hourly_forcing_error_vs_2min_pct": -38.9,
+   "hourly_forcing_error_vs_10min_pct": -34.3,
+   "hourly_forcing_error_vs_peak_pixel_pct": -57.8
+  },
+  {
+   "case": "Ida / Philadelphia 2021",
+   "frames": 151,
+   "window": [
+    "2021-09-01T23:00Z",
+    "2021-09-02T04:00Z"
+   ],
+   "peak_2min_box_mean_mm_h": 39.61,
+   "peak_10min_box_mean_mm_h": 35.06,
+   "peak_30min_box_mean_mm_h": 21.52,
+   "peak_60min_box_mean_mm_h": 15.08,
+   "peak_pixel_2min_mm_h": 121.7,
+   "peak_hour_radar_only_mm_h": 39.46,
+   "hourly_forcing_error_vs_2min_pct": -0.4,
+   "hourly_forcing_error_vs_10min_pct": 12.5,
+   "hourly_forcing_error_vs_peak_pixel_pct": -67.6
+  }
+ ],
+ "item3_bias_timing_vs_magnitude": {
+  "Matthew / Norfolk": {
+   "hours": 36,
+   "event_ratio_gauge_over_radar": 0.798,
+   "per_pixel_log_sd_from_census": 0.059,
+   "aggregation_stability": [
+    {
+     "window_h": 1,
+     "blocks": 17,
+     "ratio_min": 0.008,
+     "ratio_max": 1.462,
+     "ratio_median": 0.909,
+     "ratio_spread_max_over_min": 174.15,
+     "log_sd": 1.145
+    },
+    {
+     "window_h": 2,
+     "blocks": 10,
+     "ratio_min": 0.38,
+     "ratio_max": 1.327,
+     "ratio_median": 0.852,
+     "ratio_spread_max_over_min": 3.49,
+     "log_sd": 0.392
+    },
+    {
+     "window_h": 3,
+     "blocks": 8,
+     "ratio_min": 0.502,
+     "ratio_max": 1.274,
+     "ratio_median": 0.792,
+     "ratio_spread_max_over_min": 2.54,
+     "log_sd": 0.257
+    },
+    {
+     "window_h": 6,
+     "blocks": 5,
+     "ratio_min": 0.502,
+     "ratio_max": 1.198,
+     "ratio_median": 0.765,
+     "ratio_spread_max_over_min": 2.39,
+     "log_sd": 0.278
+    },
+    {
+     "window_h": 12,
+     "blocks": 3,
+     "ratio_min": 0.76,
+     "ratio_max": 0.826,
+     "ratio_median": 0.808,
+     "ratio_spread_max_over_min": 1.09,
+     "log_sd": 0.036
+    }
+   ],
+   "lag_correlation": {
+    "by_lag": [
+     {
+      "lag_h_of_gauge_product": -4,
+      "pearson_r": 0.4919
+     },
+     {
+      "lag_h_of_gauge_product": -3,
+      "pearson_r": 0.5711
+     },
+     {
+      "lag_h_of_gauge_product": -2,
+      "pearson_r": 0.5661
+     },
+     {
+      "lag_h_of_gauge_product": -1,
+      "pearson_r": 0.782
+     },
+     {
+      "lag_h_of_gauge_product": 0,
+      "pearson_r": 0.8928
+     },
+     {
+      "lag_h_of_gauge_product": 1,
+      "pearson_r": 0.6733
+     },
+     {
+      "lag_h_of_gauge_product": 2,
+      "pearson_r": 0.5354
+     },
+     {
+      "lag_h_of_gauge_product": 3,
+      "pearson_r": 0.4255
+     },
+     {
+      "lag_h_of_gauge_product": 4,
+      "pearson_r": 0.3577
+     }
+    ],
+    "best_lag_h": 0,
+    "best_r": 0.8928
+   },
+   "k_sensitivity": {
+    "K_event": 0.798,
+    "K_hourly_over_wet_hours": {
+     "n": 17,
+     "min": 0.008,
+     "max": 1.462,
+     "median": 0.909,
+     "spread_max_over_min": 174.1
+    },
+    "event_total_mm": {
+     "radar_only": 285.42,
+     "arm_A_hourly_K": 227.81,
+     "arm_B_event_K": 227.81
+    },
+    "peak_hour_mm": {
+     "radar_only": 38.29,
+     "arm_A_hourly_K": 33.01,
+     "arm_B_event_K": 30.56
+    },
+    "peak_hour_shift_vs_radar": {
+     "arm_A_hourly_K_pct": -13.8,
+     "arm_B_event_K_pct": -20.2
+    },
+    "max_hour_to_hour_K_jump": 0.94
+   }
+  },
+  "Matthew / Charleston": {
+   "hours": 36,
+   "event_ratio_gauge_over_radar": 1.24,
+   "per_pixel_log_sd_from_census": 0.046,
+   "aggregation_stability": [
+    {
+     "window_h": 1,
+     "blocks": 18,
+     "ratio_min": 0.243,
+     "ratio_max": 3.934,
+     "ratio_median": 1.532,
+     "ratio_spread_max_over_min": 16.18,
+     "log_sd": 0.7
+    },
+    {
+     "window_h": 2,
+     "blocks": 11,
+     "ratio_min": 0.432,
+     "ratio_max": 3.943,
+     "ratio_median": 1.484,
+     "ratio_spread_max_over_min": 9.13,
+     "log_sd": 0.574
+    },
+    {
+     "window_h": 3,
+     "blocks": 7,
+     "ratio_min": 0.54,
+     "ratio_max": 1.736,
+     "ratio_median": 1.315,
+     "ratio_spread_max_over_min": 3.21,
+     "log_sd": 0.383
+    },
+    {
+     "window_h": 6,
+     "blocks": 4,
+     "ratio_min": 0.9,
+     "ratio_max": 1.534,
+     "ratio_median": 1.176,
+     "ratio_spread_max_over_min": 1.7,
+     "log_sd": 0.21
+    },
+    {
+     "window_h": 12,
+     "blocks": 3,
+     "ratio_min": 1.0,
+     "ratio_max": 1.331,
+     "ratio_median": 1.254,
+     "ratio_spread_max_over_min": 1.33,
+     "log_sd": 0.123
+    }
+   ],
+   "lag_correlation": {
+    "by_lag": [
+     {
+      "lag_h_of_gauge_product": -4,
+      "pearson_r": 0.0059
+     },
+     {
+      "lag_h_of_gauge_product": -3,
+      "pearson_r": 0.2298
+     },
+     {
+      "lag_h_of_gauge_product": -2,
+      "pearson_r": 0.688
+     },
+     {
+      "lag_h_of_gauge_product": -1,
+      "pearson_r": 0.7777
+     },
+     {
+      "lag_h_of_gauge_product": 0,
+      "pearson_r": 0.5403
+     },
+     {
+      "lag_h_of_gauge_product": 1,
+      "pearson_r": 0.3429
+     },
+     {
+      "lag_h_of_gauge_product": 2,
+      "pearson_r": 0.1775
+     },
+     {
+      "lag_h_of_gauge_product": 3,
+      "pearson_r": 0.0736
+     },
+     {
+      "lag_h_of_gauge_product": 4,
+      "pearson_r": 0.105
+     }
+    ],
+    "best_lag_h": -1,
+    "best_r": 0.7777
+   },
+   "k_sensitivity": {
+    "K_event": 1.24,
+    "K_hourly_over_wet_hours": {
+     "n": 18,
+     "min": 0.243,
+     "max": 3.934,
+     "median": 1.532,
+     "spread_max_over_min": 16.2
+    },
+    "event_total_mm": {
+     "radar_only": 164.37,
+     "arm_A_hourly_K": 203.81,
+     "arm_B_event_K": 203.81
+    },
+    "peak_hour_mm": {
+     "radar_only": 27.22,
+     "arm_A_hourly_K": 35.13,
+     "arm_B_event_K": 33.75
+    },
+    "peak_hour_shift_vs_radar": {
+     "arm_A_hourly_K_pct": 29.1,
+     "arm_B_event_K_pct": 24.0
+    },
+    "max_hour_to_hour_K_jump": 3.69
+   }
+  },
+  "Ellicott City 2016 (control)": {
+   "hours": 9,
+   "event_ratio_gauge_over_radar": 0.992,
+   "aggregation_stability": [
+    {
+     "window_h": 1,
+     "blocks": 4,
+     "ratio_min": 0.949,
+     "ratio_max": 1.018,
+     "ratio_median": 1.006,
+     "ratio_spread_max_over_min": 1.07,
+     "log_sd": 0.028
+    },
+    {
+     "window_h": 2,
+     "blocks": 3,
+     "ratio_min": 0.99,
+     "ratio_max": 1.002,
+     "ratio_median": 1.0,
+     "ratio_spread_max_over_min": 1.01,
+     "log_sd": 0.005
+    },
+    {
+     "window_h": 3,
+     "blocks": 2,
+     "ratio_min": 0.994,
+     "ratio_max": 1.0,
+     "ratio_median": 0.997,
+     "ratio_spread_max_over_min": 1.01,
+     "log_sd": 0.003
+    },
+    {
+     "window_h": 6,
+     "blocks": 1
+    },
+    {
+     "window_h": 12,
+     "blocks": 0
+    }
+   ],
+   "lag_correlation": {
+    "by_lag": [
+     {
+      "lag_h_of_gauge_product": -3,
+      "pearson_r": -0.7885
+     },
+     {
+      "lag_h_of_gauge_product": -2,
+      "pearson_r": -0.3378
+     },
+     {
+      "lag_h_of_gauge_product": -1,
+      "pearson_r": 0.4919
+     },
+     {
+      "lag_h_of_gauge_product": 0,
+      "pearson_r": 0.9993
+     },
+     {
+      "lag_h_of_gauge_product": 1,
+      "pearson_r": 0.5311
+     },
+     {
+      "lag_h_of_gauge_product": 2,
+      "pearson_r": -0.324
+     },
+     {
+      "lag_h_of_gauge_product": 3,
+      "pearson_r": -0.7883
+     }
+    ],
+    "best_lag_h": 0,
+    "best_r": 0.9993
+   },
+   "k_sensitivity": {
+    "K_event": 0.992,
+    "K_hourly_over_wet_hours": {
+     "n": 4,
+     "min": 0.949,
+     "max": 1.018,
+     "median": 1.006,
+     "spread_max_over_min": 1.1
+    },
+    "event_total_mm": {
+     "radar_only": 148.91,
+     "arm_A_hourly_K": 147.75,
+     "arm_B_event_K": 147.75
+    },
+    "peak_hour_mm": {
+     "radar_only": 70.05,
+     "arm_A_hourly_K": 71.29,
+     "arm_B_event_K": 69.5
+    },
+    "peak_hour_shift_vs_radar": {
+     "arm_A_hourly_K_pct": 1.8,
+     "arm_B_event_K_pct": -0.8
+    },
+    "max_hour_to_hour_K_jump": 0.07
+   }
+  }
+ }
+}
