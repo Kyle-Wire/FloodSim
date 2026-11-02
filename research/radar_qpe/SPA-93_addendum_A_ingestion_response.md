@@ -309,7 +309,7 @@ This was the census left fetching when this addendum was first pushed. It comple
 
 **The field runs 82 % above the 103.8 mm/h convective ceiling that clamps case 1b, with no clamping at any value.** The mechanism is the classification: 89 % tropical, 0.06 % convective, no hail. So gate G3 passes for case 4, the verdict is now measured on the dimension §7.4 previously argued, and main document §10 item 6 closes for this case.
 
-This also makes the cap argument a three-case comparison rather than a two-case one: tropical → uncapped (Harvey 189.4, Ellicott City 2016 152.3); convective and hail → hard clamp (Ellicott City 2018, pinned at exactly 103.8 and 53.8).
+This also makes the cap argument a **four**-case comparison rather than a two-case one, since Matthew's census has since run as well (main document §7.6, peak 180.9 mm/h, 99.4 % tropical, 0.15 % hail): **tropical → uncapped** (Harvey 189.4, Matthew 180.9, Ellicott City 2016 152.3, spanning 152–189 mm/h with no common ceiling); **convective and hail → hard clamp** (Ellicott City 2018, pinned at exactly 103.8 and 53.8, 0 % tropical). G3 is therefore run for all four CONUS storms and fails only on 1b.
 
 ## A.12 Scripts added by this addendum
 
