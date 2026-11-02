@@ -1,6 +1,6 @@
 # Radar coverage and QPE product assessment for the six Phase 1 hindcast cases
 
-**Task:** SPA-93 · Radar & Precipitation (QPE) Specialist · **Date:** 1 November 2026 · **Revision 2**
+**Task:** SPA-93 · Radar & Precipitation (QPE) Specialist · **Date:** 1–2 November 2026 · **Revision 3**
 **Status:** deliverable. Sits ahead of Phase 1 pre-registration; no Phase 1 case should be pre-registered until the per-case gates in §9 have been run.
 **Amended by [Addendum A](SPA-93_addendum_A_ingestion_response.md)** (1 November 2026), which responds to the Phase 3e ingestion findings on SPA-94. Three statements below are corrected there — §1.1 and §8.1 on the availability of a dBZ display layer, §2.4 trap 2 on whether the no-coverage sentinel had been observed, and §5.5 on how the duplicate-frame guard must be specified. Each carries a pointer in place.
 **Scope of my verdicts:** rainfall only. A "go" below means *the rainfall field can be built honestly for this catchment and event*. It says nothing about the DEM, the drainage network, the tide boundary or the verification data, which belong to other roles.
@@ -15,6 +15,12 @@
 > - **§7.4 and §7.6 — both outstanding rate-cap censuses are run and both pass**, Harvey at 189.4 mm/h and Matthew at 180.9 mm/h, each with no clamping at any value and 89 % / 99.4 % tropical classification. That closes revision 1's §10 item 6 and leaves **no unrun gate that I can run from the archive**. The cap mechanism is now a four-case comparison: tropical → uncapped at 152–189 mm/h, convective-and-hail → clamped at exactly 103.8.
 > - **§7.5 — Ida's census window was truncated too**, by the same hour-labelling error, and I found it while fixing the 2018 one. Re-censused: peak pixel **161.4 mm/h** rather than 121.7, peak box-mean 96.0 rather than 39.6. The verdict holds and the "no saturation at all" finding is stronger. It also makes Ida the **worst case in the set for hourly forcing, at −58.9 %**.
 > - **§11.1 — the per-host transfer cap is now enforced in code**, not intended.
+
+> **Revision 3** answers the SPA-94 revision-2 reconciliation comment (2 November 2026, 02:07Z) and fixes one piece of drift that comment would otherwise have been implemented against. No verdict changes. §14 indexes it. Three substantive items:
+>
+> - **§8.1.1 — the reflectivity layer carries *two* negative sentinels, and conflating them is the display-side twin of the −3.0 trap.** Measured from cache: `SeamlessHSR` reports **−999.0 for no radar coverage** and **−99.0 for no echo**, and the no-echo set is *pixel-for-pixel identical* to `PrecipRate == 0` (21,393 of 21,393 over a 50,000-pixel Maryland box). A ramp that renders −999 at its bottom paints a radar outage as clear sky. New legend requirement, and it is the one genuinely new specification in this revision.
+> - **Addendum A §A.1's per-case `displayProduct` column still named the withdrawn `mrms_lcref`** for cases 1a, 1b, 4 and 6, three sections after §8.1.1 superseded it. That table is what the Geospatial Engineer would have built from. **Corrected to `mrms_seamless_hsr`**, and this is the explicit answer to their question of which layer those three cases render.
+> - **§5.5.1 — the duplicate-frame guard's threshold is now a named parameter with its metric defined**, because SPA-94 §7 holds it with no default and a run cannot start until I set it. `dedupe.threshold = 0.25`, `dedupe.wetThreshold = 1.0 mm/h`. **It gates the motion estimate only; a weak-update frame is never dropped from the forcing integration** — the name "dedupe" invites exactly that error and it would lose real rainfall.
 
 ---
 
@@ -73,7 +79,7 @@ Consequences the Geospatial Engineer has to plan for:
 - **Cases 1, 4 and 6 cannot be fetched from NODD at all.** They come from MTArchive, over HTTP, as `.grib2.gz`, at one file per field per 2 minutes. URL pattern, verified: `https://mtarchive.geol.iastate.edu/YYYY/MM/DD/mrms/ncep/<Field>/<Field>_00.00_YYYYMMDD-HHMMSS.grib2.gz`. NODD keys carry an extra prefix: `CONUS/<Field>_00.00/YYYYMMDD/MRMS_<Field>_00.00_YYYYMMDD-HHMMSS.grib2.gz`. The two differ in both path shape and filename; write one resolver with two backends, not one path template.
 - **`MergedReflectivityQCComposite` does not exist in the archive before October 2020.** The display layer the board asked for is unavailable for Ellicott City, Harvey and Matthew. For those three the replay layer must be built from `PrecipRate` in mm/h — which changes what the legend says (§8). Do not let this become an argument for decoding NEXRAD Level II: that is a radial-sweep decoder and a separate project, and it buys nothing for the forcing.
 
-  > **Corrected by [Addendum A §A.3](SPA-93_addendum_A_ingestion_response.md#a3-the-display-layer--i-was-wrong-and-the-correction-is-good-news).** The first sentence is right about the NCEP GRIB2 tree and I wrongly generalised it to the archive. IEM renders its own reflectivity raster, `mrms_lcref`, and it is present **720/720 frames on every case date and on 2014-11-01**. Cases 1, 4 and 6 *can* have a dBZ replay. The conclusion that those three must fall back to a rate layer is withdrawn.
+  > **Corrected twice; the second correction is the answer.** First, by [Addendum A §A.3](SPA-93_addendum_A_ingestion_response.md#a3-the-display-layer--i-was-wrong-and-the-correction-is-good-news): the sentence above is right about the `MergedReflectivityQC*` family and I wrongly generalised it to "no dBZ layer exists", when IEM's `mrms_lcref` raster is present 720/720 frames on every case date. Then by **[§8.1.1](#811-the-pre-2020-replay-layer--seamlesshsr-and-this-supersedes-two-earlier-answers)**, which is where this now rests: **`SeamlessHSR` is native NCEP GRIB2 reflectivity in dBZ and is present on every pre-2020 case date**, so cases 1, 4 and 6 get a dBZ replay from the same decoder and the same host as their forcing. **Both the claim that those three can have no dBZ layer and the conclusion that their replay must be built from `PrecipRate` in mm/h are withdrawn.** SPA-94 identified this sentence as the false premise their M16 overturns, and they are right that it was still standing here.
 - **IEM's rolling real-time cache was cut to 30 days in August 2026.** MTArchive is the durable copy; the rolling cache is not. Do not build the historic path against `mrms.agron.iastate.edu`.
 - **`RadarQualityIndex` is not archived for 2016.** For Ellicott City 2016 and Matthew 2016 the per-pixel QPE quality field cannot be retrieved, so the coverage statement for those two rests on computed geometry plus an RQI sample from a modern date over the same catchment. Say that in the pre-registration rather than quietly omitting it.
 
@@ -135,7 +141,7 @@ The tropical row is the one that decides case 1. The two Ellicott City storms ar
 
 Phase 1 splits across this boundary: **cases 1, 4 and 6 are pre-v12; case 5 is v12.** Four consequences:
 
-- Product names differ, so the fetch layer needs a version-aware product map keyed on date, with 2020-10-14 as the switch.
+- Product names differ, so the fetch layer needs a version-aware product map keyed on date, with 2020-10-14 as the switch. **Keyed on the declared date, never on which product happens to exist** — and SPA-94's M15 measured why that distinction has teeth rather than being a style preference. The 2020-10-13 and 2020-10-14 MTArchive trees each carry **both** `GaugeCorr_QPE_01H` and `MultiSensor_QPE_01H_Pass2`; 2016-07-30 carries only the former and 2021-09-02 only the latter. So a resolver that picks "whichever exists" is deterministic at both ends of the archive and **ambiguous exactly across the version boundary**, which is the one place a silent choice corrupts a cross-era comparison — and it would be ambiguous in the direction nobody would notice, because both answers decode cleanly. No Phase 1 case sits on 13–14 October 2020, so this cannot bite us now; it would bite the first person to add a case that does.
 - Case 5's rainfall is from a materially better algorithm than cases 1, 4 and 6's. **Cross-case bias comparisons are not like-for-like and must not be aggregated into a single "radar rainfall accuracy" number for the validation report.**
 - The pre-v12 caps bite hardest exactly where the plan most wants radar: a convective flash flood. §7.1 measures how hard.
 - v12.1 (24 February 2021) reduced Multi-Sensor Pass 1 latency 60→20 min and Pass 2 120→60 min, and v12.2 (22 April 2022) added the Canadian S-band radars. Neither changes a Phase 1 case, but the live-mode latency figures in the plan are v12.1-onwards figures and should be labelled as such.
@@ -166,6 +172,8 @@ I wrote a minimal reader (`research/radar_qpe/mrms_read.py`) to do the measureme
    | Ellicott City 2016 | 3 | **1.40 mm** | 34.98 mm |
 
    Ida's four hours agree to 0.07 mm: the file stamped `2021-09-02T00:00Z` carries 15.07 mm and the rate frames from 23:00Z to 00:00Z integrate to 15.08 mm. So `RadarOnly_QPE_01H_00.00_20210902-000000` is the accumulation for **23:00–00:00Z**.
+
+   **A measurement that looks like it settles this does not.** SPA-94's M14 establishes that the archived hourly products are *clock*-hourly — 24 files per day, spaced exactly 60 minutes, on both hosts and in both eras — which is genuinely useful, because it means §2.1 step 3 needs no reconstruction from running sums. But **file spacing says nothing about which hour a file covers**, and the two measurements are complementary rather than redundant: M14 fixes the *grid*, trap 4 fixes the *offset*. A reader who had only M14 would reasonably take the file stamped `T` to cover `[T, T+1h)`, which is the reading measured wrong here by 6.91 mm against 0.07 mm over four Ida hours. Both facts have to travel together.
 
    Two consequences, and both bit this document. First, it is a free and strong cross-validation: `PrecipRate` integrated over an hour reproduces `RadarOnly_QPE_01H` to about 1 %, which means my reader, the 2-minute product and the hourly product all agree, and §4's renormalisation `K` is therefore a correction for gauges rather than for a product inconsistency. Second, **a one-hour alignment error reads an event's peak hour off by one hour**, which is exactly how the Ida rate census in the first revision came to start at 23:00Z and miss the 22:00–23:00Z peak hour entirely (§7.5). Any pipeline that aligns an accumulation product to the start of its stamp will mis-time every hyetograph it builds, and will do it silently, because the volume still looks right.
 
@@ -366,6 +374,26 @@ Three things follow, and I am separating them because they point in different di
 - **The duplicate-frame guard moves up, and its threshold is now justified by a number.** On the 2016 Ellicott City window **one pair in three** carries less than a quarter of a field's worth of new information. Cross-correlating such a pair returns a displacement near zero with a high correlation score — a confidently wrong answer that passes any peak-quality gate R3 could impose, on 32.5 % of pairs rather than the 14.5 % §5.5 claimed. The guard in §5.5's closing specification is therefore load-bearing, and the `frac_wet_changed < 0.25` criterion from Addendum A §A.7 is the right test. Gate **G7** now reports both metrics per case.
 
 Note the era dependence, which is sharper on the corrected metric than on the old one: 32.5 % weak pairs in 2016, 19.4 % in 2018, **0.0 % in 2021**. The pre-v12 single-polarisation cases are the ones that need the guard; the v12 case does not. That is the opposite of convenient, because the pre-v12 cases are also the ones with the rate caps.
+
+#### 5.5.2 The guard as a named parameter — values, metric, and the scope error the name invites
+
+SPA-94 §7 holds the weak-update threshold as a run parameter with **no default**, so a run cannot start until this role sets it. Setting it, with the metric defined precisely enough that it cannot be implemented as a different statistic from the one measured above (`update_census.py`):
+
+| Parameter | Value | Definition |
+|---|---|---|
+| `dedupe.wetThreshold` | **1.0 mm/h** | A pixel is *wet* for this test if **either** frame of the pair is ≥ 1.0 mm/h. Below that a pixel carries no information an advection scheme can use, and including the near-zero field would let a large dry area dilute the statistic to meaninglessness. |
+| `dedupe.threshold` | **0.25** | A frame pair is a *weak update* if the fraction of wet pixels whose value changed is **< 0.25**. "Changed" is exact inequality of the decoded physical value, i.e. a change of one 0.1 mm/h quantum counts. |
+| scoring window | the **motion-estimation halo** (§5.1-R2), not the model domain | A 25-pixel domain gives a fraction with no resolution; the measurements above used a catchment box and are therefore, if anything, conservative. |
+
+**The value is not a guess.** 0.25 is the threshold at which the three measured windows separate cleanly: at `frac_wet_changed < 0.25` the weak-update fraction is 32.5 % / 19.4 % / 0.0 % across the 2016, 2018 and Ida windows, against the 53.8 % / 39.8 % / 97.5 % of pairs that changed more than 90 % of their wet pixels. The distribution is bimodal, and 0.25 sits in the gap rather than on a shoulder. Report the realised distribution per run regardless, because a case whose distribution is *not* bimodal is a case where this parameter is doing something I have not measured.
+
+**And the name invites a scope error that would lose rainfall.** `dedupe` suggests removal. A weak-update frame must **not** be removed:
+
+- **Motion estimate: exclude.** Do not cross-correlate a weak pair. Carry the previous smoothed displacement across the weak run, scaled by the *real* elapsed time (§5.1-R1), and flag the pair in the run provenance.
+- **Forcing integration: keep, always.** The rate field still covers those 120 seconds of real time and the rain still fell. Dropping a weak frame from the accumulation deletes its contribution, and because the hourly renormalisation `K` (§2.1) would then quietly scale the remaining frames back up to the hourly total, **the event volume would still balance** — so no water-balance check would catch it, and the damage would appear only as a distorted hyetograph shape. This is the same failure mode as the hour-label error in §2.4 trap 4, arriving by a different route.
+- **Display layer: keep, always.** A dropped frame is a visible stutter in the replay, and the replay is the Phase 3e exit criterion.
+
+One frame pair in three on the 2016 Ellicott City window is a weak update, so this is not a corner case on the case the programme most wants.
 
 ---
 
@@ -579,7 +607,7 @@ Two things I will add, because they are the only ways this case can go wrong fro
 
 **Coverage — the best in the set.** KHGX League City at **43.5 km**, azimuth 302°, beam centre **501 m** above the catchment, beam bottom 150 m, sample **0.70 km × 0.70 km**. Flat coastal plain, no blockage. Melting layer ~5 km against a beam top of 0.9 km MSL: no bright band. THOU (Hobby TDWR) at 27.9 km and TIAH at 44.0 km are both nearby but discounted (§3). Partial beam filling is negligible at 43 km with a 0.70 km sample.
 
-**Availability.** MTArchive, 7 fields including `RadarQualityIndex`, **720/720 frames on both 26 and 27 August**. No reflectivity composite (replay is a rate layer).
+**Availability.** MTArchive, 7 fields including `RadarQualityIndex`, **720/720 frames on both 26 and 27 August**. No `MergedReflectivityQCComposite`, but `SeamlessHSR` is present and is this case's replay layer (§8.1.1, §8.1.2) — native GRIB2 dBZ, not the rate layer the first revision concluded.
 
 **Measured**, 26–28 August 2017, hourly over a 150 km² box:
 
@@ -667,7 +695,7 @@ Two scope notes. The Schuylkill basin extends more than 100 km north-west of the
 
 **Coverage.** KAKQ Wakefield at **65.1 km**, azimuth 103°, beam centre **869 m** above the city, bottom 343 m, sample **1.05 km**. Flat coastal plain, no terrain blockage. Melting layer ~4.5 km in early October against a 1.4 km beam top: no bright band. **But no redundancy** — the next radars are KDOX at 232.5 km and KMHX at 236.2 km, both sampling above 5 km, which is useless for QPE. A KAKQ outage or a clear-air VCP during the event would hit the whole case with no fallback, which is gate G6.
 
-**Availability.** MTArchive, 6 fields, **720/720 frames on both 8 and 9 October** — complete. **No `RadarQualityIndex` for 2016**, so the coverage statement rests on the computed geometry plus a modern RQI sample over the same catchment. No reflectivity composite; replay is a rate layer.
+**Availability.** MTArchive, 6 fields, **720/720 frames on both 8 and 9 October** — complete. **No `RadarQualityIndex` for 2016**, so the coverage statement rests on the computed geometry plus a modern RQI sample over the same catchment. No `MergedReflectivityQCComposite`, but `SeamlessHSR` is present and is this case's replay layer (§8.1.1, §8.1.2) — native GRIB2 dBZ, not the rate layer the first revision concluded. For this case in particular the §8.1.2 no-coverage requirement is not academic: §3 records no radar redundancy within 232 km, so a KAKQ outage would blank the catchment, and the replay must draw that as a blank rather than as clear sky.
 
 **Measured**, 8–9 October 2016, hourly over a 150 km² box centred on Hampton Roads:
 
@@ -759,7 +787,35 @@ That is an independent confirmation of the hail rate cap, from reflectivity and 
 
 **May not claim:** "column-maximum" — that wording is licensed only for `MergedReflectivityQCComposite`, i.e. case 5 only. Nor may it imply a constant sampling height; where `SeamlessHSRHeight` is archived (v12 cases) the legend may state the height, and where it is not, the legend says the height varies with range.
 
+#### 8.1.2 The reflectivity layer has three display states, not two — and this is the display-side twin of the −3.0 trap
+
+SPA-94's M16 reports two negative sentinels in `SeamlessHSR` rather than the one §2.4 lists. That is a claim about what the display layer may say, which is this role's, so it is measured here rather than taken on trust. `hsr_sentinel_census.py` runs entirely off frames already in the local cache and issues **no HTTP requests**, so this measurement cost zero bytes against the §11.1 ledger. Frame 2016-07-30 23:52Z, three windows:
+
+| Window | Pixels | `SeamlessHSR` negatives found | No coverage | No echo | Valid dBZ |
+|---|---|---|---|---|---|
+| G2b no-coverage patch, 53.8–54.2 N | 1,600 | **−999.0 × 1,600** | 100 % | 0 % | 0 % |
+| Tiber catchment, storm peak | 36 | none | 0 % | 0 % | 100 % (48.2–53.5 dBZ) |
+| Maryland wide, 38.5–40.5 N / 78–75.5 W | 50,000 | **−99.0 × 21,393** | 0 % | **42.8 %** | 57.2 % (7.3–55.5 dBZ) |
+
+Confirmed, and two of these are exact rather than approximate:
+
+- **The two sentinels are real and they are different values.** `X = 0 → −999.0` is no radar coverage; `X = 9000 → −99.0` is coverage with no echo. `PrecipRate` has no equivalent distinction available to it — its floor is −3.0, so it has exactly one negative value and must express "covered and dry" as 0.0 mm/h.
+- **The no-coverage masks of the two products co-register exactly.** Over the G2b patch, `SeamlessHSR` is −999.0 and `PrecipRate` is −3.0 on the same **1,600 of 1,600** pixels, with zero pixels flagged by one product and not the other. So the display layer and the forcing layer agree on where the radar was not looking, and a figure can state it once for both.
+- **The no-echo mask co-registers exactly too, and this one surprised me.** Over the 50,000-pixel Maryland box the set `{SeamlessHSR = −99.0}` and the set `{PrecipRate = 0.0}` are the *same* 21,393 pixels — not 21,390, not 21,400. Every pixel the reflectivity field calls no-echo, the rate field calls zero, and conversely, with no exceptions. That is a sharper statement of §8.1.1's "it is the field `PrecipRate` is derived from" than the n = 36 Z–R test, and it comes from 50,000 pixels rather than 36.
+
+**Legend requirement, and it is new.** The dBZ layer must render **no coverage** distinctly from **no echo**, and a run whose domain contains any no-coverage pixel must say so on screen. Specifically:
+
+- **−999 may not be placed at the bottom of the colour ramp.** A continuous ramp that accepts −999 as its minimum paints a radar outage as the weakest possible echo, or — more likely, after clamping — as indistinguishable from clear sky. **Render no-coverage as a non-ramp fill** (hatching or a reserved neutral) with its own legend entry, as the water layers already do for nodata.
+- **−99 (no echo) may render as transparent**, which is the ordinary and correct treatment, *provided* −999 does not share that treatment.
+- Neither sentinel may be filled, interpolated across, or advected. §5.2's resampler must treat both as masked, not as numbers — a cubic kernel applied across a −999 boundary will smear −999 into neighbouring valid pixels and produce dBZ values that are not merely wrong but impossible.
+
+This is the display-side twin of §2.4 trap 2. There, treating −3 as 0 mm/h turns a radar outage into a dry spell in the forcing; here, ramping −999 turns the same outage into clear sky on screen. The second one is worse in one specific way: the forcing error is caught by gate G2, and a figure has no G2.
+
+**Note the asymmetry this creates with case 5.** `MergedReflectivityQCComposite` is a different product with its own section 5, so its sentinel values must be read from its own header rather than assumed to match — §2.4 trap 2's rule, applied to the display layer. I have not measured them, and gate **G2c** below says so rather than letting the v12 case inherit a pre-v12 measurement.
+
 **Withdrawn:** the Addendum A recommendation of `mrms_lcref`. Its low-end black palette is a real hazard for a replay figure — absence of colour would mean absence of echo to any reader, and for everything below +10.5 dBZ that is false. Keep it only as a fallback if a `SeamlessHSR` route proves unavailable, and if it is ever used, the ±60 s timing and the IEM credit still apply.
+
+**One qualification on that, measured, and it cuts against how hard I pressed the point.** §8.1.2's census gives the size of the black band on a real frame for the first time: over the wide Maryland box at the 2016 storm peak, only **0.34 % of the valid-echo pixels sit at or below +10.5 dBZ**. On a convective frame the palette hides almost nothing, because a convective frame has little weak echo in it. So the hazard is real but it is *not* large on the case I used it to argue about, and anyone checking the claim would have found that. Where it does bite is the opposite regime — the stratiform and light-rain hours that bracket a convective core, and Matthew's long tropical-stratiform periods (99.4 % tropical, 24.2 % of it stratiform, §7.6), where a much larger share of the field sits in the low dBZ band. `SeamlessHSR` remains the recommendation on precision, provenance, timing and co-registration, each of which is a stronger argument than the palette one; the palette objection should be read as the weakest of the five rather than the decisive one Addendum A made it.
 
 ### 8.2 The QPE layer — the published estimate
 
@@ -798,11 +854,12 @@ These are cheap and they all run off the archive. **G1, G3, G4, G7, G10 and G11 
 | **G1.** Frame census: requested / decoded / missing, with the missing timestamps listed, for the event window | all radar cases | Measured in §1.1. Two of the five candidate events have gaps. |
 | **G2.** No-data census: any pixel-frame with value < 0 inside the domain | all radar cases | §2.4 trap 2. A single unflagged −3 is an invented dry spell. |
 | **G2b.** No-coverage **positive control**: decode any frame over 53.80–54.20 N / −100.40 to −100.00 E and assert the pipeline reports *no radar coverage*, not 0 mm/h | the decoder, once — a merge gate | [Addendum A §A.5](SPA-93_addendum_A_ingestion_response.md#a5-the-no-coverage-sentinel-i-expected-the-raster-to-lose-it-and-it-does-not--but-gate-g2-now-has-a-positive-control). G2 alone passes vacuously on any window that had no outage, and a census that cannot fail is not a gate. Measured: `-3.0` on 1600/1600 pixels there. |
+| **G2c.** Display-layer sentinel read-out: for whichever reflectivity product this case renders, read `R`, `E`, `D` and the negative values **out of that product's own section 5 and a real frame**, and assert the renderer maps no-coverage to a non-ramp fill | the renderer, once per display product | §8.1.2. Measured for `SeamlessHSR`: **−999.0 no coverage, −99.0 no echo**, co-registering exactly with `PrecipRate`'s −3.0 mask. **Not measured for `MergedReflectivityQCComposite`**, which case 5 renders, so case 5 must run this rather than inherit the pre-v12 answer. A ramp that accepts −999 paints an outage as clear sky, and no water-balance or forcing gate can catch a figure. |
 | **G3.** `PrecipFlag` histogram and the **cap-clamped pixel-frame fraction** over the catchment | all pre-v12 cases, and case 5 via `SyntheticPrecipRateID` | §7.1. This is the gate that qualified case 1a and disqualified 1b. **Now run for all four CONUS storms** — 1a, 1b, 4 and 6 — and the only one it fails is 1b. Not available for Charleston Oct 2015 (no `PrecipFlag` archived), which is a further reason case 6 is Norfolk. |
 | **G4.** `GaugeInflIndex` (v12) or the gauge-merged / radar-only ratio (all eras) over the catchment | all radar cases | §6.3. This is the gate that revealed that "gauge-corrected" means nothing over the Tiber catchment. |
 | **G5.** `RadarQualityIndex` over the catchment through the event, or an explicit statement that it is not archived for this date | all radar cases | §1.1. Not archived for 2016, which affects cases 1 (2016 arm) and 6. |
 | **G6.** Primary-radar availability through the event, and the VCP in use | all radar cases, **especially case 6** | §3: Norfolk has no radar redundancy within 232 km. Confirm KAKQ was up and on a precipitation VCP for 8–9 October 2016. |
-| **G7.** Duplicate-frame fraction and effective refresh interval, scored on **fraction of wet pixels changed** (threshold 0.25) as well as bit-identity | all radar cases | §5.5.1. Sets the real advection gap and protects the motion estimator from low-information pairs. Measured for three windows; bit-identity alone understates the weak-update fraction by more than a factor of two. |
+| **G7.** Duplicate-frame fraction and effective refresh interval, scored on **fraction of wet pixels changed** (`dedupe.threshold` 0.25, `dedupe.wetThreshold` 1.0 mm/h) as well as bit-identity, **plus the realised distribution of the fraction** | all radar cases | §5.5.1 and §5.5.2. Sets the real advection gap and protects the motion estimator from low-information pairs. Measured for three windows; bit-identity alone understates the weak-update fraction by more than a factor of two. The distribution is reported because 0.25 sits in the gap of a bimodal distribution on all three measured windows, and a case where it is not bimodal is a case where this parameter is untested. |
 | **G8.** T3 frame-holdout score, advected vs in-place, on this event's own data | all radar cases | §5.4. The per-case number that justifies the advection module on that case. |
 | **G9.** Independent-gauge list with `n`, and the §6.4 label it earns | all radar cases | §6.2. Where `n < 3`, the pre-registration must say the rainfall has no verified absolute scale. |
 | **G10.** Hourly-product **alignment assertion**: integrate `PrecipRate` over `[T−1h, T)` and confirm it reproduces the hourly file stamped `T` to within a stated tolerance | the decoder, once — a merge gate — then once per case | §2.4 trap 4. The hourly products are stamped with the **end** of their accumulation window. A one-hour alignment error moves rainfall between hours while leaving the event total exact, so no water-balance check will catch it. Measured at 0.07 mm mean absolute error over four Ida hours and 1.40 mm over three Ellicott City 2016 hours. |
@@ -883,7 +940,10 @@ research/radar_qpe/
   iem_lut_probe.py          IEM documented index -> value lookups  -> out/measured_iem_lut.json
   iem_lcref_census.py       lcref/a2m file counts per case date    -> out/measured_lcref_census.json
   nodata_probe.py           no-coverage sentinel on both routes    -> out/measured_nodata.json
+  hsr_sentinel_census.py    dBZ no-coverage vs no-echo, co-reg     -> out/measured_hsr_sentinels.json
 ```
+
+`hsr_sentinel_census.py` is cache-only by construction — it resolves its three frames from `$MRMS_CACHE` and raises rather than fetching if one is absent, so it adds nothing to the §11.1 ledger. Revision 3's measurements cost **0 bytes**; the ledger total stands unchanged at 448.3 MB over 754 requests.
 
 ```
 python archive_probe.py > out/archive_probe.json
@@ -917,7 +977,24 @@ Two things I was asked for and did not do, stated plainly. I did **not** raise t
 
 ---
 
-## 13. Sources
+## 13. Revision 3 — the SPA-94 reconciliation, item by item
+
+SPA-94's revision-2 comment (2 November 2026, 02:07Z) reported three measurements and two smaller items against this document, and said none of them changes a verdict. **That is correct — none does.** What they changed:
+
+| Their item | Status here | What it changed |
+|---|---|---|
+| **1.** `SeamlessHSR` gives cases 1, 4 and 6 a dBZ replay | **Already accepted in revision 2** (§8.1.1, review item 6), reached independently — but **they are right that §1.1 still carried the false premise** and, worse, that Addendum A §A.1's per-case table still named the withdrawn `mrms_lcref`. Both corrected. | **Answer to their question: no, do not default those three to `@forcing`.** Cases 1a, 1b, 4 and 6 render `mrms_seamless_hsr`; case 5 renders `mrms_merged_reflectivity_qc_composite`; cases 2 and 3 render `none`. Legend must say "hybrid scan", never "column-maximum" — which they had already inferred correctly. |
+| **1b.** Their two sentinels, `−999.0` / `−99.0` | **Confirmed by measurement, §8.1.2**, and extended | **The one new specification in this revision.** The no-echo set is pixel-identical to `PrecipRate == 0` (21,393 / 21,393), the no-coverage masks co-register exactly (1,600 / 1,600), and a new **legend requirement** forbids rendering −999 on the colour ramp. New gate **G2c**, which case 5 must run because its display product is a different product with its own header. |
+| **2.** Archived hourly products are clock-hourly, 24 files/day | **Confirmed and useful** — §2.1 step 3 needs no reconstruction from running sums | Added to §2.4 trap 4 with a warning: **file spacing fixes the grid, not the offset.** M14 alone would license the start-of-window reading, which trap 4 measures wrong by 6.91 mm against 0.07 mm. The two facts must travel together, and their §4.6 implements steps 1–7 as written in **revision 1**, which predates trap 4. |
+| **3.** The v12 switch cannot be keyed on availability | **Agrees with §2.3**, which was already keyed on the declared date | Their M15 supplies the measured reason — both families present on 2020-10-13 and 2020-10-14 — so §2.3 now states it as measured rather than as a preference. No Phase 1 case sits on the boundary. |
+| **4.** §2.4 trap 2's floor is exactly −3.0, coinciding with the no-coverage sentinel | **Already corrected in revision 2** (review item 5), and they confirm the per-product sentinel rule | Nothing further; §8.1.2 now applies the same rule to the display layer, which is where it had not been applied. |
+| **5.** `dedupe.threshold` has no default and is mine to set | **Set, §5.5.2** | `dedupe.threshold = 0.25`, `dedupe.wetThreshold = 1.0 mm/h`, with the metric defined to match the measurement that justifies it — and an explicit scope rule, because **the parameter's name invites dropping weak frames from the forcing integration, which would distort the hyetograph while leaving the event volume exact.** Gate and forcing paths are now separated in writing. |
+
+**One thing I would flag back.** Their §4.6 implements this document's §2.1 steps 1–7 "verbatim", and the version it implements is revision 1's, which did not contain the end-of-window finding. Revision 2's step 4 does. If that implementation pairs `Q_hourly(x, hour)` with the rate frames from `T` forward, every `K` is shifted by one hour — and gate **G10** exists precisely because the resulting error leaves event volume exact and so passes a water-balance check. Worth checking against revision 2's step 4 before anything is run, not after.
+
+---
+
+## 14. Sources
 
 Verified during this assessment.
 

@@ -28,13 +28,15 @@ SPA-94 asked whether my specification names a product that cannot be honoured pr
 
 | # | Case | Date | Era | **Forcing** | **Hourly normaliser** | **Bias denominator** | **`displayProduct`** | Archive host |
 |---|------|------|-----|-------------|----------------------|----------------------|----------------------|--------------|
-| 1a | Ellicott City | 2016-07-30/31 | pre-v12 | `PrecipRate_00.00` | `GaugeCorr_QPE_01H` | `RadarOnly_QPE_01H` | `iem_mrms_lcref` | MTArchive |
-| 1b | Ellicott City | 2018-05-27 | pre-v12 | *not forced from radar* — see §7.1 | — | `RadarOnly_QPE_01H` (for the record) | `iem_mrms_lcref` | MTArchive |
+| 1a | Ellicott City | 2016-07-30/31 | pre-v12 | `PrecipRate_00.00` | `GaugeCorr_QPE_01H` | `RadarOnly_QPE_01H` | **`mrms_seamless_hsr`** | MTArchive |
+| 1b | Ellicott City | 2018-05-27 | pre-v12 | *not forced from radar* — see §7.1 | — | `RadarOnly_QPE_01H` (for the record) | **`mrms_seamless_hsr`** | MTArchive |
 | 2 | Bellinge | — | n/a | supplied gauges | — | — | **`none`** | — |
 | 3 | EA 8A/8B | — | n/a | specified uniform | — | — | **`none`** | — |
-| 4 | Meyerland / Brays | 2017-08-26/27 | pre-v12 | `PrecipRate_00.00` | `GaugeCorr_QPE_01H` | `RadarOnly_QPE_01H` | `iem_mrms_lcref` | MTArchive |
+| 4 | Meyerland / Brays | 2017-08-26/27 | pre-v12 | `PrecipRate_00.00` | `GaugeCorr_QPE_01H` | `RadarOnly_QPE_01H` | **`mrms_seamless_hsr`** | MTArchive |
 | 5 | Philadelphia / Ida | 2021-09-01/02 | **v12** | `PrecipRate_00.00` | `MultiSensor_QPE_01H_Pass2` | `RadarOnly_QPE_01H` | `mrms_merged_reflectivity_qc_composite` | NODD |
-| 6 | Norfolk / Matthew | 2016-10-08/09 | pre-v12 | `PrecipRate_00.00` | `GaugeCorr_QPE_01H` | `RadarOnly_QPE_01H` | `iem_mrms_lcref` | MTArchive |
+| 6 | Norfolk / Matthew | 2016-10-08/09 | pre-v12 | `PrecipRate_00.00` | `GaugeCorr_QPE_01H` | `RadarOnly_QPE_01H` | **`mrms_seamless_hsr`** | MTArchive |
+
+> **Corrected in revision 3 (2 November 2026).** The `displayProduct` column read `iem_mrms_lcref` for cases 1a, 1b, 4 and 6 until now. That was already withdrawn by main document [§8.1.1](SPA-93_radar_coverage_and_qpe_assessment.md#811-the-pre-2020-replay-layer--seamlesshsr-and-this-supersedes-two-earlier-answers) in revision 2 in favour of `mrms_seamless_hsr`, and this table was not updated with it — so the document carried its decision in one section and the opposite instruction in the table built for the engineer to read. SPA-94 asked directly which layer those three cases should render, which is how it surfaced. **`mrms_seamless_hsr` is the answer, and `@forcing` is not** — a rate layer in mm/h under a reflectivity legend is the §8.1 confusion this document exists to prevent, and it is no longer necessary for any case.
 
 `MultiSensor_QPE_01H_Pass1` appears nowhere in this table. It is legal only as a recorded fallback for a single missing Pass 2 hour on case 5 (main document §2.1 step 6), and never as a hindcast normaliser.
 
@@ -91,7 +93,7 @@ The grid is the MRMS grid at the MRMS resolution, so the display layer registers
 **Decision.** `displayProduct` takes exactly the three values SPA-94 built, and the per-case assignment is the last column of §A.1:
 
 - `mrms_merged_reflectivity_qc_composite` — case 5 only. The only case whose era has it.
-- `iem_mrms_lcref` — cases 1a, 4, 6 (and 1b if that run renders a context layer at all, §A.1).
+- ~~`iem_mrms_lcref` — cases 1a, 4, 6~~ **→ `mrms_seamless_hsr`, revision 3.** See the correction note under §A.1. `iem_mrms_lcref` remains a legal fourth value but is a fallback only, used if no `SeamlessHSR` route is available for a date.
 - `none` — cases 2 and 3, mandatory, per §8.2 of the main document.
 
 **Three amendments to §8.1 that follow from the product actually being a different product.**
@@ -279,8 +281,9 @@ SPA-94's registry fields: id, pass, rate-vs-accumulation, units, accumulation wi
 
 **`mrms_seamless_hsr`** · `SeamlessHSR_00.00` — **the pre-2020 display layer; added in revision 2**
 - era: **all** (48/48 probed frames present on every pre-2020 case date; every even minute, 10/10 consecutive) · dBZ · 2 min, GRIB2 section-1 valid time · tier: **`display`**
-- encoding: native NCEP GRIB2, grid template 0, data template 5.41, **R = −9990.0, E = 0, D = 1, 16-bit** → step **0.1 dBZ**, floor **−999.0** (which *is* this product's no-data value, unlike `PrecipRate` — §2.4 trap 2), no practical ceiling. ~1.0–1.4 MB per frame
-- legend: *"MRMS SeamlessHSR — seamless hybrid-scan radar reflectivity, dBZ, valid HH:MM:SS UTC"* **+ "observation — display only; not the model forcing"**
+- encoding: native NCEP GRIB2, grid template 0, data template 5.41, **R = −9990.0, E = 0, D = 1, 16-bit** → step **0.1 dBZ**, no practical ceiling. ~1.0–1.4 MB per frame
+- **sentinels — two, not one (revision 3, measured in main document §8.1.2):** **`−999.0` = no radar coverage** (raw `X = 0`) and **`−99.0` = coverage, no echo** (raw `X = 9000`). Both are sentinels, neither is a dBZ value, and they must be masked separately. Measured on 2016-07-30 23:52Z: −999.0 on 1,600/1,600 pixels of the gate-G2b no-coverage patch, co-registering **exactly** with `PrecipRate`'s −3.0 mask; and −99.0 on 21,393 pixels of a 50,000-pixel Maryland box, which is **pixel-for-pixel the same set as `PrecipRate == 0`**. Unlike `PrecipRate`, which has only one negative value available to it, this product distinguishes "no radar looked" from "the radar saw nothing" — and the renderer must preserve that distinction (gate **G2c**)
+- legend: *"MRMS SeamlessHSR — seamless hybrid-scan radar reflectivity, dBZ, valid HH:MM:SS UTC"* **+ "observation — display only; not the model forcing"**, and **no-coverage drawn as a non-ramp fill with its own legend entry**, never as the bottom of the dBZ ramp
 - caveats: cases 1a, 1b, 4, 6. **Hybrid-scan, not column-maximum** — the contributing beam elevation varies with range and blockage, so §8.1's "column-maximum" wording is invalid here and the legend may not imply a constant sampling height. Where `SeamlessHSRHeight` is archived (v12) the legend may state the height; where it is not, it says the height varies. **This is measurably the reflectivity `PrecipRate` is derived from** — through the published per-class Z–R it reproduces `PrecipRate` to 5 % on tropical-flagged pixels — which means it will visibly disagree with the forcing layer exactly where a rate cap binds, and §8.3's cap sentence is what answers that. Main document §8.1.1
 - capacity note: a full replay day is 720 × ~1.2 MB ≈ **860 MB**. Fetch the event window, not the day
 

@@ -24,6 +24,7 @@ to the Geospatial Engineer's ticket. Nothing here is imported by `src/`.
 | `hour_label_test.py` | Which end of its accumulation window an hourly QPE file is stamped with | `out/measured_hour_label.json` |
 | `review_followups.py` | Peak-intensity attenuation from hourly forcing on real storms; bias estimability vs aggregation window; hourly-`K` against event-`K` sensitivity | `out/measured_review_followups.json` |
 | `partial_census.py` | Rate-cap census over **only the frames already in `$MRMS_CACHE`**, issuing no requests, with the cached fraction reported. For when a host starts throttling and the right answer is to stop asking rather than ask harder | `out/measured_partial_<label>.json` |
+| `hsr_sentinel_census.py` | Whether the reflectivity layer distinguishes *no radar coverage* from *no echo*, and whether its masks co-register with `PrecipRate`'s. Cache-only; raises rather than fetching | `out/measured_hsr_sentinels.json` |
 
 ## Running
 
@@ -41,6 +42,7 @@ OUTDIR=out MRMS_CACHE=/tmp/mrms python seamless_hsr_probe.py
 OUTDIR=out MRMS_CACHE=/tmp/mrms python hsr_zr_consistency.py   # --fetch for more frames
 OUTDIR=out python hour_label_test.py        # cached JSON only, no network
 OUTDIR=out python review_followups.py       # cached JSON only, no network
+MRMS_CACHE=/tmp/mrms OUTDIR=out python hsr_sentinel_census.py   # cached frames only
 ```
 
 `assess.py`, `refresh_probe.py` and the two `*_hsr*` probes fetch `.grib2.gz`
@@ -62,6 +64,12 @@ interpreter does not add the working directory to `sys.path`.
   at all*; `SeamlessHSR` has `R = −9990.0, D = 1`, so −999.0 **is** its no-data
   value. A single global no-data rule is wrong in both directions. Treating −3 as
   0 mm/h turns a radar outage into a dry spell.
+
+  `SeamlessHSR` also carries a **second** sentinel that `PrecipRate` has no room
+  for: **−999.0 is no radar coverage, −99.0 is coverage with no echo.** Measured
+  by `hsr_sentinel_census.py`, the −99.0 set is pixel-for-pixel identical to
+  `PrecipRate == 0` (21,393 of 21,393 over a 50,000-pixel box) and the −999.0 set
+  is identical to `PrecipRate == −3.0`. Mask both; never ramp either.
 - **The hourly accumulation products are stamped with the END of their
   accumulation window.** `RadarOnly_QPE_01H_00.00_20210902-000000` is the
   accumulation for 23:00–00:00Z. Verified by `hour_label_test.py`: the
