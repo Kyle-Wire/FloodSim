@@ -25,7 +25,8 @@ const ALLOW = new Set([
   'sdmdataaccess.sc.egov.usda.gov', // SSURGO Soil Data Access
   'hdsc.nws.noaa.gov',              // NOAA Atlas 14 precipitation frequency
   'hazards.fema.gov',               // FEMA National Flood Hazard Layer (flood zones, BFEs)
-  'mesonet.agron.iastate.edu',      // IEM: historic rainfall (IEMRE, ASOS 1-minute), NEXRAD radar frame listings
+  'mesonet.agron.iastate.edu',      // IEM: historic rainfall (IEMRE, ASOS 1-minute), NEXRAD radar frame listings, MRMS radar rain
+  'mtarchive.geol.iastate.edu',     // IEM raw MRMS archive: gauge-corrected hourly rain (GRIB2)
   'www.nhc.noaa.gov',               // NHC HURDAT2 hurricane tracks
   'api.tidesandcurrents.noaa.gov',  // NOAA CO-OPS tide gauges
   'services.arcgis.com',            // city utility layers (e.g. Philadelphia Water inlets, combined-sewer area)

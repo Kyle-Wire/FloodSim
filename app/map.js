@@ -713,7 +713,8 @@ function stormMeta(st) {
     patternFrom: hist.patternFrom, ari: st.ari, gev: st.gev, climateFactor: st.factor, ...base };
   if (st.pattern === 'historic') return { source: st.source, event: st.name, startUTC: new Date(st.t0).toISOString(), returnPeriods: st.rp, ...base,
     waterLevel: st.wl ? { station: st.wl.station, name: st.wl.name, datum: st.wl.datum, tUTC: st.wl.t.map(t => new Date(t).toISOString()), m: st.wl.v } : null,
-    ...(st.radar ? { radar: { product: 'NOAA MRMS RadarOnly_QPE_01H shaped by PrecipRate (2 min), IEM archive; per cell, bilinear from 0.01° pixels', hash: st.radar.hash,
+    ...(st.radar ? { radar: { product: `NOAA MRMS ${st.radar.gauged ? st.radar.products + ' hourly' : 'RadarOnly_QPE_01H'}, timed by PrecipRate (2 min), IEM archive; per cell, bilinear from 0.01° pixels`, hash: st.radar.hash,
+      areaMM: { used: st.radar.hoursMM, radarOnly: st.radar.radarMM },
       pixelWindow: { c0: st.radar.win.c0, c1: st.radar.win.c1, r0: st.radar.win.r0, r1: st.radar.win.r1 }, areaPixels: st.radar.pixels, siteGriddedMM: st.radar.siteMM, stats: st.radar.stats } } : {}) };
   const p = model.atlas14;
   return { source: 'NOAA Atlas 14 (PFDS, partial-duration series)', volume: p.volume, version: p.version, region: p.region, siteLonLat: [p.lon, p.lat],
@@ -856,14 +857,22 @@ async function radarStorm(e, hourly) {
   const frames = rr.frames.slice(a, b); mean = mean.slice(a, b);
   const st0 = rr.t0 + a * rr.blockMin * 60e3, st1 = st0 + frames.length * rr.blockMin * 60e3;
   let siteMM = 0; hourly.mm.forEach((v, h) => { const t = hourly.t0 + h * 3600e3; if (t + 3600e3 > st0 && t < st1) siteMM += v; }); // hours overlapping the radar window
-  const depth = Array.from(mean), intensity = depth.map(d => d * 60 / rr.blockMin);
+  // area totals over the same whole hours: the radar's own (p1h) beside the totals used (gauge-corrected where there were some)
+  const areaMM = (g) => (g ? samples.reduce((a, ws) => a + ws.reduce((b, [i, w]) => b + w * (g[i] || 0), 0), 0) / samples.length : 0);
+  const hrs = rr.hours.filter(h => h.end > st0 && h.end - 3600e3 < st1), radarMM = hrs.reduce((a, h) => a + areaMM(h.radar), 0), hoursMM = hrs.reduce((a, h) => a + areaMM(h.total), 0);
+  const depth = Array.from(mean), intensity = depth.map(d => d * 60 / rr.blockMin), gauged = rr.stats.gaugeHours > 0;
+  const products = MR.GAUGE.filter(g => rr.stats.products.includes(g.prod)).map(g => g.label).join(' and ');
   return { blockMin: rr.blockMin, depth, intensity, total: depth.reduce((x, y) => x + y, 0), peakIntensity: Math.max(...intensity), durationMin: depth.length * rr.blockMin,
-    pattern: 'historic', name: e.name ?? `Storm of ${e.peakDate}`, source: 'NOAA MRMS radar-only (hourly RadarOnly_QPE_01H, shaped by 2-minute PrecipRate), 1 km, IEM archive', t0: st0,
-    radar: { win: rr.win, frames, mean, hash: MR.framesHash(frames), stats: rr.stats, siteMM, pixels: used.length } };
+    pattern: 'historic', name: e.name ?? `Storm of ${e.peakDate}`, t0: st0,
+    source: gauged ? `NOAA ${products}, hourly, timed by the 2-minute radar rain rate; 1 km, IEM archive` : 'NOAA MRMS radar-only (hourly RadarOnly_QPE_01H, timed by the 2-minute PrecipRate), 1 km, IEM archive',
+    radar: { win: rr.win, frames, mean, hash: MR.framesHash(frames), stats: rr.stats, siteMM, radarMM, hoursMM, gauged, products, pixels: used.length } };
 }
 function radarNoteText(R) {
   const s = R.stats, fb = s.areaShape + s.uniform;
-  return `Radar over ${R.pixels} pixels of 1 km; site gridded record over the same hours ${R.siteMM.toFixed(0)} mm (radar-only rain is not adjusted to gauges).` +
+  const g = R.gauged ? `Hourly totals adjusted to rain gauges for ${s.gaugeHours} of ${s.hours} hours (${R.hoursMM.toFixed(0)} mm over the area; the radar alone gives ${R.radarMM.toFixed(0)} mm).` +
+      (s.radarOnlyHours.length ? ` Radar-only, no gauge-corrected file: ${s.radarOnlyHours.join(', ')}.` : '') + (s.gaugeGaps ? ` ${s.gaugeGaps} wet pixel-hours in the radar window radar-only (no gauge-corrected value).` : '')
+    : `Radar-only (gauge-corrected totals are archived from May 2015): not adjusted to rain gauges.`;
+  return `Rain over ${R.pixels} pixels of 1 km. ${g} Site gridded record over the same hours: ${R.siteMM.toFixed(0)} mm.` +
     (fb ? ` ${fb} of ${s.wetPixelHours} wet pixel-hours timed by the area's shape or evenly (2-minute frames missing or overflowed).` : '') +
     (s.missingHours.length ? ` Missing hours (no rain assumed): ${s.missingHours.join(', ')}.` : '') + (s.noCoverage ? ` ${s.noCoverage} pixel-hours without radar coverage.` : '');
 }

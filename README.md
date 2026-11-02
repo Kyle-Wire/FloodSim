@@ -264,21 +264,29 @@ Environmental Mesonet, as map tiles every 5 minutes: N0Q (0.5 dBZ steps) from 15
 varying cell by cell and every 2 minutes, instead of one gauge or grid point spread evenly over the area. NOAA's
 Multi-Radar Multi-Sensor rain at 0.01° (about 1 km), read from the Iowa Environmental Mesonet's archive (September 2013
 on, lower 48).
-- **What it uses:** the hourly radar-only total (`RadarOnly_QPE_01H`) for each pixel, timed within the hour by the 30
-  two-minute rain rates (`PrecipRate`). A pixel whose 2-minute rates are missing, overflowed (the archive stores them
-  in a byte that tops out near 150 mm/hr) or disagree with its hourly total by more than 2× takes the area's mean
-  shape, else an even spread; the storm summary counts these, and lists any missing hours (taken as dry).
+- **What it uses:** each pixel's hourly total, gauge-corrected where the archive has it, timed within the hour by the
+  30 two-minute radar rain rates (`PrecipRate`).
+  - **Gauge-corrected totals** from IEM's raw MRMS archive (`mtarchive.geol.iastate.edu`, GRIB2 with PNG packing, read
+    in the browser): `GaugeCorr_QPE_01H` from 6 May 2015, `MultiSensor_QPE_01H_Pass2` (radar adjusted to gauges, with
+    gauges and climatology where radar is poor) from 14 October 2020. Before May 2015, or for an hour or pixel the
+    file lacks, the radar-only total (`RadarOnly_QPE_01H`) stands in; the summary lists those hours and counts those
+    pixel-hours, and gives the area total from radar alone beside the one used.
+  - A pixel whose 2-minute rates are missing, overflowed (the archive stores them in a byte that tops out near
+    150 mm/hr) or disagree with the radar's own hourly total by more than 2× takes the area's mean shape, else an even
+    spread; the summary counts these, and lists any missing hours (taken as dry).
 - **Window:** the site record's wettest stretch of the event, 2 h either side, trimmed to the first and last wet
   2-minute frame. Only wet hours' 2-minute frames are fetched (through the local server's cache).
 - **In the run:** each solver cell takes its rain bilinearly from the pixel centres; the solver's per-cell rain
   multiplier (the one roof routing uses) becomes roof routing × cell depth ÷ area mean at each 2-minute block, so no
   kernel changes, and the rain books follow the field exactly. The hyetograph and the Atlas 14 comparison show the
   area mean; the forcing record (and so the run fingerprint) carries a hash of the frames.
-- **Radar-only:** not adjusted to gauges. Radar can read high in hail or bright band and low far from the radar or
-  under beam blockage; the summary sets the gridded site record over the same hours beside it.
-- Ellicott City, 30 July 2016: 165 mm over the area in about 4 h, peak 131 mm/hr over 2 minutes at 23:36 UTC (7:36 pm
-  EDT); the gridded site record (IEM reanalysis) has 94 mm over the same hours. NWS reported about 6.6 in (168 mm),
-  most of it in 2 h. `npm run test:mrms` (`--live`: Ida over Philadelphia).
+- **Radar alone** can read high in hail or bright band and low far from the radar or under beam blockage, which is why
+  the gauge-corrected totals come first. The timing within each hour is still radar's. The summary also sets the
+  gridded site record over the same hours beside it.
+- Ellicott City, 30 July 2016 (GaugeCorr for all 12 hours): 164 mm over the area in about 4 h (radar alone 165 mm),
+  peak 134 mm/hr over 2 minutes at 23:36 UTC (7:36 pm EDT); the gridded site record (IEM reanalysis) has 94 mm over
+  the same hours. NWS reported about 6.6 in (168 mm), most of it in 2 h. `npm run test:mrms` (`--live`: Ida over
+  Philadelphia, all hours MultiSensor Pass 2; one GaugeCorr hour at Ellicott City checked against PIL).
 - Downspouts into the sewer take the radar rain at their manhole (the coupler's per-node roof rain), so the pipes see
   the storm cell where it falls. The rain readout and the green-roof and cistern stages count rain fallen as the
   hyetograph's (the area mean), not the books' volume over a rain area that changes as roofs fill.
@@ -985,7 +993,7 @@ node tests/run-bathymetry-tests.mjs # channel bathymetry: regional curves, flatt
 node tests/run-window-tests.mjs   # window reruns: the window, its edge segments (+ outward), inflow rates, the edge check, merging
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
 node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and listing URLs, frame at a time (--live: Ida's frames)
-node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (all filters), MRMS value tables, pixel window, interpolation, timing (--live: Ida)
+node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (8 and 16 bit, all filters), GRIB2, value tables, gauge-corrected totals, timing (--live: Ida)
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
 # log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8770
@@ -1019,7 +1027,7 @@ src/export.js         zip, 16-bit PNG, OpenEXR, buildings GLB writers
 src/storm.js          Atlas 14 fetch/parse, DDF, alternating-block hyetographs, rain schedule
 src/history.js        event catalog (IEM record + HURDAT2), rainfall replay, ASOS blend, CO-OPS water levels
 src/radar.js          NEXRAD composite overlay: IEM tile URLs, frame listing, frame at a time
-src/mrms.js           MRMS radar rainfall: archive PNG decoding, hourly totals timed by 2-minute rates, per-pixel frames
+src/mrms.js           MRMS radar rainfall: archive PNG and GRIB2 decoding, gauge-corrected hourly totals timed by 2-minute rates
 src/drainage.js       synthetic network, rational-method sizing, SWMM .inp writer, inlet hydraulics, lumped tier
 src/coupler.js        1D–2D exchange loop (GPU inlets ↔ SWMM), roof downspout inflow
 src/utilities.js      registry of open utility layers (Philadelphia Water is the first entry)
