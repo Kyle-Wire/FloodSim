@@ -1,0 +1,80 @@
+# Merge gate. Runs on every push and every pull request.
+#
+# Before this existed nothing ran on push, so the convergence order of the scheme and the mass conservation
+# of the solver — the two numbers the product's credibility rests on — were defended by nothing. The core
+# suite below now asserts both and exits non-zero when they move (see tests/run-tests.mjs).
+#
+# What is deliberately NOT here: the GPU suite and the EA benchmark score. Both need a real WebGPU adapter,
+# which GitHub's hosted runners do not have. They live in nightly-gpu.yml, on a self-hosted runner.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# A second push to the same branch makes the first run's answer worthless; don't pay for it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The numerics gate, on its own so a failure here is unmistakable in the checks list: this is the job that
+  # says the scheme is still second order and the solver still conserves mass. It is also the slowest, which
+  # is why it does not share a job with the fast feature suites.
+  core:
+    name: Core solver verification (convergence, well-balancing, mass)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      # npm ci is preferred for a reproducible install, but it hard-fails whenever package.json and the
+      # lockfile disagree on anything at all, including the root version field. Falling back to npm install
+      # keeps the gate running rather than going red for a reason unrelated to the code under test.
+      - run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      - run: node tests/run-tests.mjs
+
+  # The 21 feature suites. Explicit steps rather than a loop so GitHub attributes a failure to the suite that
+  # caused it, instead of to one opaque "tests" step.
+  suites:
+    name: Feature suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      # Guards against this gate quietly decaying: if someone adds a test:* script to package.json and does
+      # not add it below, this fails and says which one is unguarded. Without it, a new suite can be written,
+      # committed and never run — which is how run-tests.mjs went unasserted in the first place.
+      - name: Every test script is covered by this workflow
+        run: node .github/check-suite-coverage.mjs
+
+      - run: npm run test:phase1
+      - run: npm run test:swmm
+      - run: npm run test:phase2
+      - run: npm run test:infra
+      - run: npm run test:barriers
+      - run: npm run test:hazard
+      - run: npm run test:subgrid
+      - run: npm run test:watershed
+      - run: npm run test:calibrate
+      - run: npm run test:inflow
+      - run: npm run test:soil
+      - run: npm run test:waterlevels
+      - run: npm run test:banks
+      - run: npm run test:design
+      - run: npm run test:compare
+      - run: npm run test:stormwater
+      - run: npm run test:emulator
+      - run: npm run test:report
+      - run: npm run test:fema
+      - run: npm run test:bathymetry
+      - run: npm run test:window
