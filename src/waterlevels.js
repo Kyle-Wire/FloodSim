@@ -79,6 +79,27 @@ export async function gaugeSurface(g, lv, fetcher) {
 }
 
 /**
+ * A gauge's water surface over [t0, t1] (ms) in NAVD88, for scoring a run: the gauge's elevation series if it reports
+ * one, else gage height on its datum (the same rules as gaugeSurface). → { series: [[t, z (m)]], how } | { series: null, why }
+ */
+export async function levelSeries(g, fetcher, t0, t1) {
+  const iso = (t) => new Date(t).toISOString().slice(0, 16) + 'Z';
+  const r = await fetcher(`${NWIS}/iv/?format=json&sites=${g.site}&parameterCd=${Object.keys(LEVEL_PARAMS).join(',')}&startDT=${iso(t0)}&endDT=${iso(t1)}`);
+  if (!r.ok) throw new Error(`NWIS levels: ${r.status}`);
+  const by = {};
+  for (const ts of (await r.json()).value?.timeSeries ?? []) {
+    const kind = LEVEL_PARAMS[ts.variable?.variableCode?.[0]?.value]; if (!kind) continue;
+    const vals = (ts.values?.[0]?.value ?? []).map(v => [Date.parse(v.dateTime), Number(v.value)]).filter(([t, v]) => Number.isFinite(t) && Number.isFinite(v) && v > -999);
+    if (vals.length && !(by[kind]?.length >= vals.length)) by[kind] = vals;
+  }
+  const kind = ['NAVD88', 'NGVD29', 'gage'].find(k => by[k]?.length); if (!kind) return { series: null, why: 'no level readings over the storm' };
+  // the surface is linear in the reading: its offset is the surface of a zero reading
+  const zero = await gaugeSurface(g, kind === 'gage' ? { gage: 0, elev: {} } : { elev: { [kind]: 0 } }, fetcher);
+  if (zero.z == null) return { series: null, why: zero.why };
+  return { series: by[kind].map(([t, v]) => [t, zero.z + v * FT]), how: zero.how };
+}
+
+/**
  * The lidar water surface near a gauge: a 1 m 3DEP patch r metres around it, the 5th-percentile height (the river is
  * the lowest ground near its gauge; gauges sit on banks and bridges).
  */
@@ -132,7 +153,7 @@ export function components(water, nx, ny) {
  * component(s) its cells are in; within a component the nearest source wins. The water then spreads, nearest water
  * first, onto connected land below its level. → { depth (Float32Array), level (Float64Array, NaN = none) }
  */
-export function startDepths(c, water, sources, { maxSpread = 300 } = {}) {
+export function startDepths(c, water, sources, { maxSpread = 300, surfR = 30, surfTol = 1 } = {}) {
   const { nx, ny, z, mask } = c, N = nx * ny, level = new Float64Array(N).fill(NaN), depth = new Float32Array(N);
   const { id } = components(water, nx, ny), owner = new Int32Array(N).fill(-1), dist = new Float32Array(N).fill(Infinity);
   // nearest source within each claimed component (breadth-first over water cells from every source's cells)
@@ -140,8 +161,8 @@ export function startDepths(c, water, sources, { maxSpread = 300 } = {}) {
   sources.forEach((s, m) => s.cells.forEach(k => { if (id[k] < 0) return; claimed.add(id[k]); if (dist[k] > 0) { dist[k] = 0; owner[k] = m; q.push(k); } }));
   const step = (k, fn) => { const i = k % nx, j = (k / nx) | 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (!di && !dj) continue; const a = i + di, b = j + dj; if (a >= 0 && b >= 0 && a < nx && b < ny) fn(b * nx + a, di && dj ? Math.SQRT2 : 1); } };
   while (q.length) { const nq = []; for (const k of q) step(k, (p, w) => { if (id[p] >= 0 && id[p] === id[k] && dist[k] + w < dist[p]) { dist[p] = dist[k] + w; owner[p] = owner[k]; nq.push(p); } }); q = nq; }
-  const zs = c.zSurf ?? z; // a rise is above the lidar water surface (not a carved channel bed)
-  for (let k = 0; k < N; k++) if (owner[k] >= 0) { const s = sources[owner[k]]; level[k] = s.level ?? zs[k] + Math.max(0, s.rise); }
+  const zs = c.zSurf ?? z, base = waterBase(water, zs, nx, ny, surfR, surfTol); // a rise is above the lidar water surface (not a carved channel bed)
+  for (let k = 0; k < N; k++) if (owner[k] >= 0) { const s = sources[owner[k]]; level[k] = s.level ?? base[k] + Math.max(0, s.rise); }
   // spread onto land below the level, from the nearest water outward (each land cell takes its first-reached level)
   let front = []; for (let k = 0; k < N; k++) if (!Number.isNaN(level[k])) front.push(k);
   for (let r = 0; r < maxSpread && front.length; r++) {
@@ -153,10 +174,60 @@ export function startDepths(c, water, sources, { maxSpread = 300 } = {}) {
   return { depth, level, claimed: claimed.size };
 }
 
+/**
+ * The water surface under each water cell for a parallel rise: its own lidar height, unless that stands more than `tol`
+ * above the lowest water within r cells and little of the water around it (under 30 % of a sample of the window) is at
+ * its height, when it takes that lowest water. Cells flagged as water are not all water: a mapped river line runs over
+ * bridge decks, and 30 m land-cover water pixels cover banks; a rise from a deck 9 m up started the Schuylkill railyard
+ * below 30th Street under 4 m of water. A pool above a dam is a wide flat surface at its own height: it keeps it.
+ */
+export function waterBase(water, zs, nx, ny, r, tol) {
+  const N = nx * ny, a = new Float64Array(N), b = new Float64Array(N);
+  for (let k = 0; k < N; k++) a[k] = water[k] ? zs[k] : Infinity;
+  const pass = (src, dst, along) => { // running minimum over ±r cells, rows then columns (a monotonic deque)
+    const n = along ? nx : ny, m = along ? ny : nx, idx = new Int32Array(n);
+    for (let o = 0; o < m; o++) {
+      const at = (t) => (along ? o * nx + t : t * nx + o); let h = 0, e = 0, t = 0;
+      for (let out = 0; out < n; out++) {
+        for (; t <= Math.min(n - 1, out + r); t++) { while (e > h && src[at(idx[e - 1])] >= src[at(t)]) e--; idx[e++] = t; }
+        while (idx[h] < out - r) h++;
+        dst[at(out)] = src[at(idx[h])];
+      }
+    }
+  };
+  pass(a, b, true); pass(b, a, false);
+  const st = Math.max(1, Math.round(r / 10)); // ~21 × 21 samples of the window
+  const flat = (k) => { // share of the window's water at this cell's height (±10 cm)
+    const i0 = k % nx, j0 = (k / nx) | 0; let w = 0, same = 0;
+    for (let j = Math.max(0, j0 - r); j <= Math.min(ny - 1, j0 + r); j += st) for (let i = Math.max(0, i0 - r); i <= Math.min(nx - 1, i0 + r); i += st) {
+      const q = j * nx + i; if (!water[q]) continue; w++; if (Math.abs(zs[q] - zs[k]) < 0.1) same++;
+    }
+    return w ? same / w : 1;
+  };
+  for (let k = 0; k < N; k++) a[k] = water[k] && zs[k] - a[k] > tol && flat(k) < 0.3 ? a[k] : zs[k];
+  return a;
+}
+
 /** Lon/lat → solver cell index (or −1), for a grid with origin x0, y1 (north-up) and cell size F on fine grid `fine`. */
 export function cellAt(fine, c, F, lon, lat) {
   const [x, y] = toUTM(lon, lat, fine.zone), I = Math.floor((x - fine.x0) / (fine.dx * F)), J = Math.floor((fine.y1 - y) / (fine.dx * F));
   return I >= 0 && J >= 0 && I < c.nx && J < c.ny ? J * c.nx + I : -1;
+}
+
+/** The n of `cells` nearest cell k, nearest first. */
+export function nearestCells(c, cells, k, n = Infinity) {
+  const i0 = k % c.nx, j0 = (k / c.nx) | 0, d = (q) => Math.hypot(q % c.nx - i0, ((q / c.nx) | 0) - j0);
+  return cells.map(q => [d(q), q]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).slice(0, n).map(([, q]) => q);
+}
+
+/**
+ * The lidar water surface at a gauge: the median of the 9 water cells nearest it. Not the lowest water within reach:
+ * a gauge above a weir or dam has the tailwater below it within 60 m, and a rise measured from there would start the
+ * pool metres too high (Fairmount Dam on the Schuylkill: 2.7 m).
+ */
+export function surfaceAtGauge(c, cells, k) {
+  const z = nearestCells(c, cells, k, 9).map(q => c.z[q]).sort((a, b) => a - b);
+  return z.length ? z[z.length >> 1] : null;
 }
 
 /** Water cells within r cells of cell k. */

@@ -40,9 +40,10 @@ import { sedimentCells } from '../src/sediment.js';
 import { findBanks, bankClass, BANK_CLASSES, UNRATED } from '../src/banks.js';
 import { scourCells, scourClass, SCOUR_CLASSES, NOT_ERODIBLE } from '../src/scour.js';
 import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/calibrate.js';
+import { gaugeScore, matchEvent } from '../src/validate.js';
 import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, InflowLinks, CFS, basinAreaKm2, areaRatioScale } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
-import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd } from '../src/waterlevels.js';
+import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge } from '../src/waterlevels.js';
 import * as FEMA from '../src/fema.js';
 import * as WIN from '../src/window.js';
 import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetry.js';
@@ -153,7 +154,7 @@ map.on('moveend', () => { try { localStorage.setItem('floodsim.view', JSON.strin
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
 map.touchZoomRotate.disableRotation();
 
-const canvases = { depth: document.createElement('canvas'), shade: document.createElement('canvas'), lc: document.createElement('canvas'), dz: document.createElement('canvas'), fema: document.createElement('canvas') };
+const canvases = { rain: document.createElement('canvas'), depth: document.createElement('canvas'), shade: document.createElement('canvas'), lc: document.createElement('canvas'), dz: document.createElement('canvas'), fema: document.createElement('canvas') };
 const emptyFC = { type: 'FeatureCollection', features: [] };
 // 'style.load' needs no rendered frame, so building works in a background tab ('load' waits for the first paint)
 const mapReady = new Promise((resolve) => map.once('style.load', () => setTimeout(resolve, 0)));
@@ -726,7 +727,7 @@ function stormMeta(st) {
 function updateStorm() {
   const st = currentStorm();
   drawHyeto();
-  if (radar.mode === 'storm') radarLoad().catch(e => radarNote('Radar unavailable: ' + e.message));
+  if (radar.mode === 'storm' || radar.mode === 'model') radarLoad().catch(e => radarNote('Radar unavailable: ' + e.message));
   if (!st) { $('stormTag').textContent = ''; $('stormSummary').textContent = model ? 'Loading the site rainfall record…' : 'Build a model to load the design rainfall for the site.'; return; }
   $('stormTag').textContent = st.pattern === 'constant' ? `${st.total.toFixed(0)} mm` : st.pattern === 'historic' ? `${st.name} · ${st.total.toFixed(0)} mm` : `${st.ari}-yr ${fmtDur(st.durationMin)} · ${st.total.toFixed(0)} mm`;
   if (st.pattern === 'historic') $('stormSummary').textContent = histSummary(st);
@@ -1365,6 +1366,7 @@ function ensureSolver() {
 async function prepareRun(r) {
   await inflow.ready; // the gauge lists (they load after the build)
   if (run !== r) return false;
+  r.gaugeWatch = gaugeWatch(r);
   if (pairPrep) {
     r.levelsReady = pairPrep.levelsReady; r.inflowReady = pairPrep.inflowReady; scaleRunInflow(r);
     if (r.levelsReady) r.levelSrc = await levelSources(r.levelsReady, r.c, r.F);
@@ -1380,6 +1382,60 @@ async function prepareRun(r) {
   return run === r && !r.solver;
 }
 let pairPrep = null;
+/**
+ * USGS level gauges inside the model, for the validation scorecard (a real storm only): each gauge's open-water cells
+ * within 60 m, whose highest water surface is recorded every simulated minute.
+ */
+function gaugeWatch(r) {
+  const st = r.storm ?? currentStorm(); if (!st?.t0 || !inflow.levels.length) return null;
+  const { c, F } = r, fine = model.fine, R = Math.max(3, Math.ceil(60 / (F * fine.dx)));
+  const lines = (model.osm.waterways || []).filter(w => /river|stream|canal|tidal/.test(w.kind)).map(w => toCells(fine, w.line));
+  const water = waterCells(c, F, fine, model.nlcd, lines), gauges = [];
+  for (const g of inflow.levels) {
+    const k = cellAt(fine, c, F, g.lon, g.lat); if (k < 0 || !c.mask[k] || (c.inside && !c.inside[k])) continue;
+    gauges.push({ g, cells: nearestCells(c, waterNear(c, water, k, R), k), series: [] });
+  }
+  return gauges.length ? { t0: st.t0, gauges, next: 0 } : null;
+}
+/** The level at each gauge: the median water surface of the 9 nearest channel cells at least 10 cm deep (a bank cell
+ *  wet with rain, or the far side of a weir, is not the gauge's water). */
+function recordGauges(r, out, t) {
+  const w = r.gaugeWatch, z = r.c.z; w.next = t + 60;
+  for (const gw of w.gauges) {
+    const v = []; for (const q of gw.cells) { const h = out[2 * q]; if (h > 0.1) { v.push(z[q] + h); if (v.length === 9) break; } }
+    v.sort((a, b) => a - b); gw.series.push([w.t0 + t * 1000, v.length ? v[v.length >> 1] : NaN]);
+  }
+}
+/**
+ * The scorecard's inputs from a finished run: the high-water marks (scored now), the rain's sources, the books; the
+ * gauges' observed levels are fetched after (filled into rec.validation.gauges, then the report redraws).
+ */
+function validationOf(r, rec) {
+  const st = r.storm, m = r.mass ?? {}, R = st?.radar, s = R?.stats;
+  const sc = S.obs.length ? scoreNow() : null;
+  return {
+    observed: !!st?.t0, event: S.obsEvent ?? null,
+    hwm: hwmOf(sc),
+    rain: st?.t0 ? { source: st.source ?? st.name, gauged: R ? (s.hours ? s.gaugeHours / s.hours : 0) : null, usedMM: R ? R.hoursMM : st.total, radarMM: R ? R.radarMM : null, siteMM: R?.siteMM ?? null } : null,
+    mass: { surface: m.rel ?? 0, combined: r.netMass?.combinedRel ?? null, clipped: m.clipped ?? 0, rain: m.rain ?? 0 },
+    gauges: r.gaugeWatch ? r.gaugeWatch.gauges.map(gw => ({ site: gw.g.site, name: gw.g.name, model: gw.series, obs: null, score: null, why: gw.cells.length ? 'reading the gauge…' : 'no open water mapped within 60 m of the gauge' })) : [],
+  };
+}
+async function fillGauges(r, v) {
+  const w = r.gaugeWatch; if (!w) return;
+  await Promise.all(w.gauges.map(async (gw, i) => {
+    const out = v.gauges[i]; if (!gw.cells.length) return;
+    const t1 = gw.series.at(-1)?.[0] ?? w.t0;
+    try {
+      const o = await levelSeries(gw.g, fetcher, w.t0 - 3600e3, t1 + 3600e3);
+      if (!o.series) { out.why = o.why; return; }
+      out.obs = o.series; out.how = o.how; out.score = gaugeScore(o.series, gw.series.filter(([, z]) => Number.isFinite(z)));
+      out.why = out.score ? '' : 'the model channel stayed dry there';
+    } catch (e) { out.why = 'gauge readings unavailable: ' + e.message; }
+  }));
+}
+const hwmOf = (sc) => sc && { n: sc.n, bias: sc.bias, mae: sc.mae, rmse: sc.rmse, within15: sc.within15, calls: sc.calls, hits: sc.hits, misses: sc.misses, falseAlarms: sc.falseAlarms,
+  points: sc.points.map(p => ({ name: p.name, lon: p.lon, lat: p.lat, kind: p.kind, observed: p.wse ?? p.depth ?? null, model: p.model ?? null, error: p.error ?? null, call: p.call ?? null })) };
 /**
  * Baseflow warm-up: before the storm, the rivers run at their flow at the storm's start (the design base, or the
  * recorded flow then) for the set hours, with no rain, from the start levels; the storm run starts from that state, so
@@ -1476,6 +1532,7 @@ async function loop(gen) {
       const N = run.c.nx * run.c.ny;
       for (let k = 0; k < N; k++) { const h = out[2 * k], v = out[2 * k + 1]; if (h > run.hmax[k]) run.hmax[k] = h; if (h > 0.01 && v > run.smax[k]) run.smax[k] = v; }
       saveFrame(out);
+      if (run.gaugeWatch && s.t >= run.gaugeWatch.next) recordGauges(run, out, s.t);
       if (run.watch) { run.watch.books(s.t, await s.readBarriers()); if (!run || run.gen !== gen) return; }
       if (!document.hidden) drawDepth(); // keep solving in the background; draw only when someone can see it
       if (now - run.lastRead > 2500) { run.lastRead = now; await readMass(); if (!run || run.gen !== gen) return; }
@@ -1489,8 +1546,10 @@ async function loop(gen) {
         // SWMM's external outflow is the outfalls plus any water sent back up through inlets (negative lateral flow)
         const c = run.netMass, m = run.mass, outfalls = c.externalOutflow * 1000 - run.coupler.totals.latOut;
         const rain = m.rain + run.coupler.totals.roofToSewer; // rain on the surface + rain piped straight from roofs
-        // + river inflow; underdrains: GI water the books count as infiltrated that went into the pipes; outlets off the model
-        run.netMass.combinedRel = (rain + (run.inflow?.totals.volume ?? 0) + (run.underdrains?.totals.underdrain ?? 0) - (run.outlets?.totals.offsite ?? 0) - m.infil - m.outflow - outfalls - m.volume - c.finalStored * 1000) / rain;
+        // + river inflow and the water on the ground at the start; underdrains: GI water the books count as infiltrated that
+        // went into the pipes; outlets off the model. Over all the water that came in (as the surface books)
+        const initial = run.solver.vol.initial, inflowV = run.inflow?.totals.volume ?? 0;
+        run.netMass.combinedRel = (initial + rain + inflowV + (run.underdrains?.totals.underdrain ?? 0) - (run.outlets?.totals.offsite ?? 0) - m.infil - m.outflow - outfalls - m.volume - c.finalStored * 1000) / Math.max(1e-30, initial + rain + inflowV + Math.max(0, -m.outflow));
       }
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
       if (S.obs.length) scoreAndShow();
@@ -1565,6 +1624,10 @@ async function finishRecord() {
     saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
     grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
   rec.wall = r.wall;
+  if (r.gaugeWatch && r.out && r.gaugeWatch.gauges[0].series.at(-1)?.[0] < r.gaugeWatch.t0 + s.t * 1000 - 1) recordGauges(r, r.out, s.t); // the last moment too
+  rec.validation = validationOf(r, rec);
+  await Promise.race([fillGauges(r, rec.validation), new Promise(res => setTimeout(res, 20000))]); // gauge readings, at most 20 s
+  if (run !== r) return;
   if (r.window?.mode === 'record') rec.window = { rect: r.window.rect, segs: winLines, inlets: books.hgl?.inletSeries ? { fineCells: (books.inlets ?? []).map(g => g.fineCell), series: books.hgl.inletSeries } : null };
   if (r.window?.mode === 'rerun') { // inside the window this run, outside it the existing run: compares like a full run
     const base = r.window.base, inside = WIN.fineInside(r.window.rect, fine.nx, fine.ny, F), check = WIN.checkWindow(base.window.segs, winLines);
@@ -1618,7 +1681,7 @@ async function loadSaved(dir) {
   let ground = null; try { ground = CMP.decodeF32(await readBytes(folder, path('grids/ground.f32'))); } catch { /* existing conditions: the base DEM */ }
   return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
     storm: sm.storm?.label, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null,
-    ponds: sm.ponds ?? null, network, hgl, inlets, ground };
+    ponds: sm.ponds ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null };
 }
 async function savedRuns() {
   const folder = projects.current?.folder; if (!folder) return [];
@@ -2052,6 +2115,7 @@ $('basemap').onchange = () => { for (const k of Object.keys(BASEMAPS)) map.setLa
 const RADAR_OPACITY = 0.6, RADAR_KEEP = 4;
 const radarID = (f) => 'radar-' + (f.t ?? 'now');
 function radarShow(k) {
+  if (radar.mode === 'model') { rainShow(k); return; }
   if (!map.isStyleLoaded()) { map.once('idle', () => radarShow(k)); return; }
   radar.k = k;
   const f = radar.frames[k], want = f ? [f, radar.frames[k + 1]].filter(Boolean) : [];
@@ -2077,6 +2141,7 @@ function radarClear() {
   clearInterval(radar.play); radar.play = 0; $('radarPlay').textContent = '▶';
   if (map.isStyleLoaded()) for (const id of radar.layers) { map.removeLayer(id); map.removeSource(id); }
   radar.layers = []; radar.frames = []; radar.k = -1; radar.key = '';
+  if (map.getLayer('ov-rain')) map.setLayoutProperty('ov-rain', 'visibility', 'none');
 }
 function radarFrames(frames) {
   radar.frames = frames; radar.follow = true;
@@ -2086,6 +2151,7 @@ function radarFrames(frames) {
 async function radarLoad() {
   const mode = radar.mode;
   if (mode === 'off') { radarClear(); radarNote(''); $('radarCtl').hidden = true; return; }
+  if (mode === 'model') { rainLoad(); return; }
   if (mode === 'live') {
     const now = Date.now(), getJSON = async (u) => { const r = await fetch(u); if (!r.ok) throw new Error(`IEM ${r.status}`); return r.json(); }; // direct: the proxy would cache "now" forever
     let frames = await R.listFrames(now - 65 * 60e3, now, getJSON).catch(() => []);
@@ -2109,6 +2175,7 @@ async function radarLoad() {
 }
 /** During a run of a historic storm, show the frame at the simulation time. */
 function radarClock(r) {
+  if (radar.mode === 'model' && radar.follow && r.storm?.radar && radar.key === rainKey(r.storm)) { const k = Math.min(r.storm.radar.frames.length - 1, Math.floor(r.t / (r.storm.blockMin * 60))); if (k !== radar.k) rainShow(k); return; }
   if (radar.mode !== 'storm' || !radar.follow || !radar.frames.length || r.storm?.t0 == null || radar.key !== `${r.storm.t0}:${r.storm.t0 + r.storm.durationMin * 60e3}`) return;
   const k = R.frameAt(radar.frames, r.storm.t0 + r.t * 1000);
   if (k !== radar.k) radarShow(k);
@@ -2119,6 +2186,60 @@ $('radarMode').onchange = () => {
   radarClear(); radarLoad().catch(e => radarNote('Radar unavailable: ' + e.message));
 };
 $('radarT').oninput = () => { radar.follow = false; radarShow(Number($('radarT').value)); };
+
+// ---- the rain the model used: a radar storm's own 2-minute MRMS frames (gauge-corrected where the archive has them,
+// the nowcast past now) over the model, and the raw 2-minute radar (a2m) for half a degree around it, dimmer, so the
+// storm can be seen coming. Follows the run clock like the NEXRAD frames; the slider and ▶ step through the blocks.
+const rain = { ctx: null, cache: new Map(), want: -1 };
+const rainKey = (st) => `model:${st.t0}:${st.radar.frames.length}:${st.radar.hash ?? ''}`;
+/** mm/hr → RGBA, the usual radar ramp (light green to magenta). */
+function rainRGBA(v) {
+  const S = [[2.5, [120, 200, 120]], [10, [40, 160, 60]], [25, [250, 220, 40]], [50, [250, 140, 30]], [100, [230, 40, 40]], [Infinity, [200, 40, 200]]];
+  for (const [hi, c] of S) if (v < hi) return c;
+}
+function rainStorm() { const st = run?.storm?.radar ? run.storm : currentStorm(); return st?.radar ? st : null; }
+function rainLoad() {
+  const st = rainStorm();
+  if (!st) { radarClear(); $('radarCtl').hidden = true; radarNote('Load a radar storm (Storm → historic with Radar, NOAA MRMS, or Live radar) to see the rain the model uses.'); return; }
+  const key = rainKey(st);
+  if (radar.key !== key) {
+    radarClear(); radar.key = key; rain.cache.clear();
+    const w = st.radar.win, pad = 50; // 0.5° of context each side
+    const r0 = Math.max(0, w.r0 - pad), r1 = Math.min(MR.GRID.ny, w.r1 + pad), c0 = Math.max(0, w.c0 - pad), c1 = Math.min(MR.GRID.nx, w.c1 + pad);
+    rain.ctx = { r0, r1, c0, c1, nx: c1 - c0, ny: r1 - r0, lon0: MR.GRID.lon0 + c0 * MR.GRID.step, lat0: MR.GRID.lat0 - r0 * MR.GRID.step, step: MR.GRID.step };
+    const cx = rain.ctx, cv = canvases.rain, W = cx.lon0, E = W + cx.nx * cx.step, N = cx.lat0, Sth = N - cx.ny * cx.step;
+    cv.width = cx.nx; cv.height = cx.ny;
+    setCanvasLayer('rain', cv, [[W, N], [E, N], [E, Sth], [W, Sth]], 'ov-depth', true, 0.85); // under the flood depths
+    radarFrames(st.radar.frames.map((_, k) => k));
+    let pk = 0; st.depth.forEach((d, i) => { if (d > st.depth[pk]) pk = i; });
+    rainShow(run?.storm === st && run.t ? Math.min(st.radar.frames.length - 1, Math.floor(run.t / (st.blockMin * 60))) : pk);
+  } else if (map.getLayer('ov-rain')) map.setLayoutProperty('ov-rain', 'visibility', 'visible');
+}
+/** The context radar for block k (the 2 minutes ending at its end), fetched once; none past the observed radar. */
+function rainContext(st, k) {
+  if (rain.cache.has(k)) return rain.cache.get(k);
+  const t = st.t0 + (k + 1) * st.blockMin * 60e3, live = st.radar.live;
+  const p = live && t > live.observedUntil ? Promise.resolve(null) : radarBytes(MR.fileURL('a2m', t)).then(b => (b ? MR.decodeWindow(b, rain.ctx) : null)).catch(() => null);
+  rain.cache.set(k, p); if (rain.cache.size > 60) rain.cache.delete(rain.cache.keys().next().value);
+  return p;
+}
+async function rainShow(k) {
+  const st = rainStorm(); if (!st || radar.key !== rainKey(st) || k < 0) return;
+  radar.k = k; rain.want = k; $('radarT').value = k;
+  for (let n = 1; n <= 3 && k + n < st.radar.frames.length; n++) rainContext(st, k + n); // the next ones load while this one shows
+  const ctx = await rainContext(st, k);
+  if (rain.want !== k || radar.key !== rainKey(st)) return;
+  const cx = rain.ctx, w = st.radar.win, f = st.radar.frames[k], per = 60 / st.blockMin, img = new ImageData(cx.nx, cx.ny), D = img.data;
+  if (ctx) for (let p = 0; p < ctx.length; p++) { const v = MR.a2mMM(ctx[p]) * 30; if (v >= 0.25) { const c = rainRGBA(v); D.set(c, 4 * p); D[4 * p + 3] = 120; } }
+  for (let j = 0; j < w.ny; j++) for (let i = 0; i < w.nx; i++) { // the model's own frame, solid, on top (none: a dry block)
+    const v = f ? f[j * w.nx + i] * per : 0, p = (j + w.r0 - cx.r0) * cx.nx + i + w.c0 - cx.c0; if (!(v >= 0.25)) { D[4 * p + 3] = 0; continue; }
+    D.set(rainRGBA(v), 4 * p); D[4 * p + 3] = 235;
+  }
+  canvases.rain.getContext('2d').putImageData(img, 0, 0); refreshCanvas('rain');
+  const t = st.t0 + k * st.blockMin * 60e3, live = st.radar.live, fc = live && t >= live.observedUntil;
+  const iso = (x) => new Date(x).toISOString().slice(0, 16).replace('T', ' ');
+  radarNote(`${iso(t)}–${iso(t + st.blockMin * 60e3).slice(11)} UTC${fc ? ' · NOWCAST (forecast)' : ''} · area mean ${(st.intensity[k] ?? 0).toFixed(1)} mm/hr. Solid: the rain the model uses over its area (${st.radar.gauged ? 'gauge-corrected MRMS' : 'MRMS radar-only'}, 1 km); faint: the raw 2-minute radar around it${fc ? ' (none past the latest frame)' : ''}. mm/hr: light green < 2.5, green < 10, yellow < 25, orange < 50, red < 100, magenta ≥ 100. Zoom out to watch the storm come in.`);
+}
 $('radarPlay').onclick = () => {
   if (radar.play) { clearInterval(radar.play); radar.play = 0; $('radarPlay').textContent = '▶'; return; }
   radar.follow = false; $('radarPlay').textContent = '❚❚';
@@ -2346,10 +2467,10 @@ async function levelSources(prep, c, F) {
   for (const [site, g] of prep.want) {
     let surf; try { surf = await gaugeSurface(g, prep.lv.get(site), fetcher); } catch (e) { surf = { z: null, why: e.message }; }
     if (surf.z == null) { notes.push(`${g.name}: not used (${surf.why})`); continue; }
-    const near = waterNear(c, water, cellAt(fine, c, F, g.lon, g.lat), R), en = entryOf.get(site);
+    const k = cellAt(fine, c, F, g.lon, g.lat), near = waterNear(c, water, k, R), en = entryOf.get(site);
     if (near.length && (g.kind === 'LK' || g.kind === 'ES')) { sources.push({ cells: near, level: surf.z }); notes.push(`${g.name}: ${surf.z.toFixed(2)} m NAVD88, flat (${surf.how})`); continue; }
     if (near.length) { // a river gauge in the area: its rise over the lidar water surface right there
-      const rise = Math.max(0, surf.z - Math.min(...near.map(q => c.z[q]))); sources.push({ cells: near, rise });
+      const rise = Math.max(0, surf.z - surfaceAtGauge(c, near, k)); sources.push({ cells: near, rise });
       notes.push(`${g.name}: ${surf.z.toFixed(2)} m NAVD88, ${rise.toFixed(2)} m above the lidar water surface (${surf.how})`); continue;
     }
     if (en) { // an inflow gauge outside the area: its rise over the lidar surface at the gauge, carried down the river
@@ -2407,7 +2528,7 @@ function startWater(c, F, stageCells) {
     const cells = stageCells.filter(k => water[k]); if (cells.length) sources.push({ cells, level: tide });
   }
   if (!sources.length) { $('startNote').textContent = 'No usable gauge level for this run: the water bodies start at the lidar surface.' + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : ''); return null; }
-  const s = startDepths(c, water, sources);
+  const s = startDepths(c, water, sources, { surfR: Math.ceil(60 / (F * model.fine.dx)) }); // decks and bank pixels within 60 m take the river under them
   let vol = 0, wet = 0; for (let k = 0; k < s.depth.length; k++) if (s.depth[k] > 0) { vol += s.depth[k]; wet++; }
   const A = (F * model.fine.dx) ** 2, msg = `Starting water: ${fmtVol(vol * A)} on ${(wet * A / 1e4).toFixed(2)} ha.` + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : '') + (tide != null && stageCells?.length ? ` Tidal water at ${tide.toFixed(2)} m NAVD88.` : '');
   $('startNote').textContent = msg; log(msg, 'ok', 'USGS NWIS');
@@ -2509,10 +2630,12 @@ $('hwmBtn').onclick = async () => {
     sel.innerHTML = '<option value="">Pick an event…</option>' + [...byEvent].sort((a, b) => b[1].length - a[1].length).map(([k, v]) => `<option value="${k}">${k.replace('USGS STN, ', '')}: ${v.length} marks</option>`).join('');
     sel.onchange = () => {
       const v = byEvent.get(sel.value); if (!v) return;
-      S.obs = v; drawObs(); obsNote(); if (run?.hmax && !run.playing && run.solver) scoreAndShow();
-      note.textContent += ` From ${sel.value}. Load the same storm under Storm → historic to replay it.`;
+      S.obs = v; S.obsEvent = sel.value; drawObs(); obsNote(); if (run?.hmax && !run.playing && run.solver) scoreAndShow();
+      note.textContent += ` From ${sel.value}.${currentStorm()?.t0 ? '' : ' Load the same storm under Storm → historic to replay it.'}`;
     };
     note.textContent = `${marks.length} USGS high-water marks in or near the area, from ${byEvent.size} event${byEvent.size > 1 ? 's' : ''}: pick one to use them as observations.`;
+    const ev = matchEvent([...byEvent.keys()].map(k => k.replace('USGS STN, ', '')), currentStorm() ?? {}); // the loaded historic storm's event
+    if (ev) { sel.value = 'USGS STN, ' + ev; sel.onchange(); note.textContent += ` Picked ${ev}, the loaded storm's event.`; }
   } catch (e) { note.textContent = 'High-water marks unavailable: ' + e.message; }
 };
 
@@ -2531,10 +2654,10 @@ function obsNote() {
 $('obsImport').onclick = () => $('obsFile').click();
 $('obsFile').onchange = async () => {
   const file = $('obsFile').files[0]; $('obsFile').value = ''; if (!file) return;
-  try { S.obs = parseObservations(await file.text(), { units: $('obsUnits').value }); if (!S.obs.length) throw new Error('no points with lat, lon and an observation'); drawObs(); obsNote(); if (run?.hmax && !run.playing && run.solver) scoreAndShow(); }
+  try { S.obsEvent = 'imported: ' + file.name; S.obs = parseObservations(await file.text(), { units: $('obsUnits').value }); if (!S.obs.length) throw new Error('no points with lat, lon and an observation'); drawObs(); obsNote(); if (run?.hmax && !run.playing && run.solver) scoreAndShow(); }
   catch (e) { $('obsNote').textContent = 'Import failed: ' + e.message; }
 };
-$('obsClear').onclick = () => { S.obs = []; drawObs(); obsNote(); $('calScore').textContent = ''; $('calTable').textContent = ''; };
+$('obsClear').onclick = () => { S.obs = []; S.obsEvent = null; drawObs(); obsNote(); $('calScore').textContent = ''; $('calTable').textContent = ''; };
 /** Observation points on the map, coloured by how the last scored run did (green right, red missed, amber false alarm). */
 function drawObs(points = S.obs) {
   const fc = { type: 'FeatureCollection', features: points.map(p => ({ type: 'Feature', properties: { call: p.call ?? '', err: p.error ?? 0, name: p.name }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) };
@@ -2564,6 +2687,7 @@ const ftm = (m) => `${m >= 0 ? '+' : '−'}${Math.abs(m / 0.3048).toFixed(2)} ft
 function scoreAndShow() {
   const sc = scoreNow(); if (!sc) return null;
   drawObs(sc.points);
+  if (run.record?.validation) Object.assign(run.record.validation, { hwm: hwmOf(sc), event: S.obsEvent ?? null }); // observations picked after the run
   const lines = [];
   if (sc.n) lines.push(`<b>Levels and depths (${sc.n}):</b> bias ${ftm(sc.bias)}, mean error ${ftm(sc.mae).slice(1)}, RMSE ${ftm(sc.rmse).slice(1)}, ${Math.round(sc.within15 * 100)} % within 15 cm`);
   if (sc.calls) lines.push(`<b>Flooded / dry:</b> ${sc.hits} flooded in both, ${sc.misses} missed, ${sc.falseAlarms} false alarms of ${sc.calls}`);
@@ -2721,7 +2845,7 @@ async function runFiles() {
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
     forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), commit: appCommit, grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
-    books: run.record?.books ?? null, ponds: run.record?.ponds ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
+    books: run.record?.books ?? null, validation: run.record?.validation ?? null, ponds: run.record?.ponds ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
     hazard: Object.fromEntries(Object.entries(STANDARDS).map(([k, st]) => [k, { name: st.name, note: st.note,
@@ -2786,5 +2910,5 @@ function barrierCSV(rs) {
 }
 const projects = initProjects({ capture: captureProject, layer: () => infra.layer, restore: restoreProject, runFiles, scenarios: scenarioFiles, analysis: () => design.analysis });
 
-window.__floodsim = { get run() { return run; }, get model() { return model; }, get records() { return records; }, map, infra, design, projects, buildPackage, runFiles, reportUI, compareUI, runWindowPair }; // console debugging
+window.__floodsim = { get run() { return run; }, get model() { return model; }, get records() { return records; }, map, setArea, infra, design, projects, buildPackage, runFiles, reportUI, compareUI, runWindowPair }; // console debugging
 gpuReady.then(() => updateSizeNote());

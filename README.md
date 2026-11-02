@@ -255,6 +255,11 @@ Environmental Mesonet, as map tiles every 5 minutes: N0Q (0.5 dBZ steps) from 15
   show as gaps. Before a run it opens on the storm's peak block; during a run it follows the simulation clock (event
   start + run time). A frame more than 15 min from the time asked for is not shown.
 - **Live, last hour:** the latest 5-minute frames, refreshed every 5 minutes.
+- **Rain the model uses (MRMS, 2 min):** for a radar storm (historic or live), not reflectivity but the rain itself in
+  mm/hr, one picture per 2-minute block: solid over the model, the exact frames the run puts on its cells
+  (gauge-corrected where the archive has them; past the latest frame of a live run, the nowcast, marked NOWCAST); faint
+  around it for half a degree, the raw 2-minute radar (a2m) at the same time, so the storm can be watched coming in.
+  It sits under the flood depths, follows the run clock, and the next three blocks load ahead.
 - A slider steps through the frames and ▶ loops them; the next frame loads unseen, so stepping does not flash. The
   overlay sits over the basemap and under every model layer.
 - Ellicott City, 30 July 2016: the peak-rain frame (00:45 UTC on the 31st, 8:45 pm EDT) shows the training storm line
@@ -665,8 +670,14 @@ hydro-flattened: open water is a flat surface at the level of the day it was flo
 lakes start at that day's level. With *Gauge levels* (the default), before the run starts the app reads the USGS gauges
 nearby and the inflow gauges, at the storm start for a historic storm or their latest reading for a design storm.
 - **River gauge:** water surface (gage height + gauge datum, or a NAVD88 water-surface elevation) minus the lidar water
-  surface at the gauge (the 5th-percentile ground of a 120 m patch: gauges sit on banks and bridges) gives the rise;
-  the river rises by that much along its length.
+  surface at the gauge gives the rise; the river rises by that much along its length. Inside the model the lidar
+  surface at the gauge is the median of the 9 water cells nearest it, not the lowest within reach (above a dam, that
+  is the tailwater: Fairmount Dam on the Schuylkill started its pool 2.7 m high); outside it, the 5th-percentile ground
+  of a 120 m patch (gauges sit on banks and bridges). Each water cell rises from its own lidar height, unless that
+  stands more than 1 m above the lowest water within 60 m and under 30 % of the water around it is at its height: a
+  mapped river line runs over bridge decks and 30 m land-cover water pixels cover banks, and a rise from a deck once
+  started the railyard below 30th Street under 4 m of water before any rain. A pool above a dam is wide and flat at
+  its own height, so it keeps it.
 - **Lake or reservoir gauge:** fills its lake flat to the reading.
 - **Tidal water** touching the tide-gauge boundary starts at the tide level.
 - **Spreading:** water spreads, nearest water first, onto connected ground below its level, so a gauge above bankfull
@@ -678,7 +689,7 @@ nearby and the inflow gauges, at the storm start for a historic storm or their l
 - **Not covered:** ungauged water stays at the lidar surface; the channel below it can be estimated (Channel bathymetry, below).
 - **Checks:**
   - `npm run test:waterlevels`: parallel rise, flat lake fill, spreading onto connected ground only, datum rules,
-    NGVD29 shift;
+    NGVD29 shift, a gauge above a weir, a bridge deck flagged as water;
   - `--live` reads Hollofield: 57.46 m NAVD88, 0.46 m above its lidar water surface at 57 cfs.
 
 **Calibration** (section 6; `src/calibrate.js`). Import observations (CSV or GeoJSON points, feet or metres NAVD88):
@@ -698,7 +709,29 @@ high-water marks (water surface elevation), observed depths, or flooded / dry re
   (`api.waterdata.usgs.gov/stnservices`, state from the Census geocoder), grouped by event. NAVD88 marks become water
   levels; marks on local control points keep their height above ground as depths. Coverage is mostly large river and
   coastal floods (Pennsylvania: Lee 2011, Ida 2021, Sandy 2012, historic Ohio River floods); street flash floods rarely
-  have any, so they help most for river and surge replays.
+  have any, so they help most for river and surge replays. With a historic storm loaded, the button picks that storm's
+  event (by name, else year and month).
+
+**Validation scorecard** (*Report* drawer, first after the summary; `src/validate.js`). Every run of a real storm
+(historic or live) gets one checklist, each line rated good / fair / poor against targets that are this app's defaults
+for an urban model at 1 m, not a published standard (`TARGETS`):
+- observations: high-water marks (RMSE ≤ 0.15 / 0.30 m, bias ± 0.10 / 0.20 m, ≥ 80 / 60 % of flooded marks flooded);
+  each USGS level gauge inside the model, its peak water level (± 0.15 / 0.30 m) and the time of that peak (± 30 / 60
+  min) against the gauge's record in NAVD88 (an elevation series, or gage height on a surveyed national datum; NGVD29
+  through NOAA NCAT). The model's level there is the median water surface of the 9 mapped open-water cells nearest the
+  gauge (within 60 m) that are at least 10 cm deep, every simulated minute (a bank wet with rain, or the far side of a
+  weir, is not the gauge's water). A peak the run cut off (still rising at its end) is not scored for timing;
+- rain: the source (gauge-corrected or radar-only), the gauge-corrected totals against radar alone, and against the
+  site's gridded daily record (a coarse grid: a gap there points at the record as often as the radar);
+- integrity: surface mass balance (≤ 1e-4 / 1e-3 of all the water in: start, rain, rivers, tide), with the pipes
+  (≤ 1 / 5 %), water added by the wet / dry clip. The combined books with the pipes now count the water on the ground
+  at the start (gauge start levels): before, a run that started with water showed that volume as an error (−53 % on
+  Ida at Fairmount; 5e-6 once counted).
+The verdict comes from the observations alone (rain and books explain a result, they do not make it), except that
+books that do not close make it poor outright. A design storm, or an area with no marks or gauges, says it is not
+validated and why. The report shows the gauges' observed and modelled hydrographs and every mark's error; the export
+has `scorecard.csv`, `high_water_marks.csv` and the figures; `summary.json` keeps the inputs (`validation`). Gauge
+readings are fetched when the run finishes (at most 20 s). `npm run test:validate`.
 
 **Projects** (header *Projects* / *Save*, Ctrl+S; `app/projects.js`, `/api/projects` in the server, loopback only).
 Each project is a folder in `Documents\FloodSim Projects` (override with `FLOODSIM_PROJECTS`):
@@ -1012,6 +1045,7 @@ node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process,
 node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and listing URLs, frame at a time (--live: Ida's frames)
 node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (8 and 16 bit, all filters), GRIB2, value tables, gauge-corrected totals, timing (--live: Ida)
 node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pixels), advection, a live build with a cell arriving in the nowcast, PrecipRate fill
+node tests/run-validate-tests.mjs  # validation scorecard: peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
 # log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8770
@@ -1061,6 +1095,7 @@ src/hazard.js         hazard classes (ARR 2019 H1–H6, FD2320), force, d·v, du
 src/subgrid.js        subgrid speed mode: 1 m storage / conveyance tables per cell and face, 1 m depth output
 src/watershed.js      watersheds from 3DEP: priority flood, D8, upstream trace, local watershed past a river
 src/calibrate.js      observations (high-water marks, depths, reports, USGS STN), run scoring, parameter sweeps
+src/validate.js       validation scorecard: marks, gauge peaks and timing, rain sources, books against targets
 src/inflow.js         upstream river inflow: USGS gauges, recorded and design (LP3) hydrographs, entry cells
 src/soil.js           SSURGO soil hydraulics, Green-Ampt parameters per cell (wetness, water table)
 src/scour.js          critical shear by surface, scour-potential classes

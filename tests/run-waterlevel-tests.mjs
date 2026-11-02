@@ -2,7 +2,7 @@
 // connected low ground only, each water body takes the nearest gauge, gauge datums need to be surveyed, and NGVD29
 // readings shift to NAVD88.
 // Usage: node tests/run-waterlevel-tests.mjs  (--live: reads the Patapsco at Hollofield gauge and the lidar at it through the local server)
-import { startDepths, components, gaugeSurface, waterNear } from '../src/waterlevels.js';
+import { startDepths, components, gaugeSurface, waterNear, nearestCells, surfaceAtGauge, waterBase } from '../src/waterlevels.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -34,6 +34,29 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   check('each lake takes its own gauge', Math.abs(s.depth[4 * nx + 21] - 1) < 1e-6);
   check('connected low ground floods, cut-off hollows do not', Math.abs(s.depth[0 * nx + 8] - 1) < 1e-6 && s.depth[5 * nx + 12] === 0);
   check('water cells near a point', waterNear(c, water, 4 * nx + 10, 3).length > 0 && waterNear(c, water, 4 * nx + 14, 3).length === 0);
+}
+{ // a gauge 3 cells above a 2 m weir: its lidar surface is the pool's, not the tailwater's within reach
+  const nx = 30, ny = 5, z = new Float64Array(nx * ny), water = new Uint8Array(nx * ny).fill(1);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = i < 15 ? 3 : 1; // pool west, tailwater east of the weir
+  const c = { nx, ny, z }, k = 2 * nx + 12, near = waterNear(c, water, k, 6);
+  check('nearest cells: nearest first', nearestCells(c, near, k, 1)[0] === k && nearestCells(c, near, k, 5).every(q => Math.hypot(q % nx - 12, ((q / nx) | 0) - 2) <= 1));
+  check('the lidar surface at a gauge above a weir is the pool (3 m), not the tailwater (1 m)', surfaceAtGauge(c, near, k) === 3 && Math.min(...near.map(q => z[q])) === 1);
+  const s = startDepths({ ...c, mask: new Uint8Array(nx * ny).fill(1) }, water, [{ cells: [k], rise: 0.4 }], { surfR: 6 });
+  check('a pool above a weir keeps its own surface: it rises right up to the weir', Math.abs(s.depth[2 * nx + 14] - 0.4) < 1e-6 && Math.abs(s.depth[2 * nx + 15] - 0.4) < 1e-6, `${s.depth[2 * nx + 14].toFixed(2)}, ${s.depth[2 * nx + 15].toFixed(2)}`);
+}
+{ // a river (rows 9–10, surface 1 m) under a bridge deck at 9 m (columns 20–22, flagged water by the river line), with
+  // a yard at 3 m beside the deck: a parallel rise of 0.4 m must not start the yard under the deck's level
+  const nx = 40, ny = 20, z = new Float64Array(nx * ny).fill(3), water = new Uint8Array(nx * ny), mask = new Uint8Array(nx * ny).fill(1);
+  for (let j = 9; j <= 10; j++) for (let i = 0; i < nx; i++) { z[j * nx + i] = i >= 20 && i <= 22 ? 9 : 1; water[j * nx + i] = 1; }
+  for (let j = 0; j < 9; j++) for (let i = 18; i <= 24; i++) z[j * nx + i] = 8.9; // the deck's approach ramp north, all of it above the yard
+  for (let j = 0; j < 9; j++) for (let i = 21; i <= 21; i++) z[j * nx + i] = 3; // a gap to the yard
+  const c = { nx, ny, z, mask };
+  const base = waterBase(water, z, nx, ny, 5, 1);
+  check('water base: a deck flagged as water takes the river under it', base[9 * nx + 21] === 1 && base[9 * nx + 5] === 1);
+  const s = startDepths(c, water, [{ cells: [9 * nx + 1], rise: 0.4 }], { surfR: 5 });
+  check('a rise from a deck does not flood the ground beside it', s.depth[4 * nx + 21] === 0 && s.depth[9 * nx + 21] === 0 && Math.abs(s.depth[10 * nx + 5] - 0.4) < 1e-6, `yard ${s.depth[4 * nx + 21].toFixed(2)} m`);
+  const old = startDepths(c, water, [{ cells: [9 * nx + 1], rise: 0.4 }], { surfR: 0 });
+  check('(without it, the yard starts 6.4 m deep)', Math.abs(old.depth[4 * nx + 21] - 6.4) < 1e-6);
 }
 { // gauge datums
   const lv = { gage: 0.5, elev: {} };

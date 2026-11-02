@@ -96,3 +96,4 @@ if (process.argv.includes('--live')) {
 }
 
 console.log(fails ? `\n${fails} check(s) FAILED` : '\nall passed');
+process.exit(fails ? 1 : 0);

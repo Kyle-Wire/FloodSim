@@ -1,12 +1,14 @@
 // Report drawer: the standard H&H outputs of a run, or of a before / after pair with the same forcing, as figures and
 // tables (src/report.js): hydrographs at control lines and storm-sewer outfalls, pond stage–storage–discharge and
 // stage in time, storm-sewer HGL profiles with surcharge and freeboard checks, water surface profiles along drawn
-// profile lines, and gutter spread at the inlets against an allowable spread. Export: report.html (prints to PDF),
+// profile lines, gutter spread at the inlets against an allowable spread, and for a real storm the validation scorecard
+// (src/validate.js: high-water marks, USGS gauge peaks, rain sources, the books). Export: report.html (prints to PDF),
 // every figure as SVG and PNG, every table as CSV; with a project open, also under reports/<stamp>/.
 import * as R from '../src/report.js';
 import * as C from '../src/compare.js';
 import { zip } from '../src/export.js';
 import * as FEMA from '../src/fema.js';
+import * as V from '../src/validate.js';
 import { labelImage } from './labels.js';
 
 const $ = (id) => document.getElementById(id);
@@ -216,6 +218,39 @@ export function initReport(map, api) {
       out.unshift({ id: 'summary', title: 'Summary', note: 'Water balance of the whole model over the run.', figures: [],
         tables: [{ name: 'water_balance', title: 'Water balance', cols: [['item', 'item'], ...(A ? [['before', `before_${u.vol}`, 0]] : []), ['after', `${A ? 'after' : 'run'}_${u.vol}`, 0], ...(A ? [['change', `change_${u.vol}`, 0]] : [])], rows }] });
     }
+
+    // 7. validation scorecard: each run of a real storm, against what was observed (after the summary)
+    for (const [role, r] of runs) {
+      const v = r.validation; if (!v?.observed) continue;
+      const sc = V.scorecard({ ...v, gauges: v.gauges.filter(g => g.score || !/reading the gauge/.test(g.why)) }), who = A ? ` (${tag(role).toLowerCase()})` : '', key = A ? '_' + role : '';
+      const signed = (x, dp) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${fmtNum(Math.abs(x), dp)}`;
+      const value = (it) => (it.value == null || (typeof it.value === 'number' && !Number.isFinite(it.value)) ? '–' : it.unit === 'm' ? `${/RMSE/.test(it.label) ? fmtNum(u.L(it.value), 2) : signed(u.L(it.value), 2)} ${u.len}`
+        : it.unit === 'min' ? `${signed(it.value, 0)} min` : it.unit === 'share' ? `${fmtNum(it.value * 100, 0)} %` : it.unit === 'ratio' ? fmtNum(it.value, 2) : it.unit === 'rel' ? it.value.toExponential(1) : String(it.value));
+      const target = (it) => { const t = it.target; if (!t) return ''; const [g, f] = t;
+        return it.unit === 'm' ? `${/RMSE/.test(it.label) ? '≤' : '±'} ${fmtNum(u.L(g), 2)} / ${fmtNum(u.L(f), 2)} ${u.len}` : it.unit === 'min' ? `± ${g} / ${f} min` : it.unit === 'share' ? `≥ ${g * 100} / ${f * 100} %`
+          : it.unit === 'ratio' ? `1 ± ${g} / ${f}` : `≤ ${g.toExponential(0)} / ${f.toExponential(0)}`; };
+      const mark = { good: '✓ good', fair: '~ fair', poor: '✕ poor', info: '' };
+      const rows = sc.items.map(it => ({ group: it.group, check: it.label, value: value(it), target: target(it), status: mark[it.status], note: it.note }));
+      const tables = [{ name: 'scorecard' + key, title: 'Checks (target: good / fair)', cols: [['group', 'group'], ['check', 'check'], ['value', 'value'], ['target', 'target_good_fair'], ['status', 'status'], ['note', 'note']], rows }];
+      if (v.hwm?.points?.length) tables.push({ name: 'high_water_marks' + key, title: `Observations${v.event ? ': ' + v.event.replace('USGS STN, ', 'USGS high-water marks, ') : ''}`,
+        cols: [['name', 'mark'], ['kind', 'kind'], ['observed', `observed_${u.len}`, 2], ['model', `model_${u.len}`, 2], ['error', `error_${u.len}`, 2], ['call', 'flooded_call']],
+        rows: v.hwm.points.map(p => ({ name: p.name, kind: p.kind ?? 'flooded / dry', observed: p.observed == null ? NaN : u.L(p.observed), model: p.model == null ? NaN : u.L(p.model), error: p.error == null ? NaN : u.L(p.error), call: p.call ?? '' }))
+          .sort((a, b) => (Number.isFinite(b.error) ? Math.abs(b.error) : -1) - (Number.isFinite(a.error) ? Math.abs(a.error) : -1)) });
+      const figures = [];
+      for (const g of v.gauges) {
+        if (!g.obs?.length || !g.model?.length) continue;
+        const t0 = g.model[0][0], h = (t) => (t - t0) / 3600e3, t1 = g.model.at(-1)[0];
+        figures.push({ name: `gauge_${g.site}${key}`, svg: R.lineChart([
+          { name: 'observed', role: 'before', pts: g.obs.filter(([t]) => t >= t0 - 1800e3 && t <= t1 + 1800e3).map(([t, z]) => [h(t), u.L(z)]) },
+          { name: 'model', role: 'after', pts: g.model.map(([t, z]) => [h(t), u.L(z)]) }],
+          { title: `USGS ${g.site} ${g.name}: water level`, xLabel: 'hours from the storm start', yLabel: `water surface, ${u.len} NAVD88`, theme, ...size }) });
+      }
+      const how = v.gauges.filter(g => g.how).map(g => `${g.site}: ${g.how}`).join('; ');
+      out.push({ id: 'validation' + key, title: `Validation scorecard${who}`, figures, tables,
+        note: `${mark[sc.verdict.status] ? mark[sc.verdict.status].toUpperCase() + ': ' : ''}${sc.verdict.text} Targets are this app's defaults for an urban flood model at 1 m (good / fair), not a published standard. High-water marks: the highest wet 1 m pixel within 3 m of each mark. Gauges: the median water surface of the 9 mapped open-water cells nearest the gauge (within 60 m) at least 10 cm deep, every simulated minute${how ? ` (observed levels: ${how})` : ''}. Rain and books explain a result; the verdict comes from the observations alone.` });
+    }
+    const vs = out.filter(sec => sec.id.startsWith('validation')); // right after the summary
+    if (vs.length) { const rest = out.filter(sec => !sec.id.startsWith('validation')); out.length = 0; out.push(rest[0], ...vs, ...rest.slice(1)); }
     return out;
   }
   /** A pond's inflow from its stage series and stage–storage: I = O + ΔS/Δt. */
