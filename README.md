@@ -248,6 +248,18 @@ Build reads FEMA's National Flood Hazard Layer for the area:
 - Check the effective FIRM and any LOMR before relying on it. `npm run test:fema` (`--live`: Meyerland, zone AE, BFE
   55.0 ft, through the local server).
 
+**NEXRAD radar overlay** (View → *NEXRAD radar*; `src/radar.js`). The US composite base reflectivity from the Iowa
+Environmental Mesonet, as map tiles every 5 minutes: N0Q (0.5 dBZ steps) from 15 November 2010, N0R (5 dBZ) back to
+1995. Display only: the model's rainfall still comes from the Storm section.
+- **This historic storm:** the frames of the loaded event's window, listed from IEM (`json/radar.py`), so archive gaps
+  show as gaps. Before a run it opens on the storm's peak block; during a run it follows the simulation clock (event
+  start + run time). A frame more than 15 min from the time asked for is not shown.
+- **Live, last hour:** the latest 5-minute frames, refreshed every 5 minutes.
+- A slider steps through the frames and ▶ loops them; the next frame loads unseen, so stepping does not flash. The
+  overlay sits over the basemap and under every model layer.
+- Ellicott City, 30 July 2016: the peak-rain frame (00:45 UTC on the 31st, 8:45 pm EDT) shows the training storm line
+  over the town. `npm run test:radar` (`--live` lists Ida's frames over Philadelphia).
+
 **Channel bathymetry (estimated)** (Area → *Channel bathymetry*; `src/bathymetry.js`; off by default). Lidar flattens
 rivers at the flight-day water surface; the channel below is missing. The estimate:
 - **The flattened surface:** grown from the mapped river lines over cells flat to the millimetre (at least 4 of 8
@@ -928,7 +940,8 @@ Full numbers: `tests/results-cpu.json`, `tests/results-gpu.json`.
 
 ```bash
 npm install
-node tests/run-tests.mjs         # CPU suite (~2 min)
+npm test                         # every CPU suite below, one line each; exits 1 if any fails
+node tests/run-tests.mjs         # CPU solver suite (~1 min): fails if accuracy, convergence or mass balance regress
 node tests/run-phase1-tests.mjs  # geodesy, terrain, roof routing, downscaling, exports, outflow BC, Atlas 14 storms, historic storms (--live hits the services)
 node tests/run-phase2-tests.mjs  # weir and culvert hydraulics, conservative culvert links, channel breaching, bank stations, SWMM river
 node tests/run-infra-tests.mjs   # infrastructure layer: capacity, estimate round trip, storage in SWMM, shapefile / zip import
@@ -946,6 +959,7 @@ node tests/run-fema-tests.mjs     # FEMA NFHL: zone codes, BFE between lines, zo
 node tests/run-bathymetry-tests.mjs # channel bathymetry: regional curves, flattened surface, carved section
 node tests/run-window-tests.mjs   # window reruns: the window, its edge segments (+ outward), inflow rates, the edge check, merging
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
+node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and listing URLs, frame at a time (--live: Ida's frames)
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
 # log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8770
@@ -978,6 +992,7 @@ src/downscale.js      water-surface-projection depth downscaling
 src/export.js         zip, 16-bit PNG, OpenEXR, buildings GLB writers
 src/storm.js          Atlas 14 fetch/parse, DDF, alternating-block hyetographs, rain schedule
 src/history.js        event catalog (IEM record + HURDAT2), rainfall replay, ASOS blend, CO-OPS water levels
+src/radar.js          NEXRAD composite overlay: IEM tile URLs, frame listing, frame at a time
 src/drainage.js       synthetic network, rational-method sizing, SWMM .inp writer, inlet hydraulics, lumped tier
 src/coupler.js        1D–2D exchange loop (GPU inlets ↔ SWMM), roof downspout inflow
 src/utilities.js      registry of open utility layers (Philadelphia Water is the first entry)

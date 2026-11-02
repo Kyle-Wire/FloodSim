@@ -13,6 +13,7 @@ import { giLayers, GI } from '../src/gi.js';
 import { drawnGI, OutletLinks, UnderdrainLinks, detentionTable } from '../src/stormwater.js';
 import { loadSWMM, SWMM } from '../src/swmm.js';
 import * as H from '../src/history.js';
+import * as R from '../src/radar.js';
 import { Coupler } from '../src/coupler.js';
 import { fetchUtility, utilityFor } from '../src/utilities.js';
 import { describeSource, fetchFeatures, detectPipeFields, pipeRecords, pointRecords } from '../src/linked.js';
@@ -75,6 +76,7 @@ const linkedFetcher = (url) => fetcher(url, { linked: true });
 
 const S = { area: null, poly: null, view: 'depth', opacity: 0.85, hmin: 0.01, obs: [] }; // poly: lon/lat ring of a polygon area (S.area is its box)
 let device = null, model = null, run = null;
+const radar = { mode: 'off', frames: [], k: -1, key: '', layers: [], follow: true, play: 0, live: 0 }; // NEXRAD overlay (View)
 let runGen = 0; // never reset: stopRun clears `run`, so a fresh run must not reuse a generation an old loop still holds
 const ws = { last: null, busy: null }; // the area's watershed, once traced
 
@@ -716,6 +718,7 @@ function stormMeta(st) {
 function updateStorm() {
   const st = currentStorm();
   drawHyeto();
+  if (radar.mode === 'storm') radarLoad().catch(e => radarNote('Radar unavailable: ' + e.message));
   if (!st) { $('stormTag').textContent = ''; $('stormSummary').textContent = model ? 'Loading the site rainfall record…' : 'Build a model to load the design rainfall for the site.'; return; }
   $('stormTag').textContent = st.pattern === 'constant' ? `${st.total.toFixed(0)} mm` : st.pattern === 'historic' ? `${st.name} · ${st.total.toFixed(0)} mm` : `${st.ari}-yr ${fmtDur(st.durationMin)} · ${st.total.toFixed(0)} mm`;
   if (st.pattern === 'historic') $('stormSummary').textContent = histSummary(st);
@@ -1323,7 +1326,7 @@ async function loop(gen) {
     const ms = performance.now() - c0;
     if (K > 0 && K >= run.K) run.K = Math.max(1, Math.min(400, Math.round(run.K * Math.min(2, Math.max(0.5, 40 / Math.max(1, ms))))));
     if (run.exchanger && s.t >= run.exchanger.tNext - 1e-6) { await run.exchanger.exchange(); if (run.coupler) drawNetworkState(); }
-    run.t = s.t;
+    run.t = s.t; radarClock(run);
     if (wall > 0) run.rtf = run.rtf ? 0.9 * run.rtf + 0.1 * ((s.t - t0) / wall) : (s.t - t0) / wall;
     if (out) {
       run.out = out; run.lastOut = now;
@@ -1899,6 +1902,85 @@ for (const seg of ['viewSeg', 'viewSeg2']) $(seg).onclick = async (e) => {
 $('hazStd').onchange = () => { drawLegend(); if (run?.out) drawDepth(); if (run?.haz?.t != null) hazardNote(); };
 $('opacity').oninput = () => { S.opacity = $('opacity').value / 100; $('opacityOut').textContent = $('opacity').value + ' %'; if (map.getLayer('ov-depth')) map.setPaintProperty('ov-depth', 'raster-opacity', S.opacity); };
 $('basemap').onchange = () => { for (const k of Object.keys(BASEMAPS)) map.setLayoutProperty(k, 'visibility', k === $('basemap').value ? 'visible' : 'none'); };
+
+// ---- NEXRAD radar overlay (display only: the model's rain still comes from the Storm section). A historic storm's
+// frames follow the run clock; live shows the last hour. Each frame is its own tile source; the next one loads unseen
+// (opacity 0), so stepping through frames does not flash.
+const RADAR_OPACITY = 0.6, RADAR_KEEP = 4;
+const radarID = (f) => 'radar-' + (f.t ?? 'now');
+function radarShow(k) {
+  if (!map.isStyleLoaded()) { map.once('idle', () => radarShow(k)); return; }
+  radar.k = k;
+  const f = radar.frames[k], want = f ? [f, radar.frames[k + 1]].filter(Boolean) : [];
+  const ls = map.getStyle().layers, lastBase = ls.findLastIndex(l => l.id in BASEMAPS);
+  const above = ls[lastBase + 1]?.id; // over the basemaps, under everything drawn on them
+  for (const x of want) {
+    const id = radarID(x);
+    if (!map.getSource(id)) {
+      map.addSource(id, { type: 'raster', tileSize: 256, tiles: [R.tileURL(x.t, x.product)], attribution: 'Radar: NEXRAD composite via Iowa Environmental Mesonet' });
+      map.addLayer({ id, type: 'raster', source: id, paint: { 'raster-opacity': 0, 'raster-fade-duration': 0 } }, above);
+    }
+    radar.layers = [id, ...radar.layers.filter(l => l !== id)];
+  }
+  const shown = f ? radarID(f) : null;
+  for (const id of radar.layers) map.setPaintProperty(id, 'raster-opacity', id === shown ? RADAR_OPACITY : 0);
+  for (const id of radar.layers.splice(RADAR_KEEP)) if (!want.some(x => radarID(x) === id)) { map.removeLayer(id); map.removeSource(id); }
+  $('radarT').value = Math.max(0, k);
+  radarNote(f ? `${f.t == null ? 'Live composite' : new Date(f.t).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'} · ${f.product} base reflectivity, ` +
+    'NEXRAD composite via Iowa Environmental Mesonet. Display only: the model\'s rainfall is set under Storm.' : radar.frames.length ? 'No radar frame within 15 minutes of this time (a gap in the archive).' : '');
+}
+function radarNote(text) { $('radarNote').hidden = !text; $('radarNote').textContent = text; }
+function radarClear() {
+  clearInterval(radar.play); radar.play = 0; $('radarPlay').textContent = '▶';
+  if (map.isStyleLoaded()) for (const id of radar.layers) { map.removeLayer(id); map.removeSource(id); }
+  radar.layers = []; radar.frames = []; radar.k = -1; radar.key = '';
+}
+function radarFrames(frames) {
+  radar.frames = frames; radar.follow = true;
+  $('radarCtl').hidden = frames.length < 2; $('radarT').max = Math.max(0, frames.length - 1);
+}
+/** Load the frames for the current mode: the loaded historic storm's window, or the last hour. */
+async function radarLoad() {
+  const mode = radar.mode;
+  if (mode === 'off') { radarClear(); radarNote(''); $('radarCtl').hidden = true; return; }
+  if (mode === 'live') {
+    const now = Date.now(), getJSON = async (u) => { const r = await fetch(u); if (!r.ok) throw new Error(`IEM ${r.status}`); return r.json(); }; // direct: the proxy would cache "now" forever
+    let frames = await R.listFrames(now - 65 * 60e3, now, getJSON).catch(() => []);
+    if (radar.mode !== mode) return;
+    if (!frames.length) frames = [{ t: null, product: 'N0Q' }]; // the listing failed: IEM's always-current composite, untimed
+    radarFrames(frames); radarShow(frames.length - 1); return; // frames already on the map stay loaded: no flash on refresh
+  }
+  const st = currentStorm();
+  if (st?.pattern !== 'historic' || st.t0 == null) { radarClear(); $('radarCtl').hidden = true; radarNote('Load a historic storm (2 · Storm) to see its radar.'); return; }
+  const t1 = st.t0 + st.durationMin * 60e3, key = `${st.t0}:${t1}`;
+  if (radar.key === key && radar.frames.length) return;
+  radarNote('Listing the radar frames for this storm…');
+  const getJSON = async (u) => { const r = await fetcher(u); if (!r.ok) throw new Error(`IEM ${r.status}`); return r.json(); };
+  let frames;
+  try { frames = await R.listFrames(st.t0, t1, getJSON); } catch (e) { if (radar.mode === mode) radarNote('Radar listing unavailable: ' + e.message); return; }
+  if (radar.mode !== mode || currentStorm()?.t0 !== st.t0) return;
+  radarClear(); radar.key = key; radarFrames(frames);
+  if (!frames.length) { radarNote('IEM holds no radar frames for this storm\'s window.'); return; }
+  let pk = 0; st.depth.forEach((d, i) => { if (d > st.depth[pk]) pk = i; }); // before a run: the frame at the storm's peak block
+  radarShow(R.frameAt(frames, run?.storm?.t0 === st.t0 && run.t ? st.t0 + run.t * 1000 : st.t0 + pk * st.blockMin * 60e3));
+}
+/** During a run of a historic storm, show the frame at the simulation time. */
+function radarClock(r) {
+  if (radar.mode !== 'storm' || !radar.follow || !radar.frames.length || r.storm?.t0 == null || radar.key !== `${r.storm.t0}:${r.storm.t0 + r.storm.durationMin * 60e3}`) return;
+  const k = R.frameAt(radar.frames, r.storm.t0 + r.t * 1000);
+  if (k !== radar.k) radarShow(k);
+}
+$('radarMode').onchange = () => {
+  radar.mode = $('radarMode').value;
+  clearInterval(radar.live); radar.live = radar.mode === 'live' ? setInterval(() => { if (radar.follow) radarLoad(); }, R.FRAME_MIN * 60e3) : 0;
+  radarClear(); radarLoad().catch(e => radarNote('Radar unavailable: ' + e.message));
+};
+$('radarT').oninput = () => { radar.follow = false; radarShow(Number($('radarT').value)); };
+$('radarPlay').onclick = () => {
+  if (radar.play) { clearInterval(radar.play); radar.play = 0; $('radarPlay').textContent = '▶'; return; }
+  radar.follow = false; $('radarPlay').textContent = '❚❚';
+  radar.play = setInterval(() => radarShow((radar.k + 1) % radar.frames.length), 400);
+};
 for (const [id, layer] of [['tShade', 'ov-shade'], ['tLc', 'ov-lc']]) $(id).onchange = () => { if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', $(id).checked ? 'visible' : 'none'); };
 $('tFema').onchange = () => { const v = $('tFema').checked ? 'visible' : 'none'; for (const l of ['ov-fema', 'fema-bfe', 'fema-bfe-label']) if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', v); };
 /** FEMA flood zones as an overlay, and the BFE lines / cross-sections labelled in feet. */

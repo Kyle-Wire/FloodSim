@@ -556,6 +556,11 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <div class="field"><label for="opacity">Water opacity</label><output id="opacityOut"></output><input type="range" id="opacity" min="10" max="100" value="85"></div>
       <div class="field"><label for="basemap">Basemap</label>
         <select id="basemap"><option value="usgs">USGS orthoimagery (public domain)</option><option value="esri">Esri World Imagery</option></select></div>
+      <div class="field"><label for="radarMode">NEXRAD radar</label>
+        <select id="radarMode"><option value="off">Off</option><option value="storm">This historic storm</option><option value="live">Live, last hour</option></select></div>
+      <div class="row" id="radarCtl" hidden><button class="btn" id="radarPlay" type="button" title="Play the frames in a loop">▶</button>
+        <input type="range" id="radarT" min="0" max="0" value="0" style="flex:1" aria-label="Radar frame"></div>
+      <p class="note" id="radarNote" hidden></p>
       <label class="toggle"><input type="checkbox" id="tShade"> Lidar hillshade</label>
       <label class="toggle"><input type="checkbox" id="tLc"> NLCD land cover</label>
       <label class="toggle"><input type="checkbox" id="tFema" checked> FEMA flood zones and BFE lines</label>
