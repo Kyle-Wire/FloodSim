@@ -1,13 +1,13 @@
 
-Test 1  (70×10 @ 10 m, 72949 steps, 36.6 s, mass rel 3.4e-6)  4/4 inside the report's spread
+Test 1  (70×10 @ 10 m, 72949 steps, 34.0 s, mass rel -4.8e-6)  4/4 inside the report's spread
   in   P1 level reaches 10.345 m                  3.617 h   [3.1–4 ±0.1]
   in   P1 level at 10 h (hold)                    10.350 m   [10.345–10.352 ±0.005]
   in   P1 level at 20 h                           10.253 m   [10.25–10.262 ±0.005]
   in   P2 level at 20 h                           10.253 m   [10.25–10.262 ±0.005]
   vs 7 codes (level where wet, else depth; ±0.02 m): P1 100% in, median |Δ| 0.1 cm · P2 100% in, median |Δ| 0.1 cm
 
-Test 2  (100×100 @ 20 m, 70202 steps, 32.4 s, mass rel -1.2e-5)  10/10 inside the report's spread
-  in   final volume (Table 4.3, full-SWE range)   97199 m³   [97162–97393 ±0]
+Test 2  (100×100 @ 20 m, 70202 steps, 26.6 s, mass rel 5.0e-7)  10/10 inside the report's spread
+  in   final volume (Table 4.3, full-SWE range)   97200 m³   [97162–97393 ±0]
   in   P4 peak level                              9.749 m   [9.72–9.775 ±0.01]
   in   P4 level at 24 h                           9.539 m   [9.535–9.55 ±0.01]
   in   P3 peak level                              9.341 m   [9.33–9.35 ±0.01]
@@ -19,7 +19,7 @@ Test 2  (100×100 @ 20 m, 70202 steps, 32.4 s, mass rel -1.2e-5)  10/10 inside t
   in   P13–16 stay dry (max depth)                0.000 m   [0–0.01 ±0]
   vs 7 codes (level where wet, else depth; ±0.02 m): P1 100% in, median |Δ| 0.3 cm · P2 100% in, median |Δ| 0.5 cm · P3 100% in, median |Δ| 0.1 cm · P4 100% in, median |Δ| 0.3 cm · P5 100% in, median |Δ| 6.0 cm · P6 100% in, median |Δ| 0.5 cm · P7 100% in, median |Δ| 0.1 cm · P8 100% in, median |Δ| 0.3 cm · P9 100% in, median |Δ| 0.0 cm · P10 100% in, median |Δ| 0.5 cm · P11 100% in, median |Δ| 1.4 cm · P12 100% in, median |Δ| 1.1 cm · P13 100% in, median |Δ| 0.0 cm · P14 100% in, median |Δ| 0.0 cm · P15 100% in, median |Δ| 0.0 cm · P16 100% in, median |Δ| 0.0 cm
 
-Test 3  (60×20 @ 5 m, 1403 steps, 10.5 s, mass rel 2.7e-7)  6/6 inside the report's spread
+Test 3  (60×20 @ 5 m, 1403 steps, 11.8 s, mass rel 1.3e-7)  6/6 inside the report's spread
   in   P1 arrival                                 66.000 s   [60–95 ±5]
   in   P1 level at 150 s                          9.978 m   [9.97–9.99 ±0.005]
   in   P1 level at 600 s                          9.986 m   [9.975–9.99 ±0.005]
@@ -27,7 +27,7 @@ Test 3  (60×20 @ 5 m, 1403 steps, 10.5 s, mass rel 2.7e-7)  6/6 inside the repo
   in   P2 rise (+1 cm)                            158.000 s   [145–200 ±5]
   in   P2 level at 600 s                          9.810 m   [9.805–9.828 ±0.005]
 
-Test 4  (200×400 @ 5 m, 40048 steps, 35.4 s, mass rel -1.2e-4)  12/12 inside the report's spread
+Test 4  (200×400 @ 5 m, 40048 steps, 28.6 s, mass rel -5.5e-6)  12/12 inside the report's spread
   in   P1 arrival                                 10.000 min   [8–11 ±3]
   in   P1 peak depth                              0.323 m   [0.295–0.333 ±0.005]
   in   P1 peak velocity                           0.398 m/s   [0.37–0.48 ±0.01]
@@ -42,7 +42,7 @@ Test 4  (200×400 @ 5 m, 40048 steps, 35.4 s, mass rel -1.2e-4)  12/12 inside th
   in   P6 peak velocity                           0.103 m/s   [0.096–0.119 ±0.01]
   vs 7 codes (level where wet, else depth; ±0.02 m): P1 100% in, median |Δ| 0.7 cm · P2 100% in, median |Δ| 0.3 cm · P3 100% in, median |Δ| 0.1 cm · P4 100% in, median |Δ| 0.1 cm · P5 100% in, median |Δ| 0.1 cm · P6 100% in, median |Δ| 0.1 cm
 
-Test 5  (256×226 @ 50 m, 64381 steps, 68.4 s, mass rel -5.9e-6)  13/13 inside the report's spread
+Test 5  (256×226 @ 50 m, 64381 steps, 54.6 s, mass rel -1.0e-7)  13/13 inside the report's spread
   in   P1 arrival                                 0.433 h   [0.4–0.45 ±0.05]
   in   P1 peak level                              174.838 m   [174.6–175.05 ±0.05]
   in   P1 level at 10 h                           172.312 m   [172.25–172.35 ±0.05]
@@ -58,7 +58,31 @@ Test 5  (256×226 @ 50 m, 64381 steps, 68.4 s, mass rel -5.9e-6)  13/13 inside t
   in   P7 peak velocity                           1.564 m/s   [1.2–1.6 ±0.1]
   vs 7 codes (level where wet, else depth; ±0.1 m): P1 100% in, median |Δ| 0.3 cm · P2 100% in, median |Δ| 0.2 cm · P3 100% in, median |Δ| 1.7 cm · P4 100% in, median |Δ| 0.6 cm · P5 100% in, median |Δ| 5.5 cm · P6 100% in, median |Δ| 0.0 cm · P7 100% in, median |Δ| 0.0 cm
 
-Test 6a  (1010×56 @ 0.1 m, 7661 steps, 36.5 s, mass rel -4.3e-7)  12/14 inside the report's spread
+Test 7  (150×400 @ 20 m, 330363 steps, 608.8 s, mass rel -3.8e-5)  18/22 inside the report's spread
+  in   M015 peak level                            14.780 m   [14.5–14.85 ±0.05]
+  in   M015 level at 20 h                         12.981 m   [12.85–13.3 ±0.05]
+  in   M025 peak level                            13.560 m   [13.22–13.55 ±0.05]
+  in   M025 level at 20 h                         12.621 m   [12.4–12.75 ±0.05]
+  in   M035 peak level                            12.587 m   [12.55–12.65 ±0.05]
+  in   M035 level at 10 h                         12.313 m   [12.2–12.4 ±0.05]
+  in   M045 peak level                            12.268 m   [12.02–12.3 ±0.05]
+  OUT  M045 level at 10 h                         11.732 m   [11.45–11.6 ±0.05]
+  in   M045 level at 30 h                         8.745 m   [8.6–8.85 ±0.05]
+  in   P2 (FP1) flooding starts                   6.733 h   [5.8–7.5 ±0.25]
+  in   P2 peak level                              13.377 m   [13.15–13.4 ±0.05]
+  in   P2 level at 40 h                           11.694 m   [11.57–11.68 ±0.05]
+  OUT  P6 (FP1) peak level (~13.20 ± 0.1, text)   13.356 m   [13.1–13.3 ±0.05]
+  in   P1 final level (~12.13, text)              12.184 m   [12.08–12.18 ±0.02]
+  in   P8 (FP2) flooding starts                   10.050 h   [9.3–10.5 ±0.25]
+  in   P8 peak level                              12.848 m   [12.8–12.93 ±0.05]
+  in   P8 final level (~12.5, text)               12.514 m   [12.42–12.56 ±0.02]
+  OUT  P11 (FP3) flooding starts                  8.350 h   [5.8–8 ±0.25]
+  in   P11 peak level                             12.630 m   [12.62–12.9 ±0.05]
+  OUT  P14 (FP3) flooding starts                  7.717 h   [8–9 ±0.25]
+  in   P14 peak level                             12.450 m   [12.48–12.62 ±0.05]
+  in   P14 final level (~11.5 ± 0.05, text)       11.486 m   [11.45–11.55 ±0.02]
+
+Test 6a  (1010×56 @ 0.1 m, 7661 steps, 30.1 s, mass rel -8.6e-9)  12/14 inside the report's spread
   OUT  G2 peak level after the jump (10–20 s)     0.053 m   [0.12–0.17 ±0.005]
   in   G2 level at 30 s                           0.090 m   [0.05–0.1 ±0.005]
   in   G2 level at 60 s                           0.054 m   [0.044–0.072 ±0.005]
@@ -74,7 +98,7 @@ Test 6a  (1010×56 @ 0.1 m, 7661 steps, 36.5 s, mass rel -4.3e-7)  12/14 inside 
   in   G6 level at 30 s                           0.172 m   [0.155–0.175 ±0.005]
   in   G6 level at 60 s                           0.098 m   [0.084–0.102 ±0.005]
 
-Test 6b  (1010×56 @ 2 m, 16575 steps, 55.1 s, mass rel -1.8e-5)  13/13 inside the report's spread
+Test 6b  (1010×56 @ 2 m, 16575 steps, 44.6 s, mass rel -4.7e-7)  13/13 inside the report's spread
   in   G2 peak level                              2.843 m   [2.8–3.25 ±0.05]
   in   G2 level at 200 s                          1.932 m   [1.85–2.03 ±0.05]
   in   G2 level at 400 s                          1.494 m   [1.45–1.55 ±0.05]
@@ -88,3 +112,7 @@ Test 6b  (1010×56 @ 2 m, 16575 steps, 55.1 s, mass rel -1.8e-5)  13/13 inside t
   in   G6 level at 200 s                          2.649 m   [2.35–2.6 ±0.05]
   in   G6 level at 300 s                          1.865 m   [1.75–1.9 ±0.05]
   in   G6 level at 600 s                          1.290 m   [1.27–1.35 ±0.05]
+
+
+88/94 measures inside the report's spread; baseline cut 2026-11-01T20:56:58.986Z.
+No regression against the baseline.

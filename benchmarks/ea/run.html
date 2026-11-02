@@ -27,6 +27,13 @@ window.__done = (async () => {
       log(`Test ${id}: ${c.nx}×${c.ny} @ ${c.dx} m, ${c.tEnd} s${c.info ? ' · ' + JSON.stringify(c.info) : ''}`);
       const r = await runCase(device, GPUSolver, c, log);
       r.adapter = adapter.info?.architecture ?? '?'; r.test = id; r.date = new Date().toISOString();
+      // Full adapter identity, so a published result says which GPU produced it rather than just "blackwell".
+      const ai = adapter.info ?? {};
+      r.adapterInfo = {
+        vendor: ai.vendor ?? '', architecture: ai.architecture ?? '', device: ai.device ?? '', description: ai.description ?? '',
+        isFallbackAdapter: ai.isFallbackAdapter ?? adapter.isFallbackAdapter ?? false, userAgent: navigator.userAgent,
+      };
+      r.adapterString = [ai.vendor, ai.architecture, ai.device, ai.description].filter(Boolean).join(' / ') || '?';
       const res = await fetch(`/api/bench-results?name=test${id}`, { method: 'POST', headers: { 'x-floodsim': '1' }, body: JSON.stringify(r) });
       summary[id] = { steps: r.steps, wall: +r.wallSeconds.toFixed(1), massRel: r.mass.rel, finalVolume: Math.round(r.finalVolume), inflow: Math.round(r.mass.inflowVolume), saved: res.ok };
       log(`  done: ${r.steps} steps in ${r.wallSeconds.toFixed(1)} s · mass rel ${r.mass.rel.toExponential(2)} · final volume ${r.finalVolume.toFixed(0)} m³ · saved ${res.ok}`);
