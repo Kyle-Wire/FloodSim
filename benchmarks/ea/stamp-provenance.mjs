@@ -7,6 +7,10 @@
 //   node benchmarks/ea/stamp-provenance.mjs --archive path/to/Benchmarking_Model_Data.zip
 //   node benchmarks/ea/stamp-provenance.mjs --sha256 <hex>   (when the archive is no longer on disk)
 //
+// --check-only hashes the archive, reports whether it is the expected one and exits without touching any
+// result. It exists so a long run can verify its inputs before it starts rather than after: the check and the
+// stamp then share one expected value, instead of a second copy of the hash living in a CI workflow.
+//
 // The adapter is not read here: benchmarks/ea/run.html already records it in each result as it runs, which is
 // the only place that knows it. This script refuses to stamp a result that has no adapter recorded, so a file
 // stamped by this script always names all three of commit, archive hash and GPU.
@@ -46,9 +50,16 @@ if (archivePath) {
   verifiedFrom = `hashed from ${archivePath}`;
 }
 if (!sha256) { console.error('need --archive <zip> or --sha256 <hex>'); process.exit(1); }
+const checkOnly = argv.includes('--check-only');
 if (sha256.toLowerCase() !== ARCHIVE.sha256) {
-  console.error(`archive SHA-256 mismatch:\n  got      ${sha256}\n  expected ${ARCHIVE.sha256}\nThe inputs are not the archive this benchmark is defined against; not stamping.`);
+  console.error(`archive SHA-256 mismatch:\n  got      ${sha256}\n  expected ${ARCHIVE.sha256}\nThe inputs are not the archive this benchmark is defined against; not ${checkOnly ? 'proceeding' : 'stamping'}.`);
   process.exit(1);
+}
+if (checkOnly) {
+  // A check that was satisfied by an assertion rather than by a measurement is not a check, so say which it
+  // was. --check-only with --sha256 only confirms the operator typed the right hex, and reads as exactly that.
+  console.log(`EA data archive SHA-256 matches ${ARCHIVE.sha256} (${verifiedFrom}).`);
+  process.exit(0);
 }
 
 // ---- which code version produced them

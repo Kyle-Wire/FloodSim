@@ -13,9 +13,14 @@
 #   1. Register a self-hosted runner on a machine with a WebGPU-capable GPU and Chrome or Edge installed,
 #      labelled `webgpu` (Settings → Actions → Runners). A Blackwell-class NVIDIA card running headless Edge
 #      is the configuration the current pinned results were produced on.
-#   2. Unpack the EA benchmark archive to benchmarks/ea/data on that machine — see benchmarks/ea/README.md.
-#      It is ~50 MB and gitignored, so it is a property of the runner, not of the checkout. The archive's
-#      SHA-256 is verified below before anything is scored.
+#   2. Put the EA benchmark inputs on that machine, outside the Actions workspace, and point the two
+#      repository variables below at them — see benchmarks/ea/README.md for the download.
+#        EA_ARCHIVE_ZIP  the ~50 MB Benchmarking_Model_Data.zip itself
+#        EA_DATA_DIR     that archive unpacked
+#      Both live outside the workspace because `actions/checkout` runs `git clean -ffdx`, which deletes
+#      benchmarks/ea/data — it is gitignored, so an unpacked tree inside the checkout cannot survive between
+#      runs. The zip is kept, not discarded after unpacking, because the SHA-256 stamped into every result is
+#      computed from it on each run. A stamp that merely repeated a hash from this file would prove nothing.
 #   3. Confirm `node tests/run-gpu-browser.mjs --probe` reports a non-fallback adapter there.
 # Until then the EA score is defended only when a human runs it, and the report for SPA-91 says so.
 # ---------------------------------------------------------------------------------------------------------
@@ -58,6 +63,14 @@ jobs:
     name: EA SC120002 benchmark score
     runs-on: [self-hosted, webgpu]
     timeout-minutes: 180   # Test 7 alone is ~14 minutes, and a cold run of all eight is well over an hour
+    # bash explicitly: the runner may be Windows (the pinned results were produced on one), where the default
+    # shell is pwsh and the file-staging step below would not parse.
+    defaults:
+      run:
+        shell: bash
+    env:
+      EA_ARCHIVE: ${{ vars.EA_ARCHIVE_ZIP }}
+      EA_DATA: ${{ vars.EA_DATA_DIR }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -65,11 +78,22 @@ jobs:
           node-version: '24'
       - run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
-      # The benchmark is meaningless if the inputs are not the inputs it is defined against, so check before
-      # spending an hour of GPU time rather than after.
+      # The benchmark is meaningless if the inputs are not the inputs it is defined against, so the archive is
+      # hashed before an hour of GPU time is spent rather than after. --check-only computes the SHA-256 of the
+      # zip on the runner and compares it with the expected value held in stamp-provenance.mjs, so the
+      # pre-flight check and the stamp at the end agree by construction.
       - name: Verify the EA data archive is present and unmodified
         run: |
-          test -d benchmarks/ea/data || { echo "benchmarks/ea/data is missing on this runner — see the header of this workflow"; exit 1; }
+          test -n "$EA_ARCHIVE" && test -n "$EA_DATA" || { echo "EA_ARCHIVE_ZIP / EA_DATA_DIR are not set for this repository — see the header of this workflow"; exit 1; }
+          test -f "$EA_ARCHIVE" || { echo "EA archive not found at $EA_ARCHIVE"; exit 1; }
+          test -d "$EA_DATA"    || { echo "EA data directory not found at $EA_DATA"; exit 1; }
+          node benchmarks/ea/stamp-provenance.mjs --archive "$EA_ARCHIVE" --check-only
+
+      # checkout has just deleted any previous benchmarks/ea/data, so stage the inputs the run will read.
+      - name: Stage the EA inputs into the checkout
+        run: |
+          rm -rf benchmarks/ea/data
+          cp -R "$EA_DATA" benchmarks/ea/data
           ls benchmarks/ea/data
 
       - name: Run EA Tests 1-7
@@ -77,8 +101,10 @@ jobs:
 
       # Stamp commit, archive hash and adapter into every result, then score. score.mjs exits non-zero if any
       # measure leaves its band or regresses past tolerance against the committed baseline.
+      # --archive, never --sha256: the hash recorded in each result is computed from the file that was read,
+      # so `verifiedFrom` in the stamp reads "hashed from …" rather than "asserted on the command line".
       - name: Stamp provenance
-        run: node benchmarks/ea/stamp-provenance.mjs --sha256 388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732
+        run: node benchmarks/ea/stamp-provenance.mjs --archive "$EA_ARCHIVE"
 
       - name: Score against the committed baseline
         run: npm run bench:ea:score
