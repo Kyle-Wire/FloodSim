@@ -41,6 +41,8 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   const c = { nx, ny, z }, k = 2 * nx + 12, near = waterNear(c, water, k, 6);
   check('nearest cells: nearest first', nearestCells(c, near, k, 1)[0] === k && nearestCells(c, near, k, 5).every(q => Math.hypot(q % nx - 12, ((q / nx) | 0) - 2) <= 1));
   check('the lidar surface at a gauge above a weir is the pool (3 m), not the tailwater (1 m)', surfaceAtGauge(c, near, k) === 3 && Math.min(...near.map(q => z[q])) === 1);
+  const bed = Float64Array.from(z, v => v - 1.5); // a carved channel: the bed 1.5 m below the lidar surface
+  check('with a carved channel, the surface at a gauge is still the lidar one', surfaceAtGauge({ ...c, z: bed, zSurf: z }, near, k) === 3);
   const s = startDepths({ ...c, mask: new Uint8Array(nx * ny).fill(1) }, water, [{ cells: [k], rise: 0.4 }], { surfR: 6 });
   check('a pool above a weir keeps its own surface: it rises right up to the weir', Math.abs(s.depth[2 * nx + 14] - 0.4) < 1e-6 && Math.abs(s.depth[2 * nx + 15] - 0.4) < 1e-6, `${s.depth[2 * nx + 14].toFixed(2)}, ${s.depth[2 * nx + 15].toFixed(2)}`);
 }

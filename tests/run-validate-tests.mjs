@@ -63,6 +63,8 @@ const MIN = 60e3, T0 = Date.parse('2021-09-01T18:00Z');
   check('scorecard: a design storm is not validated', /design storm/.test(scorecard({ mass, observed: false }).verdict.text));
   const late = scorecard({ gauges: [{ ...g, score: { error: 0.05, lag: -200, obsAtEnd: true, modelAtEnd: false } }], observed: true });
   check('scorecard: a peak cut off by the run end is not scored for timing, and is called the highest level in the run', late.items[1].status === 'info' && late.items[0].note.includes('still rising') && /highest level in the run/.test(late.items[0].label));
+  const cut = scorecard({ hwm, gauges: [{ ...g, score: { error: -0.1, lag: 0, obsAtEnd: true, modelAtEnd: false } }], observed: true });
+  check('scorecard: marks against a run that stopped before the crest say so', /still rising/.test(cut.items[0].note) && /past the crest/.test(cut.verdict.text), cut.verdict.text);
   check('scorecard: custom targets', scorecard({ hwm }, { ...TARGETS, hwmRMSE: [0.05, 0.1] }).items[0].status === 'poor');
 }
 

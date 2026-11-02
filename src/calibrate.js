@@ -49,13 +49,19 @@ function splitCSV(line) { const out = []; let cur = '', q = false; for (const ch
 
 /**
  * Score a run. at(lon, lat, radius) → { ground, wse } (wse = highest modelled water surface within radius, or null if
- * dry). → { points: [{ ...obs, ground, model, error, kind }], n, bias, mae, rmse, within15, hits, misses, falseAlarms, score }
+ * dry). → { points: [{ ...obs, ground, model, error, kind, skip? }], n, bias, mae, rmse, within15, hits, misses, falseAlarms,
+ * skipped, score }. A level mark more than 1 m below the lidar ground at its point is not scored (skip says why): it is
+ * under a structure the lidar sees as ground, a bridge or deck (Ida's Cherry Street mark sits 4 m under the deck), and
+ * the model's water there is rain on top of it.
  * score: RMSE of levels (m) plus 0.25 m per wrong flooded / dry call, so a sweep can rank runs with mixed observations.
  */
 export function scoreRun(obs, at, radius = 3) {
-  const pts = [], e = []; let hits = 0, misses = 0, falseAlarms = 0, wrong = 0, calls = 0;
+  const pts = [], e = []; let hits = 0, misses = 0, falseAlarms = 0, wrong = 0, calls = 0, skipped = 0;
   for (const o of obs) {
     const m = at(o.lon, o.lat, radius); if (!m) continue;
+    if (o.wse != null && m.ground != null && o.wse < m.ground - 1) { // under a bridge or deck: not on the model's ground
+      pts.push({ ...o, ground: m.ground, kind: 'level', skip: `${(m.ground - o.wse).toFixed(1)} m below the lidar ground there (under a bridge or deck): not scored` }); skipped++; continue;
+    }
     const depth = m.wse == null ? 0 : Math.max(0, m.wse - m.ground), p = { ...o, ground: m.ground, modelDepth: depth };
     if (o.wse != null) { p.kind = 'level'; p.model = m.wse ?? m.ground; p.error = p.model - o.wse; e.push(p.error); }
     else if (o.depth != null) { p.kind = 'depth'; p.model = depth; p.error = depth - o.depth; e.push(p.error); }
@@ -69,7 +75,7 @@ export function scoreRun(obs, at, radius = 3) {
   }
   const n = e.length, bias = n ? e.reduce((a, b) => a + b, 0) / n : null, mae = n ? e.reduce((a, b) => a + Math.abs(b), 0) / n : null;
   const rmse = n ? Math.sqrt(e.reduce((a, b) => a + b * b, 0) / n) : null, within15 = n ? e.filter(x => Math.abs(x) <= 0.15).length / n : null;
-  return { points: pts, n, bias, mae, rmse, within15, hits, misses, falseAlarms, calls, score: (rmse ?? 0) + 0.25 * (calls ? wrong / calls : 0) * (n ? 1 : 4) };
+  return { points: pts, n, bias, mae, rmse, within15, hits, misses, falseAlarms, calls, skipped, score: (rmse ?? 0) + 0.25 * (calls ? wrong / calls : 0) * (n ? 1 : 4) };
 }
 
 /** Parameter sets for a sweep: a grid over the chosen parameters (each at `levels` values), at most `max` runs. */

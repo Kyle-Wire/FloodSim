@@ -233,7 +233,7 @@ export function initReport(map, api) {
       const rows = sc.items.map(it => ({ group: it.group, check: it.label, value: value(it), target: target(it), status: mark[it.status], note: it.note }));
       const tables = [{ name: 'scorecard' + key, title: 'Checks (target: good / fair)', cols: [['group', 'group'], ['check', 'check'], ['value', 'value'], ['target', 'target_good_fair'], ['status', 'status'], ['note', 'note']], rows }];
       if (v.hwm?.points?.length) tables.push({ name: 'high_water_marks' + key, title: `Observations${v.event ? ': ' + v.event.replace('USGS STN, ', 'USGS high-water marks, ') : ''}`,
-        cols: [['name', 'mark'], ['kind', 'kind'], ['observed', `observed_${u.len}`, 2], ['model', `model_${u.len}`, 2], ['error', `error_${u.len}`, 2], ['call', 'flooded_call']],
+        cols: [['name', 'mark'], ['kind', 'kind'], ['observed', `observed_${u.len}`, 2], ['model', `model_${u.len}`, 2], ['error', `error_${u.len}`, 2], ['call', 'flooded_call_or_note']],
         rows: v.hwm.points.map(p => ({ name: p.name, kind: p.kind ?? 'flooded / dry', observed: p.observed == null ? NaN : u.L(p.observed), model: p.model == null ? NaN : u.L(p.model), error: p.error == null ? NaN : u.L(p.error), call: p.call ?? '' }))
           .sort((a, b) => (Number.isFinite(b.error) ? Math.abs(b.error) : -1) - (Number.isFinite(a.error) ? Math.abs(a.error) : -1)) });
       const figures = [];

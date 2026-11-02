@@ -1434,8 +1434,8 @@ async function fillGauges(r, v) {
     } catch (e) { out.why = 'gauge readings unavailable: ' + e.message; }
   }));
 }
-const hwmOf = (sc) => sc && { n: sc.n, bias: sc.bias, mae: sc.mae, rmse: sc.rmse, within15: sc.within15, calls: sc.calls, hits: sc.hits, misses: sc.misses, falseAlarms: sc.falseAlarms,
-  points: sc.points.map(p => ({ name: p.name, lon: p.lon, lat: p.lat, kind: p.kind, observed: p.wse ?? p.depth ?? null, model: p.model ?? null, error: p.error ?? null, call: p.call ?? null })) };
+const hwmOf = (sc) => sc && { n: sc.n, bias: sc.bias, mae: sc.mae, rmse: sc.rmse, within15: sc.within15, calls: sc.calls, hits: sc.hits, misses: sc.misses, falseAlarms: sc.falseAlarms, skipped: sc.skipped ?? 0,
+  points: sc.points.map(p => ({ name: p.name, lon: p.lon, lat: p.lat, kind: p.kind, observed: p.wse ?? p.depth ?? null, model: p.model ?? null, error: p.error ?? null, call: p.skip ?? p.call ?? null })) };
 /**
  * Baseflow warm-up: before the storm, the rivers run at their flow at the storm's start (the design base, or the
  * recorded flow then) for the set hours, with no rain, from the start levels; the storm run starts from that state, so
@@ -2264,7 +2264,7 @@ function drawFema(corners) {
   } else { map.getSource('fema-bfe').setData(fc); for (const l of ['fema-bfe', 'fema-bfe-label']) map.setLayoutProperty(l, 'visibility', vis); }
 }
 $('tBld').onchange = () => { for (const l of ['bld-fill', 'bld-line']) map.setLayoutProperty(l, 'visibility', $('tBld').checked ? 'visible' : 'none'); };
-for (const [id, fmt] of [['rain', v => v + ' mm/hr'], ['dur', v => v + ' min'], ['uplift', v => '+' + v + ' %'], ['tail', v => v + ' min'], ['speed', () => speedMul() === Infinity ? 'max' : speedMul().toLocaleString() + '×']]) {
+for (const [id, fmt] of [['rain', v => v + ' mm/hr'], ['dur', v => v + ' min'], ['uplift', v => '+' + v + ' %'], ['tail', v => (v < 60 ? v + ' min' : fmtDur(Number(v)))], ['speed', () => speedMul() === Infinity ? 'max' : speedMul().toLocaleString() + '×']]) {
   const upd = () => { $(id + 'Out').textContent = fmt($(id).value); }; $(id).addEventListener('input', upd); upd();
 }
 $('roofOut').textContent = $('roof').value + ' %'; $('opacityOut').textContent = $('opacity').value + ' %';
@@ -2691,6 +2691,7 @@ function scoreAndShow() {
   const lines = [];
   if (sc.n) lines.push(`<b>Levels and depths (${sc.n}):</b> bias ${ftm(sc.bias)}, mean error ${ftm(sc.mae).slice(1)}, RMSE ${ftm(sc.rmse).slice(1)}, ${Math.round(sc.within15 * 100)} % within 15 cm`);
   if (sc.calls) lines.push(`<b>Flooded / dry:</b> ${sc.hits} flooded in both, ${sc.misses} missed, ${sc.falseAlarms} false alarms of ${sc.calls}`);
+  if (sc.skipped) lines.push(`Not scored: ${sc.points.filter(p => p.skip).map(p => `${p.name} (${p.skip.replace(': not scored', '')})`).join(' · ')}`);
   const worst = sc.points.filter(p => p.error != null).sort((a, b) => Math.abs(b.error) - Math.abs(a.error)).slice(0, 5);
   if (worst.length) lines.push('Largest misses: ' + worst.map(p => `${p.name} ${ftm(p.error)}`).join(' · '));
   $('calScore').innerHTML = `Run scored (${PARAMS.manning.label.split(' ×')[0]} ${cal().manning}×, infiltration ${cal().infil}×, clogging ${Math.round(cal().clog * 100)} %): ` + lines.join('<br>');

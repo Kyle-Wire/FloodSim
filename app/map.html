@@ -461,7 +461,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <div class="hyeto-plot" id="wlPlot"></div>
       </figure>
       <p class="note" id="stormSummary">Build a model to load Atlas 14 estimates for the site.</p>
-      <div class="field"><label for="tail">Keep running after the storm</label><output id="tailOut"></output><input type="range" id="tail" min="0" max="180" step="5" value="30"></div>
+      <div class="field"><label for="tail">Keep running after the storm</label><output id="tailOut"></output><input type="range" id="tail" min="0" max="720" step="5" value="30" title="River crests come hours after the rain: a validation run against high-water marks should reach them"></div>
       <div class="field"><label for="roof">Roof runoff routed to ground</label><output id="roofOut"></output><input type="range" id="roof" min="0" max="100" step="5" value="100"></div>
       <div class="field"><label for="infilModel">Infiltration</label>
         <select id="infilModel"><option value="ga">Green-Ampt from the soil survey</option><option value="const">Constant rate by soil group</option></select></div>

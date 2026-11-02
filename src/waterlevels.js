@@ -226,7 +226,8 @@ export function nearestCells(c, cells, k, n = Infinity) {
  * pool metres too high (Fairmount Dam on the Schuylkill: 2.7 m).
  */
 export function surfaceAtGauge(c, cells, k) {
-  const z = nearestCells(c, cells, k, 9).map(q => c.z[q]).sort((a, b) => a - b);
+  const zs = c.zSurf ?? c.z; // the lidar surface, not a carved channel bed (startDepths rises from the same surface)
+  const z = nearestCells(c, cells, k, 9).map(q => zs[q]).sort((a, b) => a - b);
   return z.length ? z[z.length >> 1] : null;
 }
 

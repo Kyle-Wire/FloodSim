@@ -31,6 +31,11 @@ check('GeoJSON depths and flooded reports', gj.length === 3 && gj[0].depth === 0
   const plan = sweepPlan(['manning', 'clog'], 3);
   check('sweep plan: a grid over the chosen parameters', plan.length === 9 && plan[0].manning === 0.6 && plan[8].manning === 1.6 && plan[8].clog === 0.7 && plan[4].manning === 1.1);
 }
+{ // a mark under a bridge deck: the lidar ground is the deck, 4 m above the mark; rain on the deck is not the river
+  const at = (lon) => (lon === 1 ? { ground: 8.48, wse: 8.58 } : { ground: 3, wse: 4.2 });
+  const sc = scoreRun([{ name: 'deck', lon: 1, lat: 0, wse: 4.45 }, { name: 'bank', lon: 2, lat: 0, wse: 4.0 }], at);
+  check('a mark more than 1 m under the lidar ground is not scored, and says why', sc.skipped === 1 && sc.n === 1 && Math.abs(sc.bias - 0.2) < 1e-9 && /under a bridge or deck/.test(sc.points[0].skip), sc.points[0].skip);
+}
 
 console.log(fails ? `\n${fails} FAILED` : '\nall calibration tests passed');
 process.exit(fails ? 1 : 0);

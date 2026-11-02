@@ -61,11 +61,14 @@ export function matchEvent(events, storm) {
 export function scorecard(input, T = TARGETS) {
   const items = [], add = (group, label, [value, unit], target, status, note = '') => items.push({ group, label, value, unit, target, status, note });
   const { hwm, gauges = [], rain, mass, observed } = input;
+  const short = gauges.some(g => g.score?.obsAtEnd); // the river was still rising at the end: the marks record a crest the run never reached
+  const shortNote = 'the gauges were still rising when the run ended: marks record the crest, so the model reads low here; run longer (Keep running after the storm)';
   // observations
   if (hwm?.n) {
-    add('observations', `High-water marks: RMSE of the level (${hwm.n})`, [hwm.rmse, 'm'], T.hwmRMSE, level(hwm.rmse, T.hwmRMSE));
-    add('observations', 'High-water marks: bias (model − observed)', [hwm.bias, 'm'], T.hwmBias, level(Math.abs(hwm.bias), T.hwmBias));
+    add('observations', `High-water marks: RMSE of the level (${hwm.n})`, [hwm.rmse, 'm'], T.hwmRMSE, level(hwm.rmse, T.hwmRMSE), short ? shortNote : '');
+    add('observations', 'High-water marks: bias (model − observed)', [hwm.bias, 'm'], T.hwmBias, level(Math.abs(hwm.bias), T.hwmBias), short ? shortNote : '');
     add('observations', 'High-water marks within 15 cm', [hwm.within15, 'share'], null, 'info');
+    if (hwm.skipped) add('observations', 'High-water marks not scored', [hwm.skipped, 'text'], null, 'info', 'more than 1 m below the lidar ground at the mark: under a bridge or deck the lidar sees as ground');
   }
   if (hwm?.calls) {
     const wet = hwm.hits + hwm.misses, rate = wet ? hwm.hits / wet : null;
@@ -101,5 +104,6 @@ export function scorecard(input, T = TARGETS) {
       : fair ? { status: 'fair', text: `Within reach: ${fair} of ${obs.length} observation checks are fair, none poor.` }
       : { status: 'good', text: `All ${obs.length} observation checks meet their targets.` };
   }
+  if (short && verdict.status !== 'info') verdict.text += ' The river was still rising when the run ended: run it past the crest before trusting the levels.';
   return { items, verdict };
 }

@@ -326,7 +326,9 @@ rivers at the flight-day water surface; the channel below is missing. The estima
 - **The section:** parabolic across the flattened width, its centre 1.5 × the mean bankfull depth below the bank tops,
   less the bank height above the water (that part was full on the flight day), at least 0.3 m; bank height is the
   median rise from the water's edge to the highest ground within half the bankfull width.
-- **In the run:** the carved channel starts full to the lidar surface; gauge start levels rise from that surface.
+- **In the run:** the carved channel starts full to the lidar surface; gauge start levels rise from that surface (the
+  gauge's rise too is measured from the lidar surface, not the carved bed: it was, and started Ida's Fairmount pool
+  0.36 m high and the tidal reach 1.3 m high).
 - Ellicott City (Appalachian Highlands): the Patapsco drains 292 mi², bankfull 160 ft wide and 5.7 ft deep; its banks
   stand 5.9 ft above the flight-day water, so 2.7 ft is carved below it at the centre. 6,967 m³ of channel, starts full;
   the run's water balance 1.8e-6. An estimate: use surveyed sections where you have them (Rivers, below).
@@ -732,6 +734,19 @@ books that do not close make it poor outright. A design storm, or an area with n
 validated and why. The report shows the gauges' observed and modelled hydrographs and every mark's error; the export
 has `scorecard.csv`, `high_water_marks.csv` and the figures; `summary.json` keeps the inputs (`validation`). Gauge
 readings are fetched when the run finishes (at most 20 s). `npm run test:validate`.
+- A level mark more than 1 m below the lidar ground at its point is not scored, and the table says why: it sits under a
+  structure the lidar sees as ground (a bridge or deck), where the model's water is rain on top of it.
+- When the gauges were still rising at the end of the run, the marks and the verdict say so: marks record the crest,
+  so a run that stops before it reads low. River crests come hours after the rain: *Keep running after the storm* goes
+  to 12 h.
+- **Ida 2021 at Fairmount Dam** (Schuylkill, 1.7 × 2.3 km at 2 m, gauge-corrected MRMS rain, recorded inflow at the
+  Philadelphia gauge, gauge start levels, run 14:06 UTC 1 Sep to 08:06 UTC 2 Sep). On the lidar surface alone the model
+  was 1.6–1.9 m high at both gauges and the marks: the hydro-flattened river carried the flood above its channel. With
+  the estimated channel (Appalachian Highlands curve, 1.55 m carved at the centre): 30th Street gauge −0.13 m,
+  Fairmount −0.68 m, four river marks −0.4 to −0.8 m. Both gauges crested 5.5 h after this run ended (0.34 and 0.54 m
+  higher), which accounts for much of the marks' shortfall; the Cherry Street mark (4 m under the bridge deck) is not
+  scored. The run's own books: surface 1.2e-6, with the pipes 1.4e-6. The gauge-corrected rain over the area (53 mm)
+  is well under the radar alone (91 mm) and the gridded record (86 mm): not explained yet.
 
 **Projects** (header *Projects* / *Save*, Ctrl+S; `app/projects.js`, `/api/projects` in the server, loopback only).
 Each project is a folder in `Documents\FloodSim Projects` (override with `FLOODSIM_PROJECTS`):
