@@ -18,7 +18,7 @@ May 2010 test specifications.
 | 6A | Lab dam break past a building | 1010×56 @ 0.1 m | **12 / 14** | — | −4e-7 | 37 s |
 | 6B | Same at field scale (×20) | 1010×56 @ 2 m | **13 / 13** | — | −2e-5 | 55 s |
 | 7 | 1D river linked to 2D floodplains, 72 h | 150×400 @ 20 m + 42-section river | **18 / 22** | — | −3.8e-5 (river 0.09 %) | 14 min |
-| 8A/8B | Urban rainfall, surcharging sewer (Glasgow) | — | not run (data not published; EA supplies on request) | | | |
+| 8A/8B | Urban rainfall, surcharging sewer (Glasgow) | — | not run — inputs are not in the published archive ([route and request](test8-data-request.md)) | | | |
 
 **88 / 94** reported measures fall inside the spread of the participating packages, and every probe series in
 Tests 1, 2, 4 and 5 sits inside the envelope of the seven independently run codes.
@@ -66,9 +66,13 @@ Tests 1, 2, 4 and 5 sits inside the envelope of the seven independently run code
 
 ## Reproduce
 
-1. Data (Open Government Licence v3): `source/Benchmarking_Model_Data.zip` from
+1. Data: `source/Benchmarking_Model_Data.zip` from
    [GOV.UK](https://www.gov.uk/flood-and-coastal-erosion-risk-management-research-reports/2d-benchmarking-evaluating-the-latest-generation-of-the-hydraulic-models-for-fcrm)
-   (SHA-256 `388c2789…bc732`), unpacked into `data/`.
+   (SHA-256 `388c2789…bc732`), unpacked into `data/`. The GOV.UK page footer gives Open Government Licence v3
+   "except where otherwise stated"; the archive itself carries no licence statement and the report is marked
+   "all rights reserved … with prior permission". A request asking the EA to confirm the position is drafted and
+   awaiting sign-off ([`test8-data-request.md`](test8-data-request.md), finding A); treat the OGL reading as
+   unconfirmed until they answer.
 2. Run: start the server (`npm start`), open `/benchmarks/ea/run.html?tests=1,2,3,4,5,6a,6b,7`. Results are saved to
    `results/test*.json` (probe series, peak and final depth maps, mass books).
 3. Score: `node benchmarks/ea/score.mjs` → `results/score.txt`, `results/score.json`.
