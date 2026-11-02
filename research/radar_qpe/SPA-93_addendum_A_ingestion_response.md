@@ -169,7 +169,17 @@ The window maxima reproduce exactly — 127.8 mm/h at 22:36 and 22:38 (and at 22
 
 So neither "the frames are duplicated" nor "the 2-minute cadence is real" is the right description. The right statistic is the fraction of wet pixels that change between consecutive frames, and `update_census.py` measures it over whole event windows rather than seven hand-picked pairs.
 
-<!-- PENDING: update_census results -->
+**It finished, and it moves my own headline number.** Scored on the fraction of wet pixels changed, with a low-information threshold of 0.25:
+
+| Window | Pairs | Bit-identical | **Weak updates (`f` < 0.25)** | Pairs > 90 % changed | Longest weak run | **Implied new-observation interval** |
+|---|---|---|---|---|---|---|
+| Ellicott City 2016, 22:00Z–02:00Z | 117 | 17 (14.5 %) | **32.5 %** | 53.8 % | 1 | **2.96 min** |
+| Ellicott City 2018, 17:30Z–21:00Z | 93 | 5 (5.4 %) | **19.4 %** | 39.8 % | 2 | **2.48 min** |
+| Ida / Philadelphia, 00:00Z–04:00Z | 118 | 0 (0.0 %) | **0.0 %** | 97.5 % | 0 | **2.00 min** |
+
+The `f` distribution over Ellicott City 2016 is strongly bimodal, exactly as the seven hand-picked pairs suggested: median 0.917, mean 0.619, p10 **0.0**, p90 **1.0**. Frames mostly either refresh almost completely or barely at all.
+
+**So §5.5's "effective refresh 2.0–2.3 minutes" was wrong, and wrong in the direction that flattered my conclusion.** The honest range is **2.0–3.0 min**, and the weak-update fraction for 2016 is **32.5 %, not the 14.5 % byte-equality found** — one pair in three rather than one in seven. SPA-94's intuition was closer to right than my refutation allowed. The 4–6 minute volume-scan hypothesis is still refuted and advection correction still ranks third (main document §5.5.1 records that decision, which I owed the board from this census), but the guard specified below is load-bearing rather than precautionary, and the era dependence is sharp: **32.5 % in 2016, 19.4 % in 2018, 0.0 % in 2021.** The pre-v12 cases need the guard and the v12 case does not — which is inconvenient, because the pre-v12 cases are also the ones with the rate caps.
 
 **The requirement in §5.5 must be broadened, and it is broadened because of SPA-94's observation.** §5.5 specified: detect duplicate frames, exclude them from the motion estimate, carry the previous displacement across the duplicate run using real elapsed time. That guard keys on byte-equality and would have caught **none** of the four weak-update pairs above — yet those are the pairs on which cross-correlation is least able to see motion, because almost nothing in the field has moved to correlate against.
 
@@ -323,6 +333,8 @@ OUTDIR=out MRMS_CACHE=... python update_census.py ec2016 ec2018 ida
 ```
 
 Python 3 with numpy; no credentials, no paid service, nothing under `src/`.
+
+Revision 2 adds five more — `fetch_budget.py`, `seamless_hsr_probe.py`, `hsr_zr_consistency.py`, `hour_label_test.py` and `review_followups.py` — listed with their outputs and invocations in main document §11, and the per-host transfer cap they all now respect in §11.1. Run them with `python -P` so the interpreter does not put the working directory on `sys.path`; downloaded archive files are cached in `$MRMS_CACHE`, which is deliberately not the directory the scripts live in.
 
 ## A.13 What this addendum does not change
 

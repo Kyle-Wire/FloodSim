@@ -46,8 +46,14 @@ def item4():
          "ellicott_city_2016_rate", "ellicott_city_2016_hourly"),
         ("Harvey / Brays Bayou 2017", "measured_harvey_rate.json",
          "harvey_brays_rate", None),
-        ("Ida / Philadelphia 2021", "measured_ida.json",
-         "ida_philadelphia_rate", "ida_philadelphia_hourly"),
+        # The truncated Ida window is superseded by ida_full; see hour_label_test.py.
+        # Its hourly arm still lives in measured_ida.json, hence the third element.
+        ("Ida / Philadelphia 2021 (window corrected)", "measured_ida_full.json",
+         "ida_philadelphia_rate_full",
+         ("measured_ida.json", "ida_philadelphia_hourly")),
+        ("Ellicott City 2018 (window corrected)", "measured_ec2018_full.json",
+         "ellicott_city_2018_rate_full",
+         ("measured_ec2018_full.json", "ellicott_city_2018_hourly_full")),
     ]
     rows = []
     for label, fn, rk, hk in cases:
@@ -64,10 +70,14 @@ def item4():
                **{k: (round(v, 2) if v else v) for k, v in peaks.items()},
                "peak_pixel_2min_mm_h": rate["peak_pixel_rate_mm_h"]}
         # The hourly product's own peak hour, i.e. what hourly forcing would give.
+        # Only usable where the rate window fully contains that hour -- the hourly
+        # file stamped T covers [T-1h, T), so a rate window starting at T misses it.
         if hk:
-            hrs = [h for h in load(fn)[hk]["hours"] if not h.get("missing")]
+            hfn, hkey = (hk if isinstance(hk, tuple) else (fn, hk))
+            hrs = [h for h in load(hfn)[hkey]["hours"] if not h.get("missing")]
             ph = max((h["radar_only_mean_mm"] for h in hrs), default=None)
             row["peak_hour_radar_only_mm_h"] = ph
+            row["peak_hour_source"] = f"{hkey} in {hfn}"
         else:
             row["peak_hour_radar_only_mm_h"] = peaks["peak_60min_box_mean_mm_h"]
             row["peak_hour_source"] = "60-min rolling mean of the 2-min series (no hourly pull for this case)"
@@ -93,23 +103,46 @@ def hourly_arrays(entry):
 
 
 def aggregation_stability(r, g, windows=(1, 2, 3, 6, 12)):
-    """Ratio spread as a function of accumulation window length."""
+    """Ratio spread as a function of accumulation window length.
+
+    Reported over **every block phase**, not just phase 0. Where the blocks
+    start is arbitrary, and on the Charleston series it matters a lot: at a
+    6-hour window one phase gives log-SD 0.21 and another 0.79, so quoting a
+    single phase can make the collapse look cleaner than it is. The phase mean
+    is the figure to quote and the phase range is the honesty.
+    """
     out = []
     for w in windows:
-        n = (len(r) // w) * w
-        rr = r[:n].reshape(-1, w).sum(axis=1)
-        gg = g[:n].reshape(-1, w).sum(axis=1)
-        m = rr > 2.0                     # only blocks with real rain
-        if m.sum() < 2:
-            out.append({"window_h": w, "blocks": int(m.sum())})
+        phases = []
+        for ph in range(w):
+            rr, gg = r[ph:], g[ph:]
+            n = (len(rr) // w) * w
+            if n < 2 * w:
+                continue
+            R = rr[:n].reshape(-1, w).sum(axis=1)
+            G = gg[:n].reshape(-1, w).sum(axis=1)
+            m = R > 2.0                  # only blocks with real rain
+            if m.sum() < 2:
+                continue
+            ratio = G[m] / R[m]
+            phases.append({
+                "phase_h": ph, "blocks": int(m.sum()),
+                "ratio_min": round(float(ratio.min()), 3),
+                "ratio_max": round(float(ratio.max()), 3),
+                "ratio_median": round(float(np.median(ratio)), 3),
+                "ratio_spread_max_over_min": round(float(ratio.max() / ratio.min()), 2),
+                "log_sd": round(float(np.log(ratio).std()), 3)})
+        if not phases:
+            out.append({"window_h": w, "phases_scored": 0})
             continue
-        ratio = gg[m] / rr[m]
-        out.append({"window_h": w, "blocks": int(m.sum()),
-                    "ratio_min": round(float(ratio.min()), 3),
-                    "ratio_max": round(float(ratio.max()), 3),
-                    "ratio_median": round(float(np.median(ratio)), 3),
-                    "ratio_spread_max_over_min": round(float(ratio.max() / ratio.min()), 2),
-                    "log_sd": round(float(np.log(ratio).std()), 3)})
+        sds = [p["log_sd"] for p in phases]
+        out.append({
+            "window_h": w, "phases_scored": len(phases),
+            "log_sd_mean_over_phases": round(float(np.mean(sds)), 3),
+            "log_sd_min_over_phases": round(min(sds), 3),
+            "log_sd_max_over_phases": round(max(sds), 3),
+            "phase0": phases[0],
+            "all_phases": phases})
     return out
 
 

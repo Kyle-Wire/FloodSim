@@ -23,6 +23,7 @@ to the Geospatial Engineer's ticket. Nothing here is imported by `src/`.
 | `hsr_zr_consistency.py` | Pushes `SeamlessHSR` dBZ through the published per-class Z–R relations and compares with `PrecipRate` at the same pixel, classified by `PrecipFlag` | `out/measured_hsr_zr.json` |
 | `hour_label_test.py` | Which end of its accumulation window an hourly QPE file is stamped with | `out/measured_hour_label.json` |
 | `review_followups.py` | Peak-intensity attenuation from hourly forcing on real storms; bias estimability vs aggregation window; hourly-`K` against event-`K` sensitivity | `out/measured_review_followups.json` |
+| `partial_census.py` | Rate-cap census over **only the frames already in `$MRMS_CACHE`**, issuing no requests, with the cached fraction reported. For when a host starts throttling and the right answer is to stop asking rather than ask harder | `out/measured_partial_<label>.json` |
 
 ## Running
 
