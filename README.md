@@ -13,10 +13,8 @@ npm start                        # → http://localhost:8766  (static files + ca
 Phase 1 is closed and **Gate B passed** for the published tests: on the UK Environment Agency 2D benchmarks
 (Néelz & Pender 2013) 88 of 94 measures fall inside the spread of the established packages, and every probe series in
 Tests 1, 2, 4 and 5 sits inside the envelope of seven independently run codes (HEC-RAS, LISFLOOD-FP ×3, TELEMAC-2D,
-ANUGA). Test 7 (1D river ↔ 2D floodplains, the first Phase 2 capability) scores 18 of 22. Tests 8A/8B are unrun: their
-inputs are not in the EA's published archive, and a request for them is drafted
-([`benchmarks/ea/test8-data-request.md`](benchmarks/ea/test8-data-request.md)). Details, deviations and how to
-reproduce: [`benchmarks/ea/README.md`](benchmarks/ea/README.md).
+ANUGA). Test 7 (1D river ↔ 2D floodplains, the first Phase 2 capability) scores 18 of 22. Tests 8A/8B need data the
+EA supplies on request. Details, deviations and how to reproduce: [`benchmarks/ea/README.md`](benchmarks/ea/README.md).
 
 **Phase 2 (urban physics) is under way:** rivers, culverts, channel conditioning, storage and green infrastructure
 are in (below). **Gate C prep** ([`benchmarks/gatec/README.md`](benchmarks/gatec/README.md)): the combined mass balance

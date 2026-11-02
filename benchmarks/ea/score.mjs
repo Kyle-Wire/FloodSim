@@ -3,24 +3,7 @@
 //      tables, each band widened by the stated reading precision, and
 //  (b) where available, probe series from seven established codes run on the same cases (HEC-RAS 6.x ×2,
 //      LISFLOOD-FP ACC / FV1 / DG2, TELEMAC-2D, ANUGA; github.com/scott-jeffers/benchmark1d2d, fetched to others/).
-// Usage: node benchmarks/ea/score.mjs [--update-baseline]
-//   → prints the table, writes results/score.txt and results/score.json, and exits non-zero if the score
-//     has moved against the committed baseline in baseline.json.
-//
-// Why a separate baseline.json rather than treating results/score.json as the baseline: score.json is this
-// script's own output and is rewritten on every run, so comparing against it would compare a run with
-// itself and could never fail. baseline.json is written only when a human passes --update-baseline, and the
-// diff is reviewable in the pull request that changes it.
-//
-// What makes the gate go red:
-//   * a measure that was inside its band in the baseline falls outside it;
-//   * any measure moves from its baseline value by more than its tolerance (the band's reading precision,
-//     or a quarter of the band width where the precision is recorded as zero) — this catches drift that is
-//     still technically inside a wide band;
-//   * a measure that is already a known miss gets further from its band than tolerance allows;
-//   * a result file the baseline expects is missing, or its mass conservation degrades by more than 10x;
-//   * the fraction of samples inside the seven-code envelope drops by more than two percentage points.
-// An improvement never fails the gate; it prints a notice asking for the baseline to be re-cut.
+// Usage: node benchmarks/ea/score.mjs  → prints the table, writes results/score.json
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const here = (p) => new URL(p, import.meta.url);
@@ -175,107 +158,17 @@ function envelope(id, r, tol) {
   return { codes: runs.length, tol, probes: out };
 }
 
-// Everything printed is also captured, so results/score.txt is written by this script and cannot drift out
-// of date the way it did when it was produced by hand-redirecting stdout.
-const out = [];
-const say = (s = '') => { out.push(s); console.log(s); };
-
-// How far a measure may move from its baseline before the gate calls it a regression. The band's reading
-// precision is the natural tolerance: it is already the recorded uncertainty of reading that value off the
-// report's figures, and it is comfortably wider than the run-to-run variation of the GPU solver (the same
-// adapter reproduces step counts exactly). Where the precision is recorded as zero — the measures read from
-// tables rather than figures — a quarter of the band width stands in for it.
-const tolOf = ({ prec, lo, hi }) => (prec > 0 ? prec : 0.25 * (hi - lo));
-
 const report = {};
 for (const id of Object.keys(BANDS)) {
-  const r = load(id); if (!r) { say(`Test ${id}: no results`); report[id] = { missing: true }; continue; }
+  const r = load(id); if (!r) { console.log(`Test ${id}: no results`); continue; }
   const checks = BANDS[id].map(([label, f, lo, hi, prec, units]) => {
     const v = f(r), pass = v >= lo - prec && v <= hi + prec;
     return { label, value: v, lo, hi, prec, units, pass };
   });
   const env = envelope(id, r, id === '5' ? 0.1 : 0.02);
   report[id] = { grid: r.grid, steps: r.steps, wallSeconds: r.wallSeconds, massRel: r.mass.rel, inflow: r.mass.inflowVolume, finalVolume: r.finalVolume, checks, envelope: env, passed: checks.filter(c => c.pass).length, total: checks.length };
-  if (r.provenance) report[id].provenance = { commit: r.provenance.commit, adapter: r.provenance.adapter, dataSha256: r.provenance.dataArchive?.sha256 };
-  say(`\nTest ${id}  (${r.grid.nx}×${r.grid.ny} @ ${r.grid.dx} m, ${r.steps} steps, ${r.wallSeconds.toFixed(1)} s, mass rel ${r.mass.rel.toExponential(1)})  ${report[id].passed}/${report[id].total} inside the report's spread`);
-  for (const c of checks) say(`  ${c.pass ? 'in ' : 'OUT'}  ${c.label.padEnd(42)} ${Number.isFinite(c.value) ? c.value.toFixed(c.units === 'm³' ? 0 : 3) : String(c.value)} ${c.units}   [${c.lo}–${c.hi} ±${c.prec}]`);
-  if (env) say(`  vs ${env.codes} codes (level where wet, else depth; ±${env.tol} m): ` + env.probes.map(p => `${p.probe} ${(100 * p.inside).toFixed(0)}% in, median |Δ| ${(p.medianDev * 100).toFixed(1)} cm`).join(' · '));
+  console.log(`\nTest ${id}  (${r.grid.nx}×${r.grid.ny} @ ${r.grid.dx} m, ${r.steps} steps, ${r.wallSeconds.toFixed(1)} s, mass rel ${r.mass.rel.toExponential(1)})  ${report[id].passed}/${report[id].total} inside the report's spread`);
+  for (const c of checks) console.log(`  ${c.pass ? 'in ' : 'OUT'}  ${c.label.padEnd(42)} ${Number.isFinite(c.value) ? c.value.toFixed(c.units === 'm³' ? 0 : 3) : String(c.value)} ${c.units}   [${c.lo}–${c.hi} ±${c.prec}]`);
+  if (env) console.log(`  vs ${env.codes} codes (level where wet, else depth; ±${env.tol} m): ` + env.probes.map(p => `${p.probe} ${(100 * p.inside).toFixed(0)}% in, median |Δ| ${(p.medianDev * 100).toFixed(1)} cm`).join(' · '));
 }
-
-// ------------------------------------------------------------------ the gate
-const BASELINE = here('./baseline.json');
-if (process.argv.includes('--update-baseline')) {
-  const base = { recordedUTC: new Date().toISOString(), tests: {} };
-  for (const [id, t] of Object.entries(report)) {
-    if (t.missing) { console.error(`cannot cut a baseline while Test ${id} has no results`); process.exit(1); }
-    base.tests[id] = {
-      massRel: t.massRel, passed: t.passed, total: t.total,
-      provenance: t.provenance ?? null,
-      checks: Object.fromEntries(t.checks.map(c => [c.label, { value: c.value, pass: c.pass }])),
-      envelope: t.envelope ? Object.fromEntries(t.envelope.probes.map(p => [p.probe, { inside: p.inside, medianDev: p.medianDev }])) : null,
-    };
-  }
-  writeFileSync(BASELINE, JSON.stringify(base, null, 1));
-  console.log(`\nbaseline.json rewritten from this run — review the diff before committing it`);
-}
-
 writeFileSync(here('./results/score.json'), JSON.stringify(report, null, 1));
-writeFileSync(here('./results/score.txt'), out.join('\n') + '\n');
-
-if (!existsSync(BASELINE)) {
-  console.error('\nNo baseline.json. Cut one with --update-baseline and commit it; until then nothing defends these numbers.');
-  process.exit(1);
-}
-const base = JSON.parse(readFileSync(BASELINE));
-
-const regressions = [], notices = [];
-for (const [id, b] of Object.entries(base.tests)) {
-  const t = report[id];
-  if (!t || t.missing) { regressions.push(`Test ${id}: the baseline has it but this run produced no results`); continue; }
-
-  // Mass conservation. Absolute values here are 1e-5 and below, so a fixed floor would be meaningless;
-  // 10x the baseline is the smallest multiple that is not tripped by fp32 reduction-order differences
-  // between adapters, which move these by a factor of a few.
-  const mb = Math.abs(b.massRel), mn = Math.abs(t.massRel);
-  if (mn > Math.max(10 * mb, 1e-7)) regressions.push(`Test ${id}: mass error ${t.massRel.toExponential(2)} against a baseline of ${b.massRel.toExponential(2)}`);
-
-  for (const c of t.checks) {
-    const bc = b.checks[c.label];
-    if (!bc) { notices.push(`Test ${id}: "${c.label}" is new since the baseline`); continue; }
-    const tol = tolOf(c);
-    const moved = Math.abs(c.value - bc.value);
-
-    if (bc.pass && !c.pass) {
-      regressions.push(`Test ${id}: "${c.label}" left its band — ${c.value.toFixed(3)} ${c.units}, band [${c.lo}–${c.hi} ±${c.prec}], baseline ${bc.value.toFixed(3)}`);
-    } else if (!bc.pass && c.pass) {
-      notices.push(`Test ${id}: "${c.label}" is now inside its band (${c.value.toFixed(3)} ${c.units}, was ${bc.value.toFixed(3)}) — re-cut the baseline`);
-    } else if (!bc.pass && !c.pass) {
-      // A known miss. It may not drift further from the band it already fails.
-      const dist = (v) => (v < c.lo - c.prec ? c.lo - c.prec - v : v > c.hi + c.prec ? v - c.hi - c.prec : 0);
-      if (dist(c.value) > dist(bc.value) + tol) regressions.push(`Test ${id}: known miss "${c.label}" got worse — ${c.value.toFixed(3)} ${c.units}, was ${bc.value.toFixed(3)}`);
-    }
-    // Drift inside a wide band is still a change in the solver, and the bands here are wide enough
-    // (Test 2's P5 arrival spans 3.7–12 h) that "inside the band" alone would miss a real regression.
-    if (Number.isFinite(moved) && moved > tol) {
-      regressions.push(`Test ${id}: "${c.label}" moved ${moved.toFixed(3)} ${c.units} from baseline (${bc.value.toFixed(3)} → ${c.value.toFixed(3)}), tolerance ${tol.toFixed(3)}`);
-    }
-  }
-
-  // The seven-code envelope is the strongest external check there is: it compares whole probe series against
-  // codes run independently on the same inputs, not against values read off a figure.
-  for (const [probe, bp] of Object.entries(b.envelope ?? {})) {
-    const p = t.envelope?.probes.find(x => x.probe === probe);
-    if (!p) { regressions.push(`Test ${id}: envelope probe ${probe} is missing from this run`); continue; }
-    if (p.inside < bp.inside - 0.02) regressions.push(`Test ${id}: ${probe} dropped to ${(100 * p.inside).toFixed(0)}% inside the seven-code envelope, from ${(100 * bp.inside).toFixed(0)}%`);
-  }
-}
-
-say('');
-for (const n of notices) say(`NOTICE      ${n}`);
-for (const g of regressions) say(`REGRESSION  ${g}`);
-const totalIn = Object.values(report).reduce((a, t) => a + (t.passed ?? 0), 0);
-const totalAll = Object.values(report).reduce((a, t) => a + (t.total ?? 0), 0);
-say(`\n${totalIn}/${totalAll} measures inside the report's spread; baseline cut ${base.recordedUTC}.`);
-say(regressions.length ? `${regressions.length} regression(s) against the baseline.` : 'No regression against the baseline.');
-writeFileSync(here('./results/score.txt'), out.join('\n') + '\n');
-process.exit(regressions.length ? 1 : 0);

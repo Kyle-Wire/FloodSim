@@ -9,10 +9,10 @@
    "cells": 700
   },
   "steps": 72949,
-  "wallSeconds": 34.045,
-  "massRel": -0.000004782447289233357,
+  "wallSeconds": 36.601,
+  "massRel": 0.0000034290584112379696,
   "inflow": 0,
-  "finalVolume": 10116.692544895344,
+  "finalVolume": 10116.733477426533,
   "checks": [
    {
     "label": "P1 level reaches 10.345 m",
@@ -72,12 +72,7 @@
    ]
   },
   "passed": 4,
-  "total": 4,
-  "provenance": {
-   "commit": "788af932d7e1061a7566ac74c1038c38fec46876",
-   "adapter": "nvidia / blackwell",
-   "dataSha256": "388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732"
-  }
+  "total": 4
  },
  "2": {
   "grid": {
@@ -89,14 +84,14 @@
    "cells": 10000
   },
   "steps": 70202,
-  "wallSeconds": 26.57020000000298,
-  "massRel": 4.997819631037701e-7,
+  "wallSeconds": 32.41689999997616,
+  "massRel": -0.000012353483830015547,
   "inflow": 97200,
-  "finalVolume": 97200.04410371765,
+  "finalVolume": 97198.7987378379,
   "checks": [
    {
     "label": "final volume (Table 4.3, full-SWE range)",
-    "value": 97200.04410371765,
+    "value": 97198.7987378379,
     "lo": 97162,
     "hi": 97393,
     "prec": 0,
@@ -168,7 +163,7 @@
    },
    {
     "label": "P5 level at 48 h",
-    "value": 8.2348,
+    "value": 8.2347,
     "lo": 8.15,
     "hi": 8.25,
     "prec": 0.01,
@@ -304,12 +299,7 @@
    ]
   },
   "passed": 10,
-  "total": 10,
-  "provenance": {
-   "commit": "788af932d7e1061a7566ac74c1038c38fec46876",
-   "adapter": "nvidia / blackwell",
-   "dataSha256": "388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732"
-  }
+  "total": 10
  },
  "3": {
   "grid": {
@@ -321,10 +311,10 @@
    "cells": 1200
   },
   "steps": 1403,
-  "wallSeconds": 11.79579999999702,
-  "massRel": 1.3272780660408913e-7,
+  "wallSeconds": 10.468699999928475,
+  "massRel": 2.6581690940327534e-7,
   "inflow": 1310,
-  "finalVolume": 1310.0003992162667,
+  "finalVolume": 1310.0003297427065,
   "checks": [
    {
     "label": "P1 arrival",
@@ -383,12 +373,7 @@
   ],
   "envelope": null,
   "passed": 6,
-  "total": 6,
-  "provenance": {
-   "commit": "788af932d7e1061a7566ac74c1038c38fec46876",
-   "adapter": "nvidia / blackwell",
-   "dataSha256": "388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732"
-  }
+  "total": 6
  },
  "4": {
   "grid": {
@@ -400,10 +385,10 @@
    "cells": 80000
   },
   "steps": 40048,
-  "wallSeconds": 28.58860000000894,
-  "massRel": -0.000005462764425845144,
+  "wallSeconds": 53.981200000047686,
+  "massRel": -0.000005447841469032073,
   "inflow": 285000,
-  "finalVolume": 284998.0618187082,
+  "finalVolume": 284998.06582945737,
   "checks": [
    {
     "label": "P1 arrival",
@@ -563,12 +548,7 @@
    ]
   },
   "passed": 12,
-  "total": 12,
-  "provenance": {
-   "commit": "788af932d7e1061a7566ac74c1038c38fec46876",
-   "adapter": "nvidia / blackwell",
-   "dataSha256": "388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732"
-  }
+  "total": 12
  },
  "5": {
   "grid": {
@@ -580,10 +560,10 @@
    "cells": 7644
   },
   "steps": 64381,
-  "wallSeconds": 54.64570000000298,
-  "massRel": -1.0083152194169279e-7,
+  "wallSeconds": 68.35170000004769,
+  "massRel": -0.0000059359641527201084,
   "inflow": 9450000,
-  "finalVolume": 9450000.96271886,
+  "finalVolume": 9449946.101292713,
   "checks": [
    {
     "label": "P1 arrival",
@@ -759,12 +739,7 @@
    ]
   },
   "passed": 13,
-  "total": 13,
-  "provenance": {
-   "commit": "788af932d7e1061a7566ac74c1038c38fec46876",
-   "adapter": "nvidia / blackwell",
-   "dataSha256": "388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732"
-  }
+  "total": 13
  },
  "7": {
   "grid": {
@@ -775,11 +750,11 @@
    "y0": 237000,
    "cells": 16780
   },
-  "steps": 330363,
-  "wallSeconds": 608.782799999997,
-  "massRel": -0.00003762013525657349,
+  "steps": 330357,
+  "wallSeconds": 845.5442000000477,
+  "massRel": -0.00003768540255109099,
   "inflow": 0,
-  "finalVolume": 4461380.237111724,
+  "finalVolume": 4461379.895028769,
   "checks": [
    {
     "label": "M015 peak level",
@@ -855,7 +830,7 @@
    },
    {
     "label": "M045 level at 30 h",
-    "value": 8.7449,
+    "value": 8.8363,
     "lo": 8.6,
     "hi": 8.85,
     "prec": 0.05,
@@ -982,12 +957,7 @@
   ],
   "envelope": null,
   "passed": 18,
-  "total": 22,
-  "provenance": {
-   "commit": "788af932d7e1061a7566ac74c1038c38fec46876",
-   "adapter": "nvidia / blackwell",
-   "dataSha256": "388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732"
-  }
+  "total": 22
  },
  "6a": {
   "grid": {
@@ -999,10 +969,10 @@
    "cells": 36411
   },
   "steps": 7661,
-  "wallSeconds": 30.058,
-  "massRel": -8.628728018924691e-9,
+  "wallSeconds": 36.459400000095364,
+  "massRel": -4.323785651301454e-7,
   "inflow": 0,
-  "finalVolume": 15.330070805434596,
+  "finalVolume": 15.330064309319534,
   "checks": [
    {
     "label": "G2 peak level after the jump (10–20 s)",
@@ -1133,12 +1103,7 @@
   ],
   "envelope": null,
   "passed": 12,
-  "total": 14,
-  "provenance": {
-   "commit": "788af932d7e1061a7566ac74c1038c38fec46876",
-   "adapter": "nvidia / blackwell",
-   "dataSha256": "388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732"
-  }
+  "total": 14
  },
  "6b": {
   "grid": {
@@ -1150,10 +1115,10 @@
    "cells": 36411
   },
   "steps": 16575,
-  "wallSeconds": 44.63240000000596,
-  "massRel": -4.7225644152473593e-7,
+  "wallSeconds": 55.094900000095365,
+  "massRel": -0.000018093970083426624,
   "inflow": 0,
-  "finalVolume": 134488.97094639728,
+  "finalVolume": 134486.60101914406,
   "checks": [
    {
     "label": "G2 peak level",
@@ -1275,11 +1240,6 @@
   ],
   "envelope": null,
   "passed": 13,
-  "total": 13,
-  "provenance": {
-   "commit": "788af932d7e1061a7566ac74c1038c38fec46876",
-   "adapter": "nvidia / blackwell",
-   "dataSha256": "388c2789570e5975fe909033e34bedbe5d7bde5e6d7f9b7d7c1eaf04e58bc732"
-  }
+  "total": 13
  }
 }

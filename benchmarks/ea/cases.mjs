@@ -1,6 +1,5 @@
 // EA 2D benchmark cases (Néelz & Pender 2013; test specifications May 2010) built from the GOV.UK "Benchmarking model
-// data" archive unpacked in benchmarks/ea/data (licence unconfirmed — see benchmarks/ea/test8-data-request.md).
-// Each builder takes a loader
+// data" archive (Open Government Licence v3) unpacked in benchmarks/ea/data. Each builder takes a loader
 // { text(path), bin(path) } and returns a case for runCase().
 import { parseASC, parseCSV, parseShp, resample, cellsInRings, cellsOnLine, series } from './lib.mjs';
 import { case7 } from './case7.mjs';

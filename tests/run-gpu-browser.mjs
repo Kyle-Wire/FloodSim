@@ -4,8 +4,6 @@
 // Usage: node tests/run-gpu-browser.mjs [--url http://localhost:8766] [--timeout 15] [--json tests/results-gpu.json]
 //                                        [--probe] [--headed] [--flags "<browser flags>"]
 //   --url      reuse a running FloodSim server (default: start server/server.mjs on a free port)
-//   --page     page to drive, path and query (default /tests/gpu-browser.html). Any page that sets
-//              window.__done to a promise works, e.g. "/benchmarks/ea/run.html?tests=1,2,3,4,5,6a,6b,7".
 //   --timeout  minutes before giving up (default 15)
 //   --json     where to write the results (default tests/results-gpu.json); written only on a clean run
 //   --probe    only print the WebGPU adapter the browser gets, then exit
@@ -26,7 +24,6 @@ const opt = (name, dflt) => { const i = argv.indexOf('--' + name); return i >= 0
 const flag = (name) => argv.includes('--' + name);
 const timeoutMin = Number(opt('timeout', 15));
 const jsonOut = opt('json', join(root, 'tests', 'results-gpu.json'));
-const page = opt('page', '/tests/gpu-browser.html');
 // Headless Chrome/Edge on Windows gets the real GPU (D3D12) even without flags; these two keep it so on machines
 // whose GPU or driver is blocklisted, or where WebGPU is not yet on by default (Linux).
 const GPU_FLAGS = ['--enable-unsafe-webgpu', '--ignore-gpu-blocklist'];
@@ -239,13 +236,13 @@ if (flag('probe')) {
 }
 
 const t0 = Date.now();
-await navigate(base + (page.startsWith('/') ? page : '/' + page));
+await navigate(base + '/tests/gpu-browser.html');
 // window.__done is set by the page's module script; wait for it, then await the suite's results.
 const json = await evaluate(`new Promise((ok, fail) => {
   const until = Date.now() + 60000;
   (function wait() {
     if (window.__done) return window.__done.then(r => ok(JSON.stringify(r)), fail);
-    if (Date.now() > until) return fail(new Error('window.__done was never set (did ${page.replace(/'/g, "\\'")} load?)'));
+    if (Date.now() > until) return fail(new Error('window.__done was never set (did tests/gpu-browser.html load?)'));
     setTimeout(wait, 100);
   })();
 })`).catch(e => { failures.push('PAGE EXCEPTION: ' + e.message); return null; });
@@ -259,5 +256,5 @@ if (failures.length || !results) {
   await finish(1, `\nFAILED after ${secs} s (${failures.length} problem${failures.length === 1 ? '' : 's'}):\n  ` + failures.join('\n  ') + `\n${jsonOut} not written.`);
 }
 writeFileSync(jsonOut, json);
-console.log(`\n${page} passed in ${secs} s; results in ${jsonOut}`);
+console.log(`\nGPU suite passed in ${secs} s; results in ${jsonOut}`);
 await finish(0);
