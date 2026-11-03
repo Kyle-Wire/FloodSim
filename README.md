@@ -740,13 +740,21 @@ readings are fetched when the run finishes (at most 20 s). `npm run test:validat
   so a run that stops before it reads low. River crests come hours after the rain: *Keep running after the storm* goes
   to 12 h.
 - **Ida 2021 at Fairmount Dam** (Schuylkill, 1.7 × 2.3 km at 2 m, gauge-corrected MRMS rain, recorded inflow at the
-  Philadelphia gauge, gauge start levels, run 14:06 UTC 1 Sep to 08:06 UTC 2 Sep). On the lidar surface alone the model
-  was 1.6–1.9 m high at both gauges and the marks: the hydro-flattened river carried the flood above its channel. With
-  the estimated channel (Appalachian Highlands curve, 1.55 m carved at the centre): 30th Street gauge −0.13 m,
-  Fairmount −0.68 m, four river marks −0.4 to −0.8 m. Both gauges crested 5.5 h after this run ended (0.34 and 0.54 m
-  higher), which accounts for much of the marks' shortfall; the Cherry Street mark (4 m under the bridge deck) is not
-  scored. The run's own books: surface 1.2e-6, with the pipes 1.4e-6. The gauge-corrected rain over the area (53 mm)
-  is well under the radar alone (91 mm) and the gridded record (86 mm): not explained yet.
+  Philadelphia gauge, gauge start levels, run 14:06 UTC 1 Sep to 15:06 UTC 2 Sep, past both crests).
+  - On the lidar surface alone the model was 1.6–1.9 m high at both gauges and the marks: the hydro-flattened river
+    carried the flood above its channel.
+  - The estimated channel (Appalachian Highlands curve, 1.55 m carved at the centre) gave −0.61 m at Fairmount and
+    −0.29 m at 30th Street at the crest, marks −0.05 to −0.52 m. Those numbers were wrong for the right-looking
+    reason: 1,540 of the river's 3,520 m³/s was pouring back out through the upstream edge (see Boundaries).
+  - With the edge closed, the pool holds its level at base flow (3.48 m, observed 3.40). The crest is now 1.98 m high
+    at Fairmount and 1.70 m high at 30th Street, still rising when the run ended. The marks are +2.2 to +2.6 m;
+    HW Philly-11 is now flooded (−0.15 m). Below the dam the water surface falls 1.8 m in 550 m at 3.4–4.4 m/s: the
+    carved channel is far too small there. The reach below Fairmount Dam is the tidal Schuylkill, a dredged estuary,
+    and the curves are fitted to non-tidal alluvial streams: they carve it to about −1.1 m NAVD88. The fix is real
+    bathymetry below the fall line (surveyed sections, or a topobathymetric DEM), not a different curve.
+  - The Cherry Street mark (4 m under the bridge deck) is not scored. The run's books: surface 9e-7, with the pipes
+    3.6e-6. The gauge-corrected rain over the area (53 mm) is well under the radar alone (91 mm) and the gridded
+    record (86 mm): not explained yet.
 
 **Projects** (header *Projects* / *Save*, Ctrl+S; `app/projects.js`, `/api/projects` in the server, loopback only).
 Each project is a folder in `Documents\FloodSim Projects` (override with `FLOODSIM_PROJECTS`):
