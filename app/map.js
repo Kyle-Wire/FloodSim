@@ -2839,7 +2839,7 @@ function ungaugedNote(i) {
 function ungaugedWire(i) {
   $('inGauge' + i).addEventListener('change', () => {
     const src = $('inGauge' + i).value;
-    if (src in UNGAUGED && $('inFlow' + i).value === 'event') $('inFlow' + i).value = 'storm';
+    if (src in UNGAUGED && ($('inFlow' + i).value === 'event' || currentStorm()?.ari > 0)) $('inFlow' + i).value = 'storm'; // a design storm: its return period (still editable)
     if (src === 'ss') streamStatsFor(i).catch(() => {});
     ungaugedNote(i);
   });
