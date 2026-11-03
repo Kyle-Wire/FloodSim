@@ -1,0 +1,583 @@
+{
+ "source": "NOAA CO-OPS mdapi datums, dpapi slr_projections / slr_projectionOffsets / extremewaterlevels, station 8545240 Philadelphia, fetched 2026-11-03",
+ "datums": {
+  "epoch": "1983-2001",
+  "units": "meters",
+  "OrthometricDatum": "NAVD88",
+  "max": 4.413,
+  "maxdate": "20240110",
+  "min": -0.914,
+  "datums": [
+   {
+    "name": "STND",
+    "value": 0
+   },
+   {
+    "name": "MHHW",
+    "value": 3.204
+   },
+   {
+    "name": "MHW",
+    "value": 3.082
+   },
+   {
+    "name": "DTL",
+    "value": 2.184
+   },
+   {
+    "name": "MTL",
+    "value": 2.152
+   },
+   {
+    "name": "MSL",
+    "value": 2.228
+   },
+   {
+    "name": "MLW",
+    "value": 1.223
+   },
+   {
+    "name": "MLLW",
+    "value": 1.165
+   },
+   {
+    "name": "GT",
+    "value": 2.039
+   },
+   {
+    "name": "MN",
+    "value": 1.86
+   },
+   {
+    "name": "DHQ",
+    "value": 0.122
+   },
+   {
+    "name": "DLQ",
+    "value": 0.058
+   },
+   {
+    "name": "HWI",
+    "value": 6.3
+   },
+   {
+    "name": "LWI",
+    "value": 0.93
+   },
+   {
+    "name": "NAVD88",
+    "value": 2.11
+   }
+  ]
+ },
+ "slr_projections": {
+  "SlrProjections": [
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Low",
+    "projectionYear": 2005,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 0,
+    "projectionCiLow": 0,
+    "projectionCiHigh": 0,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-Low",
+    "projectionYear": 2005,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 0,
+    "projectionCiLow": 0,
+    "projectionCiHigh": 0,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate",
+    "projectionYear": 2005,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 0,
+    "projectionCiLow": 0,
+    "projectionCiHigh": 0,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-High",
+    "projectionYear": 2005,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 0,
+    "projectionCiLow": 0,
+    "projectionCiHigh": 0,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "High",
+    "projectionYear": 2005,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 0,
+    "projectionCiLow": 0,
+    "projectionCiHigh": 0,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Low",
+    "projectionYear": 2020,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 10,
+    "projectionCiLow": 7,
+    "projectionCiHigh": 12,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-Low",
+    "projectionYear": 2020,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 11,
+    "projectionCiLow": 7,
+    "projectionCiHigh": 14,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate",
+    "projectionYear": 2020,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 11,
+    "projectionCiLow": 8,
+    "projectionCiHigh": 14,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-High",
+    "projectionYear": 2020,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 11,
+    "projectionCiLow": 8,
+    "projectionCiHigh": 14,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "High",
+    "projectionYear": 2020,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 11,
+    "projectionCiLow": 8,
+    "projectionCiHigh": 14,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Low",
+    "projectionYear": 2030,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 17,
+    "projectionCiLow": 11,
+    "projectionCiHigh": 22,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-Low",
+    "projectionYear": 2030,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 18,
+    "projectionCiLow": 13,
+    "projectionCiHigh": 24,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate",
+    "projectionYear": 2030,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 19,
+    "projectionCiLow": 14,
+    "projectionCiHigh": 24,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-High",
+    "projectionYear": 2030,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 20,
+    "projectionCiLow": 14,
+    "projectionCiHigh": 26,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "High",
+    "projectionYear": 2030,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 20,
+    "projectionCiLow": 14,
+    "projectionCiHigh": 27,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Low",
+    "projectionYear": 2050,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 31,
+    "projectionCiLow": 23,
+    "projectionCiHigh": 39,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-Low",
+    "projectionYear": 2050,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 35,
+    "projectionCiLow": 26,
+    "projectionCiHigh": 43,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate",
+    "projectionYear": 2050,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 38,
+    "projectionCiLow": 30,
+    "projectionCiHigh": 48,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-High",
+    "projectionYear": 2050,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 44,
+    "projectionCiLow": 33,
+    "projectionCiHigh": 58,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "High",
+    "projectionYear": 2050,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 48,
+    "projectionCiLow": 36,
+    "projectionCiHigh": 65,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Low",
+    "projectionYear": 2100,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 53,
+    "projectionCiLow": 38,
+    "projectionCiHigh": 69,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-Low",
+    "projectionYear": 2100,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 71,
+    "projectionCiLow": 58,
+    "projectionCiHigh": 89,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate",
+    "projectionYear": 2100,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 116,
+    "projectionCiLow": 92,
+    "projectionCiHigh": 136,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-High",
+    "projectionYear": 2100,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 154,
+    "projectionCiLow": 114,
+    "projectionCiHigh": 182,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "High",
+    "projectionYear": 2100,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 199,
+    "projectionCiLow": 156,
+    "projectionCiHigh": 236,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Low",
+    "projectionYear": 2150,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 73,
+    "projectionCiLow": 52,
+    "projectionCiHigh": 100,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-Low",
+    "projectionYear": 2150,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 113,
+    "projectionCiLow": 87,
+    "projectionCiHigh": 144,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate",
+    "projectionYear": 2150,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 212,
+    "projectionCiLow": 157,
+    "projectionCiHigh": 406,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "Intermediate-High",
+    "projectionYear": 2150,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 256,
+    "projectionCiLow": 193,
+    "projectionCiHigh": 375,
+    "units": "cm"
+   },
+   {
+    "stationId": "8545240",
+    "stationName": "PHILADELPHIA",
+    "scenario": "High",
+    "projectionYear": 2150,
+    "backgroundRslPerYear": 0.149,
+    "projectionRsl": 353,
+    "projectionCiLow": 257,
+    "projectionCiHigh": 531,
+    "units": "cm"
+   }
+  ]
+ },
+ "slr_projectionOffsets": {
+  "SlrProjectionOffsets": [
+   {
+    "offsetName": "RSL_OFFSET_1992_2000",
+    "offset": 3,
+    "units": "cm"
+   },
+   {
+    "offsetName": "RSL_OFFSET_2000_2005",
+    "offset": 2,
+    "units": "cm"
+   }
+  ]
+ },
+ "extremewaterlevels": {
+  "datum": "MHHW",
+  "units": "meters",
+  "GEV_HI": {
+   "exceedanceLevels": [
+    {
+     "probability": 0.99,
+     "returnPeriod": 1.01,
+     "level": 0.26,
+     "upper90CI": 0.31,
+     "lower90CI": 0.22
+    },
+    {
+     "probability": 0.909,
+     "returnPeriod": 1.1,
+     "level": 0.39,
+     "upper90CI": 0.42,
+     "lower90CI": 0.36
+    },
+    {
+     "probability": 0.8,
+     "returnPeriod": 1.25,
+     "level": 0.47,
+     "upper90CI": 0.5,
+     "lower90CI": 0.44
+    },
+    {
+     "probability": 0.667,
+     "returnPeriod": 1.5,
+     "level": 0.54,
+     "upper90CI": 0.57,
+     "lower90CI": 0.51
+    },
+    {
+     "probability": 0.5,
+     "returnPeriod": 2,
+     "level": 0.62,
+     "upper90CI": 0.65,
+     "lower90CI": 0.59
+    },
+    {
+     "probability": 0.4,
+     "returnPeriod": 2.5,
+     "level": 0.67,
+     "upper90CI": 0.71,
+     "lower90CI": 0.64
+    },
+    {
+     "probability": 0.313,
+     "returnPeriod": 3.2,
+     "level": 0.72,
+     "upper90CI": 0.76,
+     "lower90CI": 0.69
+    },
+    {
+     "probability": 0.25,
+     "returnPeriod": 4,
+     "level": 0.76,
+     "upper90CI": 0.81,
+     "lower90CI": 0.73
+    },
+    {
+     "probability": 0.2,
+     "returnPeriod": 5,
+     "level": 0.81,
+     "upper90CI": 0.85,
+     "lower90CI": 0.77
+    },
+    {
+     "probability": 0.156,
+     "returnPeriod": 6.4,
+     "level": 0.85,
+     "upper90CI": 0.9,
+     "lower90CI": 0.81
+    },
+    {
+     "probability": 0.125,
+     "returnPeriod": 8,
+     "level": 0.88,
+     "upper90CI": 0.94,
+     "lower90CI": 0.84
+    },
+    {
+     "probability": 0.1,
+     "returnPeriod": 10,
+     "level": 0.92,
+     "upper90CI": 0.98,
+     "lower90CI": 0.87
+    },
+    {
+     "probability": 0.08,
+     "returnPeriod": 12.5,
+     "level": 0.95,
+     "upper90CI": 1.02,
+     "lower90CI": 0.9
+    },
+    {
+     "probability": 0.063,
+     "returnPeriod": 16,
+     "level": 0.99,
+     "upper90CI": 1.07,
+     "lower90CI": 0.93
+    },
+    {
+     "probability": 0.05,
+     "returnPeriod": 20,
+     "level": 1.02,
+     "upper90CI": 1.11,
+     "lower90CI": 0.96
+    },
+    {
+     "probability": 0.04,
+     "returnPeriod": 25,
+     "level": 1.05,
+     "upper90CI": 1.15,
+     "lower90CI": 0.99
+    },
+    {
+     "probability": 0.031,
+     "returnPeriod": 32,
+     "level": 1.09,
+     "upper90CI": 1.2,
+     "lower90CI": 1.02
+    },
+    {
+     "probability": 0.025,
+     "returnPeriod": 40,
+     "level": 1.12,
+     "upper90CI": 1.24,
+     "lower90CI": 1.04
+    },
+    {
+     "probability": 0.02,
+     "returnPeriod": 50,
+     "level": 1.15,
+     "upper90CI": 1.28,
+     "lower90CI": 1.06
+    },
+    {
+     "probability": 0.016,
+     "returnPeriod": 64,
+     "level": 1.18,
+     "upper90CI": 1.33,
+     "lower90CI": 1.09
+    },
+    {
+     "probability": 0.013,
+     "returnPeriod": 80,
+     "level": 1.21,
+     "upper90CI": 1.37,
+     "lower90CI": 1.11
+    },
+    {
+     "probability": 0.01,
+     "returnPeriod": 100,
+     "level": 1.23,
+     "upper90CI": 1.41,
+     "lower90CI": 1.13
+    }
+   ]
+  }
+ }
+}

@@ -229,6 +229,10 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
 .drawer h3.sub { font: 600 12px var(--body); color: var(--muted); margin: 10px 0 4px; }
 #batJobs table { width: 100%; border-collapse: collapse; font-size: 11.5px; } #batJobs th { text-align: left; color: var(--muted); font-weight: 600; padding: 2px 4px; }
 #batJobs td { padding: 2px 4px; border-top: 1px solid var(--rule); } #batJobs tr.ok td:nth-child(3) { color: var(--good); } #batJobs tr.err td:nth-child(3) { color: var(--warn); } #batJobs tr.muted td { color: var(--muted); }
+/* ---- compound flooding and SLR (src/compound.js) */
+#cmpdPairs table { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 4px; } #cmpdPairs th { text-align: left; color: var(--muted); font-weight: 600; padding: 2px 4px; }
+#cmpdPairs td { padding: 2px 4px; border-top: 1px solid var(--rule); vertical-align: top; } #cmpdPairs .btn { padding: 1px 8px; font-size: 11px; }
+/* end of compound flooding */
 </style>
 </head>
 <body>
@@ -469,6 +473,30 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <div class="field"><label for="rain">Rain intensity</label><output id="rainOut"></output><input type="range" id="rain" min="5" max="200" step="5" value="75"></div>
         <div class="field"><label for="dur">Storm duration</label><output id="durOut"></output><input type="range" id="dur" min="5" max="180" step="5" value="60"></div>
       </div>
+      <!-- ---- compound flooding and SLR (src/compound.js) -->
+      <div id="cmpdCtl" hidden>
+        <p class="note" id="cmpdStation">Tide gauge datums, sea-level rise and extreme water levels…</p>
+        <div id="dtRows">
+          <div class="field"><label for="dtMode">Design tide</label>
+            <select id="dtMode" style="max-width:62%"><option value="off" selected>None (free outfall at the edges)</option><option value="still">Still water: MHHW + surge</option><option value="cycle">Tide cycle, MLLW to MHHW (M2)</option><option value="predicted">NOAA tide prediction for a date</option></select></div>
+          <div class="field" id="dtPhaseRow"><label for="dtPhase">At the rain peak</label>
+            <select id="dtPhase"><option value="high" selected>High water</option><option value="low">Low water</option></select></div>
+          <div class="field" id="dtDateRow" hidden><label for="dtDate">Prediction date</label><input type="date" id="dtDate" value="2026-09-15"></div>
+          <div class="field"><label for="dtSurge">Surge</label>
+            <select id="dtSurge" style="max-width:62%"><option value="none" selected>None</option><option value="ewl:1">NOAA 1-yr high water</option><option value="ewl:2">NOAA 2-yr high water</option><option value="ewl:5">NOAA 5-yr high water</option><option value="ewl:10">NOAA 10-yr high water</option><option value="ewl:25">NOAA 25-yr high water</option><option value="ewl:50">NOAA 50-yr high water</option><option value="ewl:100">NOAA 100-yr high water</option><option value="custom">Custom (m above MHHW)</option></select></div>
+          <div class="field" id="dtSurgeMRow" hidden><label for="dtSurgeM">Surge, m above MHHW</label><input type="number" id="dtSurgeM" step="0.01" value="0.5" style="width:7em"></div>
+        </div>
+        <div class="field"><label for="slrScen">Sea-level rise</label>
+          <select id="slrScen" style="max-width:62%"><option value="none">None (MHHW at the datum epoch)</option><option value="trend">Observed trend at the gauge</option><option value="Low">2022 Interagency Low</option><option value="Intermediate-Low">Intermediate-Low</option><option value="Intermediate" selected>Intermediate</option><option value="Intermediate-High">Intermediate-High</option><option value="High">High</option></select></div>
+        <div class="field"><label for="slrYear">Year</label>
+          <select id="slrYear"><option value="2026" selected>2026 (today)</option><option value="2030">2030</option><option value="2040">2040</option><option value="2050">2050</option><option value="2060">2060</option><option value="2070">2070</option><option value="2080">2080</option><option value="2090">2090</option><option value="2100">2100</option><option value="2120">2120</option><option value="2150">2150</option></select></div>
+        <label class="toggle" id="slrHistRow" hidden><input type="checkbox" id="slrHist"> Raise the observed water level to the scenario year</label>
+        <p class="note" id="cmpdNote"></p>
+        <div class="row"><button class="btn" id="cmpdJoint" title="Daily rain at the nearest long-record gauge (ACIS) and the daily highest water at the tide gauge (NOAA CO-OPS), one request a year: a minute or two the first time, cached after">Joint rain–surge probability</button></div>
+        <p class="note" id="cmpdJointNote">Rain and high water together: Kendall's τ, a Gumbel copula, and the 100-yr design pairs.</p>
+        <div id="cmpdPairs"></div>
+      </div>
+      <!-- end of compound flooding -->
       <figure class="hyeto" id="hyetoFig">
         <figcaption id="hyetoTitle">Rain intensity, mm/hr per 5 min</figcaption>
         <div class="hyeto-plot" id="hyeto"></div>

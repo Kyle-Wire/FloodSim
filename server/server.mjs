@@ -29,7 +29,8 @@ const ALLOW = new Set([
   'mesonet.agron.iastate.edu',      // IEM: historic rainfall (IEMRE, ASOS 1-minute), NEXRAD radar frame listings, MRMS radar rain
   'mtarchive.geol.iastate.edu',     // IEM raw MRMS archive: gauge-corrected hourly rain (GRIB2)
   'www.nhc.noaa.gov',               // NHC HURDAT2 hurricane tracks
-  'api.tidesandcurrents.noaa.gov',  // NOAA CO-OPS tide gauges
+  'api.tidesandcurrents.noaa.gov',  // NOAA CO-OPS tide gauges, datums, SLR projections, extreme water levels
+  'data.rcc-acis.org',              // ACIS (NOAA Regional Climate Centers): long daily rain records for the joint rain–surge analysis
   'services.arcgis.com',            // city utility layers (e.g. Philadelphia Water inlets, combined-sewer area)
   'mapservices.pasda.psu.edu',      // PASDA (Pennsylvania) utility layers
   'geocoding.geo.census.gov',       // US Census address geocoder

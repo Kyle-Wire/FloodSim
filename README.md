@@ -945,6 +945,72 @@ the channel (land cover marks only its middle as water), plus 138 cells where th
 inflow edge above the dam and a corner 12 m up. The baseflow warm-up holds the tide at its level at the storm's start.
 The rest of the edge stays a free outfall.
 
+**Compound flooding and sea-level rise** (Storm → under the design storm; `src/compound.js`, report section
+`app/report-compound.js`). Where a tide gauge was found, its NOAA CO-OPS station datums, sea-level rise projections and
+extreme water levels load with the model:
+- **Datums.** CO-OPS serves them on the station datum; with the station's NAVD88 value they become NAVD88 (MSL, flagged,
+  at a station with no NAVD88). Philadelphia 8545240: MHHW 1.094 m, MSL 0.118 m, MLLW −0.945 m NAVD88, epoch 1983–2001.
+- **Sea-level rise.** The 2022 Interagency Technical Report scenarios, Low to High, as CO-OPS serves them for the
+  station (`slr_projections`, cm, 0 in 2005), moved to the datum epoch's mid-year with NOAA's own offsets
+  (`slr_projectionOffsets`: 1992 → 2000 and 2000 → 2005), so a rise adds straight onto MHHW. Philadelphia, Intermediate:
+  +0.21 m today (2026), +0.43 m by 2050, +1.21 m by 2100 (High: +2.04 m). "Observed trend" is NOAA's trend at the
+  gauge (3.15 mm/yr). Years from today to 2150.
+- **Design tide** for a design storm (Atlas 14, site record or custom): the open water on the edges takes
+  - still water: MHHW + a surge + the rise, for the whole run;
+  - a tide cycle between MLLW and MHHW (period M2, 12.42 h), with high or low water at the rain peak;
+  - or NOAA's harmonic prediction for a chosen date, shifted so its high (or low) water nearest noon UTC falls at the
+    rain peak;
+  each plus the surge and the rise. The surge is none, a custom height, or NOAA's 1- to 100-yr extreme water level (a
+  GEV on the detrended annual maxima, metres above MHHW; Philadelphia 100-yr: 1.23 m). The design tide is a
+  water-level series like an observed one, so it drives the same tidal edge cells, the warm-up, the starting tidal
+  water and the forcing fingerprint exactly as a historic tide does. A historic event's observed level can be raised by
+  the scenario's rise from the event's year to the scenario year.
+- **Joint rain–surge probability** (button). Two-sided conditional sampling (Bender and Jensen 2017; Jane et al. 2020):
+  - each year's wettest day with the highest water within ±1 day (rain-driven), and each year's highest water with
+    the most rain within ±1 day (surge-driven);
+  - rain from the nearest ACIS gauge with 40 years of current daily record; water from the CO-OPS daily highs,
+    detrended to the datum epoch;
+  - Kendall's τ per sample gives a Gumbel copula (θ = 1 / (1 − τ); independence for τ ≤ 0);
+  - marginals: GEVs by L-moments of the driver's annual maxima (the rain record; NOAA's detrended annual maxima for
+    water) and of the concurrent variable in its sample (a point mass at zero rain).
+  
+  The section reports AND isolines (both exceeded in a year) at 10, 50 and 100 years, and four 100-yr design pairs:
+  - the most likely event of each sample, the largest joint density on the part of the isoline where that sample's
+    driver is the rarer of the two;
+  - the 100-yr rain with its conditional median water;
+  - the 100-yr high water with its conditional median rain.
+
+  "Use" sets a pair as the storm: Atlas 14 24 h at the rain's return period (annual maximum converted to partial
+  duration, nearest offered), with a still design tide at the pair's water level.
+  
+  Philadelphia: PHL airport (10 km, 85 years of rain), 36 paired years. τ is 0.10 in the rain-driven sample and 0.37
+  in the surge-driven one. The 100-yr design pairs:
+
+  | Pair | Rain | Water above MHHW |
+  | --- | --- | --- |
+  | 100-yr rain + its median water | 188 mm/day | 0.49 m (1.3-yr) |
+  | 100-yr high water + its median rain | 140 mm (25-yr) | 1.26 m |
+  | Most likely, rain-driven | 114 mm (10-yr) | 0.92 m (10-yr) |
+  | Most likely, surge-driven | 146 mm (30-yr) | 1.17 m (51-yr) |
+- **Batch.**
+  - Variants SLR Intermediate 2050 and 2100, Intermediate-High 2100 and High 2100. They put a still MHHW tide on a
+    design storm when none is set, and raise a historic one.
+  - After a joint analysis, the four design pairs appear as storms.
+
+The report section has:
+- MHHW in NAVD88 by scenario and year, with rise tables since the epoch and since 2000;
+- the datums and NOAA's extreme levels;
+- the isolines with the pairs, and the samples' τ;
+- each run's downstream water level, with its rain peak.
+
+Limits:
+- the dependence of the daily events stands in for that of the annual maxima;
+- the daily rain is a calendar-day gauge total, and a design run takes Atlas 14 at the same return period, not this
+  depth;
+- a still surge is held for the whole run (conservative for a short storm);
+- waves, river–tide interaction upstream of the model and the tide's change in range with sea-level rise are not
+  included.
+
 **Drainage** (`src/drainage.js`, `src/coupler.js`, `src/swmm.js`). Three tiers, labelled on every output:
 - **Tier 2, synthetic network:** manholes with grate inlets every ~60 m along OSM streets (residential and up), outfalls
   at mapped streams and where streets leave the area, a drainage tree by Dijkstra from the outfalls (penalising
@@ -1138,6 +1204,7 @@ node tests/run-waterlevel-tests.mjs # starting water levels: river rise, lake fi
 node tests/run-bank-tests.mjs     # bank stability: friction-angle failure, cohesion, confinement, rapid drawdown, probability, bank tops
 node tests/run-report-tests.mjs   # report: hydrographs, profiles, HGL flags, stage–storage–discharge, gutter spread, charts
 node tests/run-fema-tests.mjs     # FEMA NFHL: zone codes, BFE between lines, zone and BFE grids (--live: Meyerland)
+node tests/run-compound-tests.mjs # compound flooding: datums, SLR to the epoch, design tides, GEV, Kendall's τ, Gumbel copula, isolines, design pairs, report (--live: Philadelphia)
 node tests/run-bathymetry-tests.mjs # channel bathymetry: regional curves, flattened surface, carved section, GeoTIFF, surveyed bed
 node tests/run-window-tests.mjs   # window reruns: the window, its edge segments (+ outward), inflow rates, the edge check, merging
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
@@ -1179,6 +1246,7 @@ src/downscale.js      water-surface-projection depth downscaling
 src/export.js         zip, 16-bit PNG, OpenEXR, buildings GLB writers
 src/storm.js          Atlas 14 fetch/parse, DDF, alternating-block hyetographs, rain schedule
 src/history.js        event catalog (IEM record + HURDAT2), rainfall replay, ASOS blend, CO-OPS water levels
+src/compound.js       compound flooding: CO-OPS datums, 2022 Interagency SLR at the gauge, NOAA extreme water levels, design tides, joint rain–surge (ACIS + CO-OPS, Gumbel copula)
 src/radar.js          NEXRAD composite overlay: IEM tile URLs, frame listing, frame at a time
 src/mrms.js           MRMS radar rainfall: archive PNG and GRIB2 decoding, gauge-corrected hourly totals timed by 2-minute rates
 src/nowcast.js        live radar: recent MRMS rain to the latest frame, storm motion by correlation, nowcast by advection
@@ -1220,7 +1288,7 @@ tools/batch.mjs       runs a project's batch study headless (tools/headless.mjs:
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)
-app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer; app/projects.js project folders
+app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer (app/report-compound.js: its compound flooding and SLR section); app/projects.js project folders
 app/                  Phase 0 lab template + voxel shell, build script
 tests/                CPU suite, Phase 1 suite, shared GPU suite, browser + Dawn runners, results JSON
 benchmarks/ea/        Gate B: EA 2D benchmark cases, browser runner, scorer, results (data/ is the GOV.UK archive)

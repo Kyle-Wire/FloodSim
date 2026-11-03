@@ -17,7 +17,7 @@ export function initBatch(api) {
   function form() {
     const aris = api.aris(), durs = api.durations(), scs = api.scenarios();
     const box = (name, value, label, on) => `<label class="chip"><input type="checkbox" name="${name}" value="${esc(value)}"${on ? ' checked' : ''}> ${esc(label)}</label>`;
-    $('batStorms').innerHTML = aris.map(a => box('batAri', a, `${a}-yr`, [2, 10, 100].includes(a))).join('');
+    $('batStorms').innerHTML = aris.map(a => box('batAri', a, `${a}-yr`, [2, 10, 100].includes(a))).join('') + (api.extraStorms?.() ?? []).map(x => box('batX', x.key, x.label, false)).join(''); // + e.g. joint rain–surge design pairs
     $('batDurs').innerHTML = durs.map(d => box('batDur', d.value, d.label, d.value === 1440)).join('') + box('batCur', 'current', 'The storm as set now (historic, live or custom)', false);
     $('batScen').innerHTML = box('batSc', '', 'Existing conditions', true) + scs.map(n => box('batSc', n, n, true)).join('');
     $('batVar').innerHTML = Object.values(B.VARIANTS).map(v => box('batV', v.key, v.label, v.key === 'base')).join('') + (api.extraVariants?.() ?? []).map(v => box('batV', v.key, v.label, false)).join('');
@@ -25,7 +25,8 @@ export function initBatch(api) {
   const checked = (name) => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(e => e.value);
   function plan() {
     const cur = checked('batCur').length > 0, aris = checked('batAri').map(Number), durs = checked('batDur').map(Number);
-    const storms = [...(aris.length && durs.length ? B.designStorms(aris, durs) : []), ...(cur ? [{ label: 'Storm as set', stormSrc: 'current', inputs: {} }] : [])];
+    const extra = Object.fromEntries((api.extraStorms?.() ?? []).map(x => [x.key, x])), xs = checked('batX').map(k => extra[k]).filter(Boolean).map(({ label, stormSrc, inputs }) => ({ label, stormSrc, inputs }));
+    const storms = [...(aris.length && durs.length ? B.designStorms(aris, durs) : []), ...xs, ...(cur ? [{ label: 'Storm as set', stormSrc: 'current', inputs: {} }] : [])];
     const scenarios = checked('batSc').map(v => (v === '' ? null : v)), all = { ...B.VARIANTS, ...Object.fromEntries((api.extraVariants?.() ?? []).map(v => [v.key, v])) };
     const variants = checked('batV').map(k => all[k]).filter(Boolean);
     if (!storms.length) throw new Error('Pick at least one design storm and duration, or the storm as set now.');
