@@ -6,243 +6,303 @@
 <title>FloodSim Map</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css">
 <style>
-/* Layout: map fills the left, control rail on the right; stacks on phones. Look: square "voxel" panels with stepped
-   pixel shadows and a pixel display face for labels only; numbers and prose stay in plain, readable faces. */
+/* Look: the SPARC Labs site (sparc-website, src/styles/tokens.css + globals.css) on a white ground. Inter for the UI,
+   JetBrains Mono for numbers and small-caps labels, warm neutrals, hairline rules, 5 px buttons, crimson accent on the
+   one button a step funnels to. The brand ramp is decoration only (the strip under the header); map overlays keep
+   their own data ramps. Layout: map on the left, the steps rail on the right; stacks on phones. */
 :root {
-  --bg: #dfe7ee; --surface: #f3f7fa; --ink: #0f1d2a; --muted: #4d6477; --rule: #b3c3d0;
-  --accent: #0b78a8; --accent-ink: #ffffff; --viewport: #cfdbe4; --shadow: #9fb2c2; --grid: rgba(11, 120, 168, 0.06);
-  --good: #2b7d52; --warn: #a96d10; --crit: #a83434;
-  --display: "Silkscreen", "Courier New", monospace;
-  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* SPARC tokens */
+  --ink: #1a1416; --ink-2: #2b2327; --muted: #6e6358; --paper: #f7f4ee; --paper-2: #ede8dd; --line: #c9c2b3;
+  --rule: #7c7362; --crimson: #cc331f; --purple: #602468; --amber-ink: #9c5e12;
+  --grad-ramp: linear-gradient(90deg, #602468 0%, #9e337d 14%, #e94d9b 28%, #e94461 42%, #e73c25 56%, #e76c25 70%, #e79024 82%, #f0b632 92%, #fbdd46 100%);
+  /* roles */
+  --bg: #ffffff; --surface: #ffffff; --sunken: #faf8f4; --hair: #e7e2d8;
+  --accent: var(--crimson); --accent-ink: #ffffff; --viewport: #e9edf0;
+  --good: #2b7d52; --warn: var(--amber-ink); --crit: #b3261e;
+  --shadow: 0 1px 2px rgba(26, 20, 22, 0.06), 0 6px 18px rgba(26, 20, 22, 0.08);
+  --body: "Inter", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --display: var(--body);
+  color-scheme: light;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0a1220; --surface: #101b2d; --ink: #e2ecf4; --muted: #8aa0b4; --rule: #26374f;
-  --accent: #3fd0ff; --accent-ink: #04121c; --viewport: #070d17; --shadow: #02060c; --grid: rgba(63, 208, 255, 0.05);
-  --good: #5cd68f; --warn: #f0b44c; --crit: #ff6b6b; color-scheme: dark; } }
-:root[data-theme="dark"] {
-  --bg: #0a1220; --surface: #101b2d; --ink: #e2ecf4; --muted: #8aa0b4; --rule: #26374f;
-  --accent: #3fd0ff; --accent-ink: #04121c; --viewport: #070d17; --shadow: #02060c; --grid: rgba(63, 208, 255, 0.05);
-  --good: #5cd68f; --warn: #f0b44c; --crit: #ff6b6b; color-scheme: dark; }
 
 html, body { height: 100%; margin: 0; }
-body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45; }
+[hidden] { display: none !important; } /* the attribute wins over .field / .row display rules */
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 13px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+code { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
+a:hover { text-decoration-color: var(--accent); }
 .app {
-  position: relative; z-index: 1; height: 100%; box-sizing: border-box; display: grid; gap: 12px; padding-bottom: 60px !important;
-  grid-template-columns: minmax(0, 1fr) clamp(320px, 30vw, 400px); grid-template-rows: auto minmax(0, 1fr);
-  padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
+  height: 100%; box-sizing: border-box; display: grid; gap: 0;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 420px); grid-template-rows: auto minmax(0, 1fr);
 }
-header { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
-h1 { font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: 0.02em; margin: 0; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
-h1 .logo { width: 26px; height: 26px; image-rendering: pixelated; }
-h1 span { color: var(--accent); }
-.tag { font-family: var(--mono); font-size: 11.5px; color: var(--muted); flex: 1 1 120px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-header a { font-size: 12.5px; color: var(--accent); }
-.proj { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12.5px; min-width: 0; }
-.pbtn { font: 600 12px var(--body); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer; }
+
+/* ---- top bar (sparc .nav + .ramp-strip) */
+.topbar { grid-column: 1 / -1; position: relative; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; min-height: 56px; box-sizing: border-box;
+  padding: 8px max(20px, env(safe-area-inset-right, 0px)) 12px max(20px, env(safe-area-inset-left, 0px)); background: var(--surface); border-bottom: 1px solid var(--line); }
+.topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--grad-ramp); }
+h1 { font-weight: 800; font-size: 19px; letter-spacing: -0.02em; margin: 0; display: flex; align-items: center; gap: 9px; }
+h1 .logo { width: 24px; height: 24px; }
+h1 em { font-style: normal; color: var(--muted); font-weight: 500; }
+.tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); flex: 1 1 120px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar a { font-size: 12.5px; font-weight: 500; color: var(--ink-2); }
+.proj { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12.5px; min-width: 0; padding-left: 14px; border-left: 1px solid var(--hair); }
+.pbtn { font: 600 12px var(--body); padding: 6px 11px; border-radius: 5px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer; }
+.pbtn:hover { background: rgba(0, 0, 0, 0.04); }
 .pname { font-family: var(--mono); font-size: 12px; color: var(--ink); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pstatus { font-size: 12px; color: var(--muted); } .pstatus.ok { color: var(--good); } .pstatus.warn { color: var(--warn); } .pstatus.err { color: var(--crit); }
-.pdlg { width: min(560px, calc(100vw - 32px)); border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); color: var(--ink); padding: 14px 16px 16px; }
-.pdlg::backdrop { background: rgba(4, 10, 14, 0.55); }
-.pdlg header { display: flex; align-items: center; } .pdlg h2 { flex: 1; margin: 0; font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.pdlg .x { background: none; border: 0; color: var(--muted); font-size: 22px; cursor: pointer; }
-.pdlg input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 5px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 13px var(--body); }
-.plist { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 6px; max-height: 50vh; overflow: auto; }
-.plist li { display: flex; gap: 8px; align-items: center; border: 1px solid var(--rule); border-radius: 5px; padding: 7px 9px; }
-.plist li.cur { border-color: var(--accent); } .plist li.muted { color: var(--muted); border-style: dashed; }
-.plist li div { flex: 1; min-width: 0; } .plist small { display: block; color: var(--muted); font-family: var(--mono); font-size: 11px; }
-.plist .btn { flex: 0 0 auto; min-width: 0; padding: 6px 10px; }
-.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }
-.engine { margin-left: 12px; font-family: var(--mono); font-size: 11.5px; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.engine { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
 .dot.gpu { background: var(--good); } .dot.bad { background: var(--crit); }
 
-.viewport { position: relative; background: var(--viewport); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; min-height: 0; }
+/* ---- projects dialog */
+.pdlg { width: min(560px, calc(100vw - 32px)); border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 16px 18px 18px; box-shadow: var(--shadow); }
+.pdlg::backdrop { background: rgba(26, 20, 22, 0.35); }
+.pdlg header { display: flex; align-items: center; } .pdlg h2 { flex: 1; margin: 0; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.pdlg .x { background: none; border: 0; color: var(--muted); font-size: 22px; cursor: pointer; }
+.pdlg input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 5px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); font: 13px var(--body); }
+.plist { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 6px; max-height: 50vh; overflow: auto; }
+.plist li { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+.plist li.cur { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); } .plist li.muted { color: var(--muted); border-style: dashed; }
+.plist li div { flex: 1; min-width: 0; } .plist small { display: block; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.plist .btn { flex: 0 0 auto; min-width: 0; padding: 6px 10px; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--ink); font: inherit; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; cursor: pointer; }
+.linkbtn:hover { text-decoration-color: var(--accent); }
+
+/* ---- map viewport, HUD, map toolbar */
+.viewport { position: relative; background: var(--viewport); overflow: hidden; min-height: 0; }
 #map { position: absolute; inset: 0; }
-.hud { position: absolute; left: 10px; top: 10px; display: flex; gap: 16px; pointer-events: none; font-family: var(--mono);
-  background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--rule); border-radius: 5px; padding: 6px 10px; }
+.hud { position: absolute; left: 12px; top: 12px; display: flex; gap: 18px; pointer-events: none; font-family: var(--mono);
+  background: color-mix(in srgb, var(--surface) 94%, transparent); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; box-shadow: var(--shadow); }
 .hud div { display: grid; }
-.hud b { font-family: var(--display); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.hud span { font-size: 18px; font-variant-numeric: tabular-nums; }
-.probe { position: absolute; pointer-events: none; font-family: var(--mono); font-size: 11.5px; padding: 4px 7px; border-radius: 4px;
-  background: var(--surface); border: 1px solid var(--rule); color: var(--ink); white-space: nowrap; transform: translate(12px, 12px); display: none; }
+.hud b { font-weight: 500; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.hud span { font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.probe { position: absolute; pointer-events: none; font-family: var(--mono); font-size: 11.5px; padding: 4px 8px; border-radius: 4px;
+  background: var(--surface); border: 1px solid var(--line); color: var(--ink); white-space: nowrap; transform: translate(12px, 12px); display: none; box-shadow: var(--shadow); }
 .drawing .maplibregl-canvas, .infra-drawing .maplibregl-canvas { cursor: crosshair !important; }
-.toggles { position: absolute; top: 10px; right: 52px; display: flex; gap: 8px; }
-.toggles .infra-toggle { position: static; }
-.infra-toggle { position: absolute; top: 10px; right: 52px; font: 600 12.5px var(--body); padding: 7px 11px; border-radius: 5px; cursor: pointer;
-  background: var(--surface); color: var(--ink); border: 1px solid var(--rule); }
-.infra-toggle[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.toggles { position: absolute; top: 12px; right: 54px; display: flex; align-items: stretch; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); overflow: hidden; }
+.toggles .infra-toggle { position: static; border: 0; border-radius: 0; box-shadow: none; }
+.toggles .tsep { width: 1px; background: var(--line); margin: 6px 2px; }
+.toggles .tgrp { display: flex; align-items: center; padding: 0 4px 0 10px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.infra-toggle { position: absolute; top: 12px; right: 54px; font: 500 12.5px var(--body); padding: 8px 11px; border-radius: 5px; cursor: pointer;
+  background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); }
+.infra-toggle:hover { background: rgba(0, 0, 0, 0.04); color: var(--ink); }
+.infra-toggle[aria-expanded="true"] { background: var(--ink); color: #fff; }
 .infra-toggle b { font-family: var(--mono); font-weight: 500; }
-.drawer { position: absolute; left: 10px; top: 64px; bottom: 36px; width: min(310px, calc(100% - 20px)); box-sizing: border-box; overflow: auto;
-  background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px 14px; font-size: 13px; }
-.drawer header { display: flex; align-items: center; gap: 8px; }
-.drawer h2 { font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0; flex: 1; }
-.drawer header select { font: 12px var(--body); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 2px 4px; }
+.toggles .infra-toggle { white-space: nowrap; flex: none; }
+
+/* ---- drawers over the map */
+.drawer { position: absolute; left: 12px; top: 70px; bottom: 36px; width: min(320px, calc(100% - 24px)); box-sizing: border-box; overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 16px; font-size: 12.5px; box-shadow: var(--shadow); }
+.drawer.wide { width: min(420px, calc(100% - 24px)); }
+.drawer > header { display: flex; align-items: center; gap: 8px; position: sticky; top: -12px; z-index: 2; margin: -12px -14px 6px; padding: 12px 14px 10px; background: var(--surface); border-bottom: 1px solid var(--hair); }
+.drawer h2 { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; color: var(--ink); margin: 0; flex: 1; }
+.drawer header select { font: 12px var(--body); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 5px; }
 .drawer .x { background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.drawer .x:hover, .pdlg .x:hover { color: var(--ink); }
+.drawer h3, .props h3 { font: 600 13px var(--body); margin: 14px 0 4px; } .props h3 i, .ifield i { font-style: normal; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.drawer h3.sub { font: 500 10px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 12px 0 5px; }
+.drawer .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; text-wrap: pretty; }
+.drawer details { margin-top: 10px; }
+.drawer details > summary { cursor: pointer; font-weight: 600; font-size: 12.5px; }
 .tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 10px; }
-.tools button { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 6px 4px; font: 500 12px var(--body); color: var(--ink); background: transparent;
-  border: 1px solid var(--rule); border-radius: 4px; cursor: pointer; min-width: 0; }
+.tools button { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 6px 4px; font: 500 12px var(--body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 5px; cursor: pointer; min-width: 0; }
+.tools button:hover { border-color: var(--rule); }
 .tools button.wide { grid-column: span 2; }
-.tools button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.tools button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.ifield { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 130px); gap: 8px; align-items: center; margin-top: 6px; font-size: 12.5px; }
+.ifield.check { grid-template-columns: auto 1fr; }
+.ifield input:not([type=checkbox]), .ifield select { min-width: 0; font: 12px var(--mono); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 4px 6px; }
+.ifield select { font-family: var(--body); }
+.iinfo { margin: 8px 0 0; font-size: 12px; color: var(--muted); } .iinfo b { color: var(--ink); } .iinfo .warn { color: var(--warn); }
+#barNote .warn { color: var(--warn); } .iinfo .good { color: var(--good); }
+.iinfo .muted { color: var(--muted); } .iinfo.warn { color: var(--warn); }
+.scn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 10px; align-items: center; } .scn select { grid-column: 1 / -1; }
+.scn select { min-width: 0; font: 12.5px var(--body); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 5px; padding: 5px 6px; }
+.scn .btn { padding: 5px 7px; font-size: 12px; }
+.dtab { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11.5px; font-family: var(--mono); }
+.dtab th { font: 600 11px var(--body); color: var(--muted); text-align: right; padding: 3px 4px; } .dtab th:first-child, .dtab td:first-child { text-align: left; font-family: var(--body); }
+.dtab td { text-align: right; padding: 3px 4px; border-top: 1px solid var(--hair); font-variant-numeric: tabular-nums; }
+.dz-legend { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.cmp-legend { flex-wrap: wrap; } .cmp-legend i.ramp { flex: 1; min-width: 80px; height: 8px; border-radius: 2px; background: linear-gradient(90deg, rgb(33,102,172), rgb(171,217,233), rgba(0,0,0,0), rgb(253,174,97), rgb(178,24,43)); }
+.cmp-legend span i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 3px; box-shadow: inset 0 0 0 1px rgba(26, 20, 22, 0.25); }
+.dz-legend i { flex: 1; height: 8px; border-radius: 2px; box-shadow: inset 0 0 0 1px var(--hair); background: linear-gradient(90deg, rgb(178,24,43), rgb(244,165,130), rgba(0,0,0,0), rgb(146,197,222), rgb(33,102,172)); }
+.iimport { margin-top: 10px; font-size: 12.5px; } .iimport summary { cursor: pointer; color: var(--ink-2); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; } .chips .chip { display: inline-flex; gap: 4px; align-items: center; }
+#batJobs table { width: 100%; border-collapse: collapse; font-size: 11.5px; } #batJobs th { text-align: left; color: var(--muted); font-weight: 600; padding: 2px 4px; }
+#batJobs td { padding: 2px 4px; border-top: 1px solid var(--hair); } #batJobs tr.ok td:nth-child(3) { color: var(--good); } #batJobs tr.err td:nth-child(3) { color: var(--warn); } #batJobs tr.muted td { color: var(--muted); }
+
+/* map swatches (the map's own feature colours, outlined so the pale ones read on white) */
 .sw { width: 10px; height: 10px; flex: none; border-radius: 50%; border: 1.5px solid #0c151b; }
 .sw.pipe { border-radius: 0; height: 4px; background: #5cc8f2; border: 0; } .sw.culvert { border-radius: 0; height: 4px; border: 0; background: repeating-linear-gradient(90deg, #ff9f43 0 4px, transparent 4px 6px); }
 .sw.manhole { background: #e8f4f8; } .sw.inlet { background: #f2c94c; } .sw.outfall { background: #ff6b6b; } .sw.storage { border-radius: 2px; background: #a78bfa; }
 .sw.wall { border-radius: 0; height: 4px; border: 0; background: #ff5d8f; } .sw.berm { border-radius: 0; height: 6px; border: 0; background: #a3c46c; }
 .sw.barrier { border-radius: 0; height: 4px; border: 0; background: repeating-linear-gradient(90deg, #ff5d8f 0 3px, transparent 3px 5px); }
-.drawer .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; text-wrap: pretty; }
-.props h3 { font: 600 13px var(--body); margin: 12px 0 4px; } .props h3 i, .ifield i { font-style: normal; color: var(--muted); font-family: var(--mono); font-size: 11px; }
-.ifield { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 120px); gap: 8px; align-items: center; margin-top: 5px; font-size: 12.5px; }
-.ifield.check { grid-template-columns: auto 1fr; }
-.ifield input:not([type=checkbox]), .ifield select { min-width: 0; font: 12.5px var(--mono); background: transparent; color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; }
-.ifield select { font-family: var(--body); }
-.iinfo { margin: 8px 0 0; font-size: 12px; color: var(--muted); } .iinfo b { color: var(--ink); } .iinfo .warn { color: var(--warn); }
-#barNote .warn { color: var(--warn); } .iinfo .good { color: var(--good); }
-.sw.building { border-radius: 2px; background: #f2a65a; } .sw.pad { border-radius: 2px; background: transparent; border: 1.5px dashed #9ad17b; }
-.sw.pond { border-radius: 2px; background: #4fa3e0; } .sw.outlet { border-radius: 0; height: 4px; border: 0; background: #f4f4f4; } .sw.swale { border-radius: 0; height: 5px; border: 0; background: #59c9a5; }
+.sw.building { border-radius: 2px; background: #f2a65a; } .sw.pad { border-radius: 2px; background: rgba(154, 209, 123, 0.25); border: 1.5px dashed #5f9a40; }
+.sw.pond { border-radius: 2px; background: #4fa3e0; } .sw.outlet { border-radius: 0; height: 4px; border: 0; background: #f4f4f4; box-shadow: 0 0 0 1px var(--rule); } .sw.swale { border-radius: 0; height: 5px; border: 0; background: #59c9a5; }
 .sw.bio { border-radius: 2px; background: #7bd389; } .sw.perm { border-radius: 2px; background: repeating-linear-gradient(45deg, #c2b280 0 2px, #8a7d5c 2px 4px); } .sw.dsp { border-radius: 0; height: 3px; border: 0; background: #5cc8f2; }
-.sw.paved { border-radius: 2px; background: #9aa7b1; } .sw.cline { border-radius: 0; height: 4px; border: 0; background: #5ce1e6; } .sw.profile { border-radius: 0; height: 0; border: 0; border-top: 3px dashed #c792ea; } .sw.site { border-radius: 2px; background: transparent; border: 1.5px dashed #f2c94c; } .sw.demolish { border-radius: 2px; background: transparent; border: 2px solid #ff5d5d; }
-.scn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 10px; align-items: center; } .scn select { grid-column: 1 / -1; }
-.scn select { min-width: 0; font: 12.5px var(--body); background: transparent; color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 4px 6px; }
-.scn .btn { padding: 4px 7px; font-size: 12px; }
-.dtab { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11.5px; font-family: var(--mono); }
-.dtab th { font: 600 11px var(--body); color: var(--muted); text-align: right; padding: 2px 4px; } .dtab th:first-child, .dtab td:first-child { text-align: left; font-family: var(--body); }
-.dtab td { text-align: right; padding: 2px 4px; border-top: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
-.iinfo .muted { color: var(--muted); } .iinfo.warn { color: var(--warn); }
-.dz-legend { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); margin-top: 4px; }
-.drawer.wide { width: min(400px, calc(100% - 20px)); }
-.cmp-legend { flex-wrap: wrap; } .cmp-legend i.ramp { flex: 1; min-width: 80px; height: 8px; border-radius: 2px; background: linear-gradient(90deg, rgb(33,102,172), rgb(171,217,233), rgba(0,0,0,0), rgb(253,174,97), rgb(178,24,43)); }
-.cmp-legend span i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 3px; }
-.dz-legend i { flex: 1; height: 8px; border-radius: 2px; background: linear-gradient(90deg, rgb(178,24,43), rgb(244,165,130), rgba(0,0,0,0), rgb(146,197,222), rgb(33,102,172)); }
-.iimport { margin-top: 8px; font-size: 12.5px; } .iimport summary { cursor: pointer; color: var(--muted); }
+.sw.paved { border-radius: 2px; background: #9aa7b1; } .sw.cline { border-radius: 0; height: 4px; border: 0; background: #5ce1e6; } .sw.profile { border-radius: 0; height: 0; border: 0; border-top: 3px dashed #c792ea; }
+.sw.site { border-radius: 2px; background: rgba(242, 201, 76, 0.2); border: 1.5px dashed #b8901c; } .sw.demolish { border-radius: 2px; background: transparent; border: 2px solid #ff5d5d; }
 
-.rail { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; overflow: auto; min-height: 0; }
-.pane { padding: 14px 16px 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-content: start; }
+/* ---- the steps rail */
+.rail { background: var(--surface); border-left: 1px solid var(--line); overflow: auto; overflow-x: hidden; min-height: 0; scrollbar-gutter: stable; }
+.pane { padding: 0 0 28px; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
 .pane > section, .pane fieldset { min-width: 0; }
-.rail { overflow-x: hidden; scrollbar-gutter: stable; }
-section h2 { font-family: var(--display); font-weight: 600; font-size: 12.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; display: flex; gap: 8px; align-items: baseline; }
-section h2 em { font-style: normal; font-family: var(--mono); letter-spacing: 0; text-transform: none; font-size: 11px; color: var(--accent); }
+.pane > section { border-bottom: 1px solid var(--hair); }
+.grouphead { margin: 0; padding: 18px 20px 6px; font: 500 10px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.grouphead + section { border-top: 1px solid var(--hair); }
+/* a step: numbered badge (ink, accent when open), title, its live status tag, chevron -- sparc .stage-block */
+.step > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 13px 20px; position: sticky; top: 0; z-index: 3; background: var(--surface); }
+.step > summary::-webkit-details-marker { display: none; }
+.step > summary:hover { background: var(--sunken); }
+.step > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.step .num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; font: 600 11px var(--mono); color: #fff; background: var(--ink); }
+.step[open] .num { background: var(--accent); }
+.step .ttl { min-width: 0; display: flex; flex-direction: column; }
+section h2 { font-weight: 700; font-size: 14.5px; letter-spacing: -0.01em; color: var(--ink); margin: 0; line-height: 1.3; }
+section h2 em, .step .ttl em { font-style: normal; font-family: var(--mono); font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step .ttl em:empty { display: none; }
+.step .chev { font: 500 11px var(--mono); color: var(--muted); transition: transform .2s ease; }
+.step[open] .chev { transform: rotate(180deg); color: var(--ink); }
+.step[open] > summary { border-bottom: 1px solid var(--hair); }
+.step-body { padding: 14px 20px 20px; }
+.step-body > :first-child { margin-top: 0; }
+/* advanced options inside a step */
+details.adv { margin-top: 14px; border-top: 1px solid var(--hair); padding-top: 4px; }
+details.adv > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; padding: 6px 0; font: 600 12.5px var(--body); color: var(--ink-2); }
+details.adv > summary::-webkit-details-marker { display: none; }
+details.adv > summary::before { content: "+"; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 1px solid var(--line); border-radius: 4px; font: 500 12px var(--mono); color: var(--muted); }
+details.adv[open] > summary::before { content: "–"; }
+details.adv > summary small { margin-left: auto; font: 500 9.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+details.adv > summary:hover { color: var(--ink); }
+.subhead { margin: 16px 0 2px; font: 500 10px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
-.seg button { background: transparent; border: 0; border-left: 1px solid var(--rule); padding: 7px 4px; font: 500 13px var(--body); color: var(--ink); cursor: pointer; }
+.seg button { background: var(--surface); border: 0; border-left: 1px solid var(--line); padding: 7px 4px; font: 500 12.5px var(--body); color: var(--ink); cursor: pointer; }
 .seg button:first-child { border-left: 0; }
-.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.seg button:hover { background: rgba(0, 0, 0, 0.04); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
 .seg button:disabled { color: var(--muted); cursor: not-allowed; }
-.desc, .note { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; text-wrap: pretty; }
-.field { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto); gap: 2px 10px; align-items: center; margin-top: 10px; }
-.field label { font-size: 13px; }
-.field output { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
-.field input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
-.field select { max-width: 100%; min-width: 0; font: 13px var(--body); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; }
-.rep-fig { margin-top: 8px; } .rep-fig svg { display: block; max-width: 100%; height: auto; border-radius: 4px; }
-.emu-num { width: 64px; box-sizing: border-box; font: 12px var(--mono); background: transparent; color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 2px 4px; }
+.desc, .note { color: var(--muted); font-size: 12px; margin: 8px 0 0; text-wrap: pretty; }
+.field { display: grid; grid-template-columns: minmax(min(9em, 45%), 1fr) minmax(0, auto); gap: 2px 12px; align-items: center; margin-top: 10px; }
+.field label, .field > span { font-size: 12.5px; color: var(--ink-2); }
+.field output { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.field input[type=range] { grid-column: 1 / -1; width: 100%; margin: 2px 0 0; }
+.field select, .field input[type=number], .field input[type=date], .field input[type=text] { max-width: 100%; min-width: 0; font: 12.5px var(--body); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 5px; padding: 5px 7px; }
+.field input[type=number] { font-family: var(--mono); font-size: 12px; }
+.rep-fig { margin-top: 8px; } .rep-fig svg { display: block; max-width: 100%; height: auto; border-radius: 4px; border: 1px solid var(--hair); }
+.emu-num { width: 64px; box-sizing: border-box; font: 12px var(--mono); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 2px 4px; }
 .emu-slider { grid-template-columns: 1fr; } .emu-slider input[type=range] { width: 100%; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-.btn { flex: 1; min-width: 84px; padding: 9px 10px; border-radius: 5px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 600 13px var(--body); cursor: pointer; }
+.btn { flex: 1; min-width: 84px; padding: 8px 12px; border-radius: 5px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); font: 600 12.5px var(--body); cursor: pointer; transition: background .12s, border-color .12s; }
+.btn:hover:not(:disabled) { background: rgba(0, 0, 0, 0.04); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn:focus-visible, .seg button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin: 0; }
-.readouts div { display: grid; gap: 1px; min-width: 0; }
-.readouts dt { font-size: 11.5px; color: var(--muted); }
-.readouts dd { margin: 0; font-family: var(--mono); font-size: 14.5px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.log { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 5px; font-size: 12.5px; }
+.btn.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.06); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.primary:disabled { opacity: 1; background: var(--paper-2); border-color: var(--line); color: var(--muted); }
+select.btn { font-weight: 500; text-align: left; }
+.btn:focus-visible, .pbtn:focus-visible, .seg button:focus-visible, .infra-toggle:focus-visible, .tools button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input, select, textarea { accent-color: var(--ink); }
+.readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; margin: 0; border-top: 1px solid var(--hair); }
+.readouts div { display: grid; gap: 1px; min-width: 0; padding: 7px 0; border-bottom: 1px solid var(--hair); }
+.readouts dt { font: 500 9.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.readouts dd { margin: 0; font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; font-size: 12px; }
+#log:not(:empty) { max-height: 260px; overflow: auto; padding: 10px 10px 10px 6px; background: var(--sunken); border: 1px solid var(--hair); border-radius: 6px; }
 .log li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
 .log li::before { content: "·"; color: var(--muted); text-align: center; }
 .log li.ok::before { content: "✓"; color: var(--good); }
 .log li.warn::before { content: "!"; color: var(--warn); font-weight: 700; }
 .log li.err::before { content: "×"; color: var(--crit); font-weight: 700; }
 .log li.run::before { content: "…"; color: var(--accent); }
-.log small { display: block; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.log small { display: block; color: var(--muted); font-family: var(--mono); font-size: 10.5px; word-break: break-all; }
 .legend { display: grid; gap: 4px; margin-top: 10px; }
-.vlabel { margin: 8px 0 4px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.vlabel { margin: 14px 0 6px; font: 500 10px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.step-body > .vlabel:first-child { margin-top: 0; }
 .vseg button { padding-left: 2px; padding-right: 2px; min-width: 0; }
-.inrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin: 6px 0 10px; padding-left: 8px; border-left: 2px solid var(--accent); }
+#viewSeg2 { grid-auto-flow: row; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+#viewSeg2 button { border-top: 1px solid var(--line); } #viewSeg2 button:nth-child(-n+5) { border-top: 0; } #viewSeg2 button:nth-child(5n+1) { border-left: 0; }
+.inrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin: 6px 0 10px; padding-left: 10px; border-left: 2px solid var(--ink); }
 .inrow b { font-size: 12.5px; } .inrow select, .inrow input { max-width: 100%; }
-.caltab { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 6px; } .caltab td, .caltab th { padding: 2px 4px; text-align: right; border-bottom: 1px solid var(--rule); }
+.caltab { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 6px; } .caltab td, .caltab th { padding: 3px 4px; text-align: right; border-bottom: 1px solid var(--hair); }
 .caltab th { color: var(--muted); font-weight: 600; } .caltab tr.best td { color: var(--good); font-weight: 600; } .caltab td:first-child, .caltab th:first-child { text-align: left; }
-.ramp { height: 10px; border-radius: 2px; }
-.ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 8px; }
-.toggle input { accent-color: var(--accent); }
-.tiers { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 12px; margin: 0; }
-.tiers dt { color: var(--muted); } .tiers dd { margin: 0; }
-.pill { display: inline-block; font: 600 10.5px var(--body); padding: 0 6px; border-radius: 999px; border: 1px solid currentColor; margin-left: 4px; }
+.ramp { height: 10px; border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(26, 20, 22, 0.18); }
+.ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.toggle { display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-top: 8px; color: var(--ink-2); }
+.tiers { display: grid; grid-template-columns: auto 1fr; gap: 0 12px; font-size: 12px; margin: 0; }
+.tiers dt { color: var(--muted); padding: 5px 0; border-bottom: 1px dotted var(--line); font: 500 10px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; } .tiers dd { margin: 0; padding: 5px 0; border-bottom: 1px dotted var(--line); }
+.pill { display: inline-block; font: 500 9.5px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; margin-left: 4px; }
 .pill.good { color: var(--good); } .pill.warn { color: var(--warn); }
 .maplibregl-ctrl-attrib { font-size: 10.5px; }
-.find input { flex: 3 1 160px; width: 0; min-width: 0; padding: 8px 10px; border-radius: 5px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 13px var(--body); }
+.maplibregl-ctrl-group { box-shadow: var(--shadow) !important; border: 1px solid var(--line); }
+.find { margin-top: 0; }
+.find input { flex: 3 1 160px; width: 0; min-width: 0; padding: 8px 10px; border-radius: 5px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); font: 13px var(--body); }
 .find .btn { flex: 0 0 auto; }
 #exampleSel { flex-basis: 100%; }
-.linked { margin-top: 12px; border: 1px solid var(--rule); border-radius: 5px; padding: 8px 10px; }
-.linked summary { cursor: pointer; font-size: 13px; font-weight: 600; }
-.linked .lab { display: block; font-size: 12.5px; margin: 8px 0 3px; }
-.linked textarea { width: 100%; box-sizing: border-box; resize: vertical; font: 11.5px var(--mono); padding: 6px 8px; border-radius: 4px; border: 1px solid var(--rule); background: transparent; color: var(--ink); }
-.log small { word-break: break-all; }
+.linked { margin-top: 12px; }
+.linked .lab { display: block; font-size: 12px; color: var(--ink-2); margin: 10px 0 4px; }
+.linked textarea { width: 100%; box-sizing: border-box; resize: vertical; font: 11.5px var(--mono); padding: 6px 8px; border-radius: 5px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); }
+details.gi { margin-top: 14px; border-top: 1px solid var(--hair); padding-top: 4px; }
+details.gi > summary { cursor: pointer; padding: 6px 0; font: 600 12.5px var(--body); color: var(--ink-2); }
 #stormSrc { margin-bottom: 4px; }
-.hyeto { margin: 14px 0 0; position: relative; }
-.hyeto figcaption { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.hyeto { margin: 16px 0 0; position: relative; }
+.hyeto figcaption { font: 500 10px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
 .hyeto-plot svg { display: block; width: 100%; height: 132px; overflow: visible; }
 .hyeto-plot text { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
-.hyeto-plot .grid { stroke: var(--rule); stroke-width: 1; }
-.hyeto-plot .bar { fill: var(--accent); }
-.hyeto-plot .bar.future { fill: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
+.hyeto-plot .grid { stroke: var(--hair); stroke-width: 1; }
+.hyeto-plot .bar { fill: #2a78d6; }
+.hyeto-plot .bar.future { fill: color-mix(in srgb, #2a78d6 40%, var(--surface)); }
 .hyeto-plot .bar.hot { fill: var(--ink); }
 .hyeto-plot .bar.fcst { fill: color-mix(in srgb, var(--warn) 70%, var(--surface)); }
 .hyeto-plot .bar.fcst.future { fill: color-mix(in srgb, var(--warn) 35%, var(--surface)); }
 .hyeto-plot .obs-end { stroke: var(--warn); stroke-width: 1.5; }
 .hyeto-plot .obs-end-label { fill: var(--warn); }
 .hyeto-plot .now { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 2; }
-.hyeto-plot .wl { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.hyeto-plot .wl { fill: none; stroke: #2a78d6; stroke-width: 2; stroke-linejoin: round; }
 .hyeto-tip { position: absolute; pointer-events: none; font-family: var(--mono); font-size: 11px; padding: 3px 7px; border-radius: 4px;
-  background: var(--surface); border: 1px solid var(--rule); color: var(--ink); white-space: nowrap; transform: translate(-50%, -100%); }
+  background: var(--surface); border: 1px solid var(--line); color: var(--ink); white-space: nowrap; transform: translate(-50%, -100%); box-shadow: var(--shadow); }
 fieldset:disabled, .locked { opacity: 0.55; pointer-events: none; }
 
-/* ---- voxel / 16-bit skin */
-*:not(.dot):not(.sw):not(.pill):not(.maplibregl-ctrl-attrib-button) { border-radius: 0 !important; }
-body { background: var(--bg) linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 100% 8px; }
-.rail, .viewport, .drawer, .pdlg, .hud, .infra-toggle { border-width: 2px; box-shadow: 4px 4px 0 var(--shadow); }
-.rail { background: var(--surface) linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 8px 8px; }
-section h2, .drawer h2, .pdlg h2 { font-size: 11px; letter-spacing: 0.06em; color: var(--ink); }
-section h2::before { content: ""; width: 8px; height: 8px; flex: none; align-self: center; background: var(--accent); box-shadow: 2px 2px 0 var(--shadow); }
-.hud b { font-size: 9px; letter-spacing: 0.04em; }
-.btn, .pbtn, .tools button, .seg { border-width: 2px; box-shadow: 2px 2px 0 var(--shadow); }
-.btn:active:not(:disabled), .pbtn:active, .tools button:active { transform: translate(2px, 2px); box-shadow: none; }
-.seg button { font-weight: 600; }
-.btn.primary { box-shadow: 2px 2px 0 var(--shadow), inset 0 -3px 0 rgba(0, 0, 0, 0.18); }
-input[type=range] { -webkit-appearance: none; appearance: none; height: 16px; background: transparent; }
-input[type=range]::-webkit-slider-runnable-track { height: 4px; background: var(--rule); }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4px; background: var(--accent); border: 2px solid var(--surface); box-shadow: 2px 2px 0 var(--shadow); }
-input[type=range]::-moz-range-track { height: 4px; background: var(--rule); }
-input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 0; background: var(--accent); border: 2px solid var(--surface); box-shadow: 2px 2px 0 var(--shadow); }
-.maplibregl-ctrl-group { border-radius: 0 !important; box-shadow: 3px 3px 0 var(--shadow) !important; }
-#water { position: fixed; left: 0; right: 0; bottom: 0; width: 100%; height: 56px; z-index: 0; image-rendering: pixelated; display: block; }
+/* range inputs: a hairline track and an ink thumb */
+input[type=range] { -webkit-appearance: none; appearance: none; height: 18px; background: transparent; }
+input[type=range]::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: var(--line); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5.5px; border-radius: 50%; background: var(--ink); border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--ink); }
+input[type=range]::-moz-range-track { height: 3px; border-radius: 2px; background: var(--line); }
+input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 50%; background: var(--ink); border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--ink); }
 
 @media (max-width: 860px) {
   .app { display: flex; flex-direction: column; height: auto; min-height: 100%; }
-  #water { position: relative; margin-top: -56px; }
+  .topbar { gap: 8px 14px; padding: 10px 16px 12px; }
+  .tag { display: none; }
+  .engine { order: 2; flex: 1 1 0; min-width: 0; justify-content: flex-end; }
+  .engine > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .proj { order: 3; margin-left: 0; padding-left: 0; border-left: 0; }
+  .pname { max-width: 110px; }
+  .topbar > a { order: 4; margin-left: auto; font-size: 12px; }
   .viewport { height: 62vh; min-height: 340px; flex: none; }
-  .rail { overflow: visible; }
-  .engine, .proj { margin-left: 0; }
+  .toggles { left: 12px; right: 12px; top: auto; bottom: 34px; overflow-x: auto; scrollbar-width: none; }
+  .toggles .tgrp { display: none; }
+  .rail { overflow: visible; border-left: 0; border-top: 1px solid var(--line); }
+  .step > summary { top: 0; }
+  .drawer { top: 64px; bottom: 80px; }
 }
-.chips { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; } .chips .chip { display: inline-flex; gap: 4px; align-items: center; }
-.drawer h3.sub { font: 600 12px var(--body); color: var(--muted); margin: 10px 0 4px; }
-#batJobs table { width: 100%; border-collapse: collapse; font-size: 11.5px; } #batJobs th { text-align: left; color: var(--muted); font-weight: 600; padding: 2px 4px; }
-#batJobs td { padding: 2px 4px; border-top: 1px solid var(--rule); } #batJobs tr.ok td:nth-child(3) { color: var(--good); } #batJobs tr.err td:nth-child(3) { color: var(--warn); } #batJobs tr.muted td { color: var(--muted); }
 /* ---- compound flooding and SLR (src/compound.js) */
 #cmpdPairs table { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 4px; } #cmpdPairs th { text-align: left; color: var(--muted); font-weight: 600; padding: 2px 4px; }
-#cmpdPairs td { padding: 2px 4px; border-top: 1px solid var(--rule); vertical-align: top; } #cmpdPairs .btn { padding: 1px 8px; font-size: 11px; }
+#cmpdPairs td { padding: 2px 4px; border-top: 1px solid var(--hair); vertical-align: top; } #cmpdPairs .btn { padding: 1px 8px; font-size: 11px; }
 /* end of compound flooding */
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <h1><svg class="logo" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+  <header class="topbar">
+    <h1><svg class="logo" viewBox="0 0 16 16" aria-hidden="true">
       <polygon points="8,1 15,4.5 8,8 1,4.5" fill="#8fe3ff"/><polygon points="1,4.5 8,8 8,15 1,11.5" fill="#1a78bd"/><polygon points="15,4.5 8,8 8,15 15,11.5" fill="#0a3466"/>
-      <polygon points="1,7 8,10.5 15,7 15,8 8,11.5 1,8" fill="#3fb4ea" opacity="0.9"/></svg>Flood<span>Sim</span></h1>
-    <span class="tag">2D urban flood model · US open data · 3DEP lidar · OSM · NLCD · SSURGO · NOAA · SWMM</span>
-    <a href="../dist/floodsim.html">Solver lab &amp; verification</a>
+      <polygon points="1,7 8,10.5 15,7 15,8 8,11.5 1,8" fill="#3fb4ea" opacity="0.9"/></svg><span>Flood<em>Sim</em></span></h1>
+    <span class="tag">2D urban flood model · 3DEP lidar · OSM · NLCD · SSURGO · NOAA · SWMM</span>
     <div class="proj">
       <button class="pbtn" id="projBtn" type="button" title="Open or create a project">Projects</button>
       <span class="pname" id="projName">Unsaved project</span>
@@ -250,6 +310,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <span class="pstatus" id="projStatus" role="status"></span>
     </div>
     <span class="engine"><i class="dot" id="engineDot"></i><span id="engineText">Starting WebGPU…</span></span>
+    <a href="../dist/floodsim.html">Solver lab &amp; verification</a>
   </header>
   <dialog class="pdlg" id="projDlg">
     <header><h2>Projects</h2><button class="x" id="projClose" type="button" aria-label="Close">×</button></header>
@@ -268,9 +329,11 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <div><b>Rain</b><span id="hudRain">–</span></div>
     </div>
     <div class="probe" id="probe"></div>
-    <div class="toggles">
+    <div class="toggles" role="toolbar" aria-label="Map tools">
+      <span class="tgrp" aria-hidden="true">Design</span>
       <button class="infra-toggle" id="designToggle" aria-expanded="false" aria-controls="design" title="Proposed buildings, pads, paved areas and grading, as scenarios over existing conditions">Site design <b id="designCount"></b></button>
       <button class="infra-toggle" id="infraToggle" aria-expanded="false" aria-controls="infra" title="Draw, import or estimate pipes, culverts, structures and storage">Infrastructure <b id="infraCount"></b></button>
+      <span class="tsep" aria-hidden="true"></span><span class="tgrp" aria-hidden="true">Analyse</span>
       <button class="infra-toggle" id="cmpToggle" aria-expanded="false" aria-controls="cmpDrawer" title="Compare two runs with the same storm and settings: what the design changed">Compare</button>
       <button class="infra-toggle" id="emuToggle" aria-expanded="false" aria-controls="emuDrawer" title="Per-project emulator: instant flood maps across a range of storms and design values, trained on this project&rsquo;s own runs (screening only)">Emulator</button>
       <button class="infra-toggle" id="batToggle" aria-expanded="false" aria-controls="batDrawer" title="Batch: many runs (design storms × scenarios × sensitivity variants) one after another, each filed in the project, with checkpoints so a stopped run resumes">Batch</button>
@@ -413,33 +476,39 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
     </aside>
   </div>
 
-  <aside class="rail"><div class="pane">
-    <section>
-      <h2>1 · Area</h2>
-      <form class="row find" id="findForm" style="margin-top:0"><input id="findInput" type="search" placeholder="Address or place in the US" aria-label="Find address or place"><button class="btn" type="submit">Find</button></form>
+  <aside class="rail" aria-label="Model steps"><div class="pane">
+    <!-- The steps, in the order a run takes them. One is open at a time (details name="step"); each header carries the
+         step's live status, so the closed ones still read as a summary. Advanced options sit in details.adv. -->
+    <p class="grouphead">Set up and run</p>
+    <section id="areaSec"><details class="step" name="step" open>
+      <summary><span class="num">1</span><span class="ttl"><h2>Area and model</h2></span><span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="step-body">
+      <form class="row find" id="findForm"><input id="findInput" type="search" placeholder="Address or place in the US" aria-label="Find address or place"><button class="btn" type="submit">Find</button></form>
       <p class="note" id="findNote" style="margin:4px 0 8px"></p>
       <div class="row" style="margin-top:0">
+        <select class="btn" id="exampleSel" aria-label="Example sites"></select>
         <button class="btn" id="drawBtn" title="Drag a rectangle">Draw box</button>
         <button class="btn" id="polyBtn" title="Click the corners; double-click, Enter, or click the first corner to finish; Esc cancels">Draw polygon</button>
-        <select class="btn" id="exampleSel" aria-label="Example sites"></select>
         <button class="btn" id="wsBtn" title="Find the ground that drains into this area, from 3DEP elevation" disabled>Watershed</button>
       </div>
       <div class="note" id="wsNote" hidden></div>
       <p class="desc" id="areaDesc">Drag a box, or click out a polygon around the catchment. Up to about 3 × 3 km at 1 m.</p>
       <div class="field"><label for="dxSel">Solver cell size</label>
         <select id="dxSel"><option value="1">1 m (DEM resolution)</option><option value="2">2 m + downscale to 1 m</option><option value="4">4 m + downscale to 1 m</option><option value="4s">Speed mode: 4 m subgrid, depths at 1 m (~15× faster)</option><option value="8s">Screening: 8 m subgrid, depths at 1 m (~35× faster, coarser)</option></select></div>
-      <div class="field"><label for="curbSel">Street curb burn</label>
-        <select id="curbSel"><option value="auto">Auto</option><option value="0.15">15 cm</option><option value="0">Off</option></select></div>
-      <!-- local time stepping (opt-in) -->
-      <label class="toggle" title="Each 8 × 8 tile steps at its own power-of-two step (up to 8× the step the fastest cell allows): faster where a few deep channel cells set the step for a large shallow area. Off with subgrid cells and sediment"><input type="checkbox" id="ltsOn"> Local time stepping (experimental)</label>
-      <!-- /local time stepping -->
-      <div class="field"><label for="bathySel" title="Lidar flattens rivers at the flight-day water surface. Where NOAA BlueTopo has surveyed the bed (harbours, estuaries, tidal rivers) that is used; elsewhere this carves an estimated channel from regional bankfull curves (Bieger et al. 2015)">Channel bathymetry</label>
-        <select id="bathySel"><option value="off">Lidar surface (none)</option><option value="USA">Estimate: nationwide curve</option><option value="APL">Estimate: Atlantic Plain</option><option value="AHI">Estimate: Appalachian Highlands</option>
-          <option value="IPL">Estimate: Interior Plains</option><option value="IHI">Estimate: Interior Highlands</option><option value="LUP">Estimate: Laurentian Upland</option><option value="RMS">Estimate: Rocky Mountains</option>
-          <option value="IMP">Estimate: Intermontane Plateaus</option><option value="PMS">Estimate: Pacific Mountains</option></select></div>
-      <p class="note" id="bathyNote"></p>
-      <details class="linked">
-        <summary>HEC-RAS cross-sections (optional)</summary>
+      <p class="note" id="sizeNote"></p>
+      <details class="adv">
+        <summary>Terrain and channels <small>Advanced</small></summary>
+        <div class="field"><label for="curbSel">Street curb burn</label>
+          <select id="curbSel"><option value="auto">Auto</option><option value="0.15">15 cm</option><option value="0">Off</option></select></div>
+        <!-- local time stepping (opt-in) -->
+        <label class="toggle" title="Each 8 × 8 tile steps at its own power-of-two step (up to 8× the step the fastest cell allows): faster where a few deep channel cells set the step for a large shallow area. Off with subgrid cells and sediment"><input type="checkbox" id="ltsOn"> Local time stepping (experimental)</label>
+        <!-- /local time stepping -->
+        <div class="field"><label for="bathySel" title="Lidar flattens rivers at the flight-day water surface. Where NOAA BlueTopo has surveyed the bed (harbours, estuaries, tidal rivers) that is used; elsewhere this carves an estimated channel from regional bankfull curves (Bieger et al. 2015)">Channel bathymetry</label>
+          <select id="bathySel"><option value="off">Lidar surface (none)</option><option value="USA">Estimate: nationwide curve</option><option value="APL">Estimate: Atlantic Plain</option><option value="AHI">Estimate: Appalachian Highlands</option>
+            <option value="IPL">Estimate: Interior Plains</option><option value="IHI">Estimate: Interior Highlands</option><option value="LUP">Estimate: Laurentian Upland</option><option value="RMS">Estimate: Rocky Mountains</option>
+            <option value="IMP">Estimate: Intermontane Plateaus</option><option value="PMS">Estimate: Pacific Mountains</option></select></div>
+        <p class="note" id="bathyNote"></p>
+        <p class="subhead">HEC-RAS cross-sections (optional)</p>
         <p class="note">A 1D model's geometry file (.g01 …) with GIS cut lines, and its project .prj (units) or the RAS Mapper projection .prj. The sections set the bed under the flattened water between them, where BlueTopo has no survey; the curve above fills the rest.</p>
         <label class="ifield"><span>Elevations in</span><select id="xsUnits"><option value="auto">Project units (else feet)</option><option value="US">feet</option><option value="SI">metres</option></select></label>
         <label class="ifield"><span>Vertical datum</span><select id="xsDatum"><option value="NAVD88">NAVD88</option><option value="NGVD29">NGVD29 (shifted to NAVD88)</option></select></label>
@@ -448,9 +517,8 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <input type="file" id="xsFiles" multiple hidden accept=".g01,.g02,.g03,.g04,.g05,.g06,.g07,.g08,.g09,.prj,.txt">
         <p class="note" id="xsNote"></p>
       </details>
-      <p class="note" id="sizeNote"></p>
-      <details class="linked">
-        <summary>Your own drainage data (optional)</summary>
+      <details class="adv linked">
+        <summary>Your own drainage data <small>Optional</small></summary>
         <p class="note">Paste links to public ArcGIS layers (…/FeatureServer/0 or …/MapServer/1) or GeoJSON files, one per line. Build uses them instead of the built-in sources; pipes make it a tier 1 model. To take part of a layer, add a filter: …/MapServer/108?where=LAYER_GROUP%3D%27SEWER%20PIPES%27 (encoded, no spaces).</p>
         <label class="lab" for="linkPipes">Pipes / mains (lines)</label><textarea id="linkPipes" rows="2" spellcheck="false" placeholder="https://…/MapServer/1"></textarea>
         <label class="lab" for="linkInlets">Inlets / catch basins (points)</label><textarea id="linkInlets" rows="1" spellcheck="false"></textarea>
@@ -460,12 +528,14 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <div class="row"><button class="btn" id="linkCheck" type="button">Check links</button></div>
         <ul class="log" id="linkLog"></ul>
       </details>
-      <div class="row"><button class="btn primary" id="buildBtn" disabled>Build model</button></div>
+      <div class="row" style="margin-top:16px"><button class="btn primary" id="buildBtn" disabled>Build model</button></div>
       <ul class="log" id="log"></ul>
-    </section>
+      </div>
+    </details></section>
 
-    <section id="stormSec">
-      <h2>2 · Storm <em id="stormTag"></em></h2>
+    <section id="stormSec"><details class="step" name="step">
+      <summary><span class="num">2</span><span class="ttl"><h2>Storm</h2><em id="stormTag"></em></span><span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="step-body">
       <div class="seg" id="stormSrc">
         <button data-s="a14" id="a14Btn" aria-pressed="true">Atlas 14 design</button><button data-s="hist" aria-pressed="false">Historic storm</button><button data-s="const" aria-pressed="false">Custom</button>
       </div>
@@ -477,7 +547,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <label class="toggle" id="coastRow" hidden><input type="checkbox" id="tCoast" checked> <span id="coastLabel">Observed water level as boundary</span></label>
         <div class="row"><button class="btn" id="histLoad" disabled>Load event</button></div>
         <p class="note" id="histNote">Searches the site's rainfall record since 1995 and every hurricane track that passed within 250 km.</p>
-        <div class="field"><label for="liveObs">Live radar</label><span class="row" style="gap:6px"><select id="liveObs" aria-label="Observed hours"><option value="1">last 1 h</option><option value="3" selected>last 3 h</option><option value="6">last 6 h</option></select>
+        <div class="field"><label for="liveObs">Live radar</label><span class="row" style="gap:6px;margin-top:0"><select id="liveObs" aria-label="Observed hours"><option value="1">last 1 h</option><option value="3" selected>last 3 h</option><option value="6">last 6 h</option></select>
           <select id="liveLead" aria-label="Nowcast"><option value="0">no nowcast</option><option value="30">+30 min nowcast</option><option value="60" selected>+60 min nowcast</option><option value="90">+90 min nowcast</option></select></span></div>
         <div class="row"><button class="btn" id="liveLoad" disabled title="NOAA MRMS radar rain over the area to the latest 2-minute frame (about 6 min old), then the last 10 minutes' rain carried along the storm's motion">Load live radar</button></div>
       </div>
@@ -496,8 +566,20 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <div class="field"><label for="rain">Rain intensity</label><output id="rainOut"></output><input type="range" id="rain" min="5" max="200" step="5" value="75"></div>
         <div class="field"><label for="dur">Storm duration</label><output id="durOut"></output><input type="range" id="dur" min="5" max="180" step="5" value="60"></div>
       </div>
+      <figure class="hyeto" id="hyetoFig">
+        <figcaption id="hyetoTitle">Rain intensity, mm/hr per 5 min</figcaption>
+        <div class="hyeto-plot" id="hyeto"></div>
+        <div class="hyeto-tip" id="hyetoTip" hidden></div>
+      </figure>
+      <figure class="hyeto" id="wlFig" hidden>
+        <figcaption id="wlTitle">Observed water level, m NAVD88</figcaption>
+        <div class="hyeto-plot" id="wlPlot"></div>
+      </figure>
+      <p class="note" id="stormSummary">Build a model to load Atlas 14 estimates for the site.</p>
+      <div class="field"><label for="tail">Keep running after the storm</label><output id="tailOut"></output><input type="range" id="tail" min="0" max="720" step="5" value="30" title="River crests come hours after the rain: a validation run against high-water marks should reach them"></div>
       <!-- ---- compound flooding and SLR (src/compound.js) -->
       <div id="cmpdCtl" hidden>
+        <p class="subhead">Tide, surge and sea-level rise</p>
         <p class="note" id="cmpdStation">Tide gauge datums, sea-level rise and extreme water levels…</p>
         <div id="dtRows">
           <div class="field"><label for="dtMode">Design tide</label>
@@ -520,46 +602,43 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <div id="cmpdPairs"></div>
       </div>
       <!-- end of compound flooding -->
-      <figure class="hyeto" id="hyetoFig">
-        <figcaption id="hyetoTitle">Rain intensity, mm/hr per 5 min</figcaption>
-        <div class="hyeto-plot" id="hyeto"></div>
-        <div class="hyeto-tip" id="hyetoTip" hidden></div>
-      </figure>
-      <figure class="hyeto" id="wlFig" hidden>
-        <figcaption id="wlTitle">Observed water level, m NAVD88</figcaption>
-        <div class="hyeto-plot" id="wlPlot"></div>
-      </figure>
-      <p class="note" id="stormSummary">Build a model to load Atlas 14 estimates for the site.</p>
-      <div class="field"><label for="tail">Keep running after the storm</label><output id="tailOut"></output><input type="range" id="tail" min="0" max="720" step="5" value="30" title="River crests come hours after the rain: a validation run against high-water marks should reach them"></div>
-      <div class="field"><label for="roof">Roof runoff routed to ground</label><output id="roofOut"></output><input type="range" id="roof" min="0" max="100" step="5" value="100"></div>
-      <div class="field"><label for="infilModel">Infiltration</label>
-        <select id="infilModel"><option value="ga">Green-Ampt from the soil survey</option><option value="const">Constant rate by soil group</option></select></div>
-      <div class="field"><label for="wetness">Soil wetness before the storm</label>
-        <select id="wetness"><option value="dry">Dry</option><option value="normal" selected>Normal</option><option value="wet">Wet (rain in the days before)</option><option value="saturated">Saturated</option></select></div>
-      <div class="field"><label for="wtDepth">Water table depth, m (blank = soil survey)</label><input id="wtDepth" type="number" min="0" step="0.1" placeholder="soil survey" style="width:7em"></div>
-      <p class="note" id="wtNote"></p>
-      <label class="toggle"><input type="checkbox" id="sedOn"> Sediment transport and bed change</label>
-      <div class="field"><label for="topsoil">Erodible topsoil depth, m</label><input id="topsoil" type="number" value="0.3" min="0" step="0.05" style="width:6em"></div>
-      <p class="note" id="sedNote">Four grain classes from the soil survey (clay, silt, sand, gravel): erosion by excess shear, settling by size, sand and gravel bedload (Wilcock &amp; Crowe), and the ground moving with it. Standard solver only (not the subgrid speed mode).</p>
-      <label class="toggle"><input type="checkbox" id="debrisOn"> Debris flows (with sediment transport)</label>
-      <p class="note" id="debrisNote">The flow becomes a water–sediment mixture that bulks as it picks up the bed, entrains on slopes over 10° and drops its load where it flattens (Egashira), and slows with a yield stress and viscosity that rise with concentration (O'Brien &amp; Julien). Steep soil saturated by the storm fails as a shallow landslide (infinite slope, Green-Ampt wetting front) and joins the flow. On slopes over 10° the whole soil to bedrock is erodible.</p>
-      <label class="toggle"><input type="checkbox" id="bankOn" checked> Bank collapse probability along rivers, streams and lakes</label>
-      <p class="note" id="bankNote">Every step, for the ground within 20 m of open water: a planar (Culmann) failure through the toe with the soil's strength and roots, the river confining the bank, the bank's water table lagging the river (rapid drawdown), and toe scour when sediment transport is on. The probability comes from the spread of the soil's strength. Standard solver only.</p>
-      <p class="note">Storm settings lock once a run starts; Reset to change them. Roof rain goes to the open cells around each building, except the share whose downspouts connect to the sewer (Drainage).</p>
-      <div class="field"><label for="startWater">Rivers, lakes and tidal water start at</label>
-        <select id="startWater"><option value="gauge" selected>Gauge levels (at the storm start; latest reading for design storms)</option><option value="lidar">The lidar water surface (no extra water)</option></select></div>
-      <p class="note" id="startNote"></p>
       <div id="inflowBox" hidden>
-        <p class="vlabel">Upstream river inflow (USGS gauges, or StreamStats where there is none)</p>
+        <p class="subhead">Upstream river inflow (USGS gauges, or StreamStats where there is none)</p>
         <div id="inflowList"></div>
         <label class="field"><span>Drainage-area exponent b (Q = Q_gauge · (A / A_gauge)^b)</span><input id="inExp" type="number" step="0.05" min="0.3" max="1.2" value="0.8" style="width:5em"></label>
         <label class="field"><span>Baseflow warm-up before the storm (h)</span><input id="warmUp" type="number" step="0.5" min="0" max="12" value="0" style="width:5em"></label>
         <p class="note" id="inflowNote"></p>
       </div>
-    </section>
+      <details class="adv">
+        <summary>Runoff and soils <small>Advanced</small></summary>
+        <div class="field"><label for="roof">Roof runoff routed to ground</label><output id="roofOut"></output><input type="range" id="roof" min="0" max="100" step="5" value="100"></div>
+        <div class="field"><label for="infilModel">Infiltration</label>
+          <select id="infilModel"><option value="ga">Green-Ampt from the soil survey</option><option value="const">Constant rate by soil group</option></select></div>
+        <div class="field"><label for="wetness">Soil wetness before the storm</label>
+          <select id="wetness"><option value="dry">Dry</option><option value="normal" selected>Normal</option><option value="wet">Wet (rain in the days before)</option><option value="saturated">Saturated</option></select></div>
+        <div class="field"><label for="wtDepth">Water table depth, m (blank = soil survey)</label><input id="wtDepth" type="number" min="0" step="0.1" placeholder="soil survey" style="width:7em"></div>
+        <p class="note" id="wtNote"></p>
+        <div class="field"><label for="startWater">Rivers, lakes and tidal water start at</label>
+          <select id="startWater"><option value="gauge" selected>Gauge levels (at the storm start; latest reading for design storms)</option><option value="lidar">The lidar water surface (no extra water)</option></select></div>
+        <p class="note" id="startNote"></p>
+      </details>
+      <details class="adv">
+        <summary>Sediment, debris flows and banks <small>Advanced</small></summary>
+        <label class="toggle"><input type="checkbox" id="sedOn"> Sediment transport and bed change</label>
+        <div class="field"><label for="topsoil">Erodible topsoil depth, m</label><input id="topsoil" type="number" value="0.3" min="0" step="0.05" style="width:6em"></div>
+        <p class="note" id="sedNote">Four grain classes from the soil survey (clay, silt, sand, gravel): erosion by excess shear, settling by size, sand and gravel bedload (Wilcock &amp; Crowe), and the ground moving with it. Standard solver only (not the subgrid speed mode).</p>
+        <label class="toggle"><input type="checkbox" id="debrisOn"> Debris flows (with sediment transport)</label>
+        <p class="note" id="debrisNote">The flow becomes a water–sediment mixture that bulks as it picks up the bed, entrains on slopes over 10° and drops its load where it flattens (Egashira), and slows with a yield stress and viscosity that rise with concentration (O'Brien &amp; Julien). Steep soil saturated by the storm fails as a shallow landslide (infinite slope, Green-Ampt wetting front) and joins the flow. On slopes over 10° the whole soil to bedrock is erodible.</p>
+        <label class="toggle"><input type="checkbox" id="bankOn" checked> Bank collapse probability along rivers, streams and lakes</label>
+        <p class="note" id="bankNote">Every step, for the ground within 20 m of open water: a planar (Culmann) failure through the toe with the soil's strength and roots, the river confining the bank, the bank's water table lagging the river (rapid drawdown), and toe scour when sediment transport is on. The probability comes from the spread of the soil's strength. Standard solver only.</p>
+      </details>
+      <p class="note">Storm settings lock once a run starts; Reset to change them. Roof rain goes to the open cells around each building, except the share whose downspouts connect to the sewer (Drainage).</p>
+      </div>
+    </details></section>
 
-    <section id="drainSec">
-      <h2>3 · Drainage <em id="drainTag"></em></h2>
+    <section id="drainSec"><details class="step" name="step">
+      <summary><span class="num">3</span><span class="ttl"><h2>Drainage</h2><em id="drainTag"></em></span><span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="step-body">
       <div class="seg" id="drainSrc">
         <button data-d="none" aria-pressed="false">None</button><button data-d="lumped" aria-pressed="false">Lumped rate</button><button data-d="network" aria-pressed="true">Pipe network (SWMM)</button>
       </div>
@@ -568,15 +647,23 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <p class="note">Data tier 3: inlets and pipes are not modelled, a capacity is removed from street cells. Use when no network data exists.</p>
       </div>
       <div id="networkCtl">
+        <p class="note" id="netSummary">Data tier 2: a synthetic network following the streets, sized by the rational method. Build a model to generate it.</p>
         <div class="field"><label for="designAri">Pipes sized for</label>
           <select id="designAri"><option value="2">2-yr storm</option><option value="5">5-yr storm</option><option value="10" selected>10-yr storm</option><option value="25">25-yr storm</option></select></div>
         <div class="field"><label for="spacing">Inlet spacing along streets</label><output id="spacingOut"></output><input type="range" id="spacing" min="30" max="120" step="10" value="60"></div>
         <div class="field"><label for="downspout">Roof downspouts connected to the sewer</label><output id="downspoutOut"></output><input type="range" id="downspout" min="0" max="100" step="5" value="0"></div>
         <label class="toggle" title="When the pipes back up, manholes pressurise and water comes back up through the inlets on the head difference (as in HEC-RAS), instead of spilling at the rim"><input type="checkbox" id="twoWay" checked> Two-way inlet exchange</label>
         <label class="toggle"><input type="checkbox" id="tNet" checked> Show network on map</label>
+        <dl class="readouts" id="netReadouts" style="margin-top:12px" hidden>
+          <div><dt>Into pipes</dt><dd id="roNetIn">–</dd></div>
+          <div><dt>Back onto streets</dt><dd id="roNetOut">–</dd></div>
+          <div><dt>Surcharged manholes</dt><dd id="roNetSur">–</dd></div>
+          <div><dt>SWMM / combined balance</dt><dd id="roNetMass">–</dd></div>
+        </dl>
+        <p class="note">Draw, import or estimate your own pipes, structures and storage with the <b>Infrastructure</b> tool on the map.</p>
         <!-- combined sewers (src/cso.js) -->
-        <details class="gi" id="csoCtl">
-          <summary>Combined sewer: sanitary flow, regulators, gates</summary>
+        <details class="adv gi" id="csoCtl">
+          <summary>Combined sewer <small>Sanitary, regulators, gates</small></summary>
           <label class="toggle" title="Ticked by Build where the utility's area is a combined sewer"><input type="checkbox" id="csoOn"> Combined sewer area</label>
           <label class="toggle"><input type="checkbox" id="csoDwf" checked> Dry-weather (sanitary) flow in the pipes</label>
           <div class="field"><label for="csoCap">Interceptor capacity at each regulator, × peak dry-weather flow</label><input id="csoCap" type="number" min="1" max="20" step="0.5" value="3" style="width:5em"></div>
@@ -586,34 +673,28 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
           <label class="toggle"><input type="checkbox" id="csoGates" checked> Flap gates on outfalls to tidal water</label>
           <p class="note" id="csoNote">Each outfall to a stream becomes a regulator: flow up to the interceptor's capacity goes on to treatment, the rest spills over a weir to the river (a combined sewer overflow). People per manhole from the land cover it serves (8 / 25 / 60 / 120 per ha of developed open / low / medium / high intensity), on a typical residential daily pattern. Pipes leaving the area carry on to the interceptor as before.</p>
         </details>
-        <p class="note">Draw, import or estimate your own pipes, structures and storage with the <b>Infrastructure</b> drawer on the map.</p>
-        <p class="note" id="netSummary">Data tier 2: a synthetic network following the streets, sized by the rational method. Build a model to generate it.</p>
-        <dl class="readouts" id="netReadouts" style="margin-top:10px" hidden>
-          <div><dt>Into pipes</dt><dd id="roNetIn">–</dd></div>
-          <div><dt>Back onto streets</dt><dd id="roNetOut">–</dd></div>
-          <div><dt>Surcharged manholes</dt><dd id="roNetSur">–</dd></div>
-          <div><dt>SWMM / combined balance</dt><dd id="roNetMass">–</dd></div>
-        </dl>
       </div>
-      <details class="gi" id="giCtl">
-        <summary>Green infrastructure and storage</summary>
+      <details class="adv gi" id="giCtl">
+        <summary>Green infrastructure and storage <small>Area-wide</small></summary>
         <div class="field"><label for="giPave">Streets converted to permeable pavement</label><output id="giPaveOut"></output><input type="range" id="giPave" min="0" max="100" step="5" value="0"></div>
         <div class="field"><label for="giGarden">Open ground converted to rain gardens</label><output id="giGardenOut"></output><input type="range" id="giGarden" min="0" max="30" step="1" value="0"></div>
         <div class="field"><label for="giRoof">Roofs with green roofs</label><output id="giRoofOut"></output><input type="range" id="giRoof" min="0" max="100" step="5" value="0"></div>
         <div class="field"><label for="giTank">Underground storage at the outfalls</label><output id="giTankOut"></output><input type="range" id="giTank" min="0" max="20000" step="500" value="0"></div>
         <p class="note" id="giNote">Pavement stores 200 mm and takes water at 1000 mm/hr; rain gardens store 300 mm at 100 mm/hr; both drain to the native soil at its SSURGO rate. Green roofs hold the first 25 mm of rain. Tanks are SWMM storage units at the manholes feeding each outfall (pipe network only).</p>
       </details>
-    </section>
+      </div>
+    </details></section>
 
-    <section>
-      <h2>4 · Run <em id="runTag"></em></h2>
+    <section id="runSec"><details class="step" name="step">
+      <summary><span class="num">4</span><span class="ttl"><h2>Run</h2><em id="runTag"></em></span><span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="step-body">
       <div class="row" style="margin-top:0">
         <button class="btn primary" id="runBtn" disabled>Run</button>
         <button class="btn" id="resetBtn" disabled>Reset</button>
         <button class="btn" id="saveRunBtn" type="button" hidden title="Save this run's results into the project's runs folder">Save run</button>
       </div>
       <div class="field"><label for="speed">Speed</label><output id="speedOut"></output><input type="range" id="speed" min="0" max="100" value="100"></div>
-      <dl class="readouts" style="margin-top:12px">
+      <dl class="readouts" style="margin-top:14px">
         <div><dt>Time step</dt><dd id="roDt">–</dd></div>
         <div><dt>Steps</dt><dd id="roSteps">–</dd></div>
         <div><dt>Rain so far</dt><dd id="roRain">–</dd></div>
@@ -625,10 +706,13 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       </dl>
       <p class="note" id="barNote" hidden></p>
       <p class="note" id="hazNote" hidden></p>
-    </section>
+      <div class="row"><button class="btn" id="runReport" type="button" title="Open the Report: hydrographs, pipe HGL, profiles, flooded areas and damage for this run, with export">Open the report</button></div>
+      </div>
+    </details></section>
 
-    <section>
-      <h2>5 · View</h2>
+    <section id="viewSec"><details class="step" name="step">
+      <summary><span class="num">5</span><span class="ttl"><h2>Map view</h2></span><span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="step-body">
       <p class="vlabel">Now</p>
       <div class="seg vseg" id="viewSeg">
         <button data-v="depth" aria-pressed="true">Depth</button><button data-v="speed">Velocity</button><button data-v="hazard">Hazard</button>
@@ -638,62 +722,88 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <button data-v="max" title="Maximum depth">Depth</button><button data-v="peakHaz" title="Worst hazard class reached (depth and velocity at the same moment)">Hazard</button>
         <button data-v="force" title="Peak force per metre of width, ρ(h·v² + ½g·h²)">Force</button><button data-v="duration" title="Time deeper than 15 cm">Duration</button><button data-v="arrival" title="When it first got 15 cm deep">Arrival</button><button data-v="scour" title="Peak bed shear against what the ground resists (scour potential)">Scour</button><button data-v="bed" title="Bed change from sediment transport: erosion red, deposition blue">Bed</button><button data-v="collapse" title="Collapsible soils (survey screening) the flood wetted">Collapse</button><button data-v="banks" title="Highest probability of bank collapse over the run, at each bank top">Banks</button><button data-v="grain" title="Bed grain size against the soil's: coarser (scoured, armoured) brown, finer (silted) blue">Grain</button>
       </div>
+      <div class="legend"><div class="ramp" id="ramp"></div><div class="ticks" id="ticks"></div></div>
       <div class="field"><label for="hazStd">Hazard classes</label>
         <select id="hazStd"><option value="arr">ARR 2019 / AIDR H1–H6 (depth, velocity, d·v limits)</option><option value="defra">UK FD2320, HR = d(v + 0.5)</option><option value="defraUrban">UK FD2320 with urban debris factor</option></select></div>
-      <div class="legend"><div class="ramp" id="ramp"></div><div class="ticks" id="ticks"></div></div>
       <div class="field"><label for="opacity">Water opacity</label><output id="opacityOut"></output><input type="range" id="opacity" min="10" max="100" value="85"></div>
-      <div class="field"><label for="basemap">Basemap</label>
+      <p class="vlabel">Layers</p>
+      <div class="field" style="margin-top:0"><label for="basemap">Basemap</label>
         <select id="basemap"><option value="usgs">USGS orthoimagery (public domain)</option><option value="esri">Esri World Imagery</option></select></div>
+      <label class="toggle"><input type="checkbox" id="tFema" checked> FEMA flood zones and BFE lines</label>
+      <label class="toggle"><input type="checkbox" id="tBld" checked> Building footprints</label>
+      <label class="toggle"><input type="checkbox" id="tShade"> Lidar hillshade</label>
+      <label class="toggle"><input type="checkbox" id="tLc"> NLCD land cover</label>
       <div class="field"><label for="radarMode">NEXRAD radar</label>
         <select id="radarMode"><option value="off">Off</option><option value="storm">This historic storm</option><option value="live">Live, last hour</option><option value="model">Rain the model uses (MRMS, 2 min)</option></select></div>
       <div class="row" id="radarCtl" hidden><button class="btn" id="radarPlay" type="button" title="Play the frames in a loop">▶</button>
         <input type="range" id="radarT" min="0" max="0" value="0" style="flex:1" aria-label="Radar frame"></div>
       <p class="note" id="radarNote" hidden></p>
-      <label class="toggle"><input type="checkbox" id="tShade"> Lidar hillshade</label>
-      <label class="toggle"><input type="checkbox" id="tLc"> NLCD land cover</label>
-      <label class="toggle"><input type="checkbox" id="tFema" checked> FEMA flood zones and BFE lines</label>
-      <label class="toggle"><input type="checkbox" id="tBld" checked> Building footprints</label>
-    </section>
+      </div>
+    </details></section>
 
-    <section>
-      <h2>6 · Calibrate</h2>
+    <p class="grouphead">Check and hand off</p>
+    <section id="calSec"><details class="step" name="step">
+      <summary><span class="num">6</span><span class="ttl"><h2>Calibrate</h2></span><span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="step-body">
       <p class="desc">Score runs against observed flooding (high-water marks, observed depths, flooded / dry reports), then tune roughness, infiltration and inlet clogging by hand or with a sweep.</p>
+      <p class="vlabel">Observations</p>
       <div class="row" style="margin-top:0"><button class="btn" id="obsImport" type="button">Import observations</button>
         <select id="obsUnits" aria-label="Units of the observations"><option value="ft">feet NAVD88</option><option value="m">metres NAVD88</option></select>
         <button class="btn" id="obsClear" type="button">Clear</button></div>
       <input type="file" id="obsFile" hidden accept=".csv,.txt,.geojson,.json">
-      <div class="row" style="margin-top:4px"><button class="btn" id="hwmBtn" type="button" disabled title="Surveyed high-water marks from the USGS Short-Term Network near this area">USGS high-water marks</button>
+      <div class="row" style="margin-top:6px"><button class="btn" id="hwmBtn" type="button" disabled title="Surveyed high-water marks from the USGS Short-Term Network near this area">USGS high-water marks</button>
         <select id="hwmEvent" aria-label="Flood event" hidden></select></div>
       <p class="note" id="obsNote">CSV with lat, lon and a water surface elevation (wse / elev), a depth, or flooded yes / no; or GeoJSON points with the same fields.</p>
-      <div class="field"><label for="calManning">Roughness (Manning n) ×</label><output id="calManningOut"></output><input type="range" id="calManning" min="0.6" max="1.6" step="0.05" value="1"></div>
+      <p class="vlabel">Parameters</p>
+      <div class="field" style="margin-top:0"><label for="calManning">Roughness (Manning n) ×</label><output id="calManningOut"></output><input type="range" id="calManning" min="0.6" max="1.6" step="0.05" value="1"></div>
       <div class="field"><label for="calInfil">Infiltration ×</label><output id="calInfilOut"></output><input type="range" id="calInfil" min="0.25" max="2" step="0.05" value="1"></div>
       <div class="field"><label for="calClog">Inlet clogging</label><output id="calClogOut"></output><input type="range" id="calClog" min="0" max="0.7" step="0.05" value="0"></div>
-      <label class="toggle"><input type="checkbox" id="calSpeed" checked> Sweep in the 4 m speed mode (then confirm the best at 1 m)</label>
+      <p class="vlabel">Sweep</p>
+      <label class="toggle" style="margin-top:0"><input type="checkbox" id="calSpeed" checked> Sweep in the 4 m speed mode (then confirm the best at 1 m)</label>
       <div class="row"><select id="calLevels" aria-label="Values per setting"><option value="2">2 values each (8 runs)</option><option value="3" selected>3 values each (27 runs)</option></select>
         <button class="btn" id="calSweep" type="button" disabled>Sweep</button><button class="btn" id="calStop" type="button" hidden>Stop</button></div>
       <div class="note" id="calScore"></div>
       <div class="note" id="calTable"></div>
-    </section>
+      </div>
+    </details></section>
 
-    <section>
-      <h2>7 · Data and assumptions</h2>
+    <section id="dataSec"><details class="step" name="step">
+      <summary><span class="num">7</span><span class="ttl"><h2>Data and assumptions</h2></span><span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="step-body">
       <dl class="tiers" id="tiers"><dt>Status</dt><dd>Build a model to see its data sources.</dd></dl>
-    </section>
+      </div>
+    </details></section>
 
-    <section>
-      <h2>8 · Export</h2>
-      <div class="field"><label for="frameEvery">Save a depth frame every</label>
+    <section id="exportSec"><details class="step" name="step">
+      <summary><span class="num">8</span><span class="ttl"><h2>Export</h2></span><span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="step-body">
+      <p class="vlabel">3D package</p>
+      <div class="field" style="margin-top:0"><label for="frameEvery">Save a depth frame every</label>
         <select id="frameEvery"><option value="60">1 min</option><option value="300" selected>5 min</option><option value="600">10 min</option><option value="0">Off</option></select></div>
       <div class="row"><button class="btn" id="exportBtn" disabled>Download 3D package (.zip)</button></div>
       <p class="note">Contains a 16-bit heightmap and float EXR DEM, buildings as GLB, max depth, a depth/velocity EXR sequence and georeferencing metadata, ready for Unreal Engine (Landscape + water material) or Blender.</p>
-      <div class="row"><button class="btn" id="rasBtn" disabled>Download HEC-RAS 2D package (.zip)</button></div>
+      <p class="vlabel">HEC-RAS 2D</p>
+      <div class="row" style="margin-top:0"><button class="btn" id="rasBtn" disabled>Download HEC-RAS 2D package (.zip)</button></div>
       <p class="note">The model for a HEC-RAS 2D build: terrain and land-cover GeoTIFFs (NAD83 / UTM, NAVD88), Manning's n by class, the perimeter, boundary-condition lines and breaklines as shapefiles, inflow, tide and rain series as CSV, and a README of the RAS Mapper steps.</p>
-    </section>
+      </div>
+    </details></section>
   </div></aside>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
-<canvas id="water" aria-hidden="true"></canvas>
 <script type="module" src="./map.js"></script>
-<script type="module">import { startWater } from './water.js'; startWater(document.getElementById('water'));</script>
+<script type="module">
+// Step navigation (layout only; the model's wiring is in map.js). When a build finishes (Run becomes enabled) while
+// the Area step is open, move on to the Storm step; "Open the report" opens the Report drawer.
+const $ = (id) => document.getElementById(id), steps = (id) => $(id).querySelector('details.step');
+let wasDisabled = $('runBtn').disabled;
+new MutationObserver(() => {
+  const dis = $('runBtn').disabled;
+  if (wasDisabled && !dis && steps('areaSec').open) steps('stormSec').open = true;
+  wasDisabled = dis;
+}).observe($('runBtn'), { attributes: true, attributeFilter: ['disabled'] });
+$('runReport').onclick = () => { if ($('repToggle').getAttribute('aria-expanded') !== 'true') $('repToggle').click(); };
+// an opened step scrolls its header to the top of the rail
+for (const d of document.querySelectorAll('details.step')) d.addEventListener('toggle', () => { if (d.open) d.parentElement.scrollIntoView({ block: 'nearest' }); });
+</script>
 </body>
 </html>

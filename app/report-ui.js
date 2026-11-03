@@ -65,10 +65,10 @@ export function initReport(map, api) {
     finally { busy = false; }
   }
 
-  // ---------------------------------------------------------------- sections (theme: 'dark' in the drawer, 'light' in report.html)
+  // ---------------------------------------------------------------- sections (light theme; drawer: true at the drawer's width)
   /** Every section as { id, title, note, figures: [{ name, svg }], tables: [{ name, title, cols, rows }] }. */
-  function sections(theme) {
-    const size = theme === 'dark' ? { width: 380, height: 240 } : {}; // the drawer draws at its own width (text stays legible)
+  function sections(theme, drawer = false) {
+    const size = drawer ? { width: 380, height: 240 } : {}; // the drawer draws at its own width (text stays legible)
     const u = U(), s = settings(), out = [], runs = [['before', A], ['after', B]].filter(([, r]) => r), tag = (role) => (A ? (role === 'before' ? 'Before' : 'After') : 'Run');
     const min = (t) => t / 60;
 
@@ -110,8 +110,8 @@ export function initReport(map, api) {
         const pb = B.ponds?.find(p => p.id === id) ?? A?.ponds?.find(p => p.id === id), name = pb?.name ?? `Pond outlet ${id}`;
         if (pb?.stageStorage && pb.structure) {
           const t = R.stageStorageDischarge(pb.stageStorage, pb.structure, { rows: 30 });
-          figs.push({ name: `pond_storage_${slug(name)}`, svg: R.lineChart([{ name: 'storage', role: 'after', pts: t.map(r => [u.V(r.storage), u.L(r.stage)]), label: false }], { title: `${name}: stage–storage`, xLabel: `storage, ${u.vol}`, yLabel: `stage, ${u.len}`, theme, ...(theme === 'dark' ? size : { width: 320, height: 260 }) }) });
-          figs.push({ name: `pond_discharge_${slug(name)}`, svg: R.lineChart([{ name: 'discharge', role: 'after', pts: t.map(r => [u.Q(r.q), u.L(r.stage)]), label: false }], { title: `${name}: stage–discharge`, xLabel: `outflow, ${u.q}`, yLabel: `stage, ${u.len}`, theme, ...(theme === 'dark' ? size : { width: 320, height: 260 }) }) });
+          figs.push({ name: `pond_storage_${slug(name)}`, svg: R.lineChart([{ name: 'storage', role: 'after', pts: t.map(r => [u.V(r.storage), u.L(r.stage)]), label: false }], { title: `${name}: stage–storage`, xLabel: `storage, ${u.vol}`, yLabel: `stage, ${u.len}`, theme, ...(drawer ? size : { width: 320, height: 260 }) }) });
+          figs.push({ name: `pond_discharge_${slug(name)}`, svg: R.lineChart([{ name: 'discharge', role: 'after', pts: t.map(r => [u.Q(r.q), u.L(r.stage)]), label: false }], { title: `${name}: stage–discharge`, xLabel: `outflow, ${u.q}`, yLabel: `stage, ${u.len}`, theme, ...(drawer ? size : { width: 320, height: 260 }) }) });
           tables.push({ name: `ssd_${slug(name)}`, title: `${name}: stage–storage–discharge (free outfall)`, cols: [['stage', `stage_${u.len}`, 2], ['depth', `depth_${u.len}`, 2], ['storage', `storage_${u.vol}`, 0], ['q', `outflow_${u.q}`, u.dpQ], ['orifices', `orifices_${u.q}`, u.dpQ], ['weir', `riser_weir_${u.q}`, u.dpQ], ['spillway', `spillway_${u.q}`, u.dpQ]],
             rows: t.map(r => ({ stage: u.L(r.stage), depth: u.L(r.depth), storage: u.V(r.storage), q: u.Q(r.q), orifices: u.Q(r.orifices), weir: u.Q(r.weir), spillway: u.Q(r.spillway) })) });
         }
@@ -299,7 +299,7 @@ export function initReport(map, api) {
     return `<table class="dtab"><thead><tr>${t.cols.map(c => `<th>${esc(c[1].replace(/_/g, ' '))}</th>`).join('')}</tr></thead><tbody>${t.rows.slice(0, 60).map(r => `<tr>${t.cols.map(([k, , dp]) => `<td>${cell(r[k], dp)}</td>`).join('')}</tr>`).join('')}</tbody></table>${t.rows.length > 60 ? `<p class="hint">${t.rows.length - 60} more rows in the CSV.</p>` : ''}`;
   }
   function render() {
-    const secs = sections('dark'); last = secs;
+    const secs = sections('light', true); last = secs;
     $('repOut').innerHTML = `<p class="iinfo">${A ? `Before: <b>${esc(A.label)}</b><br>After: <b>${esc(B.label)}</b>` : `Run: <b>${esc(B.label)}</b>`}</p>` + secs.map(sec => `<h3>${esc(sec.title)}</h3><p class="hint">${esc(sec.note)}</p>` +
       (sec.pick ? `<label class="ifield"><span>From manhole <i>or click one on the map</i></span><select id="repHglFrom">${sec.pick.nodes.map(n => `<option value="${n.i}"${n.i === sec.pick.sel ? ' selected' : ''}>${esc(n.name)}</option>`).join('')}</select></label>` : '') +
       sec.figures.map(f => `<div class="rep-fig">${f.svg}</div>`).join('') + sec.tables.map(t => `<details${sec.id === 'summary' ? ' open' : ''}><summary>${esc(t.title)}</summary>${tableHTML(t)}</details>`).join('')).join('') +
