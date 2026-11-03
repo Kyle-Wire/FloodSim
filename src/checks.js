@@ -157,7 +157,7 @@ export function checkList(x, L = LIMITS) {
   if (w) {
     const share = w.onWatershed ? 0 : w.upstreamArea / Math.max(1, w.studyArea);
     add('Inflow', 'Ground outside that drains in', grade(share, L.upstream), w.onWatershed ? 'none: the model runs on its watershed' : `${Math.round(w.upstreamArea / 1e4).toLocaleString()} ha (${pct(share)} of the area)`,
-      'Surface runoff from outside the area is not in the model unless it runs on the watershed or has an inflow; a large share understates the flooding.');
+      'Surface runoff from outside the area is not in the model unless it runs on the watershed or has an inflow (River inflow: a gauged river, or an ungauged one from StreamStats); a large share understates the flooding.');
     if (w.river) add('Inflow', 'A river enters from a large basin', x.inflow ? 'ok' : 'problem', x.inflow ? `inflow set: ${x.inflow}` : 'no inflow set', 'Its flow is in the model only with a gauged or ungauged river inflow.');
   } else add('Inflow', 'Ground outside that drains in', 'n/a', 'watershed not traced', 'Trace the watershed (Area) to see whether ground outside drains into the area.');
   if (x.mass) {
@@ -182,7 +182,7 @@ export function checkList(x, L = LIMITS) {
       } else add('Sensitivity', s.label, 'info', `area ${fmtRel(s.dArea)}, damage ${fmtRel(s.dDamage)}, |Δ depth| p95 ${s.cmp.p95Abs.toFixed(2)} m`, 'How much the results move with this input: report the spread with the results.');
     }
     if (x.sensVersions) add('Sensitivity', 'Base and variants from one FloodSim version', 'check', 'the runs were made with different commits', 'A code change between the runs is mixed into the differences: rerun the base and the variants together.');
-  } else add('Sensitivity', 'Sensitivity runs', 'n/a', 'none saved for this storm', 'Run a batch study with the variants (roughness ± 20 %, infiltration × 0.5, rain + 10 %, cell size) to fill this.');
+  } else add('Sensitivity', 'Sensitivity runs', 'n/a', 'none saved for this storm and inputs', 'Run a batch study with the variants (roughness ± 20 %, infiltration × 0.5, rain + 10 %, cell size) and every other input as in this run (tide, sewers, inflow) to fill this.');
   return rows;
 }
 export const fmtRel = (v) => (Number.isFinite(v) ? `${v >= 0 ? '+' : '−'}${Math.abs(100 * v).toFixed(1)} %` : '–');

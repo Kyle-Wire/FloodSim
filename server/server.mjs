@@ -153,7 +153,7 @@ async function projects(req, res, p) {
   const file = !q.get('folder') && p === '/api/projects/reveal' ? projectsDir : projectPath(q.get('folder'), q.get('path') ?? '');
   if (!file) return send(res, 400, 'bad project or file name');
   if (p === '/api/projects/file' && req.method === 'GET') {
-    let data; try { data = await readFile(file); } catch { return send(res, 404, 'not found'); }
+    let data; try { data = await readFile(file); } catch { return q.get('optional') ? (res.writeHead(204), res.end()) : send(res, 404, 'not found'); } // optional: a file that may not be there, without a 404 in the console
     res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' }); return res.end(data);
   }
   if (p === '/api/projects/file' && req.method === 'POST') {

@@ -32,7 +32,7 @@ import { initEmulator } from './emulator-ui.js';
 import * as CMP from '../src/compare.js';
 import * as REP from '../src/report.js';
 import { initReport } from './report-ui.js';
-import { initProjects, readBytes, readFile as readProjectFile, writeFile as writeProjectFile, stamp } from './projects.js';
+import { initProjects, readBytes, readBytesOptional, readOptional, readFile as readProjectFile, writeFile as writeProjectFile, stamp } from './projects.js';
 import { buildBarriers, BarrierWatch } from '../src/barriers.js';
 import { buildSubgrid, fineDepth, CT as SG_CT, FT as SG_FT } from '../src/subgrid.js';
 import { watershed } from '../src/watershed.js';
@@ -1972,10 +1972,10 @@ async function loadSaved(dir) {
   if (!sm.grids) throw new Error(`run ${dir} was saved without 1 m grids`);
   const head = CMP.parseHeader(await readProjectFile(folder, path('grids/max_depth.hdr'))), grids = {};
   await Promise.all([...Object.keys(CMP.GRIDS), 'hazard_arr'].map(async k => { grids[k] = CMP.decodeF32(await readBytes(folder, path(`grids/${k}.f32`))); }));
-  const json = async (p, d) => { try { return JSON.parse(await readProjectFile(folder, path(p))); } catch { return d; } };
+  const json = async (p, d) => { try { const t = await readOptional(folder, path(p)); return t == null ? d : JSON.parse(t); } catch { return d; } };
   const lines = await json('lines.json', []), newBuildings = await json('buildings.json', []);
   const [network, hgl, inlets] = await Promise.all([json('network.json', null), json('hgl.json', null), json('inlets.json', null)]);
-  let ground = null; try { ground = CMP.decodeF32(await readBytes(folder, path('grids/ground.f32'))); } catch { /* existing conditions: the base DEM */ }
+  const gb = await readBytesOptional(folder, path('grids/ground.f32')).catch(() => null), ground = gb ? CMP.decodeF32(gb) : null; // none: the base DEM (only emulator runs save it)
   return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
     storm: sm.storm?.label, stormInfo: { ari: sm.storm?.ari ?? null, durationMin: sm.storm?.durationMin ?? null }, batch: sm.batch ?? null, dir, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null,
     ponds: sm.ponds ?? null, cso: sm.cso ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null, simulatedS: sm.results?.simulatedS ?? null, inflow: sm.inflow ?? null, tide: sm.tide ?? null };
@@ -2099,7 +2099,7 @@ async function saveCheckpoint(r) {
 }
 async function checkpointMeta() {
   const folder = projects.current?.folder; if (!folder) return null;
-  try { const m = JSON.parse(await readProjectFile(folder, CK_DIR + '/meta.json')); return m.forcing ? m : null; } catch { return null; }
+  try { const t = await readOptional(folder, CK_DIR + '/meta.json'), m = t && JSON.parse(t); return m?.forcing ? m : null; } catch { return null; }
 }
 async function clearCheckpoint() {
   const folder = projects.current?.folder; if (!folder) return;
@@ -3686,5 +3686,5 @@ const projects = initProjects({ capture: captureProject, layer: () => infra.laye
   if (pf) projects.open(pf).then(built).then(() => batchUI.opened({ auto: qp.get('batch') === 'run' })).then(st => { window.__batchDone = { ok: true, study: st }; })
     .catch(e => { log('Opening the project failed: ' + e.message, 'err'); window.__batchDone = { ok: false, error: e.message }; });
 }
-window.__floodsim = { batchUI, analyzeRecord, eadFamily, checksOf, loadSaved, damageAssets, saveCheckpoint: () => saveCheckpoint(run), resumeCheckpoint: () => resumeCheckpoint(run), get run() { return run; }, get model() { return model; }, get records() { return records; }, map, setArea, infra, design, projects, buildPackage, runFiles, reportUI, compareUI, runWindowPair }; // console debugging
+window.__floodsim = { batchUI, analyzeRecord, eadFamily, checksOf, loadSaved, damageAssets, saveCheckpoint: () => saveCheckpoint(run), resumeCheckpoint: () => resumeCheckpoint(run), get run() { return run; }, get model() { return model; }, get records() { return records; }, map, setArea, infra, design, projects, buildPackage, runFiles, rasFiles, reportUI, compareUI, runWindowPair }; // console debugging
 gpuReady.then(() => updateSizeNote());

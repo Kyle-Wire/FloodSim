@@ -20,6 +20,10 @@ export async function writeFile(folder, path, data) {
 }
 export async function readFile(folder, path) { return (await api('/api/projects/file?' + q({ folder, path }))).text(); }
 export async function readBytes(folder, path) { return new Uint8Array(await (await api('/api/projects/file?' + q({ folder, path }))).arrayBuffer()); }
+/** A file that may not be there: its text, or null. */
+export async function readOptional(folder, path) { const r = await api('/api/projects/file?' + q({ folder, path, optional: 1 })); return r.status === 204 ? null : r.text(); }
+/** The same as bytes, or null. */
+export async function readBytesOptional(folder, path) { const r = await api('/api/projects/file?' + q({ folder, path, optional: 1 })); return r.status === 204 ? null : new Uint8Array(await r.arrayBuffer()); }
 
 /**
  * @param capture  () => project object (settings, area …) without name/saved
