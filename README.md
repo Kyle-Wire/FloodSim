@@ -315,7 +315,7 @@ nowcast. Same per-cell rain, books and outputs as a historic radar storm; click 
 - Fort Pierce FL, 2 November 2026, 14:38 UTC: loads in about 7 s; 3 h observed (60 mm over the area) and 60 min of
   nowcast (48 mm), motion 23 km/h toward 323° (r = 0.85). `npm run test:nowcast` (`--live`: Philadelphia now).
 
-**Channel bathymetry (estimated)** (Area → *Channel bathymetry*; `src/bathymetry.js`; off by default). Lidar flattens
+**Channel bathymetry (surveyed or estimated)** (Area → *Channel bathymetry*; `src/bathymetry.js`; off by default). Lidar flattens
 rivers at the flight-day water surface; the channel below is missing. The estimate:
 - **The flattened surface:** grown from the mapped river lines over cells flat to the millimetre (at least 4 of 8
   neighbours within 3 mm). Natural ground carries centimetres of lidar noise; flattened water carries none.
@@ -333,6 +333,20 @@ rivers at the flight-day water surface; the channel below is missing. The estima
   stand 5.9 ft above the flight-day water, so 2.7 ft is carved below it at the centre. 6,967 m³ of channel, starts full;
   the run's water balance 1.8e-6. An estimate: use surveyed sections where you have them (Rivers, below).
   `npm run test:bathymetry`.
+- **Surveyed bed where it exists** (`src/topobathy.js`, `src/tiff.js`). NOAA's National Bathymetric Source publishes
+  BlueTopo: gridded hydrographic surveys of navigable water, such as harbours, estuaries and tidal rivers. It comes in
+  2–16 m tiles, on NAVD88 in the lower 48.
+  - The server finds the tiles under the area in BlueTopo's tile index (`GET /api/bluetopo?bbox=`). The index is a
+    GeoPackage, downloaded once into `.cache/bluetopo/` and read with Node's built-in SQLite.
+  - The browser fetches the GeoTIFFs through the proxy. A small reader of its own decodes them: tiled or striped,
+    deflate, float samples. It samples them bilinearly onto the 1 m grid.
+  - On the lidar's flattened water, the surveyed bed replaces the estimate. A survey pixel above the lidar surface (a
+    bank caught in a coarse pixel) carves nothing. The estimate carries on where there is no survey.
+  - Tiles not on NAVD88 are left out, with the reason given.
+  - The regional curves are fitted to non-tidal alluvial streams. At Fairmount they carved the tidal Schuylkill to
+    −1.1 m NAVD88; BlueTopo has it surveyed to −8.2 m (median −2.8). On the Ida box, BlueTopo covers 55% of the river
+    surface, everything below the dam: 813k m³ of channel, where the estimate alone gave 357k m³ for the whole river.
+    The dam crest is untouched (3.02 m both ways).
 
 **Window reruns** (Compare → *Run both in a window*, *Check the window*; `src/window.js`; phase 4 of the site-design
 spec). On a large model, rerun a design change on a window around the site only.
@@ -962,7 +976,7 @@ an area is instant and works offline. Overpass is the least reliable source (pub
 - 1D–2D exchange every 2 s sets the pace on small domains (~47× real time at 190 k cells)
 - Design-storm rain is uniform over the domain (no areal reduction factor); historic storms can use MRMS radar (cell by cell); Atlas 14 temporal distributions not yet offered
 - Rivers come from hydro-flattened lidar: the channel below the flight-day water surface is missing unless you estimate it
-  (Channel bathymetry; regional curves, not surveyed sections)
+  (Channel bathymetry; NOAA BlueTopo surveys where they exist, mostly navigable and tidal water; regional curves elsewhere)
 - No catchment delineation: water from upstream of the drawn area is ignored (draw the polygon around the catchment);
   the drainage network is built over the polygon's bounding box, so inlets outside the polygon sit in dry sink cells
 - Max speed in exports is sampled at the display frame rate, not every solver step
@@ -1067,7 +1081,7 @@ node tests/run-waterlevel-tests.mjs # starting water levels: river rise, lake fi
 node tests/run-bank-tests.mjs     # bank stability: friction-angle failure, cohesion, confinement, rapid drawdown, probability, bank tops
 node tests/run-report-tests.mjs   # report: hydrographs, profiles, HGL flags, stage–storage–discharge, gutter spread, charts
 node tests/run-fema-tests.mjs     # FEMA NFHL: zone codes, BFE between lines, zone and BFE grids (--live: Meyerland)
-node tests/run-bathymetry-tests.mjs # channel bathymetry: regional curves, flattened surface, carved section
+node tests/run-bathymetry-tests.mjs # channel bathymetry: regional curves, flattened surface, carved section, GeoTIFF, surveyed bed
 node tests/run-window-tests.mjs   # window reruns: the window, its edge segments (+ outward), inflow rates, the edge check, merging
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
 node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and listing URLs, frame at a time (--live: Ida's frames)
@@ -1137,6 +1151,8 @@ src/compare.js        paired-run comparison: forcing fingerprint, .f32 grids, Δ
 src/report.js         H&H report outputs: hydrograph stats, profiles, HGL path and checks, stage–storage–discharge, gutter spread, SVG charts
 src/fema.js           FEMA NFHL: flood zones, BFE lines and cross-sections, zone and BFE grids
 src/bathymetry.js     estimated channel bathymetry from regional bankfull curves
+src/topobathy.js      surveyed bathymetry (NOAA BlueTopo) on the model grid, merged under the flattened water
+src/tiff.js           small GeoTIFF reader (tiled / striped, deflate, float samples, GeoKeys)
 src/window.js         window reruns: the window, edge segments, inflow rates, the edge check, merging
 src/emulator.js       per-project emulator: Latin hypercube, Gaussian processes, PCA of flood fields, leave-one-out, save / load
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten

@@ -47,6 +47,7 @@ import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells
 import * as FEMA from '../src/fema.js';
 import * as WIN from '../src/window.js';
 import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetry.js';
+import { blueTopoGrid, mergeSurvey } from '../src/topobathy.js';
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
  * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
@@ -1479,6 +1480,7 @@ async function warmUp(r) {
   } finally { s.destroy(); }
 }
 $('runBtn').onclick = async () => {
+  if (model?.bathyJob) await model.bathyJob; // the channel (surveyed bathymetry is fetched) before the run is built
   if (!run) resetRun(); if (!run) return;
   if (!run.solver && !(await prepareRun(run))) return;
   try { ensureSolver(); } catch (e) { log(e.message, 'err'); return; }
@@ -1598,7 +1600,7 @@ function forcingRecord(r) {
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
     drainage: { src: drainSrc, ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
-    area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume) } : {}) },
+    area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume), ...(model.bathy.surveyed ? { bathySurveyed: { source: 'NOAA BlueTopo', tiles: model.bathy.surveyed.tiles, volume: Math.round(model.bathy.surveyed.volume) } } : {}) } : {}) },
     commit: appCommit,
   };
 }
@@ -2502,33 +2504,51 @@ async function levelSources(prep, c, F) {
   return { water, sources, notes };
 }
 /** Starting depths for the run (null = start dry): the gauge sources, plus the tide level at t = 0 on tidal water at the edge. */
+/** NOAA BlueTopo surveyed bed elevations under the model (src/topobathy.js), fetched once per model; { error } if unavailable. */
+function surveyOf(m) {
+  const tilesAt = async (bbox) => {
+    const r = await fetch(`/api/bluetopo?bbox=${bbox.map(v => v.toFixed(5)).join(',')}`, { headers: { 'x-floodsim': '1' } });
+    if (!r.ok) throw new Error(`BlueTopo tile index: ${r.status} ${await r.text()}`); return r.json();
+  };
+  return (m.survey ??= blueTopoGrid(m.fine, tilesAt, fetcher).catch(e => ({ error: e.message })));
+}
 /**
- * Estimated channel bathymetry (src/bathymetry.js) carved into the existing-conditions ground below the flattened lidar
- * water surface, or the lidar surface put back. Rivers entering the model carry their NLDI drainage area; streams that
- * start inside it use D8 accumulation on the DEM. Rebuilds the scenario and the run inputs.
+ * Channel bathymetry carved into the existing-conditions ground below the flattened lidar water surface, or the lidar
+ * surface put back. Where NOAA BlueTopo has surveyed the bed (harbours, estuaries, tidal rivers) it is used; elsewhere
+ * the estimate from regional curves (src/bathymetry.js). Rivers entering the model carry their NLDI drainage area;
+ * streams that start inside it use D8 accumulation on the DEM. Rebuilds the scenario and the run inputs.
  */
 function applyBathymetry() {
   if (!model) return;
-  const fine = model.fine, base = model.base, mode = $('bathySel').value, nx = fine.nx, ny = fine.ny, t0 = performance.now();
-  model.zLidar ??= base.z.slice(); base.z.set(model.zLidar); model.bathy = null;
-  if (mode !== 'off') {
-    const seeds = [];
-    for (const w of (model.osm.waterways || []).filter(w => /river|stream|canal/.test(w.kind))) {
-      const pts = toCells(fine, w.line);
-      for (let s = 0; s + 1 < pts.length; s++) { const [ax, ay] = pts[s], [bx, by] = pts[s + 1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) * 2));
-        for (let t = 0; t <= n; t++) { const i = Math.floor(ax + (bx - ax) * t / n), j = Math.floor(ay + (by - ay) * t / n); if (i >= 0 && j >= 0 && i < nx && j < ny) seeds.push(j * nx + i); } }
-    }
-    const water = flatWater(model.zLidar, nx, ny, seeds);
-    model.acc ??= accumulation(model.zLidar, nx, ny);
-    const r = carveChannels(model.zLidar, nx, ny, fine.dx, water, { entries: inflow.entries.filter(en => en.areaKm2).map(en => ({ x: en.at[0], y: en.at[1], areaKm2: en.areaKm2 })), curve: CURVES[mode], acc: model.acc });
-    for (let k = 0; k < r.dz.length; k++) if (r.dz[k]) base.z[k] = model.zLidar[k] - r.dz[k];
-    model.bathy = { curve: mode, dz: r.dz, comps: r.comps, volume: r.volume };
-    const big = [...r.comps].sort((a, b) => b.areaKm2 - a.areaKm2)[0];
-    $('bathyNote').textContent = r.comps.length ? `${r.comps.length} channel${r.comps.length > 1 ? 's' : ''} carved below the lidar water surface: ${fmtVol(r.volume)} of channel (starts full).` +
-      (big ? ` Largest: ${(big.areaKm2 / 2.589988).toFixed(big.areaKm2 < 26 ? 2 : 0)} mi² drainage, bankfull ${(big.W / 0.3048).toFixed(0)} ft wide × ${(big.D / 0.3048).toFixed(1)} ft deep, banks ${(big.bank / 0.3048).toFixed(1)} ft above the water → ${(big.dc / 0.3048).toFixed(1)} ft below it at the centre.` : '') +
-      ` ${CURVES[mode].label} curve (Bieger et al. 2015): an estimate; use surveyed sections where you have them.` : 'No flattened river surface found to carve.';
-    log(`Channel bathymetry estimated (${CURVES[mode].label}): ${fmtVol(r.volume)} below the lidar water surface, ${((performance.now() - t0) / 1000).toFixed(1)} s`, 'ok', 'Bieger et al. 2015 regional curves; NLDI drainage areas');
-  } else $('bathyNote').textContent = '';
+  const m = model, mode = $('bathySel').value;
+  if (mode === 'off') { m.zLidar ??= m.base.z.slice(); m.base.z.set(m.zLidar); m.bathy = null; $('bathyNote').textContent = ''; groundCache.clear(); applyScenario(); drawDesign(); resetRun(); return (m.bathyJob = null); }
+  $('bathyNote').textContent = 'Looking for surveyed bathymetry (NOAA BlueTopo)…';
+  const job = m.bathyJob = surveyOf(m).then((sv) => { if (model === m && m.bathyJob === job && $('bathySel').value === mode) carveBathymetry(m, mode, sv); });
+  return job;
+}
+function carveBathymetry(m, mode, sv) {
+  const fine = m.fine, base = m.base, nx = fine.nx, ny = fine.ny, t0 = performance.now();
+  m.zLidar ??= base.z.slice(); base.z.set(m.zLidar); m.bathy = null;
+  const seeds = [];
+  for (const w of (m.osm.waterways || []).filter(w => /river|stream|canal/.test(w.kind))) {
+    const pts = toCells(fine, w.line);
+    for (let s = 0; s + 1 < pts.length; s++) { const [ax, ay] = pts[s], [bx, by] = pts[s + 1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) * 2));
+      for (let t = 0; t <= n; t++) { const i = Math.floor(ax + (bx - ax) * t / n), j = Math.floor(ay + (by - ay) * t / n); if (i >= 0 && j >= 0 && i < nx && j < ny) seeds.push(j * nx + i); } }
+  }
+  const water = flatWater(m.zLidar, nx, ny, seeds);
+  m.acc ??= accumulation(m.zLidar, nx, ny);
+  const r = carveChannels(m.zLidar, nx, ny, fine.dx, water, { entries: inflow.entries.filter(en => en.areaKm2).map(en => ({ x: en.at[0], y: en.at[1], areaKm2: en.areaKm2 })), curve: CURVES[mode], acc: m.acc });
+  const mg = sv?.cells ? mergeSurvey(m.zLidar, water, sv.z, r.dz, fine.dx * fine.dx) : null, dz = mg ? mg.dz : r.dz, volume = mg ? mg.volume.surveyed + mg.volume.estimated : r.volume;
+  for (let k = 0; k < dz.length; k++) if (dz[k]) base.z[k] = m.zLidar[k] - dz[k];
+  m.bathy = { curve: mode, dz, comps: r.comps, volume, surveyed: mg ? { cells: mg.surveyed, volume: mg.volume.surveyed, tiles: sv.tiles } : null };
+  const big = [...r.comps].sort((a, b) => b.areaKm2 - a.areaKm2)[0], nWater = water.reduce((a, b) => a + b, 0);
+  const surveyText = mg?.surveyed ? `Surveyed bed (NOAA BlueTopo ${sv.tiles.map(t => `${t.tile}, ${t.resolution}, ${String(t.delivered).slice(0, 10)}`).join('; ')}) under ${Math.round(100 * mg.surveyed / Math.max(1, nWater))}% of the river surface: ${fmtVol(mg.volume.surveyed)} below it; the rest estimated. `
+    : sv?.error ? `No surveyed bathymetry (BlueTopo unavailable: ${sv.error}). ` : 'No surveyed bathymetry here (NOAA BlueTopo). ';
+  $('bathyNote').textContent = surveyText + (r.comps.length ? `${r.comps.length} channel${r.comps.length > 1 ? 's' : ''} below the lidar water surface: ${fmtVol(volume)} of channel (starts full).` +
+    (big ? ` Largest: ${(big.areaKm2 / 2.589988).toFixed(big.areaKm2 < 26 ? 2 : 0)} mi² drainage, bankfull ${(big.W / 0.3048).toFixed(0)} ft wide × ${(big.D / 0.3048).toFixed(1)} ft deep, banks ${(big.bank / 0.3048).toFixed(1)} ft above the water → ${(big.dc / 0.3048).toFixed(1)} ft below it at the centre (estimated).` : '') +
+    ` ${CURVES[mode].label} curve (Bieger et al. 2015) where not surveyed: an estimate; use surveyed sections where you have them.` : 'No flattened river surface found to carve.');
+  if (mg?.surveyed) log(`Surveyed bathymetry: NOAA BlueTopo under ${Math.round(mg.surveyed * fine.dx ** 2).toLocaleString()} m² of river, ${fmtVol(mg.volume.surveyed)} below the lidar water surface`, 'ok', 'NOAA National Bathymetric Source (BlueTopo)');
+  log(`Channel bathymetry (${CURVES[mode].label} where not surveyed): ${fmtVol(volume)} below the lidar water surface, ${((performance.now() - t0) / 1000).toFixed(1)} s`, 'ok', 'Bieger et al. 2015 regional curves; NLDI drainage areas');
   groundCache.clear(); applyScenario(); drawDesign(); resetRun();
 }
 $('bathySel').onchange = () => { if (model) applyBathymetry(); };

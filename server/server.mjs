@@ -4,6 +4,7 @@
 // Only allowlisted hosts are proxied; responses are cached in .cache/ so re-running an area is offline-fast.
 // /api/projects…: project folders on this computer (loopback only), under FLOODSIM_PROJECTS or Documents\FloodSim Projects.
 // GET /api/version → { commit, dirty }: the app commit, part of every run's forcing fingerprint.
+// GET /api/bluetopo?bbox=w,s,e,n → { scheme, tiles }: NOAA BlueTopo bathymetry tiles under a box (from its tile index).
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, stat, readdir } from 'node:fs/promises';
 import { spawn, spawnSync } from 'node:child_process';
@@ -39,6 +40,7 @@ const ALLOW = new Set([
   'api.water.usgs.gov',             // USGS NLDI: upstream basins (drainage-area ratio for river inflow)
   'nwis.waterdata.usgs.gov',        // USGS NWIS: annual peak flows
   'geodesy.noaa.gov',               // NOAA NCAT / VERTCON: NGVD29 → NAVD88 for gauge datums
+  'noaa-ocs-nationalbathymetry-pds.s3.amazonaws.com', // NOAA National Bathymetric Source: BlueTopo tiles (surveyed river and harbour beds)
 ]);
 const UA = 'FloodSim/0.1 (urban flood research prototype)';
 const MIME = {
@@ -162,6 +164,46 @@ async function projects(req, res, p) {
   return send(res, 404, 'not found');
 }
 
+// ------------------------------------------------------------------ BlueTopo tile index
+// NOAA's National Bathymetric Source publishes BlueTopo, gridded surveyed bathymetry of navigable waters (NAVD88 in the
+// lower 48), as GeoTIFF tiles on S3. Which tiles cover a box is only in its tile-scheme GeoPackage (an SQLite file
+// with an R-tree), re-issued under a new dated name now and then: the latest is found by listing, downloaded once into
+// .cache/bluetopo/, and queried with Node's built-in SQLite.
+const NBS = 'https://noaa-ocs-nationalbathymetry-pds.s3.amazonaws.com';
+let scheme = null; // { name, file, at }
+async function blueTopoScheme() {
+  if (scheme && Date.now() - scheme.at < 864e5) return scheme;
+  const dir = join(cacheDir, 'bluetopo'); await mkdir(dir, { recursive: true });
+  let name = null;
+  try {
+    const r = await fetch(`${NBS}/?list-type=2&prefix=BlueTopo/_BlueTopo_Tile_Scheme/`, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(30e3) });
+    name = [...(await r.text()).matchAll(/<Key>([^<]+\.gpkg)<\/Key>/g)].map(m => m[1]).sort().at(-1) ?? null;
+  } catch { /* offline: the newest one already downloaded */ }
+  const have = (await readdir(dir).catch(() => [])).filter(f => f.endsWith('.gpkg')).sort();
+  const base = name ? name.split('/').at(-1) : have.at(-1); if (!base) throw new Error('BlueTopo tile index unavailable');
+  const file = join(dir, base);
+  if (!have.includes(base)) {
+    const r = await fetch(`${NBS}/${name}`, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(180e3) });
+    if (!r.ok) throw new Error(`BlueTopo tile index ${r.status}`);
+    await writeFile(file, Buffer.from(await r.arrayBuffer()));
+  }
+  return (scheme = { name: base, file, at: Date.now() });
+}
+async function blueTopo(req, res) {
+  if (req.headers['x-floodsim'] !== '1') return send(res, 403, 'missing x-floodsim header');
+  const b = (new URL(req.url, 'http://x').searchParams.get('bbox') ?? '').split(',').map(Number);
+  if (b.length !== 4 || !b.every(Number.isFinite) || b[2] <= b[0] || b[3] <= b[1]) return send(res, 400, 'bbox=w,s,e,n');
+  const sc = await blueTopoScheme(), { DatabaseSync } = await import('node:sqlite');
+  const db = new DatabaseSync(sc.file, { readOnly: true });
+  try {
+    const t = db.prepare('select table_name from gpkg_contents').get().table_name;
+    const tiles = db.prepare(`select t.tile as tile, t.GeoTIFF_Link as url, t.Resolution as resolution, t.UTM as utm, t.Delivered_Date as delivered from "${t}" t
+      join "rtree_${t}_geom" r on t.fid = r.id where r.minx < ? and r.maxx > ? and r.miny < ? and r.maxy > ? and t.GeoTIFF_Link is not null`).all(b[2], b[0], b[3], b[1]);
+    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+    res.end(JSON.stringify({ scheme: sc.name, tiles: tiles.map(r => ({ ...r })) }));
+  } finally { db.close(); }
+}
+
 /** The commit the server's checkout is on, and whether it has uncommitted changes (null outside a git checkout). */
 let version = null;
 function appVersion() {
@@ -191,7 +233,7 @@ createServer((req, res) => {
   const p = req.url.split('?')[0];
   (req.method === 'POST' && p === '/api/fetch' ? proxy(req, res) : req.method === 'POST' && p === '/api/bench-results' ? saveBench(req, res)
     : p === '/api/version' ? Promise.resolve().then(() => { res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(appVersion())); })
-    : p.startsWith('/api/projects') ? projects(req, res, p) : serveStatic(req, res))
+    : p === '/api/bluetopo' ? blueTopo(req, res) : p.startsWith('/api/projects') ? projects(req, res, p) : serveStatic(req, res))
     .catch((e) => { console.error(e); if (!res.headersSent) send(res, 500, String(e.message)); });
 }).listen(port, () => console.log(`FloodSim at http://localhost:${port}/app/map.html
 Projects in ${projectsDir}`));
