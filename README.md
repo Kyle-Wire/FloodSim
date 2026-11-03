@@ -764,9 +764,19 @@ readings are fetched when the run finishes (at most 20 s). `npm run test:validat
     at Fairmount and 1.70 m high at 30th Street, still rising when the run ended. The marks are +2.2 to +2.6 m;
     HW Philly-11 is now flooded (−0.15 m). Below the dam the water surface falls 1.8 m in 550 m at 3.4–4.4 m/s: the
     carved channel is far too small there. The reach below Fairmount Dam is the tidal Schuylkill, a dredged estuary,
-    and the curves are fitted to non-tidal alluvial streams: they carve it to about −1.1 m NAVD88. The fix is real
-    bathymetry below the fall line (surveyed sections, or a topobathymetric DEM), not a different curve.
-  - The Cherry Street mark (4 m under the bridge deck) is not scored. The run's books: surface 9e-7, with the pipes
+    and the curves are fitted to non-tidal alluvial streams: they carve it to about −1.1 m NAVD88.
+  - With NOAA BlueTopo's surveyed bed below the dam (Channel bathymetry, above), both gauges track within about
+    0.15 m from base flow to hour 15. At the crest, Fairmount is +0.27 m and 11 min late, and 30th Street is +0.14 m
+    and 66 min late. The 30th Street timing is off because the model has no tide: the observed level falls with the
+    ebb after 14:00, and the model's stays up.
+  - The marks: four of five flooded, bias +0.32 m, RMSE 1.16 m.
+    - The three in the pool above the dam read +0.55 to +1.44 m, growing toward the top edge. Philly-7 is 250 m from
+      where the river comes in and reads +1.44 m. The flow enters there from rest, over a pool channel that is still
+      estimated (BlueTopo stops at the dam), so the surface slopes far more steeply than the river's. Draw the box
+      well upstream of the marks you score.
+    - HW Philly-11 (a depth mark near Market Street, 1.83 m observed) stays dry in the model. Its observed level
+      (5.44 m) is above the 30th Street crest (4.96 m), so it was probably local ponding, not the river.
+  - The Cherry Street mark (4 m under the bridge deck) is not scored. The books (edge-fix run): surface 9e-7, with the pipes
     3.6e-6. The gauge-corrected rain over the area (53 mm) is well under the radar alone (91 mm) and the gridded
     record (86 mm): not explained yet.
 
