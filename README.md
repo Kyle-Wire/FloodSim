@@ -685,6 +685,50 @@ Catonsville and Elkridge gauges).
 - Check: Ellicott City in the speed mode with the Patapsco's 10-year flow: 1.35 million m³ through the model in 90
   minutes, surface mass error 1.6e-6 of the water that entered. `npm run test:inflow` (`--live` fits Hollofield).
 
+**Ungauged river inflow** (Storm → *Upstream river inflow* → an entry's source *Ungauged: USGS StreamStats regression
+peak* or *Ungauged: your own peak flow*; `src/streamstats.js`, report section `app/report-inflow.js`). For a river with
+no gauge to transfer from.
+- **The peak.** USGS StreamStats, in its published flow-statistics workflow:
+  1. delineate the basin above the entry (`ss-delineate`);
+  2. find its regression regions (NSS `regressionregions/bylocation`) and their peak-flow equations (NSS `scenarios`,
+     statistic group 2);
+  3. compute the basin characteristics those equations use (`ss-hydro`);
+  4. get the estimate (NSS `scenarios/estimate`): the 2- to 500-year peaks.
+  A basin across region boundaries is weighted by area, as StreamStats does. Return periods between the published ones
+  are log-log interpolated.
+- **The interval.** Each peak carries a 90 % interval: NSS's own where the state publishes one, else ±1.645 average
+  standard errors of prediction (Sl = √ln(1 + SE²) / ln 10), which is the region's average width.
+- **Snapping.** A point must lie within about 40 m of StreamStats' stream grid. A mapped OSM river that misses it
+  returns a 200 m² cell, so the delineation is retried on the nearest point of the NHDPlus flowline (USGS NLDI).
+  The note compares the StreamStats and NLDI basin areas.
+- **Your own peak** is for a river where StreamStats is unavailable or has no equations, or where you have a better
+  number (a FIS discharge table, a study). There is no other fallback: the app does not invent a regional peak.
+- **The shape.** The NRCS dimensionless unit hydrograph (NEH 630 ch. 16, table 16-1, peak rate factor 484; the table's
+  area is 1.336 qp·tp). It sits on a base of 5 % of the peak, and the runoff it carries is compared with the storm's rain.
+- **The timing.** The peak is the NRCS lag after the middle of the rain's peak block, plus the entry's shift:
+  L = l^0.8 (S+1)^0.7 / (1900 Y^0.5), tp = 1.11 L.
+  - l is the longest flow path where the state has it, else 209 A^0.6.
+  - Y is StreamStats' mean basin slope.
+  - The CN is 98 on the impervious share (NLCD, from StreamStats) and 70 on the rest.
+  - Without those characteristics the defaults are slope 2 % and CN 75, and the note says so.
+  - The lag equation was fitted to small basins (up to about 2,000 acres): on larger ones the note says the timing is
+    indicative.
+- **The return period** defaults to the storm's (*Design: the storm's return period*, also offered for gauges).
+- **Warnings** go in the note and the log:
+  - a characteristic outside the equations' range;
+  - a basin more than 10 % impervious (the equations are fitted to mostly rural basins, so the peak is likely higher);
+  - runoff greater than the storm's rain;
+  - a peak after the run ends.
+- **Saved with the run.** The entry's peak, interval, equations and characteristics go into the forcing fingerprint and
+  the saved run (`summary.json` `inflow`). The *River inflow* report section shows every entry's hydrograph, the
+  peak-flow table with intervals, and the characteristics with their equation ranges.
+- **Check.** Wissahickon Creek at the Philadelphia gauge (01474000; NWIS: 64.0 mi²) gives:
+  - StreamStats basin 63.7 mi²;
+  - PA SIR 2019-5094 peak-flow region 4 (drainage area, percent carbonate 16.8 %);
+  - Q100 12,300 cfs, 90 % 7,400–20,400 cfs (ASEp 31.5 %);
+  - 16.2 % impervious, mean slope 2.94°, CN 74.5, NRCS lag 7.7 h (a 40,800-acre basin: indicative).
+  `node tests/run-streamstats-tests.mjs` runs on recorded replies; `--live` asks the real services (about 20 s).
+
 **Starting water levels** (Storm → *Rivers, lakes and tidal water start at*; `src/waterlevels.js`). The 3DEP lidar is
 hydro-flattened: open water is a flat surface at the level of the day it was flown, so without this the channels and
 lakes start at that day's level. With *Gauge levels* (the default), before the run starts the app reads the USGS gauges
@@ -1145,6 +1189,7 @@ node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and lis
 node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (8 and 16 bit, all filters), GRIB2, value tables, gauge-corrected totals, timing (--live: Ida)
 node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pixels), advection, a live build with a cell arriving in the nowcast, PrecipRate fill
 node tests/run-validate-tests.mjs  # validation scorecard: peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88
+node tests/run-streamstats-tests.mjs # ungauged inflow: StreamStats replies, snapping retry, 90 % intervals, NRCS lag and unit hydrograph, report section (--live: Wissahickon)
 node tests/run-checkpoint-tests.mjs # checkpoints: state by path (typed arrays in place, a solver root), packing, a SWMM run copied half way
 npm run batch -- "<project>"     # a project's batch study headless on the GPU (tools/batch.mjs; --url, --retries, --hours, --headed)
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
@@ -1207,6 +1252,7 @@ src/gi.js             green infrastructure layers (permeable pavement, rain gard
 src/design.js         site design: proposed buildings, pads, paved areas, demolitions → edited 1 m layers; grading engine, cut / fill log
 src/stormwater.js     outlet structures (rating, links), stage–storage, modified Puls, drawn GI, underdrains, the detention check
 src/compare.js        paired-run comparison: forcing fingerprint, .f32 grids, Δ maps, off-site impact, building and outlet tables
+src/streamstats.js    ungauged river inflow: USGS StreamStats regression peaks, 90 % intervals, NRCS lag and unit hydrograph
 src/batch.js          batch studies: jobs from storms × scenarios × variants, stable job ids, progress
 src/checkpoint.js     run checkpoints: GPU buffers, SWMM memory and files, the run's JS state by path; packing
 src/report.js         H&H report outputs: hydrograph stats, profiles, HGL path and checks, stage–storage–discharge, gutter spread, SVG charts
@@ -1220,7 +1266,7 @@ tools/batch.mjs       runs a project's batch study headless (tools/headless.mjs:
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)
-app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer; app/projects.js project folders
+app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer (app/report-inflow.js its river inflow section); app/projects.js project folders
 app/                  Phase 0 lab template + voxel shell, build script
 tests/                CPU suite, Phase 1 suite, shared GPU suite, browser + Dawn runners, results JSON
 benchmarks/ea/        Gate B: EA 2D benchmark cases, browser runner, scorer, results (data/ is the GOV.UK archive)
