@@ -405,6 +405,16 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
           <option value="IPL">Estimate: Interior Plains</option><option value="IHI">Estimate: Interior Highlands</option><option value="LUP">Estimate: Laurentian Upland</option><option value="RMS">Estimate: Rocky Mountains</option>
           <option value="IMP">Estimate: Intermontane Plateaus</option><option value="PMS">Estimate: Pacific Mountains</option></select></div>
       <p class="note" id="bathyNote"></p>
+      <details class="linked">
+        <summary>HEC-RAS cross-sections (optional)</summary>
+        <p class="note">A 1D model's geometry file (.g01 …) with GIS cut lines, and its project .prj (units) or the RAS Mapper projection .prj. The sections set the bed under the flattened water between them, where BlueTopo has no survey; the curve above fills the rest.</p>
+        <label class="ifield"><span>Elevations in</span><select id="xsUnits"><option value="auto">Project units (else feet)</option><option value="US">feet</option><option value="SI">metres</option></select></label>
+        <label class="ifield"><span>Vertical datum</span><select id="xsDatum"><option value="NAVD88">NAVD88</option><option value="NGVD29">NGVD29 (shifted to NAVD88)</option></select></label>
+        <label class="ifield"><span>Projection</span><input id="xsCrs" type="text" spellcheck="false" placeholder="from the .prj, or EPSG:2272"></label>
+        <div class="row"><button class="btn" id="xsImport" type="button">Load geometry…</button><button class="btn" id="xsClear" type="button">Clear</button></div>
+        <input type="file" id="xsFiles" multiple hidden accept=".g01,.g02,.g03,.g04,.g05,.g06,.g07,.g08,.g09,.prj,.txt">
+        <p class="note" id="xsNote"></p>
+      </details>
       <p class="note" id="sizeNote"></p>
       <details class="linked">
         <summary>Your own drainage data (optional)</summary>
@@ -605,6 +615,8 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <select id="frameEvery"><option value="60">1 min</option><option value="300" selected>5 min</option><option value="600">10 min</option><option value="0">Off</option></select></div>
       <div class="row"><button class="btn" id="exportBtn" disabled>Download 3D package (.zip)</button></div>
       <p class="note">Contains a 16-bit heightmap and float EXR DEM, buildings as GLB, max depth, a depth/velocity EXR sequence and georeferencing metadata, ready for Unreal Engine (Landscape + water material) or Blender.</p>
+      <div class="row"><button class="btn" id="rasBtn" disabled>Download HEC-RAS 2D package (.zip)</button></div>
+      <p class="note">The model for a HEC-RAS 2D build: terrain and land-cover GeoTIFFs (NAD83 / UTM, NAVD88), Manning's n by class, the perimeter, boundary-condition lines and breaklines as shapefiles, inflow, tide and rain series as CSV, and a README of the RAS Mapper steps.</p>
     </section>
   </div></aside>
 </div>

@@ -231,7 +231,7 @@ const mapGeom = (g, tf) => {
 };
 
 /** Coordinate transform to lon/lat: identity when the data already look geographic, else proj4 from the .prj / EPSG code. */
-async function transformFor(prj, geoms, fetcher) {
+export async function transformFor(prj, geoms, fetcher) {
   const first = geoms.find(Boolean); if (!first) return (c) => c;
   const c0 = first.kind === 'point' ? first.coords : first.kind === 'line' ? first.coords[0] : first.coords[0][0];
   const geographic = Math.abs(c0[0]) <= 180 && Math.abs(c0[1]) <= 90;
