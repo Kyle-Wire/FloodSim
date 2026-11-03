@@ -55,6 +55,10 @@ import * as DMG from '../src/damage.js';
 import * as AR from '../src/areas.js';
 import * as CHK from '../src/checks.js';
 import * as MAPS from '../src/maps.js';
+import * as RAS from '../src/hecras.js'; // HEC-RAS handoff: the 2D package export, 1D cross-sections into the channel bed
+import { MANNING } from '../src/terrain.js';
+import { layerInputs, transformFor } from '../src/infra.js';
+import { toUTM } from '../src/geo.js';
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
  * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
@@ -554,7 +558,7 @@ async function decodeImage(buf) {
 $('buildBtn').onclick = async () => {
   if (!S.area) return;
   stopRun(); model = null; logEl.textContent = '';
-  for (const id of ['buildBtn', 'runBtn', 'resetBtn', 'exportBtn']) $(id).disabled = true;
+  for (const id of ['buildBtn', 'runBtn', 'resetBtn', 'exportBtn', 'rasBtn']) $(id).disabled = true;
   inflow.entries = []; $('inflowBox').hidden = true; $('hwmEvent').hidden = true; $('hwmBtn').disabled = true; // site-specific: found again after the build
   let built; inflow.ready = new Promise((res) => { built = res; }); // a run waits for the whole build, gauge lists included
   const fine = gridFromLonLatBox(...S.area, 1), bounds = fine.lonlatBounds(0.0004);
@@ -599,6 +603,7 @@ $('buildBtn').onclick = async () => {
     model = { fine, f, base: f, dem, osm, nlcd, soils, curb, atlas14, util, linked, site: [clon, clat], poly: S.poly };
     if (nfhl) { model.fema = { data: nfhl, grids: FEMA.nfhlGrids(nfhl, fine, f.z, { step: 4 }) }; lFema.set(...femaSummary(model.fema, fine)); }
     groundCache.clear(); emulatorUI.reset();
+    if (rasXS.geom) loadXS().catch(xsFail); // HEC-RAS cross-sections loaded before this build: placed on the new grid
     applyScenario(); // the active design scenario, if any (model.base stays existing conditions)
     $('downspout').value = util?.combined ? 100 : 0; $('downspout').dispatchEvent(new Event('input')); // combined-sewer rowhouses: downspouts tie into the sewer
     $('csoOn').checked = !!util?.combined; // combined sewers: sanitary flow and regulators (src/cso.js)
@@ -1268,7 +1273,7 @@ function resetRun() {
   run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: [...clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, faces: lf.perLine[l] })), ...winSegs.map((s, q) => ({ id: 'win:' + q, name: null, side: s.side, faces: lf.perLine[clines.length + q] }))], faces: lf.faces, samples: allLines.map(() => [[0, 0, 0, 0]]) },
     window: win ? { ...win, segs: winSegs } : null, culv, roof, net, cso, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
   run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
-  $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('hud').hidden = false;
+  $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('rasBtn').disabled = false; $('hud').hidden = false;
   $('runTag').textContent = `${c.nx.toLocaleString()} × ${c.ny.toLocaleString()} @ ${F} m`;
   canvases.depth.getContext('2d').clearRect(0, 0, canvases.depth.width, canvases.depth.height); refreshCanvas('depth');
   for (const id of ['roDt', 'roSteps', 'roRain', 'roArea', 'roVol', 'roOut', 'roMass', 'roRtf']) $(id).textContent = '–';
@@ -1664,7 +1669,7 @@ function forcingRecord(r) {
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
     drainage: { src: drainSrc, ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
-    area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume), ...(model.bathy.surveyed ? { bathySurveyed: { source: 'NOAA BlueTopo', tiles: model.bathy.surveyed.tiles, volume: Math.round(model.bathy.surveyed.volume) } } : {}) } : {}) },
+    area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume), ...(model.bathy.surveyed ? { bathySurveyed: { source: 'NOAA BlueTopo', tiles: model.bathy.surveyed.tiles, volume: Math.round(model.bathy.surveyed.volume) } } : {}), ...(model.bathy.xs ? { bathyXS: { source: model.bathy.xs.source, volume: Math.round(model.bathy.xs.volume) } } : {}) } : {}) },
     commit: appCommit,
   };
 }
@@ -2673,6 +2678,128 @@ Files
   results/frames/*.exr          depth (R) and speed (G) snapshots, solver grid; times in metadata.json
 `;
 
+// ------------------------------------------------------------------ HEC-RAS handoff (src/hecras.js)
+// Area → Channel bathymetry → HEC-RAS cross-sections (a 1D model's geometry into the channel bed), and Export →
+// HEC-RAS 2D package. Kept together here; the logic is in src/hecras.js, src/shapefile.js and src/tiff-write.js.
+const rasXS = { geom: null, units: null, proj: null, name: '' };
+const xsFail = (err) => { console.error(err); $('xsNote').textContent = 'Cross-sections not used: ' + err.message; };
+$('xsFiles').onchange = async (e) => {
+  rasXS.geom = null; rasXS.units = null; rasXS.proj = null; rasXS.name = '';
+  for (const file of e.target.files) {
+    const text = await file.text(), pj = RAS.parseProject(text);
+    if (pj) rasXS.units = pj.units;
+    else if (/^\s*(PROJCS|GEOGCS|PROJCRS)/i.test(text)) rasXS.proj = text.trim();
+    else if (/^River Reach=/m.test(text)) { rasXS.geom = RAS.parseGeometry(text); rasXS.name = file.name; }
+  }
+  if (!rasXS.geom) { $('xsNote').textContent = 'No HEC-RAS geometry (.g01 … .g99 text with "River Reach=") among those files.'; return; }
+  loadXS().catch(xsFail);
+};
+$('xsImport').onclick = () => $('xsFiles').click();
+for (const id of ['xsUnits', 'xsDatum', 'xsCrs']) $(id).onchange = () => loadXS().catch(xsFail);
+$('xsClear').onclick = () => { rasXS.geom = null; $('xsFiles').value = ''; $('xsNote').textContent = ''; if (model?.xsBed) { model.xsBed = null; applyBathymetry(); } };
+/** File coordinates → UTM in the model's zone: EPSG:269xx / 326xx locally, anything else through proj4 (a .prj's WKT, EPSG codes via epsg.io). */
+async function xsTransform(crs, zone, sample) {
+  const m = /^EPSG:(269|326)(\d\d)$/i.exec(crs ?? '');
+  if (m) { const z = Number(m[2]); return z === zone ? (x, y) => [x, y] : (x, y) => toUTM(...fromUTM(x, y, z), zone); }
+  if (!crs) throw new Error('the projection is unknown: add the RAS Mapper projection (.prj with PROJCS) or type its EPSG code');
+  const tf = await transformFor(crs, [{ kind: 'point', coords: sample }], fetcher);
+  return (x, y) => { const [lon, lat] = tf([x, y]); return toUTM(lon, lat, zone); };
+}
+async function loadXS() {
+  if (!model || !rasXS.geom) return;
+  const fine = model.fine, g = rasXS.geom, units = $('xsUnits').value === 'auto' ? rasXS.units ?? 'US' : $('xsUnits').value;
+  const pts = g.reaches.flatMap(r => r.xs.flatMap(x => x.cut)); if (!pts.length) throw new Error('no cross-section with a GIS cut line');
+  $('xsNote').textContent = 'Placing the cross-sections…';
+  const tf = await xsTransform($('xsCrs').value.trim() || rasXS.proj, fine.zone, pts[0]);
+  const toGrid = (x, y) => { const [X, Y] = tf(x, y); return [(X - fine.x0) / fine.dx, (fine.y1 - Y) / fine.dx]; };
+  const mid = tf(pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length);
+  const zShift = $('xsDatum').value === 'NGVD29' ? await ngvdToNavd(...fromUTM(mid[0], mid[1], fine.zone), fetcher) : 0;
+  const bed = RAS.xsBed(g, fine, toGrid, { zScale: units === 'US' ? 0.3048 : 1, zShift });
+  const n = g.reaches.length, label = `${rasXS.name}: ${bed.sections} section${bed.sections === 1 ? '' : 's'} in ${n} reach${n === 1 ? '' : 'es'}, ${units === 'US' ? 'ft' : 'm'} ${$('xsDatum').value}${zShift ? ` (${zShift >= 0 ? '+' : ''}${zShift.toFixed(2)} m to NAVD88)` : ''}`;
+  const had = !!model.xsBed; model.xsBed = bed.cells ? { z: bed.z, label } : null;
+  $('xsNote').textContent = (bed.cells ? `${label}; ${Math.round(bed.cells * fine.dx ** 2).toLocaleString()} m² of the model between sections.` : `${label}: none of them falls inside the model area (check the projection and units).`) +
+    (g.skipped.structures ? ` ${g.skipped.structures} bridge / culvert / structure record${g.skipped.structures > 1 ? 's' : ''} left out.` : '') +
+    (!bed.cells ? '' : $('bathySel').value === 'off' ? ' Pick a channel bathymetry option above to carve them (its curve fills where no section reaches).' : ' They set the bed under the flattened water where BlueTopo has no survey.');
+  if ((bed.cells || had) && $('bathySel').value !== 'off') applyBathymetry();
+}
+
+$('rasBtn').onclick = async () => {
+  if (!model || !run) return;
+  const btn = $('rasBtn'); btn.disabled = true; btn.textContent = 'Packaging…';
+  try {
+    if (model.bathyJob) await model.bathyJob; // the channel being carved
+    const blob = zip(await rasFiles());
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `floodsim_hecras_${model.fine.epsg}_${model.fine.x0}_${model.fine.y0}.zip`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    log('HEC-RAS 2D package exported (terrain, land cover, perimeter, boundary lines and series, breaklines, rain)', 'ok');
+  } catch (e) { console.error(e); log('HEC-RAS export failed: ' + e.message, 'err'); }
+  finally { btn.disabled = false; btn.textContent = 'Download HEC-RAS 2D package (.zip)'; }
+};
+/** The HEC-RAS package's inputs from the model and the current run settings (RAS.rasPackage). */
+async function rasFiles() {
+  const { fine, f } = model, W = fine.nx, NY = fine.ny, F = run.F, c = run.c, st = run.storm ?? currentStorm(), T = tStop(), n = cal().manning;
+  const cx = (I) => fine.x0 + I * F * fine.dx, cy = (J) => fine.y1 - J * F * fine.dx, ll = ([lon, lat]) => toUTM(lon, lat, fine.zone);
+  const lineXY = (r) => RAS.runLine(r, c.nx, c.ny).map(([I, J]) => [cx(I), cy(J)]);
+  const sample = (fn, dt) => { const out = []; for (let t = 0; t <= T + 1e-6; t += dt) out.push([t, fn(t)]); return out; };
+  const entries = run.inflowReady ?? await prepareInflow().catch(e => { log('HEC-RAS export: river inflow left out (' + e.message + ')', 'warn'); return []; });
+  const bcs = [], inflowPoints = [], taken = new Set();
+  for (const e of entries) {
+    const q = (t) => Math.max(0, typeof e.flow === 'function' ? e.flow(t) : e.flow) * (e.scale ?? 1), name = `${e.name || e.label?.split(',')[0] || 'River'} inflow`;
+    const ed = e.at ? entryEdge(c, e.at, { used: new Set() }) : null;
+    if (ed?.closed.length) {
+      ed.closed.forEach(k => taken.add(k));
+      const best = RAS.edgeRuns(ed.closed, c.nx, c.ny).sort((a, b) => b.b - b.a - (a.b - a.a))[0];
+      bcs.push({ name, kind: 'flow', line: lineXY(best), series: sample(q, 300), note: `enters across the edge over ${Math.round(ed.width)} m of channel` });
+    } else if (e.at) inflowPoints.push({ name, x: fine.x0 + e.at[0] * fine.dx, y: fine.y1 - e.at[1] * fine.dx, series: sample(q, 300) });
+  }
+  if (st?.wl) {
+    const { mask } = edgeEntries(c, entries, new Set()), cells = stageEdgeCells(c, F, mask, st) ?? [];
+    cells.forEach(k => taken.add(k));
+    RAS.edgeRuns(cells, c.nx, c.ny).forEach((r, i, all) => bcs.push({ name: `Tide ${st.wl.name ?? st.wl.station ?? ''}${all.length > 1 ? ' ' + (i + 1) : ''}`.trim(), kind: 'stage', line: lineXY(r),
+      series: sample(t => stageAt(st, t), 360), note: `observed water level${st.wl.station ? ` (NOAA CO-OPS ${st.wl.station})` : ''}, m NAVD88` }));
+  }
+  // the rest of the edge: FloodSim's free outfall, as normal depth on the ground slope near the edge (0.05 % to 5 %)
+  const free = []; for (let J = 0; J < c.ny; J++) for (let I = 0; I < c.nx; I++) { if (I && J && I < c.nx - 1 && J < c.ny - 1) continue; const k = J * c.nx + I; if (c.mask[k] && !taken.has(k)) free.push(k); }
+  const inward = Math.max(1, Math.round(20 / (F * fine.dx)));
+  for (const r of RAS.edgeRuns(free, c.nx, c.ny)) {
+    if (r.b - r.a < 2) continue;
+    let s = 0, m = 0;
+    for (let p = r.a; p <= r.b; p++) {
+      const [I, J, dI, dJ] = r.side === 'north' ? [p, 0, 0, 1] : r.side === 'south' ? [p, c.ny - 1, 0, -1] : r.side === 'west' ? [0, p, 1, 0] : [c.nx - 1, p, -1, 0];
+      const I1 = I + dI * inward, J1 = J + dJ * inward; if (I1 < 0 || J1 < 0 || I1 >= c.nx || J1 >= c.ny) continue;
+      const k0 = J * c.nx + I, k1 = J1 * c.nx + I1; if (c.mask[k1]) { s += Math.abs(c.z[k1] - c.z[k0]) / (inward * F * fine.dx); m++; }
+    }
+    bcs.push({ name: `${r.side[0].toUpperCase() + r.side.slice(1)} edge outflow ${r.a}-${r.b}`, kind: 'normal', line: lineXY(r), series: null, slope: Math.min(0.05, Math.max(0.0005, m ? s / m : 0.001)) });
+  }
+  const breaklines = layerInputs(infra.layer).barriers.map(b => ({ name: b.name || b.type, kind: b.type, line: b.line.map(ll) }));
+  if (model.bathy?.dz) {
+    const wet = new Uint8Array(W * NY); for (let k = 0; k < W * NY; k++) wet[k] = model.bathy.dz[k] > 0 ? 1 : 0;
+    RAS.maskOutline(wet, W, NY, { tol: 1.5 / fine.dx, minLen: 20 / fine.dx }).forEach((l, i) => breaklines.push({ name: `Channel bank ${i + 1}`, kind: 'channel bank', line: l.map(([i2, j2]) => [fine.x0 + i2 * fine.dx, fine.y1 - j2 * fine.dx]) }));
+  }
+  const buildings = buildingsFC().features.map(b => ({ ring: b.geometry.coordinates[0].map(ll), height: b.properties.h ?? null }));
+  let radar = null;
+  if (st?.radar?.frames?.length && st.radar.win) { // 15-minute totals of the 2-minute frames
+    const per = Math.max(1, Math.round(15 / st.blockMin)), win = st.radar.win, N = win.nx * win.ny; radar = [];
+    for (let a = 0; a < st.radar.frames.length; a += per) {
+      const mm = new Float32Array(N); for (let q = a; q < Math.min(st.radar.frames.length, a + per); q++) { const fr = st.radar.frames[q]; if (fr) for (let p = 0; p < N; p++) mm[p] += fr[p] || 0; }
+      radar.push({ t0: st.t0 + a * st.blockMin * 60e3, minutes: Math.min(per, st.radar.frames.length - a) * st.blockMin, mm, win });
+    }
+  }
+  const bz = model.bathy, start = st?.t0 ?? Date.now();
+  return RAS.rasPackage({
+    grid: { zone: fine.zone, x0: fine.x0, y1: fine.y1, dx: fine.dx, nx: W, ny: NY }, z: f.z, bld: f.bld, bldH: f.bldH, cls: f.cls, road: f.road,
+    manning: n === 1 ? f.manning : f.manning.map(v => v * n), nTable: Object.fromEntries(Object.entries(MANNING).map(([k, v]) => [k, v * n])), nRoad: MANNING_ROAD * n, classNames: NLCD_NAMES,
+    perimeter: model.poly ? [...model.poly.map(ll), ll(model.poly[0])] : [[cx(0), cy(0)], [cx(c.nx), cy(0)], [cx(c.nx), cy(c.ny)], [cx(0), cy(c.ny)], [cx(0), cy(0)]],
+    bcs, inflowPoints, breaklines, buildings, radar,
+    rain: st ? { t0: start, blockMin: st.blockMin, depth: st.depth } : null,
+    meta: { title: `${projects.current?.name ?? 'FloodSim model'} · ${st ? stormLabel(st).replace(/<[^>]+>/g, '') : 'no storm'}`, commit: appCommit, start, end: start + T * 1000, scenario: run.scenario ?? null,
+      bathy: bz ? [bz.surveyed ? 'NOAA BlueTopo survey' : null, bz.xs ? `HEC-RAS cross-sections, ${bz.xs.source}` : null, `${CURVES[bz.curve]?.label ?? bz.curve} curve elsewhere`].filter(Boolean).join('; ') : null,
+      curb: model.curb, solverDx: F * fine.dx, nCal: n, startLevels: $('startWater').value === 'gauge' ? 'USGS gauge levels at the start' : null },
+  });
+}
+// ------------------------------------------------------------------ end of the HEC-RAS handoff
+
 // ------------------------------------------------------------------ start
 // ------------------------------------------------------------------ soils, infiltration, groundwater
 function soilsRow() {
@@ -2821,16 +2948,22 @@ function carveBathymetry(m, mode, sv) {
   const water = flatWater(m.zLidar, nx, ny, seeds);
   m.acc ??= accumulation(m.zLidar, nx, ny);
   const r = carveChannels(m.zLidar, nx, ny, fine.dx, water, { entries: inflow.entries.filter(en => en.areaKm2).map(en => ({ x: en.at[0], y: en.at[1], areaKm2: en.areaKm2 })), curve: CURVES[mode], acc: m.acc });
-  const mg = sv?.cells ? mergeSurvey(m.zLidar, water, sv.z, r.dz, fine.dx * fine.dx) : null, dz = mg ? mg.dz : r.dz, volume = mg ? mg.volume.surveyed + mg.volume.estimated : r.volume;
+  // the bed's sources in order of trust: BlueTopo's survey, then HEC-RAS cross-sections (Area → Cross-sections), then the curves
+  const beds = m.xsBed ? RAS.layerBeds(sv?.cells ? sv.z : null, m.xsBed.z, nx * ny) : sv?.cells ? { z: sv.z } : null;
+  const mg = beds ? mergeSurvey(m.zLidar, water, beds.z, r.dz, fine.dx * fine.dx) : null, dz = mg ? mg.dz : r.dz, volume = mg ? mg.volume.surveyed + mg.volume.estimated : r.volume;
   for (let k = 0; k < dz.length; k++) if (dz[k]) base.z[k] = m.zLidar[k] - dz[k];
-  m.bathy = { curve: mode, dz, comps: r.comps, volume, surveyed: mg ? { cells: mg.surveyed, volume: mg.volume.surveyed, tiles: sv.tiles } : null };
+  let xsCells = 0, xsVol = 0; if (m.xsBed) for (let k = 0; k < dz.length; k++) if (water[k] && !(sv?.cells && !Number.isNaN(sv.z[k])) && !Number.isNaN(m.xsBed.z[k])) { xsCells++; xsVol += dz[k] * fine.dx * fine.dx; }
+  const bt = mg ? mg.surveyed - xsCells : 0;
+  m.bathy = { curve: mode, dz, comps: r.comps, volume, surveyed: bt ? { cells: bt, volume: mg.volume.surveyed - xsVol, tiles: sv.tiles } : null, ...(xsCells ? { xs: { cells: xsCells, volume: xsVol, source: m.xsBed.label } } : {}) };
   const big = [...r.comps].sort((a, b) => b.areaKm2 - a.areaKm2)[0], nWater = water.reduce((a, b) => a + b, 0);
-  const surveyText = mg?.surveyed ? `Surveyed bed (NOAA BlueTopo ${sv.tiles.map(t => `${t.tile}, ${t.resolution}, ${String(t.delivered).slice(0, 10)}`).join('; ')}) under ${Math.round(100 * mg.surveyed / Math.max(1, nWater))}% of the river surface: ${fmtVol(mg.volume.surveyed)} below it; the rest estimated. `
-    : sv?.error ? `No surveyed bathymetry (BlueTopo unavailable: ${sv.error}). ` : 'No surveyed bathymetry here (NOAA BlueTopo). ';
+  const surveyText = (bt ? `Surveyed bed (NOAA BlueTopo ${sv.tiles.map(t => `${t.tile}, ${t.resolution}, ${String(t.delivered).slice(0, 10)}`).join('; ')}) under ${Math.round(100 * bt / Math.max(1, nWater))}% of the river surface: ${fmtVol(mg.volume.surveyed - xsVol)} below it; the rest estimated. `
+    : sv?.error ? `No surveyed bathymetry (BlueTopo unavailable: ${sv.error}). ` : 'No surveyed bathymetry here (NOAA BlueTopo). ') +
+    (m.xsBed ? `HEC-RAS cross-sections (${m.xsBed.label}) under ${Math.round(100 * xsCells / Math.max(1, nWater))}% of the river surface: ${fmtVol(xsVol)} below it. ` : '');
   $('bathyNote').textContent = surveyText + (r.comps.length ? `${r.comps.length} channel${r.comps.length > 1 ? 's' : ''} below the lidar water surface: ${fmtVol(volume)} of channel (starts full).` +
     (big ? ` Largest: ${(big.areaKm2 / 2.589988).toFixed(big.areaKm2 < 26 ? 2 : 0)} mi² drainage, bankfull ${(big.W / 0.3048).toFixed(0)} ft wide × ${(big.D / 0.3048).toFixed(1)} ft deep, banks ${(big.bank / 0.3048).toFixed(1)} ft above the water → ${(big.dc / 0.3048).toFixed(1)} ft below it at the centre (estimated).` : '') +
     ` ${CURVES[mode].label} curve (Bieger et al. 2015) where not surveyed: an estimate; use surveyed sections where you have them.` : 'No flattened river surface found to carve.');
-  if (mg?.surveyed) log(`Surveyed bathymetry: NOAA BlueTopo under ${Math.round(mg.surveyed * fine.dx ** 2).toLocaleString()} m² of river, ${fmtVol(mg.volume.surveyed)} below the lidar water surface`, 'ok', 'NOAA National Bathymetric Source (BlueTopo)');
+  if (xsCells) log(`Channel bed from HEC-RAS cross-sections (${m.xsBed.label}): under ${Math.round(xsCells * fine.dx ** 2).toLocaleString()} m² of river, ${fmtVol(xsVol)} below the lidar water surface`, 'ok', 'HEC-RAS geometry, interpolated between sections');
+  if (bt) log(`Surveyed bathymetry: NOAA BlueTopo under ${Math.round(bt * fine.dx ** 2).toLocaleString()} m² of river, ${fmtVol(mg.volume.surveyed - xsVol)} below the lidar water surface`, 'ok', 'NOAA National Bathymetric Source (BlueTopo)');
   log(`Channel bathymetry (${CURVES[mode].label} where not surveyed): ${fmtVol(volume)} below the lidar water surface, ${((performance.now() - t0) / 1000).toFixed(1)} s`, 'ok', 'Bieger et al. 2015 regional curves; NLDI drainage areas');
   groundCache.clear(); applyScenario(); drawDesign(); resetRun();
 }

@@ -440,6 +440,24 @@ rivers at the flight-day water surface; the channel below is missing. The estima
     −1.1 m NAVD88; BlueTopo has it surveyed to −8.2 m (median −2.8). On the Ida box, BlueTopo covers 55% of the river
     surface, everything below the dam: 813k m³ of channel, where the estimate alone gave 357k m³ for the whole river.
     The dam crest is untouched (3.02 m both ways).
+- **HEC-RAS cross-sections** (Area → *HEC-RAS cross-sections*; `src/hecras.js`). Where a 1D model exists (an effective
+  FEMA model, a county study), its surveyed sections beat the curves.
+  - Load the geometry file (`.g01` …, plain text) with the project `.prj` (for its units) or the RAS Mapper projection
+    `.prj` (PROJCS WKT); or type the EPSG code. NAD83 / WGS84 UTM is converted here; state plane and the rest go
+    through proj4. Elevations in feet or metres, NAVD88 or NGVD29 (shifted by NOAA's VERTCON at the sections' centre).
+  - Read: each reach's cross-sections (`Type RM … = 1`) with `#Sta/Elev`, `Bank Sta` and the `XS GIS Cut Line`, in
+    RAS's fixed-width fields (8 characters for station–elevation, 16 for coordinates; they can run together).
+    Bridges, culverts, inline and lateral structures are counted and left out.
+  - Between two successive sections of a reach the bed is interpolated the way RAS Mapper does. Stations are stretched
+    onto the cut line's length; each section is split into left overbank, channel (between the bank stations) and
+    right overbank. Each zone is cut into strips at matching normalised stations, and a cell inside a strip takes
+    (1 − u)·z₁ + u·z₂ along it. Reaches are interpolated independently: no junctions, and nothing beyond the first
+    and last section.
+  - Under the flattened water, BlueTopo's survey comes first, then the cross-sections, then the curve. As with the
+    survey, a section above the lidar water surface carves nothing (so the overbanks never raise the ground). The note
+    and the log give the share and the volume from the sections; runs record it in their forcing (`bathyXS`).
+  - Needs a channel bathymetry option other than *Lidar surface* (that one carves nothing). Loaded sections are placed
+    again on every Build. `npm run test:hecras`.
 
 **Window reruns** (Compare → *Run both in a window*, *Check the window*; `src/window.js`; phase 4 of the site-design
 spec). On a large model, rerun a design change on a window around the site only.
@@ -1132,6 +1150,33 @@ Hover any cell for elevation, land cover, depth, speed and max depth.
 G = speed, on the solver grid), and `metadata.json` (CRS, origin, cell sizes, data sources and licences, run parameters,
 mass balance).
 
+**HEC-RAS 2D package** (Export → *Download HEC-RAS 2D package*; `src/hecras.js`, `src/tiff-write.js`,
+`src/shapefile.js`). The model as inputs for a HEC-RAS 6.x 2D build, so a reviewer can rebuild it in RAS. RAS builds its
+own terrain (.hdf) and mesh from these; no RAS project, plan, geometry or unsteady-flow file is written.
+- `terrain/terrain_model.tif`: the ground the model ran on, at 1 m. That is the lidar with the channel bathymetry carved,
+  the curb burn and any site design. The format is float32 GeoTIFF, deflate, NAD83 / UTM (EPSG 269xx) and NAVD88
+  (vertical GeoKeys 5703 / 5103). `terrain_buildings_raised.tif` is the same with the footprints raised by their height
+  (at least 3 m).
+- `landcover/landcover.tif`: the NLCD class per pixel (uint8), with 254 for an OSM street and 255 for a building.
+  `landcover_classes.csv` gives each class its ID, name and Manning's n as FloodSim used it (× the calibration
+  multiplier). `mannings_n.tif` is n per pixel.
+- `gis/*.shp` (with `.shx`, `.dbf`, `.prj` ESRI WKT):
+  - `perimeter`: the box or polygon;
+  - `bc_lines`: boundary-condition lines, from the run's own edge treatment:
+    - each river entry's closed edge run as a Flow Hydrograph;
+    - the tidal edge cells as a Stage Hydrograph;
+    - the rest of the edge, FloodSim's free outfall, as Normal Depth, with a friction slope from the ground 20 m inward
+      (0.05–5 %: an estimate);
+  - `breaklines`: drawn barriers, and the carved channel's banks traced from the carve mask and simplified;
+  - `buildings`;
+  - `internal_inflows`: rivers that enter inside the area, for a RAS internal BC line.
+- `boundary/*.csv`: each series in UTC and hours from the start, in SI and US columns. Flows are sampled every 5 min;
+  the tide every 6 min.
+- `precip/hyetograph.csv`: the rain over the area. With a radar storm, `precip/grid/*.tif` holds 15-minute MRMS
+  totals (lon/lat GeoTIFF), listed in `index.csv`.
+- `README_HEC-RAS.txt`: the RAS Mapper steps, and `hecras_package.json`, which has the same as data.
+- Not exported: the storm sewer (the 3D package has it as SWMM), culverts, ponds and GI, and starting water levels.
+
 **Caching.** `server/server.mjs` proxies an allowlist of open-data hosts and caches responses in `.cache/`, so rebuilding
 an area is instant and works offline. Overpass is the least reliable source (public servers return 429/504 under load).
 
@@ -1279,6 +1324,7 @@ node tests/run-bank-tests.mjs     # bank stability: friction-angle failure, cohe
 node tests/run-report-tests.mjs   # report: hydrographs, profiles, HGL flags, stage–storage–discharge, gutter spread, charts
 node tests/run-fema-tests.mjs     # FEMA NFHL: zone codes, BFE between lines, zone and BFE grids (--live: Meyerland)
 node tests/run-bathymetry-tests.mjs # channel bathymetry: regional curves, flattened surface, carved section, GeoTIFF, surveyed bed
+node tests/run-hecras-tests.mjs   # HEC-RAS: GeoTIFF and shapefile round trips, .g01 parsing, bed between sections, the 2D package
 node tests/run-window-tests.mjs   # window reruns: the window, its edge segments (+ outward), inflow rates, the edge check, merging
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
 node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and listing URLs, frame at a time (--live: Ida's frames)
@@ -1363,6 +1409,9 @@ src/fema.js           FEMA NFHL: flood zones, BFE lines and cross-sections, zone
 src/bathymetry.js     estimated channel bathymetry from regional bankfull curves
 src/topobathy.js      surveyed bathymetry (NOAA BlueTopo) on the model grid, merged under the flattened water
 src/tiff.js           small GeoTIFF reader (tiled / striped, deflate, float samples, GeoKeys)
+src/tiff-write.js     small GeoTIFF writer (striped, deflate, float32 / uint8, projected or lon/lat, NAVD88 GeoKeys)
+src/shapefile.js      ESRI shapefile writer (points, lines, polygons; .shx, .dbf, .prj)
+src/hecras.js         HEC-RAS handoff: .g01 cross-sections into the channel bed; the 2D package export
 src/window.js         window reruns: the window, edge segments, inflow rates, the edge check, merging
 src/emulator.js       per-project emulator: Latin hypercube, Gaussian processes, PCA of flood fields, leave-one-out, save / load
 tools/batch.mjs       runs a project's batch study headless (tools/headless.mjs: Chrome/Edge over DevTools)
