@@ -12,6 +12,8 @@ import * as V from '../src/validate.js';
 import { labelImage } from './labels.js';
 import { areasSection } from './report-areas.js';
 import { damageSection, eadSection } from './report-damage.js';
+import { checksSection, sensitivitySection } from './report-checks.js';
+import { mapsSection, streetsSection } from './report-maps.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -51,8 +53,9 @@ export function initReport(map, api) {
       if (!b) { $('repOut').innerHTML = ''; return; }
       if (a && a.forcing?.hash !== b.forcing?.hash) { const ok = C.comparable(a, b); if (!ok.ok) { $('repOut').innerHTML = `<p class="iinfo warn"><b>Not a before / after pair.</b> ${esc(ok.reason)} Pick “None” for a one-run report.</p>`; A = null; B = b; return; } }
       // flooded areas and building damage per run, and the return-period family for EAD (app/map.js analyzeRecord, eadFamily)
-      if (api.analyze) { $('repOut').innerHTML = '<p class="note">Flooded areas, building damage and expected annual damage…</p>';
-        for (const r of [a, b].filter(Boolean)) { await api.analyze(r, { threshold: settings().areaTh, wall: settings().wall }).catch(e => console.warn('analysis', e)); r.ead = await api.eadFamily?.(r, { wall: settings().wall }).catch(e => { console.warn('EAD', e); return null; }) ?? null; } }
+      if (api.analyze) { $('repOut').innerHTML = '<p class="note">Flooded areas, streets, building damage, expected annual damage, model checks and sensitivity…</p>';
+        for (const r of [a, b].filter(Boolean)) { await api.analyze(r, { threshold: settings().areaTh, wall: settings().wall }).catch(e => console.warn('analysis', e)); r.ead = await api.eadFamily?.(r, { wall: settings().wall }).catch(e => { console.warn('EAD', e); return null; }) ?? null;
+          await api.checks?.(r, { threshold: settings().areaTh, wall: settings().wall }).catch(e => console.warn('checks', e)); } } // app/map.js checksOf: model checks and sensitivity
       A = a; B = b; render();
     } catch (e) { console.error(e); $('repOut').innerHTML = `<p class="iinfo warn">${esc(e.message)}</p>`; }
     finally { busy = false; }
@@ -255,9 +258,9 @@ export function initReport(map, api) {
       out.push({ id: 'validation' + key, title: `Validation scorecard${who}`, figures, tables,
         note: `${mark[sc.verdict.status] ? mark[sc.verdict.status].toUpperCase() + ': ' : ''}${sc.verdict.text} Targets are this app's defaults for an urban flood model at 1 m (good / fair), not a published standard. High-water marks: the highest wet 1 m pixel within 3 m of each mark. Gauges: the median water surface of the 9 mapped open-water cells nearest the gauge (within 60 m) at least 10 cm deep, every simulated minute${how ? ` (observed levels: ${how})` : ''}. Rain and books explain a result; the verdict comes from the observations alone.` });
     }
-    for (const sec of [areasSection({ runs, A, theme, size, u, tag }), damageSection({ runs, A, theme, size, tag }), eadSection({ runs, A, theme, size, tag, s: s.bca })]) if (sec) out.push(sec); // app/report-areas.js, app/report-damage.js
-    const vs = out.filter(sec => sec.id.startsWith('validation')); // right after the summary
-    if (vs.length) { const rest = out.filter(sec => !sec.id.startsWith('validation')); out.length = 0; out.push(rest[0], ...vs, ...rest.slice(1)); }
+    for (const sec of [mapsSection({ runs, A, theme, size, u, tag }), areasSection({ runs, A, theme, size, u, tag }), streetsSection({ runs, theme, size, u, tag }), damageSection({ runs, A, theme, size, tag }), eadSection({ runs, A, theme, size, tag, s: s.bca }), sensitivitySection({ runs, theme, size, u, tag }), checksSection({ runs, theme, size, u, tag })]) if (sec) out.push(sec); // app/report-maps.js, report-areas.js, report-damage.js, report-checks.js
+    const vs = out.filter(sec => sec.id.startsWith('validation') || sec.id === 'maps'); // right after the summary
+    if (vs.length) { const rest = out.filter(sec => !vs.includes(sec)); out.length = 0; out.push(rest[0], ...vs, ...rest.slice(1)); }
     return out;
   }
   /** A pond's inflow from its stage series and stage–storage: I = O + ΔS/Δt. */

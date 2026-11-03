@@ -52,6 +52,8 @@ import * as CK from '../src/checkpoint.js';
 import { initBatch } from './batch-ui.js';
 import * as DMG from '../src/damage.js';
 import * as AR from '../src/areas.js';
+import * as CHK from '../src/checks.js';
+import * as MAPS from '../src/maps.js';
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
  * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
@@ -1572,7 +1574,11 @@ async function loop(gen) {
     if (out) {
       run.out = out; run.lastOut = now;
       const N = run.c.nx * run.c.ny;
-      for (let k = 0; k < N; k++) { const h = out[2 * k], v = out[2 * k + 1]; if (h > run.hmax[k]) run.hmax[k] = h; if (h > 0.01 && v > run.smax[k]) run.smax[k] = v; }
+      // peak depth: the solver's own, tracked every step (readMassNow); a frame is read right after the inlet exchange, so
+      // its depths at exchange cells hold one step's lump of returned water and would make the peak depend on when frames
+      // happen to be read. The subgrid mode tracks the peak level instead, so its live view still takes the frames.
+      const sgMax = !!run.c.sg;
+      for (let k = 0; k < N; k++) { const h = out[2 * k], v = out[2 * k + 1]; if (sgMax && h > run.hmax[k]) run.hmax[k] = h; if (h > 0.01 && v > run.smax[k]) run.smax[k] = v; }
       saveFrame(out);
       if (run.gaugeWatch && s.t >= run.gaugeWatch.next) recordGauges(run, out, s.t);
       if (run.watch) { run.watch.books(s.t, await s.readBarriers()); if (!run || run.gen !== gen) return; }
@@ -1639,6 +1645,11 @@ async function finishRecord() {
   if (run !== r) return;
   const maxD = F === 1 && !c.sg ? Float32Array.from(r.hmax) : Float32Array.from(toFine(c, r.hmax, 1));
   const finD = F === 1 && !c.sg ? Float32Array.from({ length: Nf }, (_, k) => r.out[2 * k]) : Float32Array.from(toFine(c, r.out, 2));
+  // the peak is never below the end. Coarser than 1 m, each grid is downscaled on its own, interpolating the level over
+  // the wet neighbours only: a neighbour wet at its peak (a film on higher ground) but dry at the end pulls a 1 m low
+  // spot's peak under its final depth (a gutter at 4 cm peak and 11 cm final on a 2 m test run, and a building's damage
+  // hanging on which neighbour got a film)
+  for (let k = 0; k < Nf; k++) if (finD[k] > maxD[k]) maxD[k] = finD[k];
   const cellOf = (k) => (F === 1 ? k : (((k / W) | 0) / F | 0) * c.nx + ((k % W) / F | 0));
   const inModel = (K) => c.mask[K] && !(c.inside && !c.inside[K]);
   const wall = (k) => !inModel(cellOf(k)) || (model.f.bld[k] && !c.sg); // outside the model, or a building wall at 1 m
@@ -1664,8 +1675,8 @@ async function finishRecord() {
   const when = new Date(), forcing = CMP.fingerprint(forcingRecord(r));
   const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
     saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), stormInfo: { ari: r.storm?.ari ?? null, durationMin: r.storm?.durationMin ?? null }, batch: r.batchInfo ?? null, geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
-    grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
-  rec.wall = r.wall;
+    grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
+  rec.wall = r.wall; rec.simulatedS = s.t;
   if (r.gaugeWatch && r.out && r.gaugeWatch.gauges[0].series.at(-1)?.[0] < r.gaugeWatch.t0 + s.t * 1000 - 1) recordGauges(r, r.out, s.t); // the last moment too
   rec.validation = validationOf(r, rec);
   await Promise.race([fillGauges(r, rec.validation), new Promise(res => setTimeout(res, 20000))]); // gauge readings, at most 20 s
@@ -1723,7 +1734,7 @@ async function loadSaved(dir) {
   let ground = null; try { ground = CMP.decodeF32(await readBytes(folder, path('grids/ground.f32'))); } catch { /* existing conditions: the base DEM */ }
   return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
     storm: sm.storm?.label, stormInfo: { ari: sm.storm?.ari ?? null, durationMin: sm.storm?.durationMin ?? null }, batch: sm.batch ?? null, dir, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null,
-    ponds: sm.ponds ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null };
+    ponds: sm.ponds ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null, simulatedS: sm.results?.simulatedS ?? null };
 }
 async function savedRuns() {
   const folder = projects.current?.folder; if (!folder) return [];
@@ -2033,7 +2044,8 @@ async function analyzeRecord(rec, { threshold = 0.15, areas = true, wall = 0.10 
     for (const x of ar.areas) Object.assign(x, { lonlat: cellLonLat(x.centroid), structures: 0, structuresFlooded: 0, aboveFloor: 0, damage: 0, peopleNight: 0 });
     damage.rows.forEach((row, n) => { const x = ar.areas[own[n]]; if (!x) return; x.structures++; if (row.total > 0) x.structuresFlooded++; if (row.depthFF > 0) { x.aboveFloor++; x.peopleNight += row.peopleNight; } x.damage += row.total; });
   }
-  rec.analysis = { key, model, threshold, wall, areas: ar, damage, nsiError: a.nsiError, nStructures: a.structures.length, geo: { nx: fine.nx, ny: fine.ny, bld: model.base.bld } };
+  const streets = areas ? MAPS.streetStats(a.roads, { nx: fine.nx, ny: fine.ny, maxDepth: G.max_depth, tWet: G.t_wet, tAbove15: G.t_above15, maxSpeed: G.max_speed }, { dx: fine.dx }) : null; // src/maps.js
+  rec.analysis = { key, model, threshold, wall, areas: ar, streets, damage, nsiError: a.nsiError, nStructures: a.structures.length, geo: { nx: fine.nx, ny: fine.ny, bld: model.base.bld } };
   return rec.analysis;
 }
 /**
@@ -2058,8 +2070,62 @@ async function eadFamily(rec, { wall = 0.10 } = {}) {
   return { points, ead: mid.ead, low: lo.ead, high: hi.ead, parts: mid.parts, curve: mid.curve, warnings: mid.warnings, durationMin: info.durationMin, scenario: rec.scenario ?? 'Existing conditions' };
 }
 // ------------------------------------------------------------------ end of flooded areas, damages, EAD
+// ------------------------------------------------------------------ defensibility checks (src/checks.js)
+// For the report: a record's checks (the model edge, inflow from outside, the books, run length, marks and features near
+// the edge) and its sensitivity family (the project's saved batch-variant runs of the same storm, scenario and design).
+const edgeDist = () => (model.edgeDist ??= CHK.edgeDistance(model.fine.nx, model.fine.ny, model.fine.dx, model.poly ? polygonCells(model.fine, model.poly) : null));
+const coordsOf = (g) => (!g ? [] : g.type === 'Point' ? [g.coordinates] : g.type === 'LineString' || g.type === 'MultiPoint' ? g.coordinates : g.type === 'Polygon' || g.type === 'MultiLineString' ? g.coordinates.flat() : g.type === 'MultiPolygon' ? g.coordinates.flat(2) : []);
+/**
+ * The sensitivity family of a record: the base run and the project's saved batch-variant runs of the same scenario and
+ * design whose forcing differs from the base's only in the part the variant changes (CHK.VARIANT_PART); the latest of
+ * each. → { base, variants: [{ key, label, dir, maxDepth, damage, commit }], versions (FloodSim commits differ) } or null
+ */
+async function sensitivityFamily(rec, { wall = 0.10 } = {}) {
+  if (!projects.current || !rec?.forcing || !model) return null;
+  const sc = (r) => r.scenario ?? 'Existing conditions', N = model.fine.nx * model.fine.ny, own = rec.batch?.variant ?? 'base';
+  const runs = (await savedRuns()).filter(r => r.grids && r.batch?.variant && r.dir !== rec.dir && sc(r) === sc(rec) && r.designHash === rec.designHash); // newest first
+  const ownPart = own === 'base' ? [] : [CHK.VARIANT_PART[own] ?? '?'];
+  const baseRow = own === 'base' ? null : runs.find(r => r.batch.variant === 'base' && !CHK.partsDiffer(r.forcing, rec.forcing, ownPart).length);
+  if (own !== 'base' && !baseRow) return null;
+  const baseF = baseRow ? baseRow.forcing : rec.forcing, byKey = new Map();
+  for (const r of runs) {
+    const k = r.batch.variant; if (k === 'base' || k === own || byKey.has(k) || !(k in CHK.VARIANT_PART)) continue;
+    if (!CHK.partsDiffer(r.forcing, baseF, [CHK.VARIANT_PART[k]]).length) byKey.set(k, r);
+  }
+  if (own !== 'base') byKey.set(own, null); // the record itself
+  if (!byKey.size) return null;
+  const member = async (key, r) => {
+    const one = r ? await loadSaved(r.dir) : rec; if (one.grids.max_depth.length !== N) return null;
+    const an = await analyzeRecord(one, { areas: false, wall });
+    return { key, label: one.batch?.variantLabel ?? key, dir: one.dir ?? null, maxDepth: one.grids.max_depth, damage: an?.damage.totals ?? null, commit: one.commit ?? null };
+  };
+  const base = baseRow ? await member('base', baseRow) : await member('base', null); if (!base) return null;
+  const variants = [];
+  for (const [key, r] of byKey) { const v = await member(key, r); if (v) variants.push(v); }
+  return { base, variants, versions: variants.some(v => v.commit !== base.commit) };
+}
+/** The checks of a record (src/checks.js checkList) with what they were made from. */
+async function checksOf(rec, { threshold = 0.15, wall = 0.10 } = {}) {
+  if (!model || !rec?.grids?.max_depth || rec.grids.max_depth.length !== model.fine.nx * model.fine.ny) return null;
+  const fine = model.fine, dist = edgeDist(), G = rec.grids, bld = model.base.bld;
+  const edge = CHK.edgeCheck(G.max_depth, dist, { nx: fine.nx, ny: fine.ny, dx: fine.dx, threshold });
+  let peak = 0, final = 0; for (let k = 0; k < G.max_depth.length; k++) if (!bld[k] && dist[k] > 0) { peak += G.max_depth[k] > 0 ? G.max_depth[k] : 0; final += G.final_depth?.[k] > 0 ? G.final_depth[k] : 0; }
+  const A1 = fine.dx ** 2, hwm = (rec.validation?.hwm?.points ?? []).filter(p => Number.isFinite(p.lon)).map(p => ({ name: p.name || 'mark', kind: 'HWM', points: [[p.lon, p.lat]] }));
+  const feats = [...(design.scenarios.find(s => s.name === rec.scenario)?.design.features ?? []), ...design.analysis.features].map((f, n) => ({ name: f.properties?.name || `${f.properties?.type ?? 'feature'} ${n + 1}`, kind: f.properties?.type ?? 'feature', points: coordsOf(f.geometry) }));
+  const W = ws.last, L = W?.w.local, river = !!W?.w.touchesEdge;
+  const watershed = W ? { upstreamArea: river ? (L?.upstreamCells ?? 0) * W.cellArea : W.upstreamArea, studyArea: W.studyArea, river, onWatershed: !!S.wsUsing } : null;
+  const sens = await sensitivityFamily(rec, { wall }).catch(e => { console.warn('sensitivity', e); return null; });
+  const rows = sens ? CHK.sensitivity(sens.base, sens.variants, { dx: fine.dx, threshold, skip: bld }) : null;
+  const b = rec.books, stormS = (rec.stormInfo?.durationMin ?? 0) * 60;
+  const input = { edge, books: b && { rain: b.rain, outflow: b.outflow, inflow: b.inflow ?? 0 }, mass: rec.validation?.mass ?? null, watershed, inflow: b?.inflow > 0 ? `${Math.round(b.inflow).toLocaleString()} m³ in` : null,
+    left: { peak: peak * A1, final: final * A1 }, runLength: rec.simulatedS && stormS ? { stop: rec.simulatedS, storm: stormS } : null,
+    points: hwm.length ? CHK.nearEdge(hwm, llCell, dist, fine.nx, fine.ny) : null, features: feats.length ? CHK.nearEdge(feats, llCell, dist, fine.nx, fine.ny) : null, sens: rows, sensVersions: !!sens?.versions, tideEdges: rec.forcing.parts?.tide !== CMP.hashOf(null) && !!$('tCoast')?.checked };
+  rec.checks = { threshold, list: CHK.checkList(input), edge, sens: sens && { base: sens.base, variants: sens.variants, rows, versions: sens.versions }, geo: { nx: fine.nx, ny: fine.ny, bld } };
+  return rec.checks;
+}
+// ------------------------------------------------------------------ end of defensibility checks
 const reportUI = initReport(map, {
-  records: () => [...records].reverse(), savedRuns, loadSaved, analyze: analyzeRecord, eadFamily, units: () => design.units, project: () => projects.current, sweep: () => compareUI.sweep(), fema: () => model?.fema ?? null, bfeFreeboard: () => design.active?.settings?.freeboard ?? 0.3,
+  records: () => [...records].reverse(), savedRuns, loadSaved, analyze: analyzeRecord, eadFamily, checks: checksOf, units: () => design.units, project: () => projects.current, sweep: () => compareUI.sweep(), fema: () => model?.fema ?? null, bfeFreeboard: () => design.active?.settings?.freeboard ?? 0.3,
   profiles: () => design.analysis.features.filter(f => f.properties.type === 'profile' && f.geometry?.coordinates?.length > 1),
   ctx: () => model && { geo: { nx: model.fine.nx, ny: model.fine.ny, x0: model.fine.x0, y0: model.fine.y1 - model.fine.ny * model.fine.dx, dx: model.fine.dx }, z: model.base.z, bld: model.base.bld, toCell: llCell },
   async exportFiles(files, name, bytes) {
@@ -3136,5 +3202,5 @@ const projects = initProjects({ capture: captureProject, layer: () => infra.laye
   if (pf) projects.open(pf).then(built).then(() => batchUI.opened({ auto: qp.get('batch') === 'run' })).then(st => { window.__batchDone = { ok: true, study: st }; })
     .catch(e => { log('Opening the project failed: ' + e.message, 'err'); window.__batchDone = { ok: false, error: e.message }; });
 }
-window.__floodsim = { batchUI, analyzeRecord, eadFamily, loadSaved, damageAssets, saveCheckpoint: () => saveCheckpoint(run), resumeCheckpoint: () => resumeCheckpoint(run), get run() { return run; }, get model() { return model; }, get records() { return records; }, map, setArea, infra, design, projects, buildPackage, runFiles, reportUI, compareUI, runWindowPair }; // console debugging
+window.__floodsim = { batchUI, analyzeRecord, eadFamily, checksOf, loadSaved, damageAssets, saveCheckpoint: () => saveCheckpoint(run), resumeCheckpoint: () => resumeCheckpoint(run), get run() { return run; }, get model() { return model; }, get records() { return records; }, map, setArea, infra, design, projects, buildPackage, runFiles, reportUI, compareUI, runWindowPair }; // console debugging
 gpuReady.then(() => updateSizeNote());

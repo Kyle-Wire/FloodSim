@@ -265,6 +265,58 @@ filters, water reaches 47 structures, 13 have it above the first floor, and dama
 listed in the table but not counted.
 Damage is buildings only: no vehicles, displacement, emergency costs or life safety.
 
+**Flood maps and streets** (Report drawer; `src/maps.js`, `app/report-maps.js`). Two more report sections:
+- **Flood maps** (right after the summary): peak depth, the worst hazard class (H1–H6), when the water arrived and
+  how long it stayed over 15 cm, from the 1 m grids with buildings grey. A before / after pair adds the change in
+  peak depth. A table gives the area in each depth band and hazard class.
+- **Streets and access:** each mapped street sampled along its centreline. Per street: its length over 15 cm (only
+  emergency and high vehicles get through) and over 30 cm (most cars float or stall), the deepest point, when the
+  water arrived, the longest any point stayed over 15 cm, and the top speed. A bar chart shows the streets with the
+  most length over 30 cm.
+
+**Model checks and sensitivity** (Report drawer; `src/checks.js`, `app/report-checks.js`). Two report sections that say
+how far to trust a run:
+- **Model checks:** one table of what a reviewer would test, each marked OK, Check, Problem or Not tested, with the
+  result and what it means. Thresholds are `LIMITS` in `src/checks.js`.
+  - **Model edge:** the share of the flooding within 50 m of the edge, and the length of the edge flooded at the
+    area threshold, by side (a bar chart). The edge is a free outfall, so a flood against it may continue past it.
+    Distance to the edge is a chamfer distance, so a polygon area's edge counts too.
+  - **Water out across the edge,** as a share of the rain and inflow.
+  - **Inflow:** the ground outside that drains in (from the traced watershed), and a river entering from a large
+    basin with or without an inflow.
+  - **Books:** the surface and the surface-plus-sewer mass balance.
+  - **Run length:** the water still standing at the end as a share of the peak, and the time run after the rain.
+  - **Near the edge:** high-water marks and drawn features (the scenario's and the analysis lines) within 50 m.
+- **Sensitivity:** the project's saved batch-study runs of the same storm, scenario and design with one input
+  changed (roughness ± 20 %, infiltration × 0.5, rain + 10 %, one cell size coarser), each against the base run over
+  the cells flooded in either:
+  - the fit (flooded in both over flooded in either);
+  - the mean, mean absolute and 95th-percentile change in peak depth, and the largest rise and fall;
+  - the changes in flooded area, volume, damage and buildings with water above the floor;
+  - the elasticities (the relative change in a result over the relative change in the input);
+  - a map of the depth change for each variant: red deeper, blue shallower, grey within 3 cm.
+
+  The cell-size variant is the grid-convergence test: below a fit of 0.9, or with 95 % of depths moving more than
+  5 cm, the checks table flags it. Plan the variants in the Batch drawer.
+On the South Street test block (2 m cells, 10-yr 1-h, the base and four variants run headless as one batch), the
+first try found a bug. Every variant showed 37–39 % less damage than the base, rain + 10 % included. One $2.2 M
+apartment building hung on one gutter cell: 12 cm peak in the base, 4.5 cm with more rain, 10.6 cm final depth in
+both. The cause: coarser than 1 m, the peak and final grids are each downscaled on their own, interpolating the level
+over the wet neighbours only, so a neighbour with a film at its peak pulled the cell's peak below its final depth. The
+peak is now never below the end, and with the exchange-spike fix (Batch studies above) the same study reads:
+
+| Variant | Flooded area | Fit | 95 % of depths within | Damage | Elasticity (area, damage) |
+|---|---|---|---|---|---|
+| Rain + 10 % | +13.6 % | 0.86 | 3.7 cm | +1.7 % | 1.36, 0.17 |
+| Infiltration × 0.5 | +1.3 % | 0.98 | 0.5 cm | +0.6 % | −0.03, −0.01 |
+| Roughness × 1.2 | −0.3 % | 0.98 | 0.4 cm | −0.5 % | −0.02, −0.02 |
+| 4 m instead of 2 m | +33 % | 0.41 | 32 cm | −20 % | – |
+
+Damage is $6.27 M with water above the first floor at 13 structures. The grid test fails, and the checks table says
+so: on rowhouse blocks with 3–4 m alleys a 4 m (or 2 m) cell does not resolve the flow paths, which is why 1 m is the
+default. The model edge check flags 46 % of the flooding within 50 m of the edge, and 8 ha of ground draining in from
+outside (36 % of the area).
+
 **FEMA flood zones and base flood elevations** (Data & assumptions → *FEMA flood zones and BFE lines*; `src/fema.js`).
 Build reads FEMA's National Flood Hazard Layer for the area:
 - **The data:** flood zones (S_FLD_HAZ_AR), the BFE lines (S_BFE) and the cross-sections with their regulatory water
@@ -860,9 +912,12 @@ Checked in the app on a 2 m model of 520 × 456 cells (10-yr 1-h storm, 158 inle
   15 cm, final depth, hazard), the inlet and pipe results, and SWMM's books. The surface infiltration book differs
   at 1e-7, the same as between two uninterrupted runs: it depends on when the page reads the GPU totals back.
 - **Headless:** the same job run headless by `tools/batch.mjs` matches the in-app run cell for cell.
-- **Peak-depth fix:** the test found that peak depth at an inlet giving water back (a surcharged manhole) was taken
-  before that step's return flow. The page caught the return only when a frame happened to be read back at that
-  moment. The exchange kernel now takes the peak too, so peak depth no longer depends on wall-clock timing.
+- **Peak-depth fix:** the test found that peak depth at an inlet giving water back (a surcharged manhole) depended on
+  when frames were read back: a frame is read right after the inlet exchange, when the cell still holds that step's
+  lump of returned water, before the next step's flux spreads it. The peak grid now comes from the solver's own peak,
+  taken every step after the flux, and not from the frames. (A first fix took the peak in the exchange kernel too,
+  which booked the lump itself: on the South Street test block one 2 m cell read 12 cm against a 5 cm wet threshold
+  never reached, and carried $2.4 M of damage. The sensitivity section found it.)
 - **Node tests:** `tests/run-checkpoint-tests.mjs` copies a SWMM engine half way through a run into a fresh engine.
   The two then produce the same 255,600 heads and close with the same continuity.
 
@@ -1184,6 +1239,7 @@ node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pix
 node tests/run-validate-tests.mjs  # validation scorecard: peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88
 node tests/run-checkpoint-tests.mjs # checkpoints: state by path (typed arrays in place, a solver root), packing, a SWMM run copied half way
 node tests/run-damage-tests.mjs   # damage and areas: USACE curves, water against walls (rowhouses, sheet flow, enclosed yards), EAD, BCA, area stats (--live: NSI)
+node tests/run-checks-tests.mjs   # model checks: edge distance and flooding by side, points near the edge, run against run, sensitivity, statuses, difference map
 npm run batch -- "<project>"     # a project's batch study headless on the GPU (tools/batch.mjs; --url, --retries, --hours, --headed)
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
@@ -1249,6 +1305,8 @@ src/batch.js          batch studies: jobs from storms × scenarios × variants, 
 src/checkpoint.js     run checkpoints: GPU buffers, SWMM memory and files, the run's JS state by path; packing
 src/areas.js          flooded areas: connected areas of the peak depth with their depth, timing, hazard, streets and buildings; SVG map
 src/damage.js         building damage (NSI structures, water against walls, USACE curves), EAD, benefit–cost
+src/maps.js           report maps (binned raster SVG, colour ramps) and flooding along each street
+src/checks.js         model checks (edge, inflow, books, run length, marks near the edge) and sensitivity of batch variants
 src/damage-curves.js  USACE depth–damage functions per occupancy type (generated from USACE go-consequences)
 src/report.js         H&H report outputs: hydrograph stats, profiles, HGL path and checks, stage–storage–discharge, gutter spread, SVG charts
 src/fema.js           FEMA NFHL: flood zones, BFE lines and cross-sections, zone and BFE grids
@@ -1261,7 +1319,7 @@ tools/batch.mjs       runs a project's batch study headless (tools/headless.mjs:
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)
-app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer; app/projects.js project folders
+app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer (sections in app/report-areas.js, report-damage.js, report-checks.js); app/projects.js project folders
 app/                  Phase 0 lab template + voxel shell, build script
 tests/                CPU suite, Phase 1 suite, shared GPU suite, browser + Dawn runners, results JSON
 benchmarks/ea/        Gate B: EA 2D benchmark cases, browser runner, scorer, results (data/ is the GOV.UK archive)
