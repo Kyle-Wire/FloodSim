@@ -9,6 +9,7 @@
 //   --probe    only print the WebGPU adapter the browser gets, then exit
 //   --headed   show the browser window (debugging)
 //   --flags    replace the default WebGPU browser flags
+//   --only     run one section of the suite (lts: local time stepping); results are then written only with --json
 // Browser: CHROME_PATH, else Chrome, else Edge. Exit code 1 on a page exception, a "GPU error" line,
 // "No WebGPU adapter", a browser crash or the timeout.
 import { spawn, spawnSync } from 'node:child_process';
@@ -23,7 +24,8 @@ const argv = process.argv.slice(2);
 const opt = (name, dflt) => { const i = argv.indexOf('--' + name); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : dflt; };
 const flag = (name) => argv.includes('--' + name);
 const timeoutMin = Number(opt('timeout', 15));
-const jsonOut = opt('json', join(root, 'tests', 'results-gpu.json'));
+const only = opt('only');
+const jsonOut = opt('json', only ? null : join(root, 'tests', 'results-gpu.json'));
 // Headless Chrome/Edge on Windows gets the real GPU (D3D12) even without flags; these two keep it so on machines
 // whose GPU or driver is blocklisted, or where WebGPU is not yet on by default (Linux).
 const GPU_FLAGS = ['--enable-unsafe-webgpu', '--ignore-gpu-blocklist'];
@@ -236,7 +238,7 @@ if (flag('probe')) {
 }
 
 const t0 = Date.now();
-await navigate(base + '/tests/gpu-browser.html');
+await navigate(base + '/tests/gpu-browser.html' + (only ? '?only=' + encodeURIComponent(only) : ''));
 // window.__done is set by the page's module script; wait for it, then await the suite's results.
 const json = await evaluate(`new Promise((ok, fail) => {
   const until = Date.now() + 60000;
@@ -255,6 +257,6 @@ const secs = ((Date.now() - t0) / 1000).toFixed(0);
 if (failures.length || !results) {
   await finish(1, `\nFAILED after ${secs} s (${failures.length} problem${failures.length === 1 ? '' : 's'}):\n  ` + failures.join('\n  ') + `\n${jsonOut} not written.`);
 }
-writeFileSync(jsonOut, json);
-console.log(`\nGPU suite passed in ${secs} s; results in ${jsonOut}`);
+if (jsonOut) writeFileSync(jsonOut, json);
+console.log(`\nGPU suite passed in ${secs} s${jsonOut ? `; results in ${jsonOut}` : ''}`);
 await finish(0);

@@ -28,6 +28,9 @@ export class GPUSolver {
    * when the device allows TILED_STORAGE_BUFFERS storage buffers per stage.
    * o.lines: control-line faces [{ i, j, axis, line, sign }] (src/compare.js lineFaces): the volume across each line is
    * booked every step (readLines); sign maps the face's + direction (from cell i−1 / j−1 into i / j) to the line's.
+   * o.lts: local time stepping (true = 3 levels: tiles step at up to 8× the base step; or 1–4), as CPUSolver o.lts. Each
+   * "step" is then one cycle of 2^L base steps. Needs the tiles; off (stepping globally, the reason in this.ltsOff) in
+   * the subgrid mode and with sediment transport.
    */
   constructor(device, o) {
     this.device = device;
@@ -131,6 +134,10 @@ export class GPUSolver {
     this.tilesX = Math.ceil((this.nx + 1) / TILE); this.tilesY = Math.ceil((this.ny + 1) / TILE); this.tiles = this.tilesX * this.tilesY;
     this.tiled = (o.tiles ?? true) && device.limits.maxStorageBuffersPerShaderStage >= TILED_STORAGE_BUFFERS;
     this.TSh = new Uint32Array(this.tiles);
+    const lw = o.lts ? (o.lts === true ? 3 : Math.max(1, Math.min(4, o.lts | 0))) : 0;
+    this.ltsOff = !lw ? null : this.sg ? 'the subgrid mode' : !this.tiled ? 'untiled stepping' : this.sed ? 'sediment transport' : null;
+    this.lts = this.ltsOff ? 0 : lw;
+    if (this.ltsOff) console.warn(`GPUSolver: local time stepping is off with ${this.ltsOff}; stepping globally`);
     const pin = (k) => { this.TSh[Math.floor(((k / this.nx) | 0) / TILE) * this.tilesX + Math.floor((k % this.nx) / TILE)] = 1; };
     ink.forEach(pin); for (const k of o.stageCells || []) pin(k);
     // flood barriers: crest and weir coefficient on each listed face (see setCrestLevels)
@@ -170,11 +177,12 @@ export class GPUSolver {
     this.buf = {
       params: mk(112, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST),
       U: mk(N * 16), U0: mk(N * 16), S: mk(N * 16), W: mk(N * 16),
-      FX: mk(N * 36), FY: mk(N * 36), A: mk(N * 16), DT: mk(16), RED: mk(4),
+      FX: mk(N * 36), FY: mk(N * 36), A: mk(N * 16), DT: mk(64), RED: mk(4),
       OUT: mk(this.nx * this.ny * 8), TH: mk(N * 4), RF: mk(N * 4),
       INC: mk(this.INCh.byteLength), INQ: mk(this.INCh.length * 4), INX: mk(this.INCh.length * 16), STG: mk(N * 4),
-      TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 8), TC: mk(8),
-      TA: mk(24, GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
+      // local time stepping: two lists per level, then the tile levels (two slots) and speeds
+      TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 4 * (this.lts ? 2 * (this.lts + 1) + 3 : 2)), TC: mk(8 * (this.lts + 1)),
+      TA: mk(24 * (this.lts + 1), GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
       GI: mk(N * 16), GS: mk(N * 16), GAP: mk(N * 16),
       CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 64), LF: mk(this.LFh.byteLength), CL: mk(this.LFh.length * 16), UDC: mk(this.UDCh.byteLength), UDX: mk(this.UDCh.length * 4), SCR: mk(N * 16), SDA: mk(this.sed ? N * 80 : 16), SDB: mk(this.sed ? N * 80 : 16), SDP: mk(this.sed ? N * 16 : 16), SE0: mk(this.sed ? N * 32 : 16), BK: mk(this.BKh.byteLength), BR: mk(this.BRh.byteLength),
       SGC: mk(this.sg ? N * CT * 4 : 16), SGF: mk(this.sg ? 2 * N * FT * 4 : 16), EO: mk(2 * (this.nx + this.ny) * 8),
@@ -213,7 +221,7 @@ export class GPUSolver {
       prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27, 32], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
       sgPrim: [0, 1, 4, 16, 28], sgFluxX: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgFluxY: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgUpdate: [0, 1, 3, 5, 6, 7, 8, 11],
       sgHazard: [0, 1, 5, 6, 7, 8, 27, 28, 32], sgDt: [0, 1, 9, 28], sgPack: [0, 1, 5, 6, 10, 28], sgExchange: [0, 1, 8, 13, 14, 15, 28],
-      update: [0, 1, 2, 3, 5, 6, 7, 8, 11], theta: [0, 1, 3, 5, 6, 8, 11], sources: [0, 1, 3, 7, 8, 12, 22, 23, 31],
+      update: [0, 1, 2, 3, 5, 6, 7, 8, 11], theta: [0, 1, 2, 3, 5, 6, 8, 11], sources: [0, 1, 3, 7, 8, 12, 22, 23, 31],
       dtReduce: [0, 1, 3, 9], dtFinal: [0, 8, 9], pack: [0, 1, 10], exchange: [0, 1, 8, 13, 14, 15],
       tileClear: [0, 17, 20], tileWet: [0, 1, 12, 17], tileList: [0, 17, 18, 19, 20], tileArgs: [20, 21],
     };
@@ -241,6 +249,14 @@ export class GPUSolver {
       hazardT: make('hazardT', T(uses.hazard), { LIST: 1 }),
       updateT0: make('updateT', T(uses.update), { STAGE: 0, LIST: 1 }), updateT1: make('updateT', T(uses.update), { STAGE: 1, LIST: 1 }),
     });
+    if (this.lts) { const L = [19]; Object.assign(this.k, {
+      dtReduceL: make('dtReduceL', [...uses.dtReduce, 19]), primT: make('primT', [...uses.prim, 8, 19], { LIST: 1 }), primGhost: make('primGhost', uses.prim), primGhostRec: make('primGhostRec', [...uses.prim, 8]), ltsCycle: make('ltsCycle', [0, 8, 9]), faceXYT: make('faceXYT', T([...new Set([...uses.faceX, ...uses.faceY])]), { LIST: 2 }),
+      ltsLevel: make('ltsLevel', [0, 8, 19], { LTSD: this.lts % 2 }), ltsSmooth: [0, 1].map(d => make('ltsSmooth', [0, 19], { LTSD: d })),
+      ltsList: make('ltsList', uses.tileList), ltsArgs: make('ltsArgs', [...uses.tileArgs, 0, 8]),
+      thetaL: [0, 1].map(st => make('thetaT', T(uses.theta), { LIST: 2, STAGE: st })), barrierL: [0, 1].map(st => make('barrierL', [...uses.barrier, ...L], { STAGE: st })),
+      edgeOutL: make('edgeOutL', [...uses.edgeOut, ...L]), exchangeL: make('exchangeL', [...uses.exchange, ...L]),
+      ...(this.nLine ? { lineFluxL: make('lineFluxL', [0, 4, 5, 6, 8, 11, 39, 40, ...L]) } : {}),
+    }); }
     if (this.sg) {
       Object.assign(this.k, {
         sgPrim: make('sgPrim', uses.sgPrim), sgDt: make('sgDt', uses.sgDt), sgPack: make('sgPack', uses.sgPack), sgExchange: make('sgExchange', uses.sgExchange),
@@ -276,7 +292,7 @@ export class GPUSolver {
     f[8] = this.cfl; f[9] = this.rainRate; f[10] = tEnd; f[11] = this.dtDry;
     u[12] = this.secondOrder ? 1 : 0; u[13] = this.limiter;
     u[18] = this.nInlets; f[19] = this.stage - this.zref; u[14] = BC[this.bc.west]; u[15] = BC[this.bc.east]; u[16] = BC[this.bc.south]; u[17] = BC[this.bc.north];
-    u[20] = this.tilesX; u[21] = this.tilesY; u[22] = this.tiles; u[23] = this.nBar; u[24] = this.nLine;
+    u[20] = this.tilesX; u[21] = this.tilesY; u[22] = this.tiles; u[23] = this.nBar; u[24] = this.nLine; u[25] = this.lts;
     this.device.queue.writeBuffer(this.buf.params, 0, ab);
   }
 
@@ -304,6 +320,7 @@ export class GPUSolver {
 
   encodeSteps(pass, K) {
     if (this.sg) return this._encodeSubgrid(pass, K);
+    if (this.lts) return this._encodeLts(pass, K);
     const w = n => Math.ceil(n / 8), { nx, ny, NX, NY, k } = this;
     for (let s = 0; s < K; s++) {
       this._dispatch(pass, k.dtReduce, w(nx), w(ny));
@@ -340,6 +357,39 @@ export class GPUSolver {
       if (this.debris) this._sed(pass, k.slopeFail);
       if (this.nBank) this._dispatch(pass, k.bankFS, Math.ceil(this.nBank / 64));
       if (this.nInlets) this._dispatch(pass, k.exchange, Math.ceil(this.nInlets / 64));
+    }
+  }
+  /** Local time stepping: K cycles. Per cycle the base step and each tile's level (smoothed so neighbours differ by at
+   *  most one), the tile lists per level, then the records (level steps) finest first, each a full RK step of that
+   *  level's cells and faces with its sources, hazard and inlet exchange; banks once per cycle, over the cycle. */
+  _encodeLts(pass, K) {
+    const w = n => Math.ceil(n / 8), { nx, ny, NX, NY, k } = this, L = this.lts, t64 = Math.ceil(this.tiles / 64), lt = Math.ceil(w(nx) * w(ny) / 64), gh = Math.ceil((2 * GH * (NX + ny)) / 64);
+    const ind = (kk, m, list) => { pass.setPipeline(kk.pipeline); pass.setBindGroup(0, kk.bg); pass.dispatchWorkgroupsIndirect(this.buf.TA, (2 * m + list - 1) * 12); };
+    const stages = this.secondOrder ? [0, 1] : [0];
+    for (let s = 0; s < K; s++) {
+      this._dispatch(pass, k.dtReduceL, w(nx), w(ny)); this._dispatch(pass, k.ltsCycle, 1);
+      this._dispatch(pass, k.ltsLevel, lt); for (let p = 1; p <= L; p++) this._dispatch(pass, k.ltsSmooth[(L - p) % 2], lt);
+      this._dispatch(pass, k.tileClear, t64); this._dispatch(pass, k.tileWet, w(nx), w(ny));
+      this._dispatch(pass, k.ltsList, t64); this._dispatch(pass, k.ltsArgs, 1);
+      // primitives: all cells once a cycle, then after each stage only those that stepped, and the ghosts
+      this._dispatch(pass, k.prim, w(NX), w(NY));
+      // (the record after this one is set up by the ghost pass that ends this one, the first by ltsArgs)
+      const prims = (m, end) => { ind(k.primT, m, 1); this._dispatch(pass, end ? k.primGhostRec : k.primGhost, gh); };
+      for (let b = 0; b < 1 << L; b++) for (let m = 0; m <= L; m++) {
+        if ((b + 1) % (1 << m)) continue;
+        for (const st of stages) {
+          if (st) prims(m, false);
+          ind(k.faceXYT, m, 2); ind(k.thetaL[st], m, 2);
+          if (this.nBar) this._dispatch(pass, k.barrierL[st], Math.ceil(this.nBar / 64));
+          this._dispatch(pass, k.edgeOutL, Math.ceil(2 * (nx + ny) / 64));
+          if (this.nLine) this._dispatch(pass, k.lineFluxL, Math.ceil(this.nLine / 64));
+          ind(st ? k.updateT1 : k.updateT0, m, 1);
+        }
+        ind(k.sourcesT, m, 1); ind(k.hazardT, m, 1);
+        if (this.nInlets) this._dispatch(pass, k.exchangeL, Math.ceil(this.nInlets / 64));
+        prims(m, true);
+      }
+      if (this.nBank) this._dispatch(pass, k.bankFS, Math.ceil(this.nBank / 64)); // after the last record: dt = the cycle
     }
   }
   /** One sediment pass over the whole grid, reading the latest state and writing the other buffer. */

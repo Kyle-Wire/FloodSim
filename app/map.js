@@ -1338,7 +1338,11 @@ function ensureSolver() {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
     sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, underdrains: coupled && run.sw.under.length ? run.sw.under.flatMap(g => g.cells) : undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: rainBase0(run, c),
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
+    // --- local time stepping (opt-in, Solver settings checkbox; off by default) ---
+    lts: $('ltsOn')?.checked || undefined,
   });
+  if (run.solver.ltsOff) log(`Local time stepping is off with ${run.solver.ltsOff}; stepping globally`, 'warn');
+  // --- /local time stepping ---
   const start = startWater(c, F, stageCells); // rivers, lakes and tidal water from the gauges (or dry: the lidar surface)
   const pool = new Map(); for (const pd of run.sw.pools) for (const K of pd.cells) pool.set(K, Math.max(pool.get(K) ?? 0, pd.pool - c.z[K])); // wet ponds start at their permanent pool
   const at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));

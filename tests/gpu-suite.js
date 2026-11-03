@@ -10,8 +10,9 @@ import { lineFaces } from '../src/compare.js';
 import { OutletLinks, rating, stageStorage, modifiedPuls } from '../src/stormwater.js';
 import { LinkHub } from '../src/links.js';
 
-export async function runGpuSuite(device, log = console.log) {
+export async function runGpuSuite(device, log = console.log, { only } = {}) {
   const results = {};
+  if (only === 'lts') { await runLtsSuite(device, log, results); return results; }
   async function both(opts, init, tEnd, rain) {
     const g = new GPUSolver(device, opts), c = new CPUSolver({ ...opts, hdry: g.hdry });
     init(g); init(c);
@@ -500,5 +501,117 @@ export async function runGpuSuite(device, log = console.log) {
     g.destroy();
   }
 
+  await runLtsSuite(device, log, results);
   return results;
+}
+
+/**
+ * Local time stepping (o.lts): against global stepping on the GPU, against the fp64 CPU reference's own LTS, and
+ * against the analytic dam breaks; still water at a stage boundary over a deep channel; a deep channel beside a wide
+ * shallow floodplain (steps, wall time, depth differences, books); every per-step book (edges, lines, barriers,
+ * inlets, rain, infiltration, hazard) against global stepping; and the modes it refuses. Throws on a failed check.
+ */
+export async function runLtsSuite(device, log, results) {
+  const fails = [], R = results.lts = {};
+  const check = (name, ok, detail) => { log(`  ${ok ? 'ok  ' : 'FAIL'} ${name}: ${detail}`); if (!ok) fails.push(name); };
+  const run = async (opts, init, tEnd, rain = 0) => {
+    const g = new GPUSolver(device, opts); init(g); g.rainRate = rain;
+    await g.ready; const t0 = performance.now(); await g.advance(tEnd); const s = await g.readState();
+    return { g, s, ms: performance.now() - t0 };
+  };
+  const maxDiff = (a, b, sel = () => true) => { let m = 0; for (let k = 0; k < a.length; k++) if (sel(k)) m = Math.max(m, Math.abs(a[k] - b[k])); return m; };
+  const meanDiff = (a, b, sel = () => true) => { let m = 0, n = 0; for (let k = 0; k < a.length; k++) if (sel(k) && (a[k] > 0.01 || b[k] > 0.01)) { m += Math.abs(a[k] - b[k]); n++; } return n ? m / n : 0; };
+
+  // dam breaks: as accurate as global stepping, and close to the CPU reference's LTS
+  for (const [name, hR] of [['stoker', 0.5], ['ritter', 0]]) {
+    const nx = 400, ny = 3, dx = 100 / nx, opts = { nx, ny, dx, z: new Float64Array(nx * ny), manning: 0 }, init = s => s.setDepth(x => (x < 50 ? 1 : hR));
+    const a = await run(opts, init, 6), b = await run({ ...opts, lts: true }, init, 6);
+    const c = new CPUSolver({ ...opts, hdry: b.g.hdry, lts: true }); init(c); c.run(6); const ch = c.field('h');
+    const ex = damBreak(1, hR, 50), L1 = (h) => { let e = 0, n = 0; for (let i = 0; i < nx; i++) { const he = ex((i + 0.5) * dx, 6); e += Math.abs(h[nx + i] - he); n += he; } return e / n; };
+    const r = R[name] = { L1global: L1(a.s.h), L1lts: L1(b.s.h), vsGlobal: maxDiff(a.s.h, b.s.h), vsCPU: maxDiff(ch, b.s.h), mass: b.s.mass.rel, cycles: b.g.steps, steps: a.g.steps };
+    log(`LTS ${name}: L1 ${r.L1global.toExponential(3)} global → ${r.L1lts.toExponential(3)} LTS, max |Δh| vs global ${r.vsGlobal.toExponential(1)} m, vs CPU LTS ${r.vsCPU.toExponential(1)} m, mass ${r.mass.toExponential(1)}, ${r.steps} steps → ${r.cycles} cycles`);
+    check(`${name} L1`, r.L1lts <= 1.1 * r.L1global, `within 10 % of global`);
+    check(`${name} vs CPU LTS`, r.vsCPU < 0.02, `max |Δh| ${r.vsCPU.toExponential(1)} < 0.02 m`);
+    check(`${name} mass`, Math.abs(r.mass) < 1e-5, `${r.mass.toExponential(1)}`);
+    a.g.destroy(); b.g.destroy();
+  }
+
+  // a deep (7 m) channel along x beside a floodplain, bed ~100 m (fp32), cells of 1 m
+  const channel = (nx, ny, w, z0 = 100) => {
+    const z = new Float64Array(nx * ny), j0 = (ny - w) >> 1;
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = z0 + ((j >= j0 && j < j0 + w) ? -7 : 0.3 - 0.002 * i + 0.01 * Math.sin(j / 5));
+    return { z, inCh: (k) => { const j = (k / nx) | 0; return j >= j0 && j < j0 + w; } };
+  };
+  // still water at a stage boundary (the west edge, channel and floodplain) stays still
+  {
+    const nx = 128, ny = 96, { z } = channel(nx, ny, 12), stageCells = []; for (let j = 0; j < ny; j++) stageCells.push(j * nx);
+    const zs = 100.1, opts = { nx, ny, dx: 1, z, manning: 0.03, bc: { west: 'outflow', east: 'outflow', south: 'wall', north: 'wall' }, stageCells, lts: true };
+    const b = await run(opts, s => { s.setStage(zs); s.setDepth((x, y, zz) => Math.max(0, zs - zz)); }, 120);
+    let umax = 0; for (let k = 0; k < b.s.h.length; k++) if (b.s.h[k] > 1e-3) umax = Math.max(umax, Math.hypot(b.s.hu[k], b.s.hv[k]) / b.s.h[k]);
+    R.stillStage = { umax, boundaryFlux: b.s.mass.outflow, mass: b.s.mass.rel, cycles: b.g.steps };
+    log(`LTS still water at a stage boundary over a 7 m channel (120 s): max |u| ${umax.toExponential(1)} m/s, boundary flux ${b.s.mass.outflow.toExponential(1)} m³, mass ${b.s.mass.rel.toExponential(1)}`);
+    check('still water at the stage', umax < 1e-3, `max |u| ${umax.toExponential(1)} < 1e-3 m/s (fp32 at z = 100 m)`);
+    b.g.destroy();
+  }
+  // a 0.5 m surge up the channel beside a shallow sheet-flow floodplain, which the channel overtops where the floodplain
+  // falls below its 100 m water (east of x = 150 m): LTS vs global, and vs the CPU reference's LTS. The largest depth
+  // differences sit on the moving fronts (a timing difference), so the mean over wet cells is checked as well
+  for (const [nx, ny, w, T] of [[256, 192, 12, 60], [1024, 768, 24, 60]]) {
+    const { z, inCh } = channel(nx, ny, w), opts = { nx, ny, dx: 1, z, manning: 0.03, bc: { east: 'outflow' } };
+    const init = s => s.setDepth((x, y, zz) => zz < 96 ? (x < 40 ? 100.5 : 100) - zz : 0.05);
+    const a = await run(opts, init, T), b = await run({ ...opts, lts: true }, init, T);
+    let at = 0; for (let k = 0; k < a.s.h.length; k++) if (!inCh(k) && Math.abs(a.s.h[k] - b.s.h[k]) > Math.abs(a.s.h[at] - b.s.h[at])) at = k;
+    log(`  largest floodplain depth difference at cell (${at % nx}, ${(at / nx) | 0}): ${a.s.h[at].toFixed(4)} m global, ${b.s.h[at].toFixed(4)} m LTS`);
+    const r = R[`channel${nx}`] = { cells: nx * ny, T, steps: a.g.steps, cycles: b.g.steps, msGlobal: a.ms, msLTS: b.ms, speedup: a.ms / b.ms,
+      dChannel: maxDiff(a.s.h, b.s.h, inCh), dFloodplain: maxDiff(a.s.h, b.s.h, k => !inCh(k)), meanFloodplain: meanDiff(a.s.h, b.s.h, k => !inCh(k)), dMax: maxDiff(a.s.hmax, b.s.hmax), meanMax: meanDiff(a.s.hmax, b.s.hmax),
+      massGlobal: a.s.mass.rel, massLTS: b.s.mass.rel };
+    log(`LTS deep channel + floodplain ${nx}×${ny}, ${T} s: ${r.steps} steps → ${r.cycles} cycles of 8, wall ${(a.ms / 1000).toFixed(2)} s → ${(b.ms / 1000).toFixed(2)} s (${r.speedup.toFixed(2)}×); max |Δh| channel ${r.dChannel.toExponential(1)}, floodplain ${r.dFloodplain.toExponential(1)} (mean ${r.meanFloodplain.toExponential(1)}), peak depth ${r.dMax.toExponential(1)} (mean ${r.meanMax.toExponential(1)}) m; mass ${r.massGlobal.toExponential(1)} → ${r.massLTS.toExponential(1)}`);
+    check(`channel ${nx} channel depth`, r.dChannel < 0.02, `${r.dChannel.toExponential(1)} < 0.02 m`);
+    check(`channel ${nx} floodplain depth`, r.dFloodplain < 0.02 && r.meanFloodplain < 1e-3, `max ${r.dFloodplain.toExponential(1)} < 0.02 m, mean ${r.meanFloodplain.toExponential(1)} < 1e-3 m`);
+    check(`channel ${nx} peak depth`, r.meanMax < 1e-3, `mean ${r.meanMax.toExponential(1)} < 1e-3 m`);
+    check(`channel ${nx} mass`, Math.abs(r.massLTS) < 1e-5, `${r.massLTS.toExponential(1)}`);
+    if (nx === 256) {
+      const c = new CPUSolver({ ...opts, hdry: b.g.hdry, lts: true }); init(c); c.run(T); const ch = c.field('h');
+      r.vsCPU = maxDiff(ch, b.s.h); log(`  CPU LTS vs GPU LTS: max |Δh| ${r.vsCPU.toExponential(1)} m (${c.steps} cycles, ${c.records} records)`);
+      check('channel vs CPU LTS', r.vsCPU < 0.02, `${r.vsCPU.toExponential(1)} < 0.02 m`);
+    } else check(`channel ${nx} faster`, r.speedup > 1.5, `${r.speedup.toFixed(2)}× > 1.5×`);
+    a.g.destroy(); b.g.destroy();
+  }
+
+  // every per-step book: rain, Green-Ampt infiltration, a drainage inlet (drawing from the channel at a fixed rate), a
+  // weir across the channel, a control line across it, the edge outflow and the hazard products, LTS vs global
+  {
+    const nx = 128, ny = 96, N = nx * ny, { z } = channel(nx, ny, 12), ga = { psiD: new Float32Array(N).fill(0.05), fmax: new Float32Array(N).fill(0.3), perv: new Float32Array(N).fill(0.5) };
+    const crest = []; for (let j = 42; j < 54; j++) crest.push({ i: 90, j, axis: 0, z: 99.8, C: 1.6, ground: z[j * nx + 90] });
+    const { faces } = lineFaces([[[64, ny + 1], [64, -1]]], nx, ny), inlet = 47 * nx + 30;
+    const opts = { nx, ny, dx: 1, z, manning: 0.03, infil: 5 * MMHR, ga, crest, lines: faces, inlets: [inlet], bc: { east: 'outflow', west: 'wall', south: 'outflow', north: 'outflow' } };
+    const init = s => { s.setDepth((x, y, zz) => zz < 96 ? (x < 40 ? 100.5 : 100) - zz : 0); s.setInletRates([0.02]); };
+    const a = await run(opts, init, 600, 60 * MMHR), b = await run({ ...opts, lts: true }, init, 600, 60 * MMHR);
+    const [La, Lb] = [await a.g.readLines(), await b.g.readLines()], [Ba, Bb] = [await a.g.readBarriers(), await b.g.readBarriers()], [Ha, Hb] = [await a.g.readHazard(), await b.g.readHazard()];
+    const [Xa, Xb] = [await a.g.readInlets(), await b.g.readInlets()], sum = (o) => o.plus.reduce((p, q) => p + q, 0) + o.minus.reduce((p, q) => p + q, 0);
+    const rel = (x, y) => Math.abs(x - y) / Math.max(1e-9, Math.abs(x));
+    const r = R.books = { massGlobal: a.s.mass.rel, massLTS: b.s.mass.rel, line: [La.net[0], Lb.net[0]], barrier: [sum(Ba), sum(Bb)], inlet: [Xa.vol[0], Xb.vol[0]],
+      infil: [a.s.mass.infil, b.s.mass.infil], outflow: [a.s.mass.outflow, b.s.mass.outflow], dv: maxDiff(Ha.dv, Hb.dv), dh: maxDiff(a.s.h, b.s.h), meanDh: meanDiff(a.s.h, b.s.h),
+      arrival: maxDiff(Ha.arrival.map(v => v || 0), Hb.arrival.map(v => v || 0)), cycles: b.g.steps, steps: a.g.steps };
+    log(`LTS books (rain 60 mm/h, Green-Ampt, inlet, barrier, line, 600 s; ${r.steps} steps → ${r.cycles} cycles): mass ${r.massGlobal.toExponential(1)} → ${r.massLTS.toExponential(1)}; line ${r.line.map(v => v.toFixed(2)).join(' → ')} m³, barrier ${r.barrier.map(v => v.toFixed(3)).join(' → ')} m³, inlet ${r.inlet.map(v => v.toFixed(2)).join(' → ')} m³, infiltration ${r.infil.map(v => v.toFixed(1)).join(' → ')} m³, edge out ${r.outflow.map(v => v.toFixed(1)).join(' → ')} m³; max |Δ d·v| ${r.dv.toExponential(1)} m²/s, max |Δh| ${r.dh.toExponential(1)} m (mean ${r.meanDh.toExponential(1)} m), max Δ arrival ${r.arrival.toFixed(1)} s`);
+    check('books depth', r.meanDh < 1e-3, `mean |Δh| ${r.meanDh.toExponential(1)} < 1e-3 m`);
+    check('books mass', Math.abs(r.massLTS) < 1e-5, `${r.massLTS.toExponential(1)}`);
+    check('books line', rel(r.line[0], r.line[1]) < 0.02, `within 2 %`);
+    check('books barrier', Math.abs(r.barrier[0] - r.barrier[1]) < 0.05 * Math.max(1, r.barrier[0]), `within 5 % (or 0.05 m³)`);
+    check('books inlet', rel(r.inlet[0], r.inlet[1]) < 1e-3, `within 0.1 %`);
+    check('books infiltration', rel(r.infil[0], r.infil[1]) < 0.01, `within 1 %`);
+    check('books edge outflow', rel(r.outflow[0], r.outflow[1]) < 0.02, `within 2 %`);
+    a.g.destroy(); b.g.destroy();
+  }
+
+  // the modes it refuses step globally and say why
+  {
+    const N0 = 100, all = (v) => new Float32Array(N0).fill(v), base = { nx: 10, ny: 10, dx: 2, z: new Float64Array(N0), manning: 0.03, lts: true };
+    const sed = new GPUSolver(device, { ...base, scour: { tauC: all(1e9), n: all(0.03) }, sediment: { erodible: new Float32Array(N0 * 4), dSand: all(2e-4), dGravel: all(8e-3) } });
+    const unt = new GPUSolver(device, { ...base, tiles: false });
+    R.refused = { sediment: sed.ltsOff, untiled: unt.ltsOff };
+    check('refuses sediment', sed.lts === 0 && !!sed.ltsOff, sed.ltsOff); check('refuses untiled', unt.lts === 0 && !!unt.ltsOff, unt.ltsOff);
+    await sed.ready; await unt.ready; sed.destroy(); unt.destroy();
+  }
+  if (fails.length) throw new Error(`local time stepping: ${fails.length} check(s) failed: ${fails.join(', ')}`);
 }

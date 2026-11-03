@@ -103,7 +103,7 @@ export class CPUSolver {
     // flux its finer neighbours have passed it while it waited (aH…, added at its own step); _lev = level stepping now
     this.lts = o.lts ? (o.lts === true ? 3 : Math.max(1, Math.min(4, o.lts | 0))) : 0; this._lev = -1;
     if (this.lts) {
-      const tx = Math.ceil((this.nx + 1) / LTS_TILE), ty = Math.ceil((this.ny + 1) / LTS_TILE);
+      const tx = Math.ceil(this.nx / LTS_TILE), ty = Math.ceil(this.ny / LTS_TILE); // tiles that hold cells
       this.tilesX = tx; this.tilesY = ty; this.LV = new Int32Array(tx * ty); this.TI = new Int32Array(N); this._tsp = new Float64Array(tx * ty);
       for (let j = 0; j < this.NY; j++) for (let i = 0; i < this.NX; i++) {
         const ii = Math.min(Math.max(i - GH, 0), this.nx - 1), jj = Math.min(Math.max(j - GH, 0), this.ny - 1);
@@ -423,9 +423,9 @@ export class CPUSolver {
   /**
    * Local time stepping: one cycle of P = 2^L base steps δ (L = this.lts). δ is LTS_SAFE times the domain's CFL step (the
    * dry step / P when all is dry), and the cycle P·δ ends at dtMax at the latest. Each 8×8 tile takes the largest level
-   * m ≤ L whose step 2^m·δ is within LTS_SAFE of its own CFL step at the cycle start; a dry tile takes L, or next to a wet
-   * tile that tile's level (a front moves under 4 cells a cycle, so it never outruns that ring); then no tile is more than
-   * one level above a face neighbour. In base step k every level whose step ends then (2^m divides k + 1) steps, finest
+   * m ≤ L whose step 2^m·δ is within LTS_SAFE of the CFL step of the fastest water in it and its 8 neighbours at the
+   * cycle start (all dry: L): a wave moves under 4 cells a cycle, so it never reaches a tile slower than its CFL step
+   * (a front into dry ground, a surge onto a floodplain); then no tile is more than one level above a face neighbour. In base step k every level whose step ends then (2^m divides k + 1) steps, finest
    * first. A level-m step is the usual SSP-RK2 on the level-m faces (the lower level of their two cells), then sources
    * and hazard products, all with dt = 2^m·δ. A cell one level coarser waits frozen while its finer neighbours step
    * against it, gathering the flux they pass it (each RK stage, weighted as the RK average) into a store that joins the
@@ -443,10 +443,10 @@ export class CPUSolver {
       if (s > sp[t]) sp[t] = s; if (s > smax) smax = s;
     }
     const D = Math.min(smax > 0 ? P * LTS_SAFE * this.cfl * this.dx / smax : this.dtDry, dtMax), dl = D / P;
-    for (let t = 0; t < LV.length; t++) LV[t] = sp[t] > 0 ? Math.max(0, Math.min(L, Math.floor(Math.log2(LTS_SAFE * this.cfl * this.dx / sp[t] / dl)))) : L;
-    for (let t = 0; t < LV.length; t++) if (!(sp[t] > 0)) { // a dry tile next to a wet one (8 neighbours) takes its level
-      const x = t % tx, y = (t / tx) | 0;
-      for (let b = Math.max(0, y - 1); b <= Math.min(ty - 1, y + 1); b++) for (let a = Math.max(0, x - 1); a <= Math.min(tx - 1, x + 1); a++) if (sp[b * tx + a] > 0) LV[t] = Math.min(LV[t], LV[b * tx + a]);
+    for (let t = 0; t < LV.length; t++) {
+      const x = t % tx, y = (t / tx) | 0; let s = 0;
+      for (let b = Math.max(0, y - 1); b <= Math.min(ty - 1, y + 1); b++) for (let a = Math.max(0, x - 1); a <= Math.min(tx - 1, x + 1); a++) s = Math.max(s, sp[b * tx + a]);
+      LV[t] = s > 0 ? Math.max(0, Math.min(L, Math.floor(Math.log2(LTS_SAFE * this.cfl * this.dx / s / dl)))) : L;
     }
     for (let p = 0; p < L; p++) for (let t = 0; t < LV.length; t++) { // at most one level above a face neighbour
       const x = t % tx, y = (t / tx) | 0;

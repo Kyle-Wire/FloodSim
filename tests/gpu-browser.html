@@ -11,6 +11,6 @@ window.__done = (async () => {
   log(`storage buffers per stage: ${device.limits.maxStorageBuffersPerShaderStage}`);
   device.onuncapturederror = e => log('GPU error: ' + e.error.message);
   log('adapter: ' + (adapter.info?.architecture || '?'));
-  return await runGpuSuite(device, log);
+  return await runGpuSuite(device, log, { only: new URLSearchParams(location.search).get('only') });
 })();
 </script>
