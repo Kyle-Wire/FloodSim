@@ -101,7 +101,10 @@ export class Coupler {
         if (dH > 0 && this.state.head[i] > this.zs[m]) { back[m] = net.opts.Co * net.opts.inletArea * this.grates[m] * Math.sqrt(2 * 9.81 * dH); want[i] += back[m]; }
       }
       for (let m = 0; m < M; m++) if (back[m] > 0) {
-        const i = this.inletNodes[m], pipeIn = Math.max(0, swmm.node('INFLOW', this.swIdx[i]) - swmm.node('LATFLOW', this.swIdx[i]));
+        // SWMM's node INFLOW holds a lateral flow only when it is positive (a negative one is booked as outflow,
+        // dynwave.c), so take only a positive one off: subtracting last interval's negative return added it back to
+        // the cap, which grew interval by interval on a surcharged network (Portland: 70k m³ returned for 38k taken in)
+        const i = this.inletNodes[m], pipeIn = Math.max(0, swmm.node('INFLOW', this.swIdx[i]) - Math.max(0, swmm.node('LATFLOW', this.swIdx[i])));
         back[m] *= Math.min(1, pipeIn / want[i]);
       }
     }

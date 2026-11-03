@@ -161,9 +161,19 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
   }
   // ---- 4. sizes
   const sized = raw.filter(q => q.r.h > 0).map(q => q.r.h).sort((a, b) => a - b), median = sized.length ? sized[sized.length >> 1] : 0.45;
+  // each end on its own: an invert is used when it lies 0.2–30 m under the manhole's ground (deep trunks included); one
+  // missing or implausible end is carried from the other at the pipe's ground slope (≥ minSlope). A missing invert is
+  // null, never 0: null × u is 0 m, which once put pipe ends 40–65 m under Portland's streets and blew SWMM's books up
+  const invAt = (v, i) => { if (!invUnits || v == null || !Number.isFinite(v) || v === 0) return null; const z = v * invUnits.u, c = nodes[i].ground - z; return c > 0.2 && c < 30 ? z : null; };
+  let invPartial = 0, invRejected = 0;
   for (const q of raw) {
-    let up = null, dn = null;
-    if (invUnits && Number.isFinite(q.r.upInv) && q.r.upInv) { up = q.r.upInv * invUnits.u; dn = q.r.dnInv * invUnits.u; }
+    let up = invAt(q.r.upInv, q.a), dn = invAt(q.r.dnInv, q.b);
+    if (invUnits && (Number.isFinite(q.r.upInv) && q.r.upInv && up == null || Number.isFinite(q.r.dnInv) && q.r.dnInv && dn == null)) invRejected++;
+    if ((up == null) !== (dn == null)) {
+      const S = Math.max(o.minSlope, Math.abs(nodes[q.a].ground - nodes[q.b].ground) / q.L);
+      if (up == null) up = dn + S * q.L; else dn = up - S * q.L;
+      invPartial++;
+    }
     const flip = up != null ? dn > up : dist[q.b] > dist[q.a] || (dist[q.b] === dist[q.a] && nodes[q.b].ground > nodes[q.a].ground);
     if (flip) { [q.a, q.b] = [q.b, q.a]; [up, dn] = [dn, up]; }
     Object.assign(q, { D: q.r.h, Wd: q.r.w, shape: q.r.shape, barrels: q.r.barrels, invUp: up, invDn: dn, given: up != null });
@@ -221,7 +231,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     stats: { junctions: outNodes.filter(n => !n.outfall).length, outfalls: outNodes.filter(n => n.outfall).length, pipes: outPipes.length,
       inlets: inlets.filter(g => g.grates > 0).length, grates: inlets.reduce((s, g) => s + g.grates, 0), lids: inlets.filter(g => !g.grates).length,
       realInlets, unconnectedGrates: unconnected, realOutfalls: 0, offsiteOutlets: outNodes.filter(n => n.offsite).length,
-      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', interiorEnds,
+      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, interiorEnds,
       pipeLength: outPipes.filter(q => !q.offsite).reduce((s, q) => s + q.L, 0), minD: Math.min(...outPipes.map(q => q.D)), maxD: Math.max(...outPipes.map(q => q.D)), served: 0 },
   };
 }

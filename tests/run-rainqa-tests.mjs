@@ -79,6 +79,10 @@ const NY = 'America/New_York', H = 3600e3;
   check('compare: not scored — missing hours, missing report, a report far beyond the storm, a dry gauge, the storm\'s own gauge',
     !by.LOM.scored && /hours missing/.test(by.LOM.why) && !by.C.scored && /no report/.test(by.C.why) && !by.D.scored && /beyond the storm/.test(by.D.why) && !by.E.scored && /under/.test(by.E.why) && !by.SRC.scored && /own rain/.test(by.SRC.why));
   check('compare: summary over the scored gauges (median of 0.5, 1.0, 1.25), the nearest scored one', c.summary.n === 3 && near(c.summary.median, 1, 1e-12) && c.summary.min === 0.5 && c.summary.max === 1.25 && c.summary.nearest.id === 'A');
+  const ub = Q.compareGauges([gs[5], { id: 'F', kind: 'CoCoRaHS', km: 2, total: dy(30, 1, 40) }, { id: 'G', kind: 'CoCoRaHS', km: 1, total: dy(30, 0, 40) }], win);
+  const ubBy = Object.fromEntries(ub.rows.map(r => [r.id, r]));
+  check('compare: a complete daily report beyond the storm is an upper bound (model 50 above 30 × 1.15, within 55; a missing report is none)',
+    ubBy.F.bound === 'above' && ubBy.D.bound === 'within' && ubBy.G.bound === null && !ubBy.F.scored && ub.bounds.n === 2 && ub.bounds.above === 1 && ub.bounds.nearestAbove === 'F' && ub.summary === null && by.A.bound === null);
   const at = Q.compareGauges([gs[1]], win, { atGauge: () => 90 });
   check('compare: the radar at the gauge when given', near(at.rows[0].ratio, 0.9, 1e-12) && at.rows[0].modelAt === 'radar at the gauge');
   const rows = c.rows.map(r => ({ ...r, gaugeMM: r.gaugeMM }));

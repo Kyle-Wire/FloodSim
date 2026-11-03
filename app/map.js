@@ -81,6 +81,11 @@ const EXAMPLES = [
   { name: 'West Hollywood CA', why: 'public storm-drain GIS linked in (tier 1)', box: [-118.3800, 34.0855, -118.3720, 34.0915],
     links: { pipes: ['https://gis.weho.org/arcgis/rest/services/DPW/StormDrains/MapServer/1', 'https://gis.weho.org/arcgis/rest/services/DPW/StormDrains/MapServer/2'],
       inlets: ['https://gis.weho.org/arcgis/rest/services/DPW/StormDrains/MapServer/0'] } },
+  { name: 'Laurelhurst, Portland OR', why: 'combined sewers linked in (tier 1): 12 Sep 2018 cloudburst', box: [-122.634, 45.524, -122.619, 45.534],
+    // City of Portland BES open data: mains only (the layer mixes in laterals), inlets from the node layer; inverts on the
+    // City of Portland datum, NAVD88 = City + 2.10 ft
+    links: { pipes: ["https://www.portlandmaps.com/od/rest/services/COP_OpenData_Utilities/MapServer/108?where=LAYER_GROUP%20IN%20(%27SEWER%20PIPES%27%2C%27STORM%20PIPES%27)%20AND%20SERVSTAT%3D%27IN%27"],
+      inlets: ["https://www.portlandmaps.com/od/rest/services/COP_OpenData_Utilities/MapServer/105?where=UNITTYPE%3D%27INLET%27"], datum: 2.10 } },
   { name: 'Meyerland, Houston TX', why: 'flat, bayou-side, flash flooding', box: [-95.4740, 29.6790, -95.4620, 29.6880] },
   { name: 'Ellicott City MD', why: 'steep valley, 2016 and 2018 flash floods', box: [-76.8020, 39.2650, -76.7930, 39.2710] },
   { name: 'Miami Beach FL', why: 'tidal and storm-surge flooding', box: [-80.1390, 25.7880, -80.1290, 25.7960] },
@@ -404,8 +409,11 @@ $('dxSel').onchange = () => { updateSizeNote(); if (model) resetRun(); };
 // ------------------------------------------------------------------ user-linked data
 const linkFields = ['linkPipes', 'linkInlets', 'linkOutfalls'];
 try { for (const id of linkFields) $(id).value = localStorage.getItem('floodsim.' + id) ?? ''; $('linkUnits').value = localStorage.getItem('floodsim.linkUnits') ?? 'auto'; } catch { /* storage off */ }
-for (const id of [...linkFields, 'linkUnits']) $(id).addEventListener('change', () => { try { localStorage.setItem('floodsim.' + id, $(id).value); } catch { /* storage off */ } });
+try { $('linkDatum').value = localStorage.getItem('floodsim.linkDatum') ?? '0'; } catch { /* storage off */ }
+for (const id of [...linkFields, 'linkUnits', 'linkDatum']) $(id).addEventListener('change', () => { try { localStorage.setItem('floodsim.' + id, $(id).value); } catch { /* storage off */ } });
 const splitLinks = (s) => s.split(/[\s,]+/).map(x => x.trim()).filter(Boolean);
+/** The linked layers and their datum for the run's fingerprint: present only when set, so runs without them keep their hashes. */
+function linkedPart() { const l = linkedLinks(), d = Number($('linkDatum').value) || 0; return { ...(l.pipes.length || l.inlets.length || l.outfalls.length ? { linked: CMP.hashOf(l) } : {}), ...(d ? { linkDatum: d } : {}) }; }
 function linkedLinks() { return { pipes: splitLinks($('linkPipes').value), inlets: splitLinks($('linkInlets').value), outfalls: splitLinks($('linkOutfalls').value) }; }
 /** Fetch every linked layer inside the box; pipes get their fields detected per layer (units overridable). */
 async function loadLinked(links, bounds) {
@@ -418,13 +426,16 @@ async function loadLinked(links, bounds) {
       if (src.kind !== 'line') throw new Error(`${src.name} has ${src.kind} features, pipes must be lines`);
       const map = detectPipeFields(src.fields, feats.slice(0, 200).map(f => f.props));
       if ($('linkUnits').value !== 'auto') map.sizeUnits = $('linkUnits').value;
-      out.pipes.push(...pipeRecords(feats, map));
-      out.notes.push(`${src.name}: size ${map.size ?? 'none'} (${map.sizeUnits})${map.width ? ', width ' + map.width : ''}${map.shape ? ', shape ' + map.shape : ''}${map.upInvert ? `, inverts ${map.upInvert}/${map.dnInvert}` : ', no inverts'}${map.status ? ', drops ' + map.status : ''}`);
+      const datum = Number($('linkDatum').value) || 0;
+      const recs = pipeRecords(feats, map, { datum }); out.pipes.push(...recs);
+      out.combinedPipes = (out.combinedPipes ?? 0) + recs.filter(r => r.combined).length;
+      out.notes.push(`${src.name}: size ${map.size ?? 'none'} (${map.sizeUnits})${map.width ? ', width ' + map.width : ''}${map.shape ? ', shape ' + map.shape : ''}${map.system ? `, system ${map.system} (${recs.filter(r => r.combined).length} of ${recs.length} combined)` : ''}${map.upInvert ? `, inverts ${map.upInvert}/${map.dnInvert}${datum ? ` ${datum > 0 ? '+' : '−'}${Math.abs(datum)} to NAVD88` : ''}` : ', no inverts'}${map.status ? ', drops ' + map.status : ''}`);
     } else {
       if (src.kind !== 'point') throw new Error(`${src.name} has ${src.kind} features, ${kind} must be points`);
       out[kind].push(...pointRecords(feats));
     }
   }
+  out.combined = out.pipes.length > 0 && out.combinedPipes > out.pipes.length / 2; // most of the linked pipes are combined sewers
   return out;
 }
 $('linkCheck').onclick = async () => {
@@ -473,6 +484,7 @@ $('exampleSel').onchange = () => {
   cancelPoly(); setArea(e.box); map.fitBounds([[e.box[0], e.box[1]], [e.box[2], e.box[3]]], { padding: 40 });
   // the example's own linked data replaces whatever links were there (examples without links clear them)
   for (const [id, k] of [['linkPipes', 'pipes'], ['linkInlets', 'inlets'], ['linkOutfalls', 'outfalls']]) { $(id).value = (e.links?.[k] ?? []).join('\n'); $(id).dispatchEvent(new Event('change')); }
+  $('linkDatum').value = e.links?.datum ?? 0; $('linkDatum').dispatchEvent(new Event('change'));
   if (e.links) document.querySelector('details.linked').open = true;
   $('exampleSel').value = '';
 };
@@ -608,8 +620,9 @@ $('buildBtn').onclick = async () => {
     groundCache.clear(); emulatorUI.reset();
     if (rasXS.geom) loadXS().catch(xsFail); // HEC-RAS cross-sections loaded before this build: placed on the new grid
     applyScenario(); // the active design scenario, if any (model.base stays existing conditions)
-    $('downspout').value = util?.combined ? 100 : 0; $('downspout').dispatchEvent(new Event('input')); // combined-sewer rowhouses: downspouts tie into the sewer
-    $('csoOn').checked = !!util?.combined; // combined sewers: sanitary flow and regulators (src/cso.js)
+    const combined = !!(util?.combined || linked?.combined); // the utility's combined-sewer area, or linked pipes marked combined
+    $('downspout').value = combined ? 100 : 0; $('downspout').dispatchEvent(new Event('input')); // combined-sewer rowhouses: downspouts tie into the sewer
+    $('csoOn').checked = combined; // combined sewers: sanitary flow and regulators (src/cso.js)
     $('a14Btn').textContent = atlas14 ? 'Atlas 14 design' : 'Site-record design';
     for (const id of ['a14dur', 'pattern', 'which']) $(id).closest('.field').hidden = !atlas14; // site-record storms: 24 h, recorded shape
     if (!atlas14) setStormSource('const'); // until the record has loaded
@@ -983,7 +996,9 @@ async function loadHistory() {
   hist.recordSource = daily.source; hist.gridded = !daily.station;
   if (!model.atlas14) await fitSiteRecord(daily, lon, lat).catch((e) => { $('stormSummary').textContent = 'Site-record design storm unavailable: ' + e.message; });
   const md = (d) => new Date(d + 'T12:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-  $('histEvent').innerHTML = hist.catalog.map((e, i) => `<option value="${i}">${e.name ? e.name + ' · ' : ''}${md(e.peakDate)}${e.total != null ? ` · ${e.total.toFixed(0)} mm` : ` · passed ${e.cyclone.minKm.toFixed(0)} km`}</option>`).join('');
+  $('histEvent').innerHTML = hist.catalog.map((e, i) => `<option value="${i}">${e.name ? e.name + ' · ' : ''}${md(e.peakDate)}${e.total != null ? ` · ${e.total.toFixed(0)} mm` : ` · passed ${e.cyclone.minKm.toFixed(0)} km`}</option>`).join('') +
+    '<option value="date">Another date… (a short burst the daily record ranks low)</option>'; // the catalog is the wettest days: a 40 min cloudburst of 20 mm never makes it
+  $('histDateRow').hidden = $('histEvent').value !== 'date';
   $('histSrc').querySelector('[value=blend]').disabled = $('histSrc').querySelector('[value=gauge]').disabled = !asos;
   if (!asos) $('histSrc').value = 'hourly';
   $('histSrc').querySelector('[value=hourly]').disabled = $('histSrc').querySelector('[value=blend]').disabled = !hist.gridded || $('histSrc').querySelector('[value=blend]').disabled;
@@ -996,8 +1011,11 @@ async function loadHistory() {
     (gauge ? `, tide gauge ${gauge.id} ${gauge.name} ${gauge.km.toFixed(0)} km away.` : '. No tide gauge within 60 km.');
   $('histLoad').disabled = false; $('liveLoad').disabled = !hist.gridded; // MRMS: the lower 48
 }
+$('histEvent').addEventListener('change', () => { $('histDateRow').hidden = $('histEvent').value !== 'date'; });
 $('histLoad').onclick = async () => {
-  const e = hist.catalog?.[Number($('histEvent').value)]; if (!e) return;
+  const v = $('histEvent').value, day = $('histDate').value;
+  if (v === 'date' && !day) { $('histNote').textContent = 'Pick the date of the storm.'; return; }
+  const e = v === 'date' ? { name: `Storm of ${day}`, start: day + 'T00:00Z', end: day + 'T23:59Z', peakDate: day, total: null } : hist.catalog?.[Number(v)]; if (!e) return;
   const btn = $('histLoad'); btn.disabled = true; btn.textContent = 'Loading…';
   try {
     const [lon, lat] = model.site, pad = 86400e3;
@@ -1868,7 +1886,7 @@ function forcingRecord(r) {
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
-    drainage: { src: drainSrc, ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
+    drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
     area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume), ...(model.bathy.surveyed ? { bathySurveyed: { source: 'NOAA BlueTopo', tiles: model.bathy.surveyed.tiles, volume: Math.round(model.bathy.surveyed.volume) } } : {}), ...(model.bathy.xs ? { bathyXS: { source: model.bathy.xs.source, volume: Math.round(model.bathy.xs.volume) } } : {}) } : {}) },
     commit: appCommit,
   };
@@ -3519,7 +3537,7 @@ function captureProject() {
     inputs[el.id] = el.type === 'checkbox' ? el.checked : el.value;
   }
   return { version: 1, area: S.area, poly: S.poly, place: $('findNote').textContent.split('. Now')[0] || '', stormSrc, drainSrc, inputs,
-    hist: stormSrc === 'hist' ? { event: $('histEvent').value, label: $('histEvent').selectedOptions[0]?.textContent ?? '' } : null,
+    hist: stormSrc === 'hist' ? { event: $('histEvent').value, label: $('histEvent').selectedOptions[0]?.textContent ?? '', date: $('histEvent').value === 'date' ? $('histDate').value : null } : null,
     view: { center: map.getCenter().toArray(), zoom: map.getZoom() }, infraUnits: $('infraUnits').value, obs: S.obs,
     activeScenario: design.active?.name ?? null, designUnits: design.units };
 }
@@ -3569,7 +3587,7 @@ async function restoreProject(pj, layer, scenarios = [], analysis = null) {
   log(`Opened project ${pj.name}`, 'ok', `saved ${pj.saved ? new Date(pj.saved).toLocaleString() : ''}`);
   if (pj.hist?.event) { // historic storms come from the site record: wait for the search, then load the same event
     const t0 = Date.now(); while (![...$('histEvent').options].some(o => o.value === pj.hist.event) && Date.now() - t0 < 90e3) await new Promise(r => setTimeout(r, 500));
-    if ([...$('histEvent').options].some(o => o.value === pj.hist.event)) { $('histEvent').value = pj.hist.event; await $('histLoad').onclick(); }
+    if ([...$('histEvent').options].some(o => o.value === pj.hist.event)) { $('histEvent').value = pj.hist.event; if (pj.hist.date) $('histDate').value = pj.hist.date; $('histDateRow').hidden = pj.hist.event !== 'date'; await $('histLoad').onclick(); }
     else log(`Historic event “${pj.hist.label}” not found in the record search: load it again under Storm`, 'warn');
   }
 }

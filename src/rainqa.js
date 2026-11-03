@@ -153,20 +153,25 @@ export function radarAt(storm, lon, lat, weights, t0 = -Infinity, t1 = Infinity)
  * win: stormWindow; atGauge(g) → the model's rain at the gauge (mm) or null; same(g) → the gauge is the storm's own source.
  * A gauge is scored when it covers the storm (ASOS ≥ 90 % of its hours, CoCoRaHS every report), saw at least minMM, is
  * not the storm's own source, and (daily) its reports add at most maxExtraH hours beyond the storm.
- * → { rows: [{ …gauge, gaugeMM, modelMM, modelAt, ratio, scored, why }], summary: { n, median, min, max, nearest } | null }
+ * → { rows: [{ …gauge, gaugeMM, modelMM, modelAt, ratio, scored, why, bound: 'above' | 'within' | null }], summary: { n, median, min, max, nearest } | null,
+ *     bounds: { n, above, nearestAbove } | null (unscored complete daily reports read as upper bounds) }
  */
-export function compareGauges(gauges, win, { atGauge = () => null, same = () => false, minMM = 2.5, maxExtraH = 18 } = {}) {
+export function compareGauges(gauges, win, { atGauge = () => null, same = () => false, minMM = 2.5, maxExtraH = 18, boundTol = 0.15 } = {}) {
   const rows = gauges.map(g => {
     const t = g.total, at = atGauge(g), modelMM = at ?? win.mm, gaugeMM = t.mm;
     const why = same(g) ? 'the storm\'s own rain came from this gauge' : g.kind === 'ASOS' && t.coverage < 0.9 ? `${t.hours - t.got} of ${t.hours} hours missing`
       : g.kind === 'CoCoRaHS' && t.coverage < 1 ? `no report for ${t.missing.join(', ')}` : g.kind === 'CoCoRaHS' && t.extraH > maxExtraH ? `its daily reports cover ${t.extraH.toFixed(0)} h beyond the storm`
       : !(gaugeMM >= minMM) ? `under ${minMM} mm at the gauge` : '';
-    return { ...g, gaugeMM, modelMM, modelAt: at != null ? 'radar at the gauge' : 'area mean', ratio: gaugeMM > 0 ? modelMM / gaugeMM : NaN, scored: !why, why };
+    // a complete daily report that spans more than the storm is still an upper bound on the storm's rain there (a gauge
+    // cannot catch less than fell in its window, undercatch aside): the model above it by more than boundTol is too wet
+    const bound = g.kind === 'CoCoRaHS' && why && t.coverage >= 1 && t.extraH > maxExtraH && gaugeMM >= 0 ? (modelMM > gaugeMM * (1 + boundTol) ? 'above' : 'within') : null;
+    return { ...g, gaugeMM, modelMM, modelAt: at != null ? 'radar at the gauge' : 'area mean', ratio: gaugeMM > 0 ? modelMM / gaugeMM : NaN, scored: !why, why, bound };
   });
   const ok = rows.filter(r => r.scored), rs = ok.map(r => r.ratio).sort((a, b) => a - b);
   const median = rs.length ? (rs.length % 2 ? rs[rs.length >> 1] : (rs[rs.length / 2 - 1] + rs[rs.length / 2]) / 2) : NaN;
-  const near = [...ok].sort((a, b) => a.km - b.km)[0];
-  return { rows, summary: rs.length ? { n: rs.length, median, min: rs[0], max: rs.at(-1), nearest: { id: near.id, name: near.name, kind: near.kind, km: near.km, ratio: near.ratio } } : null };
+  const near = [...ok].sort((a, b) => a.km - b.km)[0], bd = rows.filter(r => r.bound);
+  const bounds = bd.length ? { n: bd.length, above: bd.filter(r => r.bound === 'above').length, nearestAbove: [...bd].filter(r => r.bound === 'above').sort((a, b) => a.km - b.km)[0]?.id ?? null } : null;
+  return { rows, bounds, summary: rs.length ? { n: rs.length, median, min: rs[0], max: rs.at(-1), nearest: { id: near.id, name: near.name, kind: near.kind, km: near.km, ratio: near.ratio } } : null };
 }
 
 // ------------------------------------------------------------------ fetching
@@ -226,7 +231,7 @@ export async function rainQA(storm, lon, lat, fetcher, { weights = null, padMin 
   const { gauges, tz, dates, errors } = await nearbyGauges(lon, lat, win, fetcher, { padMin, ...o });
   const atGauge = (g) => (weights && storm.radar ? radarAt(storm, g.lon, g.lat, weights, g.kind === 'ASOS' ? g.total.span[0] : -Infinity, g.kind === 'ASOS' ? g.total.span[1] : Infinity) : null);
   const cmp = compareGauges(gauges, win, { atGauge, same: (g) => g.kind === 'ASOS' && g.id === own });
-  const slim = (r) => ({ id: r.id, name: r.name, kind: r.kind, network: r.network, lon: r.lon, lat: r.lat, km: r.km, gaugeMM: r.gaugeMM, modelMM: r.modelMM, modelAt: r.modelAt, ratio: r.ratio, scored: r.scored, why: r.why,
+  const slim = (r) => ({ id: r.id, name: r.name, kind: r.kind, network: r.network, lon: r.lon, lat: r.lat, km: r.km, gaugeMM: r.gaugeMM, modelMM: r.modelMM, modelAt: r.modelAt, ratio: r.ratio, scored: r.scored, why: r.why, bound: r.bound,
     coverage: r.total.coverage, missing: r.kind === 'ASOS' ? r.total.missing.length : r.total.missing, span: r.total.span, ...(r.kind === 'ASOS' ? { hours: r.total.hours } : { days: r.total.days, extraH: r.total.extraH, obsHour: r.total.obsHour, assumedHour: r.total.assumedHour }) });
-  return { window: { t0: win.t0, t1: win.t1, padMin, live: win.live }, modelMM: win.mm, tz, dates, rows: cmp.rows.map(slim), summary: cmp.summary, errors, sourceGauge: own };
+  return { window: { t0: win.t0, t1: win.t1, padMin, live: win.live }, modelMM: win.mm, tz, dates, rows: cmp.rows.map(slim), summary: cmp.summary, bounds: cmp.bounds, errors, sourceGauge: own };
 }

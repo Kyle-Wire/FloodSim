@@ -247,6 +247,20 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   ];
   const recs = pipeRecords(feats, detectPipeFields(fields.slice(0, 5), feats.map(f => f.props)));
   check('placeholder sizes and abandoned pipes', recs.length === 4 && recs[1].h === null && recs[3].shape === 'RECT_CLOSED' && Math.abs(recs[3].w - 1.524) < 1e-9);
+  // Portland BES: FRM_ELEV / TO_ELEV, 0 = missing, inverts on the City datum (+2.10 ft to NAVD88)
+  const pdx = detectPipeFields(['OBJECTID', 'Shape', 'UNITTYPE', 'SERVSTAT', 'FRM_NODE', 'TO_NODE', 'FRM_ELEV', 'TO_ELEV', 'FRM_DEPTH', 'TO_DEPTH', 'PIPESIZE', 'PIPEHEIGHT', 'PIPESHPE'], [{ PIPESIZE: 24 }, { PIPESIZE: 15 }, { PIPESIZE: 67 }]);
+  const pr = pipeRecords([{ kind: 'line', coords: [ll(0, 0), ll(10, 0)], props: { PIPESIZE: 24, PIPESHPE: 'CIRC', FRM_ELEV: 120.1, TO_ELEV: 117.06, UNITTYPE: 'CSML' } }, { kind: 'line', coords: [ll(0, 5), ll(10, 5)], props: { PIPESIZE: 67, PIPESHPE: 'HS', FRM_ELEV: 0, TO_ELEV: 109.53, UNITTYPE: 'STML' } }], pdx, { datum: 2.1 });
+  check('linked pipes: FRM_/TO_ELEV inverts, a datum offset, 0 read as missing; UNITTYPE CSML is a combined sewer', pdx.system === 'UNITTYPE' && pr[0].combined === true && pr[1].combined === false && pdx.upInvert === 'FRM_ELEV' && pdx.dnInvert === 'TO_ELEV' && pdx.size === 'PIPESIZE' && pdx.shape === 'PIPESHPE' && pdx.sizeUnits === 'in' &&
+    Math.abs(pr[0].upInv - 122.2) < 1e-9 && Math.abs(pr[0].dnInv - 119.16) < 1e-9 && pr[1].upInv === null && Math.abs(pr[1].dnInv - 111.63) < 1e-9, JSON.stringify({ pdx, a: pr[0].upInv, b: pr[1].upInv }));
+  { // a chain with inverts in feet (2 m cover), one end missing and one 40 m deep: neither may reach SWMM as given
+    const ft = (x) => (8 + 0.02 * x) / 0.3048, xs = [190, 145, 100, 55, 10];
+    const chain = xs.slice(0, -1).map((x, k) => ({ line: [ll(x, 60), ll(xs[k + 1], 60)], h: 0.45, w: null, shape: 'CIRCULAR', barrels: 1, upInv: ft(x), dnInv: k === 3 ? null : ft(xs[k + 1]) }));
+    chain[1].upInv = (8 + 0.02 * 145 - 40) / 0.3048; // a typo'd invert 40 m under the street
+    const nk = realNetwork(g, { z, bld: new Uint8Array(N), road: new Uint8Array(N) }, chain, { nx: 200, ny: 200, F: 1, mask: new Uint8Array(N).fill(1) }, {});
+    const deep = nk.nodes.filter(n => !n.outfall).map(n => n.ground - n.invert);
+    check('tier-1 inverts: a missing end is carried at the slope, an implausible one is not used (no end at 0 m)', nk.stats.inverts === 'from layer (ft)' && nk.stats.invPartial === 2 && nk.stats.invRejected === 1 && deep.every(c => c > 0.2 && c < 5),
+      JSON.stringify({ inv: nk.stats.inverts, p: nk.stats.invPartial, r: nk.stats.invRejected, deep: deep.map(c => +c.toFixed(2)) }));
+  }
   const net = realNetwork(g, { z, bld: new Uint8Array(N), road: new Uint8Array(N) }, recs, { nx: 200, ny: 200, F: 1, mask: new Uint8Array(N).fill(1) },
     { realInlets: [{ lon: ll(170, 103)[0], lat: ll(170, 103)[1] }] });
   const s = net.stats, links = new Map(); net.pipes.forEach(p => { if (net.nodes[p.to].outfall) links.set(p.to, (links.get(p.to) || 0) + 1); });

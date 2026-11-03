@@ -451,11 +451,12 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <p class="note" id="sizeNote"></p>
       <details class="linked">
         <summary>Your own drainage data (optional)</summary>
-        <p class="note">Paste links to public ArcGIS layers (…/FeatureServer/0 or …/MapServer/1) or GeoJSON files, one per line. Build uses them instead of the built-in sources; pipes make it a tier 1 model.</p>
+        <p class="note">Paste links to public ArcGIS layers (…/FeatureServer/0 or …/MapServer/1) or GeoJSON files, one per line. Build uses them instead of the built-in sources; pipes make it a tier 1 model. To take part of a layer, add a filter: …/MapServer/108?where=LAYER_GROUP%3D%27SEWER%20PIPES%27 (encoded, no spaces).</p>
         <label class="lab" for="linkPipes">Pipes / mains (lines)</label><textarea id="linkPipes" rows="2" spellcheck="false" placeholder="https://…/MapServer/1"></textarea>
         <label class="lab" for="linkInlets">Inlets / catch basins (points)</label><textarea id="linkInlets" rows="1" spellcheck="false"></textarea>
         <label class="lab" for="linkOutfalls">Outfalls (points)</label><textarea id="linkOutfalls" rows="1" spellcheck="false"></textarea>
         <div class="field"><label for="linkUnits">Pipe size units</label><select id="linkUnits"><option value="auto">Detect</option><option value="in">inches</option><option value="mm">millimetres</option><option value="ft">feet</option><option value="m">metres</option></select></div>
+        <div class="field"><label for="linkDatum" title="Inverts on a local datum: what to add to reach NAVD88, in the inverts' own units (City of Portland datum: +2.10 ft). 0 = already NAVD88.">Add to inverts (to NAVD88)</label><input id="linkDatum" type="number" step="0.01" value="0" style="width:6em"></div>
         <div class="row"><button class="btn" id="linkCheck" type="button">Check links</button></div>
         <ul class="log" id="linkLog"></ul>
       </details>
@@ -470,6 +471,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       </div>
       <div id="histCtl" hidden>
         <div class="field"><label for="histEvent">Event</label><select id="histEvent" style="max-width:62%"><option value="">Build a model to search…</option></select></div>
+        <div class="field" id="histDateRow" hidden><label for="histDate">Date (local)</label><input type="date" id="histDate" min="1995-01-01"></div>
         <div class="field"><label for="histSrc">Rainfall</label>
           <select id="histSrc" style="max-width:62%"><option value="blend">Site totals, gauge timing (5 min)</option><option value="hourly">Site rainfall (hourly)</option><option value="gauge">Airport gauge (5 min)</option><option value="radar">Radar, NOAA MRMS (1 km, 2 min; gauge-corrected from May 2015)</option></select></div>
         <label class="toggle" id="coastRow" hidden><input type="checkbox" id="tCoast" checked> <span id="coastLabel">Observed water level as boundary</span></label>

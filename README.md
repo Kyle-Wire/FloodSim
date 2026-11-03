@@ -1035,7 +1035,9 @@ upstream.
 
 **Two-way inlet exchange (default).** When the pipes back up, manholes pressurise and water returns to the street
 through the inlet on the head difference, as HEC-RAS does, instead of spilling at the rim; the return is capped per
-manhole by what its pipes deliver. On HEC-RAS's Davis storm-sewer example it brought the pump peak, wet-well and node levels
+manhole by what its pipes deliver. (Until Nov 2026 the cap took SWMM's lateral flow off the node inflow even when it was
+the negative return itself, which raised the cap each interval on a surcharged network: on the Portland example 70,000 m³
+came back up for 38,000 m³ taken in, combined books −183 %. Fixed; Davis moved by under 1 % of the return flow.) On HEC-RAS's Davis storm-sewer example it brought the pump peak, wet-well and node levels
 into line with HEC-RAS (the volume pumped over the event is still 16 % under HEC-RAS's: more water stays ponded on the
 surface at the end, 52.5k against 31.5k m³; `benchmarks/gatec/results/davis-compare.txt`), and on the mass audit it halved the combined error where the pipes surcharge
 ([`benchmarks/gatec/README.md`](benchmarks/gatec/README.md)). Untick it under Drainage for the older inlets-in-only coupling.
@@ -1097,7 +1099,9 @@ and Oregon; there the site-record design storm above is used.
 **Historic storms** (`src/history.js`). After a build, the Storm panel lists the events that hit the site: the 12 wettest
 rain events in the IEM Reanalysis daily record (1995 →), named when a NOAA HURDAT2 hurricane track passed within 250 km
 at the time, plus every other hurricane passage within 250 km (surge events like Sandy rain little but matter on the
-coast). Loading an event rebuilds its rainfall at the site from one of:
+coast). *Another date…* takes any day since 1995 instead: a short cloudburst (Portland's 0.75 in in 40 minutes on
+12 Sep 2018) never ranks among the wettest days, and the ±1 day either side holds a storm that crosses midnight UTC.
+Loading an event rebuilds its rainfall at the site from one of:
 - **Site totals, gauge timing (default):** IEM hourly gridded precipitation at the site, distributed inside each hour by
   the nearest ASOS 1-minute gauge (method of fragments; site hourly totals preserved exactly). Isaias 2020 at Eastwick:
   150 mm, 177 mm/hr peak 5 min, 1 h ≈ 68-yr and 3 h ≈ 95-yr against the site's Atlas 14.
@@ -1226,7 +1230,24 @@ from neighbouring pipes, box and multi-barrel culverts become SWMM RECT_CLOSED w
 plausible against the lidar (metres or feet) and otherwise derived (cover over the crown, ≥ 0.5 %, never rising), and
 the whole network is oriented toward its exits so flat streets do not create sinks. Verified with West Hollywood's
 public storm drains (mains + laterals + catch basins, inches, no inverts): 100-yr 1-h, SWMM continuity −0.04 %,
-combined balance −0.002 %. The dev proxy only reaches links on public https hosts (never localhost or private
+combined balance −0.002 %.
+- **A filter on a link:** `…/MapServer/108?where=LAYER_GROUP%20IN%20(%27SEWER%20PIPES%27)` takes part of a layer
+  (encoded, since links are split on spaces and commas): utility layers often mix mains with service laterals.
+- **Inverts on a local datum:** *Add to inverts (to NAVD88)*, in the inverts' own units (City of Portland datum:
+  +2.10 ft). An invert of exactly 0 is read as missing, as utility layers leave it.
+- **Each invert on its own:** once the layer's units are settled (metres or feet, by how many pipes sit plausibly under
+  the lidar), an invert is used only where it lies 0.2–30 m under its manhole's ground; a pipe with one good end gets the
+  other at its ground slope (≥ 0.5 %). Before this a missing end became 0 m: on the Portland example 40 pipes had an
+  end 40–65 m under the street, heads rose 26 m above it and the combined books were off by 223 % (the model checks
+  flagged it as a Problem). The network stats count both (`invPartial`, `invRejected`).
+- **Field names:** `FRM_ELEV` / `TO_ELEV` count as up / down inverts and `PIPESHPE` as the shape; ArcGIS's own geometry
+  fields (`Shape`, `Shape_Length`) are never taken for the pipe shape.
+- **Combined sewers from the layer:** a system field (`UNITTYPE`, `SYSTEM`, `SEWER_TYPE` …) reading *Combined*, `COMB`
+  or a combined unit code (Portland's `CSML`) marks a pipe combined. When most linked pipes are, the build sets the
+  combined-sewer defaults (roof downspouts 100 % to the sewer, sanitary flow and CSO regulators on), as it does inside
+  Philadelphia's combined-sewer area.
+- The *Laurelhurst, Portland OR* example links the City of Portland's open combined-sewer mains and inlets with the
+  datum offset: 370 mains (335 combined) and 476 inlets in 1.3 km², 446 SWMM conduits (420 surveyed, inverts from the layer). The dev proxy only reaches links on public https hosts (never localhost or private
 addresses), GET only, and every request must carry the app's `x-floodsim` header, so other web pages cannot use it.
 
 **Roofs and outlets.** In combined-sewer areas roof downspouts feed the nearest manhole directly (slider in Drainage,
