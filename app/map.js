@@ -9,6 +9,7 @@ import { downscaleDepth, volumeRatio } from '../src/downscale.js';
 import { zip, png16, exr, buildingsGLB } from '../src/export.js';
 import { fetchAtlas14, hyetograph, constantStorm, rainAt, rainDepthTo, ddf, fitGEV, annualMaxima24h, recordStorm, wettest24, gevQuantile, pdsToAms } from '../src/storm.js';
 import { synthNetwork, toINP, lumpedInfil, addTanks } from '../src/drainage.js';
+import * as CSO from '../src/cso.js';
 import { giLayers, GI } from '../src/gi.js';
 import { drawnGI, OutletLinks, UnderdrainLinks, detentionTable } from '../src/stormwater.js';
 import { loadSWMM, SWMM } from '../src/swmm.js';
@@ -600,6 +601,7 @@ $('buildBtn').onclick = async () => {
     groundCache.clear(); emulatorUI.reset();
     applyScenario(); // the active design scenario, if any (model.base stays existing conditions)
     $('downspout').value = util?.combined ? 100 : 0; $('downspout').dispatchEvent(new Event('input')); // combined-sewer rowhouses: downspouts tie into the sewer
+    $('csoOn').checked = !!util?.combined; // combined sewers: sanitary flow and regulators (src/cso.js)
     $('a14Btn').textContent = atlas14 ? 'Atlas 14 design' : 'Site-record design';
     for (const id of ['a14dur', 'pattern', 'which']) $(id).closest('.field').hidden = !atlas14; // site-record storms: 24 h, recorded shape
     if (!atlas14) setStormSource('const'); // until the record has loaded
@@ -1071,11 +1073,39 @@ function setDrainSource(d) {
   if (model) resetRun();
 }
 $('drainSrc').onclick = (e) => { const b = e.target.closest('button'); if (b && !(run?.solver)) setDrainSource(b.dataset.d); };
-for (const id of ['designAri', 'spacing', 'lumpRate', 'downspout', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay']) $(id).addEventListener('change', () => { if (model && !(run?.solver)) resetRun(); });
+for (const id of ['designAri', 'spacing', 'lumpRate', 'downspout', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates']) $(id).addEventListener('change', () => { if (model && !(run?.solver)) resetRun(); });
 for (const [id, fmt] of [['giPave', v => v + ' %'], ['giGarden', v => v + ' %'], ['giRoof', v => v + ' %'], ['giTank', v => (v > 0 ? Number(v).toLocaleString() + ' m³' : 'none')]]) {
   const show = () => { $(id + 'Out').textContent = fmt($(id).value); }; $(id).addEventListener('input', show); show();
 }
 $('tNet').onchange = () => setDrainSource(drainSrc);
+
+// ------------------------------------------------------------------ combined sewers (src/cso.js)
+/** Local hour at the storm's start (standard time from the longitude; design storms start at 06:00). */
+const csoStartHour = (st) => (st?.t0 != null ? (((st.t0 / 3.6e6 + model.site[0] / 15) % 24) + 24) % 24 : 6);
+/** In a combined-sewer area: people per manhole, sanitary flow and the regulators, on the run's network. → books setup | null */
+function csoSetup(net) {
+  if (!$('csoOn').checked) return null;
+  const pop = CSO.populationPerNode(model.fine, model.f, net, { uniform: $('csoDensity').value === '' ? null : Number($('csoDensity').value) });
+  const dwfTotal = CSO.setDWF(net, pop, { perCapita: Number($('csoPerCap').value) || CSO.CSO_DEFAULTS.perCapita });
+  const regs = CSO.addRegulators(net, { capacity: Number($('csoCap').value) || CSO.CSO_DEFAULTS.capacity, gates: false });
+  const people = pop.reduce((a, b) => a + b, 0);
+  $('csoNote').textContent = `${Math.round(people).toLocaleString()} people on ${net.nodes.filter(n => n.dwf > 0).length} manholes, ${(dwfTotal * 1000).toFixed(1)} L/s mean sanitary flow (peak ×${CSO.PEAK_FACTOR.toFixed(2)}). ` +
+    (regs.length ? `${regs.length} regulator${regs.length > 1 ? 's' : ''} at the outfalls to streams, interceptor capacity ${regs.map(g => (g.qcap * 1000).toFixed(0)).join(' / ')} L/s.` : 'No outfalls to a stream here: all combined flow leaves the area in the sewer (no overflow books).');
+  return { regs, dwfTotal, people, dwfOn: $('csoDwf').checked, interEventH: Number($('csoIet').value) || CSO.CSO_DEFAULTS.interEventH, gatesOn: $('csoGates').checked };
+}
+/** Just before the .inp is written: the pattern's local start hour, and flap gates where the outfalls see the tide. */
+function csoBeforeRun(r) {
+  const st = currentStorm(), cs = r.cso; cs.startHour = csoStartHour(st); cs.gates = cs.gatesOn && !!st?.wl;
+  r.net.dwfOn = cs.dwfOn; r.net.dwfStartHour = cs.startHour;
+  for (const g of cs.regs) r.net.nodes[g.overflow].gated = cs.gates;
+}
+/** The run record's combined-sewer books (src/cso.js csoBooks) from the coupler's outfall volumes and series. */
+function csoRecord(r, hgl, T) {
+  const cs = r.cso, offsite = r.net.nodes.reduce((a, n, i) => a + (n.outfall && n.offsite ? hgl?.outVol?.[i] ?? 0 : 0), 0);
+  return { ...CSO.csoBooks(cs.regs, hgl, { T, startHour: cs.startHour, dwfOn: cs.dwfOn, dwfTotal: cs.dwfTotal, offsite, interEventH: cs.interEventH, gates: cs.gates }),
+    people: cs.people, startHour: cs.startHour, settings: { perCapita: Number($('csoPerCap').value), capacity: Number($('csoCap').value), density: $('csoDensity').value || 'by land cover', dwf: cs.dwfOn, gates: cs.gates } };
+}
+// ------------------------------------------------------------------ end of combined sewers
 
 /** Network for the current solver grid (inlet cells depend on the cell size). */
 function makeNetwork(c, F, { ignoreLayer = false } = {}) {
@@ -1224,6 +1254,7 @@ function resetRun() {
   const tanks = net ? addTanks(net, Number($('giTank').value)) : [];
   const storage = attachStorage(net, lay.storage, model.fine, model.f).attached; // after addTanks, which clears storage
   infra.setAttached(net ? storage : []);
+  const cso = net ? csoSetup(net) : null; // combined sewers: sanitary flow, regulators to the interceptor (after the tanks)
   drawNetwork(net);
   const green = Number($('giRoof').value) / 100; // green roofs hold the first 25 mm on their share of the roofs
   // until they fill, only the other roofs shed water: downspouts take down·(1 − green), the ground (1 − down)·(1 − green)·roof
@@ -1235,7 +1266,7 @@ function resetRun() {
   const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
   const sw = stormwaterLinks(c, F, net, new Set([...(net ? net.inlets.map(g => g.cell) : []), ...culv.flatMap(x => [x.a, x.b])]), gi);
   run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: [...clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, faces: lf.perLine[l] })), ...winSegs.map((s, q) => ({ id: 'win:' + q, name: null, side: s.side, faces: lf.perLine[clines.length + q] }))], faces: lf.faces, samples: allLines.map(() => [[0, 0, 0, 0]]) },
-    window: win ? { ...win, segs: winSegs } : null, culv, roof, net, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
+    window: win ? { ...win, segs: winSegs } : null, culv, roof, net, cso, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
   run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
   $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('hud').hidden = false;
   $('runTag').textContent = `${c.nx.toLocaleString()} × ${c.ny.toLocaleString()} @ ${F} m`;
@@ -1361,6 +1392,7 @@ function ensureSolver() {
   if (coupled) {
     run.swmm = swmmEngine; run.swmmClosed = false;
     run.twoWay = $('twoWay').checked;
+    if (run.cso) csoBeforeRun(run);
     run.inp = toINP(run.net, model.fine, { durationS: Math.ceil(tStop() / 60) * 60 + 3600, title: 'FloodSim synthetic network (data tier 2)', pressurise: run.twoWay });
     run.swmm.open(run.inp);
     run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofStages ? run.roofStages[0].roofArea ?? run.roof?.roofArea : run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay });
@@ -1600,7 +1632,8 @@ async function loop(gen) {
         const rain = m.rain + run.coupler.totals.roofToSewer; // rain on the surface + rain piped straight from roofs
         // + river inflow and the water on the ground at the start; underdrains: GI water the books count as infiltrated that
         // went into the pipes; outlets off the model. Over all the water that came in (as the surface books)
-        const initial = run.solver.vol.initial, inflowV = run.inflow?.totals.volume ?? 0;
+        // + sanitary flow and the water it starts the pipes with (combined sewers)
+        const initial = run.solver.vol.initial + (c.initialStored ?? 0) * 1000, inflowV = (run.inflow?.totals.volume ?? 0) + (c.dryWeatherInflow ?? 0) * 1000;
         run.netMass.combinedRel = (initial + rain + inflowV + (run.underdrains?.totals.underdrain ?? 0) - (run.outlets?.totals.offsite ?? 0) - m.infil - m.outflow - outfalls - m.volume - c.finalStored * 1000) / Math.max(1e-30, initial + rain + inflowV + Math.max(0, -m.outflow));
       }
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
@@ -1630,7 +1663,7 @@ function forcingRecord(r) {
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
-    drainage: { src: drainSrc, ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
+    drainage: { src: drainSrc, ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
     area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume), ...(model.bathy.surveyed ? { bathySurveyed: { source: 'NOAA BlueTopo', tiles: model.bathy.surveyed.tiles, volume: Math.round(model.bathy.surveyed.volume) } } : {}) } : {}) },
     commit: appCommit,
   };
@@ -1682,6 +1715,7 @@ async function finishRecord() {
     grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
   rec.wall = r.wall; rec.simulatedS = s.t;
   if (r.gaugeWatch && r.out && r.gaugeWatch.gauges[0].series.at(-1)?.[0] < r.gaugeWatch.t0 + s.t * 1000 - 1) recordGauges(r, r.out, s.t); // the last moment too
+  if (r.cso) rec.cso = csoRecord(r, books.hgl, s.t);
   rec.validation = validationOf(r, rec);
   await Promise.race([fillGauges(r, rec.validation), new Promise(res => setTimeout(res, 20000))]); // gauge readings, at most 20 s
   if (run !== r) return;
@@ -1738,7 +1772,7 @@ async function loadSaved(dir) {
   let ground = null; try { ground = CMP.decodeF32(await readBytes(folder, path('grids/ground.f32'))); } catch { /* existing conditions: the base DEM */ }
   return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
     storm: sm.storm?.label, stormInfo: { ari: sm.storm?.ari ?? null, durationMin: sm.storm?.durationMin ?? null }, batch: sm.batch ?? null, dir, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null,
-    ponds: sm.ponds ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null, simulatedS: sm.results?.simulatedS ?? null };
+    ponds: sm.ponds ?? null, cso: sm.cso ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null, simulatedS: sm.results?.simulatedS ?? null };
 }
 async function savedRuns() {
   const folder = projects.current?.folder; if (!folder) return [];
@@ -3135,7 +3169,7 @@ async function runFiles() {
     batch: run.batchInfo ?? null, // the batch study job (src/batch.js) this run was, for the sensitivity and EAD sections
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
     forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), commit: appCommit, grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
-    books: run.record?.books ?? null, validation: run.record?.validation ?? null, ponds: run.record?.ponds ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
+    books: run.record?.books ?? null, validation: run.record?.validation ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
     hazard: Object.fromEntries(Object.entries(STANDARDS).map(([k, st]) => [k, { name: st.name, note: st.note,

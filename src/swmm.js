@@ -92,7 +92,7 @@ export class SWMM {
   static continuity(rpt) {
     const block = (rpt.split('Flow Routing Continuity')[1] ?? '').split('Highest Continuity Errors')[0];
     const row = (label) => { const m = block.match(new RegExp(label + '[ .]+(-?[\\d.]+)\\s+(-?[\\d.]+)')); return m ? Number(m[2]) : null; };
-    return { externalInflow: row('External Inflow'), externalOutflow: row('External Outflow'), flooding: row('Flooding Loss'),
+    return { externalInflow: row('External Inflow'), dryWeatherInflow: row('Dry Weather Inflow'), externalOutflow: row('External Outflow'), flooding: row('Flooding Loss'),
       initialStored: row('Initial Stored Volume'), finalStored: row('Final Stored Volume'),
       errorPct: Number(block.match(/Continuity Error \(%\)[ .]+(-?[\d.]+)/)?.[1] ?? NaN) };
   }

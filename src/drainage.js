@@ -12,6 +12,7 @@
 //      never shrinking downstream. Inverts keep `cover` m over the crown and at least 0.5 % slope.
 import { toCells } from './ingest.js';
 import { IMPERVIOUS } from './terrain.js';
+import { dwfAbove, rotated } from './cso.js';
 import { ddf } from './storm.js';
 
 const SIZES = [0.3, 0.375, 0.45, 0.525, 0.6, 0.675, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.8, 2.1, 2.4, 2.7, 3.0];
@@ -378,11 +379,33 @@ export function toINP(net, fine, { durationS = 7200, routingStep = 1, surcharge 
     for (const n of net.nodes) if (n.storageArea) L.push(`${pad(n.name, 16)} ${pad(f3(n.invert), 10)} ${pad(f3(n.depth), 10)} 0          FUNCTIONAL 0          0          ${pad(f3(n.storageArea), 10)} ${pad(surDepth, 9)} 0`);
   }
   L.push('', '[OUTFALLS]', ';;Name           Elevation  Type       Stage Data       Gated');
-  for (const n of net.nodes) if (n.outfall) L.push(`${pad(n.name, 16)} ${pad(f3(n.invert), 10)} ${pad(n.outfallType ?? 'FREE', 10)}                  NO`);
+  for (const n of net.nodes) if (n.outfall) L.push(`${pad(n.name, 16)} ${pad(f3(n.invert), 10)} ${pad(n.outfallType ?? 'FREE', 10)}                  ${n.gated ? 'YES' : 'NO'}`);
+  // combined sewers (src/cso.js): dry-weather flow at the manholes on the local-time pattern, the pipes starting with it
+  const dwf = net.dwfOn && net.nodes.some(n => n.dwf > 0), pat = dwf ? rotated(net.dwfStartHour ?? 0) : null, q0 = dwf ? dwfAbove(net).map(v => v * pat[0]) : null;
+  const conduits = net.pipes.filter(q => q.kind == null), weirs = net.pipes.filter(q => q.kind === 'weir'), outlets = net.pipes.filter(q => q.kind === 'outlet');
   L.push('', '[CONDUITS]', ';;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow');
-  for (const q of net.pipes) L.push(`${pad(q.name, 16)} ${pad(net.nodes[q.from].name, 16)} ${pad(net.nodes[q.to].name, 16)} ${pad(f3(q.L), 10)} ${pad(q.n ?? net.opts.n, 10)} ${pad(f3(q.inOffset), 10)} ${pad(f3(q.outOffset), 10)} 0          0`);
+  for (const q of conduits) L.push(`${pad(q.name, 16)} ${pad(net.nodes[q.from].name, 16)} ${pad(net.nodes[q.to].name, 16)} ${pad(f3(q.L), 10)} ${pad(q.n ?? net.opts.n, 10)} ${pad(f3(q.inOffset), 10)} ${pad(f3(q.outOffset), 10)} ${pad(q0 ? (+q0[q.from].toPrecision(4)) : 0, 10)} 0`);
+  if (weirs.length) { // regulators: the overflow weir and the interceptor outlet's rating (flow up to its capacity)
+    L.push('', '[WEIRS]', ';;Name           From Node        To Node          Type         CrestHt    Qcoeff     Gated    EndCon   EndCoeff   Surcharge');
+    for (const q of weirs) L.push(`${pad(q.name, 16)} ${pad(net.nodes[q.from].name, 16)} ${pad(net.nodes[q.to].name, 16)} TRANSVERSE   ${pad(f3(q.crest), 10)} 1.84       NO       0        0          YES`);
+  }
+  if (outlets.length) {
+    L.push('', '[OUTLETS]', ';;Name           From Node        To Node          Offset     Type            QTable/Qcoeff    Qexpon     Gated');
+    for (const q of outlets) L.push(`${pad(q.name, 16)} ${pad(net.nodes[q.from].name, 16)} ${pad(net.nodes[q.to].name, 16)} 0          TABULAR/DEPTH   ${pad('CRV_' + q.name, 16)}            NO`);
+  }
   L.push('', '[XSECTIONS]', ';;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels');
-  for (const q of net.pipes) L.push(`${pad(q.name, 16)} ${pad(q.shape ?? 'CIRCULAR', 12)} ${pad(+q.D.toFixed(3), 16)} ${pad(+(q.W ?? 0).toFixed(3), 10)} 0          0          ${q.barrels ?? 1}`);
+  for (const q of conduits) L.push(`${pad(q.name, 16)} ${pad(q.shape ?? 'CIRCULAR', 12)} ${pad(+q.D.toFixed(3), 16)} ${pad(+(q.W ?? 0).toFixed(3), 10)} 0          0          ${q.barrels ?? 1}`);
+  for (const q of weirs) L.push(`${pad(q.name, 16)} RECT_OPEN    ${pad(+q.D.toFixed(3), 16)} ${pad(+q.W.toFixed(3), 10)} 0          0`);
+  if (outlets.length) {
+    L.push('', '[CURVES]', ';;Name           Type       X-Value    Y-Value');
+    for (const q of outlets) q.curve.forEach(([x, y], m) => L.push(`${pad('CRV_' + q.name, 16)} ${m ? '          ' : 'Rating    '} ${pad(f3(x), 10)} ${(+y.toPrecision(5))}`));
+  }
+  if (dwf) {
+    L.push('', '[DWF]', ';;Node           Constituent      Baseline   Patterns');
+    for (const n of net.nodes) if (!n.outfall && n.dwf > 0) L.push(`${pad(n.name, 16)} FLOW             ${pad(+n.dwf.toPrecision(5), 10)} DWF_HOURLY`);
+    L.push('', '[PATTERNS]', ';;Name           Type       Multipliers');
+    for (let h = 0; h < 24; h += 6) L.push(`${pad('DWF_HOURLY', 16)} ${h ? '          ' : 'HOURLY    '} ${pat.slice(h, h + 6).map(v => v.toFixed(4)).join(' ')}`);
+  }
   L.push('', '[REPORT]', 'INPUT NO', 'CONTROLS NO', 'SUBCATCHMENTS NONE', 'NODES NONE', 'LINKS NONE', '');
   L.push('[COORDINATES]', ';;Node           X-Coord            Y-Coord');
   for (const n of net.nodes) L.push(`${pad(n.name, 16)} ${(fine.x0 + n.p[0] * fine.dx).toFixed(2)} ${(fine.y1 - n.p[1] * fine.dx).toFixed(2)}`);

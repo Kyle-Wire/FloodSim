@@ -534,6 +534,18 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <div class="field"><label for="downspout">Roof downspouts connected to the sewer</label><output id="downspoutOut"></output><input type="range" id="downspout" min="0" max="100" step="5" value="0"></div>
         <label class="toggle" title="When the pipes back up, manholes pressurise and water comes back up through the inlets on the head difference (as in HEC-RAS), instead of spilling at the rim"><input type="checkbox" id="twoWay" checked> Two-way inlet exchange</label>
         <label class="toggle"><input type="checkbox" id="tNet" checked> Show network on map</label>
+        <!-- combined sewers (src/cso.js) -->
+        <details class="gi" id="csoCtl">
+          <summary>Combined sewer: sanitary flow, regulators, gates</summary>
+          <label class="toggle" title="Ticked by Build where the utility's area is a combined sewer"><input type="checkbox" id="csoOn"> Combined sewer area</label>
+          <label class="toggle"><input type="checkbox" id="csoDwf" checked> Dry-weather (sanitary) flow in the pipes</label>
+          <div class="field"><label for="csoCap">Interceptor capacity at each regulator, × peak dry-weather flow</label><input id="csoCap" type="number" min="1" max="20" step="0.5" value="3" style="width:5em"></div>
+          <div class="field"><label for="csoPerCap">Sanitary flow, L per person per day</label><input id="csoPerCap" type="number" min="50" max="1500" step="10" value="300" style="width:6em"></div>
+          <div class="field"><label for="csoDensity">People per ha of developed land (blank = by land cover)</label><input id="csoDensity" type="number" min="0" max="2000" step="5" placeholder="by land cover" style="width:7em"></div>
+          <div class="field"><label for="csoIet">Dry hours that separate overflow events</label><input id="csoIet" type="number" min="1" max="72" step="1" value="6" style="width:5em"></div>
+          <label class="toggle"><input type="checkbox" id="csoGates" checked> Flap gates on outfalls to tidal water</label>
+          <p class="note" id="csoNote">Each outfall to a stream becomes a regulator: flow up to the interceptor's capacity goes on to treatment, the rest spills over a weir to the river (a combined sewer overflow). People per manhole from the land cover it serves (8 / 25 / 60 / 120 per ha of developed open / low / medium / high intensity), on a typical residential daily pattern. Pipes leaving the area carry on to the interceptor as before.</p>
+        </details>
         <p class="note">Draw, import or estimate your own pipes, structures and storage with the <b>Infrastructure</b> drawer on the map.</p>
         <p class="note" id="netSummary">Data tier 2: a synthetic network following the streets, sized by the rational method. Build a model to generate it.</p>
         <dl class="readouts" id="netReadouts" style="margin-top:10px" hidden>

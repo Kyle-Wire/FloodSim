@@ -14,6 +14,7 @@ import { areasSection } from './report-areas.js';
 import { damageSection, eadSection } from './report-damage.js';
 import { checksSection, sensitivitySection } from './report-checks.js';
 import { mapsSection, streetsSection } from './report-maps.js';
+import { csoSection } from './report-cso.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -258,7 +259,7 @@ export function initReport(map, api) {
       out.push({ id: 'validation' + key, title: `Validation scorecard${who}`, figures, tables,
         note: `${mark[sc.verdict.status] ? mark[sc.verdict.status].toUpperCase() + ': ' : ''}${sc.verdict.text} Targets are this app's defaults for an urban flood model at 1 m (good / fair), not a published standard. High-water marks: the highest wet 1 m pixel within 3 m of each mark. Gauges: the median water surface of the 9 mapped open-water cells nearest the gauge (within 60 m) at least 10 cm deep, every simulated minute${how ? ` (observed levels: ${how})` : ''}. Rain and books explain a result; the verdict comes from the observations alone.` });
     }
-    for (const sec of [mapsSection({ runs, A, theme, size, u, tag }), areasSection({ runs, A, theme, size, u, tag }), streetsSection({ runs, theme, size, u, tag }), damageSection({ runs, A, theme, size, tag }), eadSection({ runs, A, theme, size, tag, s: s.bca }), sensitivitySection({ runs, theme, size, u, tag }), checksSection({ runs, theme, size, u, tag })]) if (sec) out.push(sec); // app/report-maps.js, report-areas.js, report-damage.js, report-checks.js
+    for (const sec of [mapsSection({ runs, A, theme, size, u, tag }), areasSection({ runs, A, theme, size, u, tag }), streetsSection({ runs, theme, size, u, tag }), damageSection({ runs, A, theme, size, tag }), eadSection({ runs, A, theme, size, tag, s: s.bca }), csoSection({ runs, A, theme, size, u, tag }), sensitivitySection({ runs, theme, size, u, tag }), checksSection({ runs, theme, size, u, tag })]) if (sec) out.push(sec); // app/report-maps.js, report-areas.js, report-damage.js, report-cso.js, report-checks.js
     const vs = out.filter(sec => sec.id.startsWith('validation') || sec.id === 'maps'); // right after the summary
     if (vs.length) { const rest = out.filter(sec => !vs.includes(sec)); out.length = 0; out.push(rest[0], ...vs, ...rest.slice(1)); }
     return out;
