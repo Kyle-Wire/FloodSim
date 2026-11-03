@@ -61,6 +61,7 @@ import { layerInputs, transformFor } from '../src/infra.js';
 import { toUTM } from '../src/geo.js';
 import * as SSX from '../src/streamstats.js'; // ungauged inflows
 import * as CPD from '../src/compound.js';
+import * as RQ from '../src/rainqa.js';
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
  * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
@@ -1683,6 +1684,15 @@ async function fillGauges(r, v) {
     } catch (e) { out.why = 'gauge readings unavailable: ' + e.message; }
   }));
 }
+// ---- rain QA (src/rainqa.js): the storm's rain against the ASOS and CoCoRaHS gauges within 25 km of the site, over the
+// storm's own hours, filled into rec.validation.rain.stations (so summary.json keeps it, and saved runs report it)
+async function fillRainQA(r, v) {
+  if (!v.rain || !r.storm?.t0) return;
+  const [lon, lat] = model.site;
+  try { v.rain.stations = await RQ.rainQA(r.storm, lon, lat, fetcher, { weights: MR.sampleWeights }); }
+  catch (e) { console.warn('rain QA', e); v.rain.stations = { error: 'nearby gauges unavailable: ' + e.message, rows: [], summary: null }; }
+}
+// ---- end of rain QA
 const hwmOf = (sc) => sc && { n: sc.n, bias: sc.bias, mae: sc.mae, rmse: sc.rmse, within15: sc.within15, calls: sc.calls, hits: sc.hits, misses: sc.misses, falseAlarms: sc.falseAlarms, skipped: sc.skipped ?? 0,
   points: sc.points.map(p => ({ name: p.name, lon: p.lon, lat: p.lat, kind: p.kind, observed: p.wse ?? p.depth ?? null, model: p.model ?? null, error: p.error ?? null, call: p.skip ?? p.call ?? null })) };
 /**
@@ -1913,7 +1923,7 @@ async function finishRecord() {
   if (r.gaugeWatch && r.out && r.gaugeWatch.gauges[0].series.at(-1)?.[0] < r.gaugeWatch.t0 + s.t * 1000 - 1) recordGauges(r, r.out, s.t); // the last moment too
   if (r.cso) rec.cso = csoRecord(r, books.hgl, s.t);
   rec.validation = validationOf(r, rec);
-  await Promise.race([fillGauges(r, rec.validation), new Promise(res => setTimeout(res, 20000))]); // gauge readings, at most 20 s
+  await Promise.race([Promise.all([fillGauges(r, rec.validation), fillRainQA(r, rec.validation)]), new Promise(res => setTimeout(res, 20000))]); // gauge readings and nearby rain gauges, at most 20 s
   if (run !== r) return;
   if (r.window?.mode === 'record') rec.window = { rect: r.window.rect, segs: winLines, inlets: books.hgl?.inletSeries ? { fineCells: (books.inlets ?? []).map(g => g.fineCell), series: books.hgl.inletSeries } : null };
   if (r.window?.mode === 'rerun') { // inside the window this run, outside it the existing run: compares like a full run
