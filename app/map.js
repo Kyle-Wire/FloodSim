@@ -59,6 +59,7 @@ import * as RAS from '../src/hecras.js'; // HEC-RAS handoff: the 2D package expo
 import { MANNING } from '../src/terrain.js';
 import { layerInputs, transformFor } from '../src/infra.js';
 import { toUTM } from '../src/geo.js';
+import * as SSX from '../src/streamstats.js'; // ungauged inflows
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
  * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
@@ -1660,7 +1661,7 @@ function forcingRecord(r) {
   const val = (...ids) => Object.fromEntries(ids.map(id => [id, $(id)?.type === 'checkbox' ? $(id).checked : $(id)?.value ?? null]));
   return {
     storm: st ? { ...stormMeta(st), waterLevel: undefined, depth: st.depth, t0: st.t0 ?? null } : null,
-    inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}) })),
+    inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}), ...(e.ungauged ? { ungauged: e.ungauged } : {}) })),
     tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: $('tCoast').checked, ...(st.wl.observedUntil ? { observedUntil: st.wl.observedUntil, surge: st.wl.surge } : {}), ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
@@ -1719,6 +1720,7 @@ async function finishRecord() {
     saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), stormInfo: { ari: r.storm?.ari ?? null, durationMin: r.storm?.durationMin ?? null }, batch: r.batchInfo ?? null, geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
     grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
   rec.wall = r.wall; rec.simulatedS = s.t;
+  rec.inflow = inflowRecord(r); // river inflow hydrographs for the report (ungauged inflows block)
   if (r.gaugeWatch && r.out && r.gaugeWatch.gauges[0].series.at(-1)?.[0] < r.gaugeWatch.t0 + s.t * 1000 - 1) recordGauges(r, r.out, s.t); // the last moment too
   if (r.cso) rec.cso = csoRecord(r, books.hgl, s.t);
   rec.validation = validationOf(r, rec);
@@ -1777,7 +1779,7 @@ async function loadSaved(dir) {
   let ground = null; try { ground = CMP.decodeF32(await readBytes(folder, path('grids/ground.f32'))); } catch { /* existing conditions: the base DEM */ }
   return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
     storm: sm.storm?.label, stormInfo: { ari: sm.storm?.ari ?? null, durationMin: sm.storm?.durationMin ?? null }, batch: sm.batch ?? null, dir, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null,
-    ponds: sm.ponds ?? null, cso: sm.cso ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null, simulatedS: sm.results?.simulatedS ?? null };
+    ponds: sm.ponds ?? null, cso: sm.cso ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null, simulatedS: sm.results?.simulatedS ?? null, inflow: sm.inflow ?? null };
 }
 async function savedRuns() {
   const folder = projects.current?.folder; if (!folder) return [];
@@ -3011,12 +3013,13 @@ async function setupInflow() {
     en.ranked = ranked;
     const pick = ranked.find(g => g.match && g.up) ?? ranked.find(g => g.match);
     return `<div class="inrow"><b>${en.name || 'Unnamed ' + en.kind} enters the area</b>
-      <select id="inGauge${i}" aria-label="Gauge"><option value="">No inflow</option>${ranked.slice(0, 12).map(g => `<option value="${g.site}"${g === pick ? ' selected' : ''}>${g.name} (${g.areaMi2 ? g.areaMi2.toLocaleString() + ' mi², ' : ''}${(g.d / 1000).toFixed(1)} km ${g.up ? 'upstream' : g.altM != null ? 'downstream' : 'away'})</option>`).join('')}</select>
-      <select id="inFlow${i}" aria-label="Flow"><option value="event">Recorded flows (historic storms)</option>${[2, 10, 25, 50, 100].map(T => `<option value="${T}"${T === 10 ? ' selected' : ''}>Design: ${T}-yr peak flow</option>`).join('')}</select>
+      <select id="inGauge${i}" aria-label="Gauge"><option value="">No inflow</option>${ungaugedOptions()}${ranked.slice(0, 12).map(g => `<option value="${g.site}"${g === pick ? ' selected' : ''}>${g.name} (${g.areaMi2 ? g.areaMi2.toLocaleString() + ' mi², ' : ''}${(g.d / 1000).toFixed(1)} km ${g.up ? 'upstream' : g.altM != null ? 'downstream' : 'away'})</option>`).join('')}</select>
+      <select id="inFlow${i}" aria-label="Flow"><option value="event">Recorded flows (historic storms)</option><option value="storm">Design: the storm's return period</option>${[2, 10, 25, 50, 100].map(T => `<option value="${T}"${T === 10 ? ' selected' : ''}>Design: ${T}-yr peak flow</option>`).join('')}</select>
       <label class="field" style="margin:0"><span>River peak after the rain peak (h)</span><input id="inLag${i}" type="number" step="0.5" value="0" style="width:5em"></label>
-      <label class="toggle"><input type="checkbox" id="inScale${i}" checked> Scale to the drainage area where it enters</label> <span class="note" id="inArea${i}"></span></div>`;
+      <label class="toggle"><input type="checkbox" id="inScale${i}" checked> Scale to the drainage area where it enters</label> <span class="note" id="inArea${i}"></span>${ungaugedControls(i)}</div>`;
   }).join('');
   for (let i = 0; i < inflow.entries.length; i++) for (const id of ['inGauge', 'inFlow', 'inLag', 'inScale']) $(id + i).onchange = () => { if (model && (!run || !run.solver)) resetRun(); inflowNoteUpdate(); areaNote(i); };
+  for (let i = 0; i < inflow.entries.length; i++) ungaugedWire(i);
   for (const id of ['inExp', 'warmUp']) $(id).onchange = () => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
   inflowNoteUpdate();
   inflow.entries.forEach((en, i) => { // the drainage area where each river enters (USGS NLDI), in the background
@@ -3034,17 +3037,18 @@ function entryScale(i) {
   const s = areaRatioScale(en.areaKm2, g.areaMi2 * 2.589988, b);
   return { k: s.k, text: `enters draining ${(en.areaKm2 / 2.589988).toLocaleString(undefined, { maximumFractionDigits: 1 })} mi² vs the gauge's ${g.areaMi2.toLocaleString()} mi²: × ${s.k.toFixed(3)} (ratio ${s.ratio.toFixed(2)}^${b})${s.ok ? '' : ' — outside 0.5–1.5, where the transfer is weak'}` };
 }
-function areaNote(i) { const el = $('inArea' + i); if (el) el.textContent = entryScale(i).text; }
+function areaNote(i) { const el = $('inArea' + i); if (el) el.textContent = entryScale(i).text; ungaugedNote(i); }
 function inflowNoteUpdate() {
   const on = inflow.entries.filter((_, i) => $('inGauge' + i)?.value).length;
   $('inflowNote').textContent = !inflow.gauges.length ? 'No USGS discharge gauges within ~15 km: the river enters dry unless you give it a flow.'
-    : `${on} of ${inflow.entries.length} river ${inflow.entries.length > 1 ? 'entries' : 'entry'} with a gauge inflow. A gauge counts the whole basin above it: each entry's flow is scaled by its drainage area against the gauge's (USGS NLDI basins, NWIS areas) unless you untick it. Recorded flows need a historic storm (15-minute data since about 2007).`;
+    : `${on} of ${inflow.entries.length} river ${inflow.entries.length > 1 ? 'entries' : 'entry'} with an inflow. A gauge counts the whole basin above it: each entry's flow is scaled by its drainage area against the gauge's (USGS NLDI basins, NWIS areas) unless you untick it. Recorded flows need a historic storm (15-minute data since about 2007). A river with no gauge takes its peak from USGS StreamStats (the state's regression equations) or from you, on the NRCS unit hydrograph.`;
 }
 /** Each entry's flow as a function of model time (s), fetched before the run starts. */
 async function prepareInflow() {
   const out = [], st = currentStorm();
   for (let i = 0; i < inflow.entries.length; i++) {
     const site = $('inGauge' + i)?.value; if (!site) continue;
+    if (site in UNGAUGED) { out.push(await ungaugedEntry(i, st)); continue; } // ungauged inflows block
     const en = inflow.entries[i], g = en.ranked.find(x => x.site === site), mode = $('inFlow' + i).value, lag = Number($('inLag' + i).value) * 3600;
     let flow, label;
     if (mode === 'event') {
@@ -3054,20 +3058,128 @@ async function prepareInflow() {
       flow = recordedHydrograph(series, st.t0); label = `${g.name}, recorded (peak ${(Math.max(...series.map(p => p.q)) / CFS).toLocaleString(undefined, { maximumFractionDigits: 0 })} cfs)`;
     } else {
       if (!inflow.peaks.has(site)) inflow.peaks.set(site, await annualPeaks(site, fetcher));
-      const peaks = inflow.peaks.get(site), q = lp3(peaks, Number(mode)); if (!q) throw new Error(`${g.name}: too few annual peaks for a frequency estimate`);
+      const T = entryT(i, st); if (!(T > 0)) throw new Error(`${g.name}: "the storm's return period" needs a design storm: pick a return period`);
+      const peaks = inflow.peaks.get(site), q = lp3(peaks, T); if (!q) throw new Error(`${g.name}: too few annual peaks for a frequency estimate`);
       const peakAt = st.intensity.indexOf(Math.max(...st.intensity)) * st.blockMin * 60 + st.blockMin * 30; // middle of the rain's peak block
       // the base: the gauge's flow at the start (latest reading) when known, else 5 % of the peak
       const q0 = run?.levelsReady?.flows?.get(site), base = q0 != null ? Math.min(q0, 0.5 * q) : 0.05 * q;
       flow = designHydrograph(q, Math.max(600, peakAt + lag), { base });
-      label = `${g.name}, ${mode}-yr peak ${(q / CFS).toLocaleString(undefined, { maximumFractionDigits: 0 })} cfs (log-Pearson III on ${peaks.length} annual peaks), base ${(base / CFS).toLocaleString(undefined, { maximumFractionDigits: 0 })} cfs (${q0 != null ? 'gauge reading' : '5 % of the peak'})`;
+      label = `${g.name}, ${T}-yr peak ${(q / CFS).toLocaleString(undefined, { maximumFractionDigits: 0 })} cfs (log-Pearson III on ${peaks.length} annual peaks), base ${(base / CFS).toLocaleString(undefined, { maximumFractionDigits: 0 })} cfs (${q0 != null ? 'gauge reading' : '5 % of the peak'})`;
     }
     await en.area; const sc = entryScale(i); // the drainage-area transfer (1 when off or unknown)
     if (sc.k !== 1) label += `, × ${sc.k.toFixed(3)} for the drainage area where it enters`;
     out.push({ at: en.at, flow, label, site, name: en.name, ...(sc.k !== 1 ? { scale: sc.k } : {}) });
   }
-  if (out.length) log('River inflow: ' + out.map(e => e.label).join('; '), 'ok', 'USGS NWIS');
+  if (out.length) log('River inflow: ' + out.map(e => e.label).join('; '), 'ok', out.some(e => e.ungauged) ? 'USGS NWIS, StreamStats' : 'USGS NWIS');
   return out;
 }
+
+// ---- ungauged inflows (src/streamstats.js)
+// A river with no gauge to transfer from: its T-year peak from the state's USGS regional regression (StreamStats), or
+// a peak the user gives (e.g. the FIS discharge table), shaped as the NRCS dimensionless unit hydrograph and timed by
+// the NRCS lag equation from the basin's characteristics (StreamStats), or from its NLDI area with stated defaults.
+const UNGAUGED = { ss: 'Ungauged: USGS StreamStats regression peak', custom: 'Ungauged: your own peak flow (e.g. the FIS discharge table)' };
+const ungaugedOptions = () => Object.entries(UNGAUGED).map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+const ungaugedControls = (i) => `<span id="inUng${i}" hidden><label class="field" style="margin:0"><span>Peak flow (cfs) for the return period</span><input id="inPeak${i}" type="number" step="10" min="0" style="width:7em"></label></span><p class="note" id="inSS${i}" hidden></p>`;
+const entryLonLat = (en) => fromUTM(model.fine.x0 + en.at[0] * model.fine.dx, model.fine.y1 - en.at[1] * model.fine.dx, model.fine.zone);
+const cfsText = (q) => Math.round(q / CFS).toLocaleString();
+/** The NHDPlus reach USGS NLDI puts a point on: StreamStats retries there when the mapped river is off its stream grid. */
+async function flowlineNear(lon, lat) {
+  const r = await fetcher(`https://api.water.usgs.gov/nldi/linked-data/comid/position?f=json&coords=POINT(${lon.toFixed(6)} ${lat.toFixed(6)})`);
+  return r.ok ? (await r.json()).features?.[0]?.geometry?.coordinates ?? null : null;
+}
+/** The entry's StreamStats peaks: asked once (in the background as soon as the entry is set to it; about 20–40 s). */
+function streamStatsFor(i) {
+  const en = inflow.entries[i];
+  if (!en.ss) {
+    const [lon, lat] = entryLonLat(en), say = (t) => { if ($('inGauge' + i)?.value === 'ss') { const el = $('inSS' + i); el.hidden = false; el.textContent = 'StreamStats: ' + t; } };
+    en.ssErr = null;
+    en.ss = flowlineNear(lon, lat).catch(() => null).then(line => SSX.streamStatsPeaks(lon, lat, fetcher, { flowline: line, progress: say }))
+      .then((r) => { en.ssResult = r; ungaugedNote(i); return r; }, (e) => { en.ssErr = e.message; en.ss = null; ungaugedNote(i); throw e; });
+    en.ss.catch(() => {});
+  }
+  return en.ss;
+}
+/** The return period an entry's flow is for: the storm's, or the one picked. */
+function entryT(i, st) {
+  const m = $('inFlow' + i).value;
+  return m === 'storm' ? (st?.ari > 0 ? st.ari : NaN) : m === 'event' ? NaN : Number(m);
+}
+/** NRCS lag for an ungauged entry: StreamStats' slope and impervious share where it has them, else stated defaults. */
+function ungaugedTiming(en, src) {
+  const r = src === 'ss' ? en.ssResult : null, areaKm2 = r?.areaKm2 ?? en.areaKm2; if (!(areaKm2 > 0)) return null;
+  const cn = r?.imperviousPct != null ? SSX.cnFromImpervious(r.imperviousPct) : 75, slopePct = r?.slopePct ?? 2;
+  const assumed = [r?.imperviousPct == null ? 'CN 75 (no impervious share)' : null, r?.slopePct == null ? 'slope 2 % (no basin slope)' : null].filter(Boolean);
+  return { ...SSX.nrcsLag({ areaKm2, slopePct, cn, lengthFt: r?.lengthFt ?? null }), cn, slopePct, areaKm2, assumed };
+}
+/** The entry's note: the basin, the equation, the peak and its interval, the timing, the warnings. */
+function ungaugedNote(i) {
+  const el = $('inSS' + i), src = $('inGauge' + i)?.value; if (!el) return;
+  $('inUng' + i).hidden = src !== 'custom'; el.hidden = !(src in UNGAUGED); if (el.hidden) return;
+  const en = inflow.entries[i], st = currentStorm(), T = entryT(i, st), tm = ungaugedTiming(en, src), out = [];
+  if (!(T > 0)) out.push($('inFlow' + i).value === 'event' ? 'An ungauged river has no recorded flows: pick a design return period.' : 'Pick a return period (this storm has none).');
+  if (src === 'ss') {
+    const r = en.ssResult;
+    if (en.ssErr) out.push(`StreamStats failed: ${en.ssErr}. Give a peak yourself (“your own peak flow”), or pick a gauge.`);
+    else if (!r) out.push('StreamStats: asking…');
+    else {
+      const pk = T > 0 ? SSX.peakAt(r.peaks, T) : null, eq = r.regions.filter(g => !g.averaged).map(g => g.name.replace(/_/g, ' ')).join(' + ');
+      out.push(`Basin ${(r.areaKm2 / 2.589988).toLocaleString(undefined, { maximumFractionDigits: 1 })} mi² (StreamStats ${r.state}${r.snappedM ? `, snapped ${Math.round(r.snappedM)} m to the stream` : ''})${en.areaKm2 ? `; NLDI says ${(en.areaKm2 / 2.589988).toFixed(1)} mi²` : ''}. Equations: ${eq}.`);
+      if (pk) out.push(`${T}-yr peak ${cfsText(pk.q)} cfs${Number.isFinite(pk.lo) ? `, 90 % interval ${cfsText(pk.lo)}–${cfsText(pk.hi)} cfs (${pk.how})` : ''}.`);
+      else if (T > 0) out.push(`StreamStats publishes ${r.peaks[0].T}–${r.peaks.at(-1).T}-yr peaks, not ${T}-yr.`);
+      if (en.areaKm2 && Math.abs(Math.log(r.areaKm2 / en.areaKm2)) > Math.log(1.3)) out.push('The StreamStats and NLDI basins differ by more than 30 %: check that the entry is on the river you mean.');
+      out.push(...r.warnings.map(w => 'Note: ' + w + '.'));
+    }
+  } else if (!en.areaKm2) out.push(en.areaErr ? `Drainage area unavailable (${en.areaErr}): the timing needs it.` : 'Finding the drainage area (NLDI)…');
+  if (tm) out.push(`Timing: NRCS lag ${tm.lagH.toFixed(1)} h (hydraulic length ${(tm.lengthFt / 5280).toFixed(1)} mi from ${tm.lengthFrom}, slope ${tm.slopePct.toFixed(1)} %, CN ${tm.cn.toFixed(0)}${tm.assumed.length ? '; assumed ' + tm.assumed.join(', ') : ''}); the river peaks that long after the rain's peak block, plus the shift set here. ${tm.warnings.map(w => 'Note: ' + w + '.').join(' ')}`);
+  el.textContent = out.join(' ');
+}
+/** Wire an entry's source picker: StreamStats asked in the background, the storm's return period by default. */
+function ungaugedWire(i) {
+  $('inGauge' + i).addEventListener('change', () => {
+    const src = $('inGauge' + i).value;
+    if (src in UNGAUGED && ($('inFlow' + i).value === 'event' || currentStorm()?.ari > 0)) $('inFlow' + i).value = 'storm'; // a design storm: its return period (still editable)
+    if (src === 'ss') streamStatsFor(i).catch(() => {});
+    ungaugedNote(i);
+  });
+  for (const id of ['inFlow', 'inLag', 'inPeak']) $(id + i).addEventListener('change', () => ungaugedNote(i));
+}
+/** An ungauged entry's inflow for prepareInflow. */
+async function ungaugedEntry(i, st) {
+  const en = inflow.entries[i], src = $('inGauge' + i).value, name = en.name || 'Unnamed ' + en.kind, T = entryT(i, st);
+  if ($('inFlow' + i).value === 'event') throw new Error(`${name} has no gauge, so no recorded flows: pick a design return period for it`);
+  if (!(T > 0)) throw new Error(`${name}: "the storm's return period" needs a design storm (Atlas 14 or the site record): pick a return period`);
+  let pk, r = null, how;
+  if (src === 'ss') {
+    r = await streamStatsFor(i); pk = SSX.peakAt(r.peaks, T);
+    if (!pk) throw new Error(`${name}: StreamStats publishes ${r.peaks[0].T}–${r.peaks.at(-1).T}-yr peaks, not ${T}-yr`);
+    how = `USGS StreamStats ${r.state}, ${r.regions.filter(g => !g.averaged).map(g => g.name.replace(/_/g, ' ')).join(' + ')}`;
+  } else {
+    const q = Number($('inPeak' + i).value) * CFS; if (!(q > 0)) throw new Error(`${name}: give the ${T}-yr peak flow (cfs)`);
+    await en.area; pk = { T, q, lo: NaN, hi: NaN, se: null, how: 'given' }; how = 'peak given';
+  }
+  const tm = ungaugedTiming(en, src); if (!tm) throw new Error(`${name}: no drainage area for the timing (USGS NLDI: ${en.areaErr ?? 'not found'})`);
+  const rainPeak = (st.intensity.indexOf(Math.max(...st.intensity)) + 0.5) * st.blockMin * 60; // middle of the rain's peak block
+  const tPeak = rainPeak + (tm.lagH + Number($('inLag' + i).value)) * 3600, tp = tm.tpH * 3600, base = 0.05 * pk.q;
+  const flow = SSX.ungaugedHydrograph(pk.q, { tPeak, tp, base }), runoffMm = flow.volume / (tm.areaKm2 * 1e6) * 1000;
+  const warnings = [...(r?.warnings ?? []), ...tm.warnings];
+  if (runoffMm > st.total) warnings.push(`the hydrograph carries ${runoffMm.toFixed(0)} mm of runoff from the basin, more than the storm's ${st.total.toFixed(0)} mm of rain: a peak this size comes from a longer or wetter storm than this one`);
+  if (tPeak > tStop()) warnings.push(`the river peaks at ${(tPeak / 3600).toFixed(1)} h, after the run ends (${(tStop() / 3600).toFixed(1)} h): lengthen the run to see it`);
+  for (const w of warnings) log(`${name}: ${w}`, 'warn');
+  const label = `${name}, ungauged: ${T}-yr peak ${cfsText(pk.q)} cfs (${how}${Number.isFinite(pk.lo) ? `; 90 % ${cfsText(pk.lo)}–${cfsText(pk.hi)} cfs` : ''}), NRCS unit hydrograph, lag ${tm.lagH.toFixed(1)} h, base 5 % of the peak`;
+  const ungauged = { source: src === 'ss' ? 'USGS StreamStats regression' : 'peak given', how, T, peak: pk.q, lo: pk.lo, hi: pk.hi, se: pk.se, interval: pk.how, interpolated: !!pk.interpolated,
+    state: r?.state ?? null, regions: r?.regions.map(g => ({ name: g.name, code: g.code, weight: g.weight, params: g.params })) ?? null, peaks: r?.peaks.map(p => ({ T: p.T, q: p.q, lo: p.lo, hi: p.hi, se: p.se })) ?? null,
+    areaKm2: tm.areaKm2, nldiKm2: en.areaKm2 ?? null, imperviousPct: r?.imperviousPct ?? null, slopePct: tm.slopePct, cn: tm.cn, lengthFt: tm.lengthFt, lengthFrom: tm.lengthFrom, assumed: tm.assumed,
+    lagH: tm.lagH, tpH: tm.tpH, tPeakS: tPeak, runoffMm, rainMm: st.total, snappedM: r?.snappedM ?? 0, warnings };
+  return { at: en.at, flow, label, site: src === 'ss' ? 'streamstats' : 'given', name: en.name, ungauged };
+}
+/** The run's river inflow for the report and the saved run: each entry's hydrograph (5-minute samples, as it went in). */
+function inflowRecord(r) {
+  const N = Math.floor(tStop() / 300);
+  return (r.inflowReady ?? []).map(e => ({ name: e.name || '', label: e.label, site: e.site ?? null, scale: e.scale ?? 1, ungauged: e.ungauged ?? null,
+    series: Array.from({ length: N + 1 }, (_, k) => [k * 300, +((typeof e.flow === 'function' ? e.flow(k * 300) : e.flow) * (e.scale ?? 1)).toFixed(4)]) }));
+}
+// ---- end of ungauged inflows
 
 // ------------------------------------------------------------------ USGS high-water marks
 $('hwmBtn').onclick = async () => {
@@ -3302,7 +3414,7 @@ async function runFiles() {
     batch: run.batchInfo ?? null, // the batch study job (src/batch.js) this run was, for the sensitivity and EAD sections
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
     forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), commit: appCommit, grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
-    books: run.record?.books ?? null, validation: run.record?.validation ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
+    books: run.record?.books ?? null, validation: run.record?.validation ?? null, inflow: run.record?.inflow ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
     hazard: Object.fromEntries(Object.entries(STANDARDS).map(([k, st]) => [k, { name: st.name, note: st.note,

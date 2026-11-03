@@ -40,6 +40,7 @@ const ALLOW = new Set([
   'waterservices.usgs.gov',         // USGS NWIS: stream gauges, instantaneous flows, site lists
   'api.water.usgs.gov',             // USGS NLDI: upstream basins (drainage-area ratio for river inflow)
   'nwis.waterdata.usgs.gov',        // USGS NWIS: annual peak flows
+  'streamstats.usgs.gov',           // USGS StreamStats: basins, characteristics and regression peaks (ungauged river inflow)
   'geodesy.noaa.gov',               // NOAA NCAT / VERTCON: NGVD29 → NAVD88 for gauge datums
   'noaa-ocs-nationalbathymetry-pds.s3.amazonaws.com', // NOAA National Bathymetric Source: BlueTopo tiles (surveyed river and harbour beds)
 ]);

@@ -520,7 +520,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <select id="startWater"><option value="gauge" selected>Gauge levels (at the storm start; latest reading for design storms)</option><option value="lidar">The lidar water surface (no extra water)</option></select></div>
       <p class="note" id="startNote"></p>
       <div id="inflowBox" hidden>
-        <p class="vlabel">Upstream river inflow (USGS gauges)</p>
+        <p class="vlabel">Upstream river inflow (USGS gauges, or StreamStats where there is none)</p>
         <div id="inflowList"></div>
         <label class="field"><span>Drainage-area exponent b (Q = Q_gauge · (A / A_gauge)^b)</span><input id="inExp" type="number" step="0.05" min="0.3" max="1.2" value="0.8" style="width:5em"></label>
         <label class="field"><span>Baseflow warm-up before the storm (h)</span><input id="warmUp" type="number" step="0.5" min="0" max="12" value="0" style="width:5em"></label>
