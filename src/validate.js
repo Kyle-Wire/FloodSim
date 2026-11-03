@@ -2,7 +2,8 @@
 // against the world and against itself:
 //   observations   USGS high-water marks or the user's own (src/calibrate.js scoreRun): level RMSE and bias, and
 //                  flooded marks the model left dry; USGS gauges inside the area: the peak water level and its time
-//   rain           where the rain came from (gauge-corrected or radar-only), and how far the sources disagree
+//   rain           where the rain came from (gauge-corrected or radar-only), how far the sources disagree, and the rain
+//                  against nearby ASOS and CoCoRaHS gauges (src/rainqa.js)
 //   integrity      the mass balance (surface, and with the pipes), water clipped by the wet / dry fix
 // Each line has a status against a target: 'good', 'fair', 'poor', or 'info' (no target). The targets are this app's
 // defaults for an urban flood model at 1 m (TARGETS; a reviewer can hold the run to others), not a published standard.
@@ -54,7 +55,7 @@ export function matchEvent(events, storm) {
 
 /**
  * The scorecard. input: { hwm: scoreRun result | null, gauges: [{ name, site, score: gaugeScore | null, why? }],
- * rain: { source, gauged (share of hours), usedMM, radarMM, siteMM } | null, mass: { surface, combined (relative errors), clipped (m³), rain (m³) },
+ * rain: { source, gauged (share of hours), usedMM, radarMM, siteMM, stations?: src/rainqa.js rainQA result } | null, mass: { surface, combined (relative errors), clipped (m³), rain (m³) },
  * observed: true when the storm is a real one (historic or live) } → { items: [{ group, label, value, unit, target, status, note }],
  * verdict: { status, text } }. unit: 'm', 'min', 'share' (0–1), 'ratio', 'rel' (a fraction of the rain), 'text'; the caller formats them.
  */
@@ -86,6 +87,17 @@ export function scorecard(input, T = TARGETS) {
     if (rain.gauged != null) add('rain', 'Hours with gauge-corrected totals', [rain.gauged, 'share'], null, rain.gauged >= 1 ? 'good' : rain.gauged > 0 ? 'fair' : 'info');
     if (rain.radarMM > 0 && rain.usedMM != null && rain.gauged > 0) add('rain', 'Gauge-corrected against radar alone', [rain.usedMM / rain.radarMM, 'ratio'], T.rainSources, level(Math.abs(rain.usedMM / rain.radarMM - 1), T.rainSources));
     if (rain.siteMM > 0 && rain.usedMM != null) add('rain', 'Against the site\'s gridded daily record', [rain.usedMM / rain.siteMM, 'ratio'], T.rainSources, level(Math.abs(rain.usedMM / rain.siteMM - 1), T.rainSources), 'a coarse grid: a disagreement here points at the record as often as the radar');
+    // nearby point gauges (src/rainqa.js): ASOS hourly and CoCoRaHS daily within 25 km, model / gauge over the storm
+    const q = rain.stations, s = q?.summary;
+    if (s) {
+      const at = q.rows.some(r => r.scored && r.modelAt === 'radar at the gauge') ? 'the radar at each gauge inside the radar window, else the area mean' : 'the area mean';
+      add('rain', `Against ${s.n} nearby rain gauge${s.n > 1 ? 's' : ''}: median (model / gauge)`, [s.median, 'ratio'], T.rainSources, level(Math.abs(s.median - 1), T.rainSources),
+        `range ${s.min.toFixed(2)}–${s.max.toFixed(2)}; against ${at}; rain varies a lot over 25 km in a convective storm, so read the median, not one gauge`);
+      add('rain', `Nearest gauge: ${s.nearest.kind} ${s.nearest.id} ${s.nearest.name}, ${s.nearest.km.toFixed(1)} km (model / gauge)`, [s.nearest.ratio, 'ratio'], T.rainSources, level(Math.abs(s.nearest.ratio - 1), T.rainSources));
+    } else if (q) {
+      const why = q.error ?? (q.rows?.length ? `none usable (${[...new Set(q.rows.map(r => r.why).filter(Boolean))].slice(0, 3).join('; ')})` : 'no ASOS or CoCoRaHS gauge reported within 25 km');
+      add('rain', 'Nearby rain gauges', [why, 'text'], null, 'info');
+    }
   }
   // integrity
   if (mass) {

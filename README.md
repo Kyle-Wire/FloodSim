@@ -779,7 +779,8 @@ for an urban model at 1 m, not a published standard (`TARGETS`):
   gauge (within 60 m) that are at least 10 cm deep, every simulated minute (a bank wet with rain, or the far side of a
   weir, is not the gauge's water). A peak the run cut off (still rising at its end) is not scored for timing;
 - rain: the source (gauge-corrected or radar-only), the gauge-corrected totals against radar alone, and against the
-  site's gridded daily record (a coarse grid: a gap there points at the record as often as the radar);
+  site's gridded daily record (a coarse grid: a gap there points at the record as often as the radar); and against the
+  independent point gauges within 25 km (below): the median model / gauge (1 ± 0.15 / 0.30) and the nearest gauge's;
 - integrity: surface mass balance (≤ 1e-4 / 1e-3 of all the water in: start, rain, rivers, tide), with the pipes
   (≤ 1 / 5 %), water added by the wet / dry clip. The combined books with the pipes now count the water on the ground
   at the start (gauge start levels): before, a run that started with water showed that volume as an error (−53 % on
@@ -791,6 +792,24 @@ has `scorecard.csv`, `high_water_marks.csv` and the figures; `summary.json` keep
 readings are fetched when the run finishes (at most 20 s). `npm run test:validate`.
 - A level mark more than 1 m below the lidar ground at its point is not scored, and the table says why: it sits under a
   structure the lidar sees as ground (a bridge or deck), where the model's water is rain on top of it.
+
+**Rain against nearby gauges** (*Report* drawer, with the scorecard; `src/rainqa.js`, `app/report-rainqa.js`). When a
+run of a historic or live storm finishes, the rain it used is checked against the gauges within 25 km (nearest first, at
+most 12), from the Iowa Environmental Mesonet: ASOS airport gauges (at most 4; hourly totals from the routine METAR,
+`cgi-bin/request/hourlyprecip.py`, summed over the hours whose middle lies within the storm ± 1 h; trace counts 0, an
+hour with no row is missing) and CoCoRaHS volunteer gauges (each state network's reports for a date,
+`api/1/daily.geojson`; a report is the 24 h to the observer's reading hour, local, usually 7 am, so the reports whose 24 h
+overlap the storm are summed and the hours they add beyond it are listed). The storm's window is its wet blocks (a surge
+pad dropped; a live storm stops at its last observed frame, the nowcast is not checked); the model's rain is the area
+mean it applied, or for a radar storm the radar at the gauge where the gauge lies inside the run's radar window. A gauge
+is scored with ≥ 90 % of its hours (ASOS) or every report (CoCoRaHS), ≥ 2.5 mm, reports adding ≤ 18 h beyond the storm,
+and not the storm's own source (a storm replayed from ASOS PHL does not score PHL). The report has a bar per gauge
+against the model's rain and a table (station, network, distance, totals, ratio, coverage, window); the results live on
+`validation.rain.stations` in `summary.json`, so saved runs report them. Hurricane Ida at 30th Street (the hourly
+record's storm, 19:00 UTC 1 Sep → 04:00 UTC 2 Sep, 95 mm over the area): 11 of 12 gauges scored, median model / gauge
+1.15 (0.73–1.99), the nearest (CoCoRaHS Philadelphia 2.7 WNW, 7 km, 3.74 in) 1.00; PHL airport had 1.88 in in those
+hours (2.37 in that day, 0.5 in of it in the morning), Northeast Philadelphia 3.27 in: the storm's spread over 25 km is
+real, so read the median. `npm run test:rainqa` (recorded IEM responses; `--live` against IEM now).
 - When the gauges were still rising at the end of the run, the marks and the verdict say so: marks record the crest,
   so a run that stops before it reads low. River crests come hours after the rain: *Keep running after the storm* goes
   to 12 h.
@@ -1184,6 +1203,7 @@ node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pix
 node tests/run-validate-tests.mjs  # validation scorecard: peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88
 node tests/run-checkpoint-tests.mjs # checkpoints: state by path (typed arrays in place, a solver root), packing, a SWMM run copied half way
 node tests/run-damage-tests.mjs   # damage and areas: USACE curves, water against walls (rowhouses, sheet flow, enclosed yards), EAD, BCA, area stats (--live: NSI)
+node tests/run-rainqa-tests.mjs   # rain against nearby gauges: reading hours across DST, ASOS hours and CoCoRaHS reports in the storm window, scoring rules, Ida at PHL (--live, --record)
 npm run batch -- "<project>"     # a project's batch study headless on the GPU (tools/batch.mjs; --url, --retries, --hours, --headed)
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
@@ -1235,6 +1255,7 @@ src/subgrid.js        subgrid speed mode: 1 m storage / conveyance tables per ce
 src/watershed.js      watersheds from 3DEP: priority flood, D8, upstream trace, local watershed past a river
 src/calibrate.js      observations (high-water marks, depths, reports, USGS STN), run scoring, parameter sweeps
 src/validate.js       validation scorecard: marks, gauge peaks and timing, rain sources, books against targets
+src/rainqa.js         rain QA: ASOS hourly and CoCoRaHS daily gauges within 25 km against the storm's rain, over its own hours
 src/inflow.js         upstream river inflow: USGS gauges, recorded and design (LP3) hydrographs, entry cells
 src/soil.js           SSURGO soil hydraulics, Green-Ampt parameters per cell (wetness, water table)
 src/scour.js          critical shear by surface, scour-potential classes
@@ -1261,7 +1282,7 @@ tools/batch.mjs       runs a project's batch study headless (tools/headless.mjs:
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)
-app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer; app/projects.js project folders
+app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer (sections in app/report-areas.js, app/report-damage.js, app/report-rainqa.js); app/projects.js project folders
 app/                  Phase 0 lab template + voxel shell, build script
 tests/                CPU suite, Phase 1 suite, shared GPU suite, browser + Dawn runners, results JSON
 benchmarks/ea/        Gate B: EA 2D benchmark cases, browser runner, scorer, results (data/ is the GOV.UK archive)

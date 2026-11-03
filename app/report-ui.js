@@ -12,6 +12,7 @@ import * as V from '../src/validate.js';
 import { labelImage } from './labels.js';
 import { areasSection } from './report-areas.js';
 import { damageSection, eadSection } from './report-damage.js';
+import { rainQaSection } from './report-rainqa.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -255,7 +256,7 @@ export function initReport(map, api) {
       out.push({ id: 'validation' + key, title: `Validation scorecard${who}`, figures, tables,
         note: `${mark[sc.verdict.status] ? mark[sc.verdict.status].toUpperCase() + ': ' : ''}${sc.verdict.text} Targets are this app's defaults for an urban flood model at 1 m (good / fair), not a published standard. High-water marks: the highest wet 1 m pixel within 3 m of each mark. Gauges: the median water surface of the 9 mapped open-water cells nearest the gauge (within 60 m) at least 10 cm deep, every simulated minute${how ? ` (observed levels: ${how})` : ''}. Rain and books explain a result; the verdict comes from the observations alone.` });
     }
-    for (const sec of [areasSection({ runs, A, theme, size, u, tag }), damageSection({ runs, A, theme, size, tag }), eadSection({ runs, A, theme, size, tag, s: s.bca })]) if (sec) out.push(sec); // app/report-areas.js, app/report-damage.js
+    for (const sec of [rainQaSection({ runs, A, theme, size, u, tag }), areasSection({ runs, A, theme, size, u, tag }), damageSection({ runs, A, theme, size, tag }), eadSection({ runs, A, theme, size, tag, s: s.bca })]) if (sec) out.push(sec); // app/report-rainqa.js, app/report-areas.js, app/report-damage.js
     const vs = out.filter(sec => sec.id.startsWith('validation')); // right after the summary
     if (vs.length) { const rest = out.filter(sec => !sec.id.startsWith('validation')); out.length = 0; out.push(rest[0], ...vs, ...rest.slice(1)); }
     return out;
