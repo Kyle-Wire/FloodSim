@@ -29,6 +29,9 @@ export class Coupler {
     this.grates = net.inlets.map(g => g.grates);
     this.swIdx = net.nodes.map(n => swmm.index('NODE', n.name));
     if (this.swIdx.some(i => i < 0)) throw new Error('SWMM node lookup failed');
+    this.lkIdx = net.pipes.map(p => swmm.index('LINK', p.name)); // by name: regulator weirs and outlets follow the conduits in the .inp
+    this.outNodes = net.nodes.map((n, i) => (n.outfall ? i : -1)).filter(i => i >= 0);
+    this.outVol = new Float64Array(net.nodes.length); // m³ into each outfall, integrated per routing step
     this.zs = net.inlets.map(g => zs[g.cell]);
     this.perNode = net.nodes.map(() => 0); for (const i of this.inletNodes) this.perNode[i]++; // exchange points per manhole
     this.q = new Float32Array(this.inletNodes.length);
@@ -79,7 +82,10 @@ export class Coupler {
     if (this.stage != null) for (const i of this.streamOutfalls) swmm.setOutfallStage(this.swIdx[i], Math.max(this.stage, net.nodes[i].invert));
     // advance SWMM step by step, integrating each node's overflow (flooding) volume exactly as SWMM books it
     const flood = new Float64Array(net.nodes.length), junc = this.junctions ??= net.nodes.map((n, i) => (n.outfall ? -1 : i)).filter(i => i >= 0);
-    swmm.stepTo(tNext, (dt) => { for (const i of junc) { const q = swmm.node('OVERFLOW', this.swIdx[i]); if (q > 0) flood[i] += q * dt; } });
+    swmm.stepTo(tNext, (dt) => {
+      for (const i of junc) { const q = swmm.node('OVERFLOW', this.swIdx[i]); if (q > 0) flood[i] += q * dt; }
+      for (const i of this.outNodes) this.outVol[i] += swmm.node('INFLOW', this.swIdx[i]) * dt;
+    });
     // network state → next interval's exchange: flooded volume goes back on the street over the next interval
     let surcharged = 0, flooding = 0;
     const overflow = flood.map(v => v / interval);
@@ -109,7 +115,7 @@ export class Coupler {
     }
     net.nodes.forEach((n, i) => { if (!this.perNode[i] && overflow[i] > 0) this.totals.overflowLost += overflow[i] * interval; });
     this.state.surcharged = surcharged; this.state.flooding = flooding;
-    net.pipes.forEach((p, k) => { this.state.flow[k] = swmm.link('FLOW', k); this.state.depth[k] = swmm.link('DEPTH', k); });
+    net.pipes.forEach((p, k) => { this.state.flow[k] = swmm.link('FLOW', this.lkIdx[k]); this.state.depth[k] = swmm.link('DEPTH', this.lkIdx[k]); });
     this.record(vol, h, interval, tNext, flood);
     return this.q;
   }
@@ -137,7 +143,7 @@ export class Coupler {
       const s = r.pipes[k], q = Math.abs(this.state.flow[k]), D = net.pipes[k].D;
       if (q > s.maxQ) { s.maxQ = q; s.tMaxQ = t; }
       if (D > 0) s.maxRatio = Math.max(s.maxRatio, this.state.depth[k] / D);
-      s.maxV = Math.max(s.maxV, Math.abs(swmm.link('VELOCITY', k)));
+      s.maxV = Math.max(s.maxV, Math.abs(swmm.link('VELOCITY', this.lkIdx[k])));
     }
     for (let m = 0; m < M; m++) {
       const s = r.inlets[m], v = vol[m]; if (v > 0) s.volume += v;
@@ -152,6 +158,6 @@ export class Coupler {
     const r = this.rec; if (!r) return null;
     const fin = (v) => (Number.isFinite(v) ? v : null);
     return { nodes: r.nodes.map(s => ({ maxHead: fin(s.maxHead), tMax: fin(s.tMax), surchargedS: s.surchargedS, floodVol: s.floodVol })), pipes: r.pipes.map(s => ({ ...s, tMaxQ: fin(s.tMaxQ) })),
-      inlets: r.inlets.map(s => ({ ...s, tPeakQ: fin(s.tPeakQ) })), outfalls: r.outfalls, series: r.series, ...(r.inletSeries ? { inletSeries: r.inletSeries } : {}) };
+      inlets: r.inlets.map(s => ({ ...s, tPeakQ: fin(s.tPeakQ) })), outfalls: r.outfalls, series: r.series, outVol: Array.from(this.outVol), ...(r.inletSeries ? { inletSeries: r.inletSeries } : {}) };
   }
 }

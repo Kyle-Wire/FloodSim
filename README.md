@@ -964,6 +964,23 @@ Where pipes leave the area they continue 100 m off-site to a normal-depth outlet
 downstream capacity and backwater are felt. South Street, 100-yr 1-h: 6,534 m³ piped from roofs, area flooded
 > 15 cm 5,026 → 2,332 m² (yard ponding was the roof-routing artefact), SWMM −0.27 %, combined −0.23 %.
 
+**Combined sewers** (`src/cso.js`; Drainage → Combined sewers, on by default where the utility marks combined sewers).
+Each manhole gets sanitary flow from the people it serves: every 4 m block of developed land goes to its nearest
+manhole (within 150 m), at 8 / 25 / 60 / 120 people per ha for NLCD open / low / medium / high intensity (or one
+density you set), times 300 L per person per day. Census counts are not fetched; these are planning defaults. The
+flow follows a typical residential day (low at night, a morning peak 1.43 × the mean) as SWMM `[DWF]` with an hourly
+pattern, turned to the local hour the run starts (UTC + longitude / 15, no daylight saving; design storms start at
+06:00), and the pipes start full of it. Every outfall to a stream becomes a regulator: an outlet sends flow on to the
+interceptor (an outfall of its own, booked separately) up to its capacity, 3 × the peak dry-weather flow above it by
+default (at least 5 L/s), and a weir set where the outlet reaches capacity spills the rest to the river. Overflow
+outfalls on tidal water carry a flap gate (SWMM `Gated YES`, the stage from the tide boundary) when the run has a
+CO-OPS water level. The report's Combined sewer overflows section gives, per regulator, the overflow volume, peak,
+hours overflowing and events (overflow above 0.1 L/s; spells less than 6 dry hours apart are one event), the flow to
+the interceptor, and capture: interceptor / (interceptor + overflow), and again with the dry-weather volume taken out.
+Checked in SWMM: a day of dry-weather flow books 25,917 m³ against the pattern's 25,920; 200 L/s into a 42.8 L/s
+regulator sends 42.8 to the interceptor and 157.2 over the weir; a tide 1.5 m up the outfall fills the last manhole
+1.0 m without the gate, 0 with it. Pipes leaving the area are not regulated: they still continue off-site.
+
 **Starting from a blank map:** type an address or place into Find (US Census geocoder, OSM Nominatim fallback), click
 Draw area, drag a box (releasing anywhere, even over a map control, finishes it), Build model, Run.
 
@@ -997,8 +1014,9 @@ an area is instant and works offline. Overpass is the least reliable source (pub
 
 ### Phase 1 known limits
 
-- Without linked pipes, pipes are synthetic even where inlets are real; combined-sewer dry-weather flow, regulators, interceptors and
-  tide gates are not modelled (edge outfalls stand in for the interceptor)
+- Without linked pipes, pipes are synthetic even where inlets are real; combined-sewer regulators are generic (an outlet to
+  the interceptor at a multiple of peak dry-weather flow, a weir for the rest), not the utility's structures, and
+  population comes from land-cover densities, not the census; pipes leaving the area are not regulated
 - 1D–2D exchange every 2 s sets the pace on small domains (~47× real time at 190 k cells)
 - Design-storm rain is uniform over the domain (no areal reduction factor); historic storms can use MRMS radar (cell by cell); Atlas 14 temporal distributions not yet offered
 - Rivers come from hydro-flattened lidar: the channel below the flight-day water surface is missing unless you estimate it
@@ -1114,6 +1132,7 @@ node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and lis
 node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (8 and 16 bit, all filters), GRIB2, value tables, gauge-corrected totals, timing (--live: Ida)
 node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pixels), advection, a live build with a cell arriving in the nowcast, PrecipRate fill
 node tests/run-validate-tests.mjs  # validation scorecard: peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88
+node tests/run-cso-tests.mjs      # combined sewers: dry-weather flow vs its pattern, regulator split, flap gate, overflow events, people per manhole
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
 # log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8770
@@ -1151,6 +1170,7 @@ src/mrms.js           MRMS radar rainfall: archive PNG and GRIB2 decoding, gauge
 src/nowcast.js        live radar: recent MRMS rain to the latest frame, storm motion by correlation, nowcast by advection
 src/drainage.js       synthetic network, rational-method sizing, SWMM .inp writer, inlet hydraulics, lumped tier
 src/coupler.js        1D–2D exchange loop (GPU inlets ↔ SWMM), roof downspout inflow
+src/cso.js            combined sewers: people per manhole, dry-weather flow and its daily pattern, regulators and interceptors, overflow books
 src/utilities.js      registry of open utility layers (Philadelphia Water is the first entry)
 src/linked.js         user-linked ArcGIS / GeoJSON layers: fetch, field detection, pipe records
 src/network-real.js   tier 1 network from real pipe layers
@@ -1184,7 +1204,7 @@ src/emulator.js       per-project emulator: Latin hypercube, Gaussian processes,
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)
-app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer; app/projects.js project folders
+app/infra-ui.js       infrastructure drawer; app/design-ui.js site design drawer; app/compare-ui.js compare drawer; app/emulator-ui.js emulator drawer; app/report-ui.js report drawer (app/report-cso.js its combined-sewer section); app/projects.js project folders
 app/                  Phase 0 lab template + voxel shell, build script
 tests/                CPU suite, Phase 1 suite, shared GPU suite, browser + Dawn runners, results JSON
 benchmarks/ea/        Gate B: EA 2D benchmark cases, browser runner, scorer, results (data/ is the GOV.UK archive)
