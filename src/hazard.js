@@ -1,7 +1,8 @@
 // Flood hazard and intensity products, tracked per solver cell through a run.
 //
 // Hazard classes come from the depth and velocity at the same moment (the peak of d·v is not max depth × max speed,
-// which occur at different times), so they are classified at every depth readback and the worst class is kept:
+// which occur at different times), so they are classified every solver step (src/kernels.wgsl.js) and the worst class
+// is kept:
 //   arr         Australian Rainfall and Runoff 2019 / AIDR Guideline 7-3 hazard vulnerability curves H1–H6
 //               (limits on d, v and d·v; the most widely used set of combined curves, also used outside Australia)
 //   defra       UK Defra / EA FD2320 hazard rating HR = d·(v + 0.5) + DF, debris factor 0

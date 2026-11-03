@@ -227,8 +227,16 @@ export function initReport(map, api) {
 
     // 6. summary books
     {
-      const bk = (r, k) => r?.books?.[k], rows = [['Rain on the model', 'rain'], ['Infiltration', 'infil'], ['Runoff off the model edge', 'outflow'], ['To the pipe outfalls', 'outfalls'], ['Stored at the end', 'stored']].map(([label, k]) => ({ item: label, before: u.V(bk(A, k) ?? NaN), after: u.V(bk(B, k) ?? NaN), change: u.V((bk(B, k) ?? NaN) - (bk(A, k) ?? NaN)) }));
-      out.unshift({ id: 'summary', title: 'Summary', note: 'Water balance of the whole model over the run.', figures: [],
+      // every term of the combined books (app/map.js: rain on the ground and from roofs into the sewers, river and sanitary
+      // inflow, water at the start, the pipes' storage), so the table closes; a term neither run has is left out
+      const bk = (r, k) => r?.books?.[k], IN = [['In: rain on the ground', 'rain'], ['In: rain from roofs piped to the sewers', 'roofs'], ['In: river inflow', 'inflow'], ['In: sanitary flow into the combined sewers', 'sanitary'],
+        ['In: water on the ground at the start', 'initial'], ['In: water in the pipes at the start', 'pipesStart'], ['In: infiltrated water the underdrains took to the pipes', 'underdrain']],
+        OUT = [['Out: infiltration', 'infil'], ['Out: runoff off the model edge', 'outflow'], ['Out: to the pipe outfalls', 'outfalls'], ['Out: pipe outlets off the model', 'outletsOffsite'], ['Out: on the ground at the end', 'stored'], ['Out: in the pipes at the end', 'pipesEnd']];
+      const always = new Set(['rain', 'infil', 'outflow', 'stored']), has = (k) => always.has(k) || [A, B].some(r => Number(bk(r, k)) > 0);
+      const sum = (r, list) => list.reduce((a, [, k]) => a + (Number(bk(r, k)) || 0), 0), closes = (r) => r?.books && (bk(r, 'roofs') !== undefined || bk(r, 'outfalls') == null); // older runs lack the roof and sewer terms
+      const bal = (r) => (closes(r) ? sum(r, IN) - sum(r, OUT) : NaN), row = (item, f) => ({ item, before: u.V(f(A) ?? NaN), after: u.V(f(B) ?? NaN), change: u.V((f(B) ?? NaN) - (f(A) ?? NaN)) });
+      const rows = [...IN, ...OUT].filter(([, k]) => has(k)).map(([label, k]) => row(label, (r) => bk(r, k))).concat([row('Total in', (r) => (closes(r) ? sum(r, IN) : NaN)), row('Balance: in − out', bal)]);
+      out.unshift({ id: 'summary', title: 'Summary', note: 'Water balance of the whole model over the run, surface and pipes together: every way water came in and left. The balance is the books’ error (the model checks grade it). Rain from roofs piped to the sewers never reaches the ground, so the rain on the ground alone is less than the storm’s total.', figures: [],
         tables: [{ name: 'water_balance', title: 'Water balance', cols: [['item', 'item'], ...(A ? [['before', `before_${u.vol}`, 0]] : []), ['after', `${A ? 'after' : 'run'}_${u.vol}`, 0], ...(A ? [['change', `change_${u.vol}`, 0]] : [])], rows }] });
     }
 

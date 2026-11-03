@@ -1035,8 +1035,9 @@ upstream.
 
 **Two-way inlet exchange (default).** When the pipes back up, manholes pressurise and water returns to the street
 through the inlet on the head difference, as HEC-RAS does, instead of spilling at the rim; the return is capped per
-manhole by what its pipes deliver. On HEC-RAS's Davis storm-sewer example it brought the pump, wet-well and node levels
-into line with HEC-RAS, and on the mass audit it halved the combined error where the pipes surcharge
+manhole by what its pipes deliver. On HEC-RAS's Davis storm-sewer example it brought the pump peak, wet-well and node levels
+into line with HEC-RAS (the volume pumped over the event is still 16 % under HEC-RAS's: more water stays ponded on the
+surface at the end, 52.5k against 31.5k m³; `benchmarks/gatec/results/davis-compare.txt`), and on the mass audit it halved the combined error where the pipes surcharge
 ([`benchmarks/gatec/README.md`](benchmarks/gatec/README.md)). Untick it under Drainage for the older inlets-in-only coupling.
 
 **Several exchange models at once.** The SWMM network, culverts and rivers share the solver's exchange cells through a
@@ -1318,9 +1319,10 @@ an area is instant and works offline. Overpass is the least reliable source (pub
 - Design-storm rain is uniform over the domain (no areal reduction factor); historic storms can use MRMS radar (cell by cell); Atlas 14 temporal distributions not yet offered
 - Rivers come from hydro-flattened lidar: the channel below the flight-day water surface is missing unless you estimate it
   (Channel bathymetry; NOAA BlueTopo surveys where they exist, mostly navigable and tidal water; regional curves elsewhere)
-- No catchment delineation: water from upstream of the drawn area is ignored (draw the polygon around the catchment);
-  the drainage network is built over the polygon's bounding box, so inlets outside the polygon sit in dry sink cells
-- Max speed in exports is sampled at the display frame rate, not every solver step
+- Water from upstream of the drawn area is ignored unless the model runs on its watershed (Area → Watershed traces it
+  and the model checks grade the share that drains in); the drainage network is built over the polygon's bounding box, so inlets outside the polygon sit in dry sink cells
+- Max speed in the .asc exports and the 3D package is sampled at the display frame rate (where over 1 cm); the run
+  folder's grids/max_speed.f32 is tracked every solver step (where over 5 cm), so the two can differ slightly
 - OSM footprint completeness varies by city; Microsoft/Overture footprints and lidar nDSM heights are the upgrade
 
 ## Phase 0 — solver core
@@ -1565,7 +1567,8 @@ dist/floodsim.html    built Phase 0 solver lab and verification page
 - Uniform grid; porosity and subgrid tables only in the opt-in speed mode (the 1 m run uses buildings as walls)
 - Inflow hydrographs go through the inlet exchange (cells on a line); no momentum-carrying inflow boundary
 - No turbulence (eddy viscosity) term
-- Infiltration is a constant capacity, not Green-Ampt
+- Infiltration is Green-Ampt on each cell's pervious share (the default) or a constant capacity; no recovery between
+  storms (single events only, no continuous simulation)
 - Local time stepping is opt-in and pays only on large grids: each record is its own set of dispatches (~30–40 µs
   each), so on a 256×192 grid it is 0.6× the global speed even with 7× fewer steps; at 1024×768 it is 2.6× faster. The
   3×3 speed rule and the one-level smoothing keep most of a floodplain beside a deep channel at a finer level than its

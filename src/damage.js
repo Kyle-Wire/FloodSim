@@ -165,6 +165,10 @@ export function damages(structures, expo, { z = 1.2816 } = {}) {
  * storm already does no damage (then nothing is added), with a warning to run a more frequent storm.
  * → { ead, parts: { frequent, between, rare }, curve: [[aep, damage]], warnings }
  */
+/** Annual exceedance probability of an Atlas 14 return period. Atlas 14's ARIs are partial-duration series (the mean time
+ *  between exceedances, any number a year), so AEP = 1 − exp(−1/ARI): 0.39 for the 2-yr, 0.095 for the 10-yr, 0.01 for
+ *  the 100-yr. 1/ARI, the annual-maximum reading, overstates the frequent storms (0.50 for the 2-yr) and so the EAD. */
+export const aepOfPds = (ari) => 1 - Math.exp(-1 / ari);
 export function ead(points) {
   const P = [...points].filter(p => p.aep > 0 && p.aep < 1 && Number.isFinite(p.damage)).sort((a, b) => b.aep - a.aep); // frequent → rare
   const warnings = [];

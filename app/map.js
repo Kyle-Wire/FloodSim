@@ -1917,7 +1917,9 @@ async function finishRecord() {
   const when = new Date(), forcing = CMP.fingerprint(forcingRecord(r));
   const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
     saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), stormInfo: { ari: r.storm?.ari ?? null, durationMin: r.storm?.durationMin ?? null }, batch: r.batchInfo ?? null, geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
-    grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
+    grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0,
+      // the rest of the combined books (line ~1842): rain piped from roofs straight to the sewers (not in `rain`, the rain on the surface), sanitary flow, water at the start, the pipes' storage
+      roofs: r.coupler?.totals.roofToSewer ?? 0, sanitary: (r.netMass?.dryWeatherInflow ?? 0) * 1000, initial: s.vol?.initial ?? 0, pipesStart: (r.netMass?.initialStored ?? 0) * 1000, pipesEnd: (r.netMass?.finalStored ?? 0) * 1000 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
   rec.wall = r.wall; rec.simulatedS = s.t; rec.tide = tideRec(r);
   rec.inflow = inflowRecord(r); // river inflow hydrographs for the report (ungauged inflows block)
   if (r.gaugeWatch && r.out && r.gaugeWatch.gauges[0].series.at(-1)?.[0] < r.gaugeWatch.t0 + s.t * 1000 - 1) recordGauges(r, r.out, s.t); // the last moment too
@@ -2308,9 +2310,9 @@ async function eadFamily(rec, { wall = 0.10 } = {}) {
   for (const [ari, r] of byAri) {
     const one = r.dir === rec.dir || (ari === info.ari && !rec.dir) ? rec : await loadSaved(r.dir);
     const an = await analyzeRecord(one, { areas: false, wall }); if (!an) continue;
-    points.push({ ari, aep: 1 / ari, damage: an.damage.totals.total, low: an.damage.totals.low, high: an.damage.totals.high, dir: r.dir, flooded: an.damage.totals.flooded });
+    points.push({ ari, aep: DMG.aepOfPds(ari), damage: an.damage.totals.total, low: an.damage.totals.low, high: an.damage.totals.high, dir: r.dir, flooded: an.damage.totals.flooded });
   }
-  if (!byAri.has(info.ari)) { const an = await analyzeRecord(rec, { areas: false, wall }); if (an) points.push({ ari: info.ari, aep: 1 / info.ari, damage: an.damage.totals.total, low: an.damage.totals.low, high: an.damage.totals.high, dir: rec.dir ?? null, flooded: an.damage.totals.flooded }); }
+  if (!byAri.has(info.ari)) { const an = await analyzeRecord(rec, { areas: false, wall }); if (an) points.push({ ari: info.ari, aep: DMG.aepOfPds(info.ari), damage: an.damage.totals.total, low: an.damage.totals.low, high: an.damage.totals.high, dir: rec.dir ?? null, flooded: an.damage.totals.flooded }); }
   points.sort((p, q) => p.ari - q.ari);
   const mid = DMG.ead(points), lo = DMG.ead(points.map(p => ({ aep: p.aep, damage: p.low }))), hi = DMG.ead(points.map(p => ({ aep: p.aep, damage: p.high })));
   return { points, ead: mid.ead, low: lo.ead, high: hi.ead, parts: mid.parts, curve: mid.curve, warnings: mid.warnings, durationMin: info.durationMin, scenario: rec.scenario ?? 'Existing conditions' };

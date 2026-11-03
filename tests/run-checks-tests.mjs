@@ -5,6 +5,7 @@
 //   node tests/run-checks-tests.mjs
 import * as K from '../src/checks.js';
 import * as M from '../src/maps.js';
+import * as B from '../src/batch.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -102,6 +103,11 @@ const near = (a, b, tol) => Math.abs(a - b) <= tol;
   const m = S[0];
   check('streets: length, over 15 and 30 cm, deepest, by name; unnamed by kind', m.name === 'Main' && m.length === 12 && m.wade === 10 && m.stall === 6 && Math.abs(m.maxDepth - 0.4) < 1e-6 && S[1].name === 'unnamed service' && S[1].wade === 0, JSON.stringify(m));
   check('streets: arrival is the earliest wetting where 5 cm deep; longest over 15 cm; top speed where 5 cm deep', m.arrival === 200 && m.over15 === 304 && Math.abs(m.speed - 0.4) < 1e-6, `${m.arrival} ${m.over15} ${m.speed}`);
+}
+
+{ // batch: a design-storm-only variant is not run on a historic storm (it would change nothing and read as no sensitivity)
+  const jobs = B.expandJobs({ storms: [{ label: '10-yr 1 h', stormSrc: 'a14', inputs: { ari: '10' } }, { label: 'Storm as set', stormSrc: 'current', inputs: {} }], variants: [B.VARIANTS.base, B.VARIANTS['rain+10'], B.VARIANTS['n+20']] });
+  check('batch: rain + 10 % runs on design storms only', jobs.length === 5 && !jobs.some(j => j.storm.stormSrc === 'current' && j.variant.key === 'rain+10'), jobs.map(j => j.label).join(' | '));
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall checks tests passed');

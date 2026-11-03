@@ -62,6 +62,7 @@ const ex = D.exposure(S, g, s => s.p, { fp });
   const e2 = D.ead([{ aep: 0.1, damage: 100 }, { aep: 0.5, damage: 50 }]);
   check('EAD: damage at the most frequent storm falls to zero at AEP 1 (and says so)', near(e2.parts.frequent, 0.5 * 50 * 0.5, 1e-9) && near(e2.parts.between, 0.5 * 150 * 0.4, 1e-9) && e2.warnings.some(w => /more frequent/.test(w)));
   check('EAD: one storm is not enough', Number.isNaN(D.ead([{ aep: 0.01, damage: 5 }]).ead));
+  check('AEP of an Atlas 14 (partial-duration) ARI: 1 − exp(−1/T)', near(D.aepOfPds(2), 0.3935, 1e-4) && near(D.aepOfPds(10), 0.09516, 1e-5) && near(D.aepOfPds(100), 0.00995, 1e-5) && D.aepOfPds(1) < 1, `${D.aepOfPds(2)}`);
 }
 { // benefit–cost
   const pvf = D.pvFactor(0.03, 50), b = D.bca({ eadWithout: 100000, eadWith: 40000, rate: 0.03, years: 50, cost: 1e6, om: 5000 });

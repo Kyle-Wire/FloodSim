@@ -5,6 +5,7 @@
 // one table what was tested and what needs a look.
 
 import { binnedMapSvg, binOf } from './maps.js';
+import { TARGETS } from './validate.js';
 const SIDES = ['N', 'E', 'S', 'W'];
 
 /**
@@ -124,7 +125,9 @@ export const LIMITS = {
   edgeWet: [0.02, 0.10],       // edge length flooded, of the edge
   outflow: [0.05, 0.25],       // water out across the edge, of the rain (and inflow)
   upstream: [0.02, 0.25],      // ground outside that drains in, of the area
-  mass: [1e-3, 1e-2],          // |surface books| relative
+  mass: TARGETS.mass,          // |surface books| relative: the validation scorecard's marks, so the two tables agree
+  combined: TARGETS.combined,  // with the pipes (SWMM's own continuity included)
+  tail: [30, 15],              // min run past the end of the rain (lower is worse): the default tail is 30 min
   left: [0.5, 0.8],            // water left at the end, of the peak volume
   fit: [0.9, 0.75],            // sensitivity: the fit of the cell-size variant (lower is worse)
   p95: [0.05, 0.15],           // sensitivity: 95th percentile |Δ depth| (m) of the cell-size variant
@@ -149,7 +152,7 @@ export function checkList(x, L = LIMITS) {
       x.tideEdges ? 'The tide boundary holds the water level on the tidal edges: wet edge there is expected; elsewhere the flood may continue past the edge.' : 'The flood may continue past the edge here: its extent and depth beyond it are not modelled.');
   }
   if (x.books && x.books.rain > 0) {
-    const inn = x.books.rain + (x.books.inflow ?? 0), share = (x.books.outflow ?? 0) / inn;
+    const inn = x.books.rain + (x.books.roofs ?? 0) + (x.books.inflow ?? 0), share = (x.books.outflow ?? 0) / inn;
     add('Model edge', 'Water out across the edge', grade(share, L.outflow), `${pct(share, 1)} of the water in (${Math.round(x.books.outflow ?? 0).toLocaleString()} m³)`,
       'Free outfall at the edge: the share leaving the model without being routed further. Large where the area cuts across a flow path.');
   }
@@ -162,7 +165,7 @@ export function checkList(x, L = LIMITS) {
   } else add('Inflow', 'Ground outside that drains in', 'n/a', 'watershed not traced', 'Trace the watershed (Area) to see whether ground outside drains into the area.');
   if (x.mass) {
     add('Mass balance', 'Surface water books', grade(Math.abs(x.mass.surface ?? 0), L.mass), `${((x.mass.surface ?? 0) * 100).toExponential(1)} %`, 'Rain + inflow − infiltration − outflow − storage, over the water in: should be near round-off.');
-    if (x.mass.combined != null) add('Mass balance', 'Surface and sewer books', grade(Math.abs(x.mass.combined), L.mass), `${(x.mass.combined * 100).toFixed(3)} %`, 'The same with the pipe network’s storage and outfalls.');
+    if (x.mass.combined != null) add('Mass balance', 'Surface and sewer books', grade(Math.abs(x.mass.combined), L.combined), `${(x.mass.combined * 100).toFixed(3)} %`, 'The same with the pipe network’s storage and outfalls.');
   }
   if (x.left && x.left.peak > 0) {
     const f = x.left.final / x.left.peak;
@@ -170,7 +173,7 @@ export function checkList(x, L = LIMITS) {
   }
   if (x.runLength?.stop && x.runLength.storm) {
     const after = x.runLength.stop - x.runLength.storm;
-    add('Run length', 'Run past the end of the rain', after >= 3600 ? 'ok' : after >= 1800 ? 'check' : 'problem', `${(after / 60).toFixed(0)} min`, 'Peaks downstream come after the rain stops; give the water time to arrive.');
+    add('Run length', 'Run past the end of the rain', grade(after / 60, L.tail, true), `${(after / 60).toFixed(0)} min`, 'Peaks downstream come after the rain stops; give the water time to arrive (longer for a large area or a river: Water left at the end says whether it did).');
   }
   if (x.points) add('Observations', 'High-water marks near the edge', x.points.length ? 'check' : 'ok', x.points.length ? x.points.map(p => `${p.name} (${Math.round(p.dist)} m)`).join(', ') : 'none within 50 m', 'A mark near the edge scores the boundary as much as the model.');
   if (x.features) add('Design', 'Drawn features near the edge', x.features.length ? 'check' : 'ok', x.features.length ? x.features.map(p => `${p.name} (${Math.round(p.dist)} m)`).join(', ') : 'none within 50 m', 'A feature near the edge has its effect cut off there: widen the area to see its full impact.');

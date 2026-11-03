@@ -9,13 +9,14 @@
 // Every combination is a job; jobs are ordered storm by storm, existing conditions first, so a with / without pair is
 // always adjacent (and comparable as soon as it is done).
 
-/** Standard variants for a sensitivity study (src/sensitivity.js reads them back by key). */
+/** Standard variants for a sensitivity study (src/checks.js reads them back by key). designOnly: the variant works through
+ *  a design-storm input (the rain uplift), so it is not run on a historic, live or custom storm, where it would change nothing. */
 export const VARIANTS = {
   base: { key: 'base', label: 'As set', inputs: {} },
   'n-20': { key: 'n-20', label: 'Roughness × 0.8', inputs: { calManning: '0.8' } },
   'n+20': { key: 'n+20', label: 'Roughness × 1.2', inputs: { calManning: '1.2' } },
   'infil-50': { key: 'infil-50', label: 'Infiltration × 0.5', inputs: { calInfil: '0.5' } },
-  'rain+10': { key: 'rain+10', label: 'Rain + 10 %', inputs: { uplift: '10' } },
+  'rain+10': { key: 'rain+10', label: 'Rain + 10 % (design storms)', designOnly: true, inputs: { uplift: '10' } },
   coarse: { key: 'coarse', label: 'One cell size coarser', coarser: true, inputs: {} },
 };
 
@@ -23,6 +24,7 @@ export const VARIANTS = {
 export function expandJobs({ storms, scenarios = [null], variants = [VARIANTS.base] }) {
   const jobs = [];
   for (const st of storms) for (const v of variants) for (const sc of scenarios) {
+    if (v.designOnly && st.stormSrc !== 'a14') continue;
     const label = [st.label, sc ?? 'Existing conditions', v.key === 'base' ? null : v.label].filter(Boolean).join(' · ');
     jobs.push({ id: jobId(st, sc, v), label, storm: st, scenario: sc, variant: v, status: 'pending' });
   }
