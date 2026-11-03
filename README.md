@@ -1173,6 +1173,34 @@ on a 1600×1600 dam break with ~7% of tiles wet. Needs 9 storage buffers per sha
 below that the solver runs untiled).
 Bed elevations are stored relative to the domain minimum for fp32 headroom.
 
+**Local time stepping (opt-in, `lts: true`; the "Local time stepping" box under the cell size).** One global step is
+set by the fastest cell: a 7 m tidal Schuylkill (waves ~8 m/s) holds a million shallow 1 m cells to ~0.1 s. With LTS
+each 8×8 tile steps at its own power-of-two step. A cycle of length D (the global CFL step × 2^L × 0.9, capped at the
+time left in the frame, so exchanges, culvert links and frame ends land on a cycle end) is cut into 2^L base steps δ;
+a tile's level is the largest m ≤ L (default 3, so up to 8δ) with its CFL number under 0.9 at 2^m δ, over the fastest
+speed in the tile and its eight neighbours (so a wave cannot run into a coarser tile within a cycle), then smoothed so
+face neighbours differ by at most one level. The records run finest first: after base step k every level m with
+2^m | k+1 takes one full SSP-RK2 step of its cells, over only its faces (a face belongs to the finer of its two cells).
+Mass stays exact the usual way for LTS: a cell one level coarser that borders a face of a finer step does not move,
+it gathers the flux it was sent (½·dt per RK stage, the stage weight) and the store joins the start state of its own
+next step, so both sides see the same integrated flux. (Adding the store before the step instead broke still water:
+the momentum flux came in a step before the bed-slope term that balances it.) The draining-time limiter counts only
+the record's faces, against the cell's depth plus its store. Sources, rain, Green-Ampt and GI, hazard, inlet exchange
+and the edge and barrier and line books follow the cell's (or face's) level and the record's end time; banks run once
+per cycle. One cycle counts as one step in `steps`. The fp64 CPU reference (`CPUSolver` `o.lts`) has the same scheme,
+and the GPU matches it to 3e-7 m on the dam breaks. Off (stepping globally, the reason in `solver.ltsOff` and the run
+log) in the subgrid speed mode, with sediment or debris (their exchange with the bed is not split per level), and
+untiled (under 9 storage buffers).
+
+| LTS vs global stepping | |
+| --- | --- |
+| Stoker / Ritter dam breaks, 400 cells, L1 | 1.599e-3 / 2.529e-3 (global 1.602e-3 / 2.531e-3); GPU vs CPU LTS 3e-7 m |
+| Still water at a stage boundary, bed at 100 m, 120 s | max \|u\| 9e-5 m/s (CPU 4e-14) |
+| Deep channel (6 m) across a wide shallow floodplain, 256×192, 60 s, CPU | 2.9× fewer cell updates, 38 → 28 s; Δh 9e-4 m channel, 5e-4 m floodplain; mass 7e-13 |
+| The same at 1024×768, GPU | 2131 steps → 296 cycles, 7.5 → 2.9 s (2.6×); Δh 8e-4 m channel, mean 7e-6 m floodplain (max 9 mm, on the spilling front); peak depth mean 2e-5 m; mass 4e-9 |
+| The same at 256×192, GPU | 1.0 → 1.7 s (0.6×: dispatch-bound) |
+| Books, 600 s: rain, Green-Ampt, an inlet, a weir across the channel, a control line, edge outflow | line 367.53 = 367.53, weir 398.864 vs 398.863, inlet 12.00 = 12.00, infiltration 82.8 = 82.8, edge 3574.0 = 3574.0 m³; mean \|Δh\| 3e-4 m |
+
 ## Verification (all pass)
 
 | Test | CPU fp64 | GPU fp32 |
@@ -1207,6 +1235,7 @@ Bed elevations are stored relative to the domain minimum for fp32 headroom.
 | Armouring: clear-water ~20 Pa over 0.3 m sand+gravel, 1 h (surface gravel share; solids per class) | – | 30 → 45 % (store 31 %); 8e-7 |
 | Window rerun of existing conditions vs the full run, Meyerland block, 60 m margin | – | depth RMSE 6.4 mm, line peak −2 %, edge outflow within 2 % |
 | FEMA BFE between two BFE lines; bathymetry centre depth and volume | exact (linear); within 5 % / 15 % | – |
+| Local time stepping vs global: dam breaks, still water at a stage boundary, deep channel + floodplain, books | L1 within 0.2 %, 4e-14 m/s, Δh 9e-4 m, mass 7e-13 | GPU = CPU LTS to 3e-7 m, 9e-5 m/s, 2.6× faster at 786k cells, books within 0.01 % |
 
 Full numbers: `tests/results-cpu.json`, `tests/results-gpu.json`.
 
@@ -1221,6 +1250,7 @@ node tests/run-phase2-tests.mjs  # weir and culvert hydraulics, conservative cul
 node tests/run-infra-tests.mjs   # infrastructure layer: capacity, estimate round trip, storage in SWMM, shapefile / zip import
 node tests/run-barrier-tests.mjs # flood barriers: watertight faces, at-rest balance, weir overflow, deployment, books
 node tests/run-hazard-tests.mjs  # hazard classes (ARR 2019, FD2320), force per width, duration and arrival
+node tests/run-lts-tests.mjs     # local time stepping vs global (CPU fp64): dam breaks, still water, deep channel + floodplain (~1.5 min)
 node tests/run-subgrid-tests.mjs # subgrid speed mode tables: storage, conveyance, curbs, porosity, level ↔ volume
 node tests/run-watershed-tests.mjs # watersheds: depression filling, D8, upstream trace, outlines, rivers from off the DEM
 node tests/run-calibrate-tests.mjs # calibration: observation import, scoring, sweep plan
@@ -1244,8 +1274,8 @@ npm run batch -- "<project>"     # a project's batch study headless on the GPU (
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
 # log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8770
-# reuses a running server, --timeout 20 (minutes), --probe prints the adapter and exits, --headed shows the window;
-# CHROME_PATH picks a browser.
+# reuses a running server, --timeout 20 (minutes), --probe prints the adapter and exits, --headed shows the window,
+# --only lts runs one section (writes no results file unless --json); CHROME_PATH picks a browser.
 npm run test:gpu
 # or in your own browser: npm start, then open http://localhost:8770/tests/gpu-browser.html
 # The old Dawn-for-Node runner (npm run test:gpu:dawn) crashes compiling the solver's shaders on some Windows/NVIDIA setups.
@@ -1332,3 +1362,9 @@ dist/floodsim.html    built Phase 0 solver lab and verification page
 - Inflow hydrographs go through the inlet exchange (cells on a line); no momentum-carrying inflow boundary
 - No turbulence (eddy viscosity) term
 - Infiltration is a constant capacity, not Green-Ampt
+- Local time stepping is opt-in and pays only on large grids: each record is its own set of dispatches (~30–40 µs
+  each), so on a 256×192 grid it is 0.6× the global speed even with 7× fewer steps; at 1024×768 it is 2.6× faster. The
+  3×3 speed rule and the one-level smoothing keep most of a floodplain beside a deep channel at a finer level than its
+  own speed needs (the CPU's cell updates fall 2.9×, not the 3.8× of the bare rule, which let a wave into a coarser tile
+  at 1.8× the CFL limit). Moving fronts arrive slightly differently timed than with one global step (up to 9 mm on the
+  spilling edge of the test floodplain; means 1e-5 m). Off with the subgrid speed mode, sediment and debris.

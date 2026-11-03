@@ -8,7 +8,7 @@ struct Params {
   secondOrder: u32, limiter: u32, bcW: u32, bcE: u32,
   bcS: u32, bcN: u32, nInlets: u32, stage: f32,
   tilesX: u32, tilesY: u32, tiles: u32, nBar: u32,
-  nLine: u32, pad1: u32, pad2: u32, pad3: u32,
+  nLine: u32, lts: u32, pad2: u32, pad3: u32,
 };
 const GH: i32 = 2;
 override STAGE: u32 = 0u;
@@ -21,7 +21,7 @@ override STAGE: u32 = 0u;
 @group(0) @binding(5) var<storage, read_write> FX: array<f32>;    // 9 per x-face, stored at right cell
 @group(0) @binding(6) var<storage, read_write> FY: array<f32>;    // 9 per y-face, stored at upper cell
 @group(0) @binding(7) var<storage, read_write> A: array<vec4f>;   // max depth, infil cum (m), outflow cum (m3), clipped (m)
-@group(0) @binding(8) var<storage, read_write> DT: array<f32>;    // dt, t, kahan c, steps
+@group(0) @binding(8) var<storage, read_write> DT: array<f32>;    // dt, t, kahan c, steps; local time stepping: base step, cycle start, cycle end, level stepping, record
 @group(0) @binding(9) var<storage, read_write> RED: atomic<u32>;  // max wave speed (float bits)
 @group(0) @binding(10) var<storage, read_write> OUT: array<vec2f>; // render: depth, speed
 @group(0) @binding(11) var<storage, read_write> TH: array<f32>;    // draining-time scale per donor cell (1 in ghosts)
@@ -33,9 +33,9 @@ override STAGE: u32 = 0u;
 // active tiles (8×8 interior cells): wet flags, always-active flags, the two tile lists, their counts, indirect args
 @group(0) @binding(17) var<storage, read_write> TF: array<atomic<u32>>; // per tile: 1 if any cell holds water this step
 @group(0) @binding(18) var<storage, read> TS: array<u32>;               // per tile: 1 = always active (inlets, stage edges)
-@group(0) @binding(19) var<storage, read_write> TL: array<u32>;         // [0, tiles): wet ⊕ 1 tile; [tiles, 2·tiles): wet ⊕ 2 tiles
-@group(0) @binding(20) var<storage, read_write> TC: array<atomic<u32>>; // the two list lengths
-@group(0) @binding(21) var<storage, read_write> TA: array<u32>;         // indirect dispatch args: (n1, 1, 1), (n2, 1, 1)
+@group(0) @binding(19) var<storage, read_write> TL: array<u32>;         // [0, tiles): wet ⊕ 1 tile; [tiles, 2·tiles): wet ⊕ 2 tiles (local time stepping: see ltsList)
+@group(0) @binding(20) var<storage, read_write> TC: array<atomic<u32>>; // the two list lengths (local time stepping: two per level)
+@group(0) @binding(21) var<storage, read_write> TA: array<u32>;         // indirect dispatch args: (n1, 1, 1), (n2, 1, 1), …
 // green infrastructure: per-cell GI infiltration into a store of fixed capacity that drains to native soil
 @group(0) @binding(22) var<storage, read> GI: array<vec4f>;          // rate (m/s), capacity (m), drain to the native soil (m/s), underdrain (m/s); capacity 0 = no GI
 @group(0) @binding(23) var<storage, read_write> GS: array<vec4f>;   // GI stored (m), time of last update (s), Green-Ampt depth infiltrated F (m per pervious area), underdrained so far (m)
@@ -94,9 +94,25 @@ fn outVel(e: i32, n: i32) -> f32 {
 
 // ---- primitives, with mirrored ghost cells (wall = reflect normal velocity, open = copy)
 @compute @workgroup_size(8, 8)
-fn prim(@builtin(global_invocation_id) gid: vec3u) {
+fn prim(@builtin(global_invocation_id) gid: vec3u) { primAt(i32(gid.x), i32(gid.y)); }
+// local time stepping: after each stage only the cells that stepped (the update list) and the ghost frame
+@compute @workgroup_size(8, 8)
+fn primT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) {
+  let c = tileCell(wid, lid); if (c.x < P.nx && c.y < P.ny) { primAt(i32(c.x) + GH, i32(c.y) + GH); }
+}
+@compute @workgroup_size(64)
+fn primGhost(@builtin(global_invocation_id) gid: vec3u) { primGhostAt(gid.x); }
+// …and at the end of a record, the next record (no other thread here reads DT)
+@compute @workgroup_size(64)
+fn primGhostRec(@builtin(global_invocation_id) gid: vec3u) { primGhostAt(gid.x); if (gid.x == 0u) { ltsNext(); } }
+fn primGhostAt(g: u32) {
+  let NX = i32(P.NX); let NY = i32(P.NY); let m = i32(g); let rows = 2 * GH * NX;
+  if (m < rows) { let r = m / NX; primAt(m % NX, select(NY - 2 * GH + r, r, r < GH)); return; }
+  let k = m - rows; let ny = i32(P.ny); if (k >= 2 * GH * ny) { return; }
+  let cl = k / ny; primAt(select(NX - 2 * GH + cl, cl, cl < GH), GH + k % ny);
+}
+fn primAt(i: i32, j: i32) {
   let NX = i32(P.NX); let NY = i32(P.NY);
-  let i = i32(gid.x); let j = i32(gid.y);
   if (i >= NX || j >= NY) { return; }
   var si = i; var sj = j; var fu = 1.0; var fv = 1.0;
   // walls mirror across the boundary face; open / outflow edges copy the edge cell into every ghost layer
@@ -226,50 +242,89 @@ fn kadd(q: vec4f, d: f32) -> vec4f {
   return r;
 }
 
-fn faceXAt(x: u32, y: u32) {
-  if (x > P.nx || y >= P.ny) { return; }
+fn faceXAt(x: u32, y: u32, on: bool) {
+  if (x > P.nx || y >= P.ny || !on) { return; }
   let NX = i32(P.NX);
   let b = (i32(y) + GH) * NX + i32(x) + GH;
   let cr = CR[b];
   let o = face(b - 1, b, 1, true, cr.x, cr.y);
   for (var k = 0; k < 9; k++) { FX[b * 9 + k] = o[k]; }
 }
-fn faceYAt(x: u32, y: u32) {
-  if (x >= P.nx || y > P.ny) { return; }
+fn faceYAt(x: u32, y: u32, on: bool) {
+  if (x >= P.nx || y > P.ny || !on) { return; }
   let NX = i32(P.NX);
   let b = (i32(y) + GH) * NX + i32(x) + GH;
   let cr = CR[b];
   let o = face(b - NX, b, NX, false, cr.z, cr.w);
   for (var k = 0; k < 9; k++) { FY[b * 9 + k] = o[k]; }
 }
-// interior cell handled by a tiled workgroup: tile from the list, cell from the local id
+// interior cell handled by a tiled workgroup: tile from the list, cell from the local id (local time stepping: the lists
+// of the level stepping now, DT[7]; 0 otherwise)
 fn tileCell(wid: vec3u, lid: vec3u) -> vec2u {
-  let t = TL[select(0u, P.tiles, LIST == 2u) + wid.x];
+  let t = TL[(2u * u32(DT[7]) + select(0u, 1u, LIST == 2u)) * P.tiles + wid.x];
   return vec2u((t % P.tilesX) * TILE + lid.x, (t / P.tilesX) * TILE + lid.y);
 }
+
+// ---- local time stepping (P.lts = L levels; src/solver-cpu.js _cycle has the scheme). Each tile of cells steps at
+// 2^m times the base step δ (DT[4]); a cycle of 2^L base steps runs level steps ("records") finest first, each with
+// DT[0] = 2^m·δ, DT[1] = its end time and DT[7] = m, so the kernels step only the level's cells and faces. A face's
+// level is the lower of its two cells' (a ghost takes its edge cell's); a cell one level coarser waits frozen and
+// gathers what its finer neighbours pass it in U0, which joins the RK start state of its own step. TL after the
+// 2(L+1) tile lists: the tile levels (two slots, ping-pong while smoothing; slot 0 is final), then the tile speeds.
+const LTS_SAFE: f32 = 0.9; // share of its CFL step a tile may take (src/solver-cpu.js LTS_SAFE)
+fn ltsLV() -> u32 { return 2u * (P.lts + 1u) * P.tiles; }
+fn ltsLvIJ(i: i32, j: i32) -> u32 {
+  let ii = u32(clamp(i, 0, i32(P.nx) - 1)); let jj = u32(clamp(j, 0, i32(P.ny) - 1));
+  return TL[ltsLV() + (jj / TILE) * P.tilesX + ii / TILE];
+}
+fn ltsLv(c: i32) -> u32 { let NX = i32(P.NX); return ltsLvIJ(c % NX - GH, c / NX - GH); }
+fn ltsFace(a: i32, b: i32) -> bool { return P.lts == 0u || min(ltsLv(a), ltsLv(b)) == u32(DT[7]); }
+// cell (x, y) in this record: mode 1 = steps, 2 = waits (one level coarser), 3 = neither, 0 = no local time stepping;
+// kf: which of its faces (w, e, s, n) step
+struct LtsCell { mode: u32, kf: vec4f }
+fn ltsCell(x: u32, y: u32) -> LtsCell {
+  var r: LtsCell; r.mode = 0u; r.kf = vec4f(1.0);
+  if (P.lts == 0u) { return r; }
+  let i = i32(x); let j = i32(y); let m = u32(DT[7]); let l = ltsLvIJ(i, j);
+  r.mode = select(select(3u, 2u, l == m + 1u), 1u, l == m);
+  r.kf = select(vec4f(0.0), vec4f(1.0), vec4<bool>(min(l, ltsLvIJ(i - 1, j)) == m, min(l, ltsLvIJ(i + 1, j)) == m, min(l, ltsLvIJ(i, j - 1)) == m, min(l, ltsLvIJ(i, j + 1)) == m));
+  return r;
+}
 @compute @workgroup_size(8, 8)
-fn faceX(@builtin(global_invocation_id) gid: vec3u) { faceXAt(gid.x, gid.y); }
+fn faceX(@builtin(global_invocation_id) gid: vec3u) { faceXAt(gid.x, gid.y, true); }
 @compute @workgroup_size(8, 8)
-fn faceY(@builtin(global_invocation_id) gid: vec3u) { faceYAt(gid.x, gid.y); }
+fn faceY(@builtin(global_invocation_id) gid: vec3u) { faceYAt(gid.x, gid.y, true); }
 @compute @workgroup_size(8, 8)
-fn faceXT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); faceXAt(c.x, c.y); }
+fn faceXT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) {
+  let c = tileCell(wid, lid); let b = (i32(c.y) + GH) * i32(P.NX) + i32(c.x) + GH; faceXAt(c.x, c.y, ltsFace(b - 1, b));
+}
 @compute @workgroup_size(8, 8)
-fn faceYT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); faceYAt(c.x, c.y); }
+fn faceYT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) {
+  let c = tileCell(wid, lid); let b = (i32(c.y) + GH) * i32(P.NX) + i32(c.x) + GH; faceYAt(c.x, c.y, ltsFace(b - i32(P.NX), b));
+}
+// local time stepping: both faces of a cell in one dispatch (a record's cost is mostly its dispatches)
+@compute @workgroup_size(8, 8)
+fn faceXYT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) {
+  let c = tileCell(wid, lid); let b = (i32(c.y) + GH) * i32(P.NX) + i32(c.x) + GH;
+  faceXAt(c.x, c.y, ltsFace(b - 1, b)); faceYAt(c.x, c.y, ltsFace(b - i32(P.NX), b));
+}
 
 // ---- draining-time limiter: theta = min(1, cell volume / volume it would export this stage)
 @compute @workgroup_size(8, 8)
-fn theta(@builtin(global_invocation_id) gid: vec3u) { thetaAt(gid.x, gid.y); }
+fn theta(@builtin(global_invocation_id) gid: vec3u) { var l: LtsCell; l.mode = 0u; l.kf = vec4f(1.0); thetaAt(gid.x, gid.y, l); }
 @compute @workgroup_size(8, 8)
-fn thetaT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); thetaAt(c.x, c.y); }
-fn thetaAt(x: u32, y: u32) {
-  if (x >= P.nx || y >= P.ny) { return; }
+fn thetaT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); thetaAt(c.x, c.y, ltsCell(c.x, c.y)); }
+fn thetaAt(x: u32, y: u32, l: LtsCell) {
+  if (x >= P.nx || y >= P.ny || l.mode == 3u) { return; }
   let NX = i32(P.NX);
   let c = (i32(y) + GH) * NX + i32(x) + GH;
   var t = 1.0;
   if (S[c].z > 0.5) {
-    let fw = FX[c * 9]; let fe = FX[(c + 1) * 9]; let fs = FY[c * 9]; let fq = FY[(c + NX) * 9];
+    let fw = FX[c * 9] * l.kf.x; let fe = FX[(c + 1) * 9] * l.kf.y; let fs = FY[c * 9] * l.kf.z; let fq = FY[(c + NX) * 9] * l.kf.w;
     let outv = (max(fe, 0.0) - min(fw, 0.0) + max(fq, 0.0) - min(fs, 0.0)) * P.dx * DT[0];
-    let vol = U[c].x * P.dx * P.dx;
+    var vol = U[c].x * P.dx * P.dx;
+    // local time stepping: the water plus what finer neighbours passed it, while it waits and in its first stage
+    if (l.mode == 2u || (l.mode == 1u && STAGE == 0u)) { let st = U0[c]; vol = max(0.0, U[c].x + st.x - st.w) * P.dx * P.dx; }
     if (outv > vol) { t = vol / outv; }
   }
   TH[c] = t;
@@ -284,9 +339,13 @@ fn fy3(f: i32, l: i32, r: i32) -> vec3f { let F = vec3f(FY[f], FY[f + 1], FY[f +
 // Faces of tiles the step skipped can hold stale fluxes, but their cells are dry, so faces with no water are skipped.
 const BAR_OVER: f32 = 0.02;
 @compute @workgroup_size(64)
-fn barrier(@builtin(global_invocation_id) gid: vec3u) {
-  let m = gid.x;
-  if (m >= P.nBar) { return; }
+fn barrier(@builtin(global_invocation_id) gid: vec3u) { if (gid.x < P.nBar) { barrierAt(gid.x); } }
+@compute @workgroup_size(64)
+fn barrierL(@builtin(global_invocation_id) gid: vec3u) { // local time stepping: the faces of the level stepping now
+  let m = gid.x; if (m >= P.nBar) { return; }
+  let b = i32(BF[m] >> 1u); if (ltsFace(b - select(1, i32(P.NX), (BF[m] & 1u) == 1u), b)) { barrierAt(m); }
+}
+fn barrierAt(m: u32) {
   let dt = DT[0];
   if (dt <= 0.0) { return; }
   let code = BF[m]; let b = i32(code >> 1u); let isY = (code & 1u) == 1u;
@@ -336,11 +395,11 @@ fn arrClass(d: f32, v: f32) -> f32 {
 }
 fn hrClass(hr: f32) -> f32 { if (hr < 0.75) { return 1.0; } if (hr < 1.25) { return 2.0; } if (hr < 2.0) { return 3.0; } return 4.0; }
 @compute @workgroup_size(8, 8)
-fn hazard(@builtin(global_invocation_id) gid: vec3u) { hazardAt(gid.x, gid.y); }
+fn hazard(@builtin(global_invocation_id) gid: vec3u) { hazardAt(gid.x, gid.y, true); }
 @compute @workgroup_size(8, 8)
-fn hazardT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); hazardAt(c.x, c.y); }
-fn hazardAt(x: u32, y: u32) {
-  if (x >= P.nx || y >= P.ny) { return; }
+fn hazardT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); hazardAt(c.x, c.y, ltsCell(c.x, c.y).mode < 2u); }
+fn hazardAt(x: u32, y: u32, on: bool) {
+  if (x >= P.nx || y >= P.ny || !on) { return; }
   let c = (i32(y) + GH) * i32(P.NX) + i32(x) + GH;
   if (S[c].z < 0.5) { return; }
   let dt = DT[0];
@@ -374,11 +433,11 @@ fn hzRecord(c: i32, d: f32, v: f32, dt: f32) {
 
 // ---- conservative update: STAGE 0 = Euler / RK stage 1, STAGE 1 = RK stage 2 (Heun average)
 @compute @workgroup_size(8, 8)
-fn update(@builtin(global_invocation_id) gid: vec3u) { updateAt(gid.x, gid.y); }
+fn update(@builtin(global_invocation_id) gid: vec3u) { var l: LtsCell; l.mode = 0u; l.kf = vec4f(1.0); updateAt(gid.x, gid.y, l); }
 @compute @workgroup_size(8, 8)
-fn updateT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); updateAt(c.x, c.y); }
-fn updateAt(x: u32, y: u32) {
-  if (x >= P.nx || y >= P.ny) { return; }
+fn updateT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); updateAt(c.x, c.y, ltsCell(c.x, c.y)); }
+fn updateAt(x: u32, y: u32, l: LtsCell) {
+  if (x >= P.nx || y >= P.ny || l.mode == 3u) { return; }
   let NX = i32(P.NX); let NY = i32(P.NY);
   let i = i32(x) + GH; let j = i32(y) + GH;
   let c = j * NX + i;
@@ -390,6 +449,7 @@ fn updateAt(x: u32, y: u32) {
   let hW = FX[w + 7]; let zW = FX[w + 8]; let hE = FX[e + 5]; let zE = FX[e + 6];
   let hS = FY[sI + 7]; let zS = FY[sI + 8]; let hN = FY[nI + 5]; let zN = FY[nI + 6];
   let Fw = fx3(w, c - 1, c); let Fe = fx3(e, c, c + 1); let Fs = fy3(sI, c - NX, c); let Fn = fy3(nI, c, c + NX);
+  if (l.mode != 0u) { ltsUpdate(c, dt, l, Fw, Fe, Fs, Fn); return; }
   let dh = -inv * (Fe.x - Fw.x + Fn.x - Fs.x);
   let dhu = -inv * ((Fe.y + FX[e + 3]) - (Fw.y + FX[w + 4]) + 0.5 * P.g * (hW + hE) * (zE - zW) + Fn.z - Fs.z);
   let dhv = -inv * ((Fn.y + FY[nI + 3]) - (Fs.y + FY[sI + 4]) + 0.5 * P.g * (hS + hN) * (zN - zS) + Fe.z - Fw.z);
@@ -409,14 +469,48 @@ fn updateAt(x: u32, y: u32) {
   if (q.x <= P.hdry) { q.y = 0.0; q.z = 0.0; }
   U[c] = q; A[c] = a; // boundary outflow is booked per edge face by edgeOut (compensated)
 }
+// local time stepping update of cell c: only this level's faces (kf); a waiting cell gathers the RK-weighted change into
+// its store U0 (no bed-slope term: its own step adds that); a stepping cell starts its RK step from its state plus its
+// store (U0 then holds that start, and is emptied after the step)
+fn ltsUpdate(c: i32, dt: f32, l: LtsCell, Fw: vec3f, Fe: vec3f, Fs: vec3f, Fn: vec3f) {
+  let NX = i32(P.NX); let w = c * 9; let e = (c + 1) * 9; let sI = c * 9; let nI = (c + NX) * 9;
+  let inv = 1.0 / P.dx; let k = l.kf; let own = select(0.0, 1.0, l.mode == 1u);
+  let hW = FX[w + 7]; let zW = FX[w + 8]; let hE = FX[e + 5]; let zE = FX[e + 6];
+  let hS = FY[sI + 7]; let zS = FY[sI + 8]; let hN = FY[nI + 5]; let zN = FY[nI + 6];
+  let dh = -inv * (k.y * Fe.x - k.x * Fw.x + k.w * Fn.x - k.z * Fs.x);
+  let dhu = -inv * (k.y * (Fe.y + FX[e + 3]) - k.x * (Fw.y + FX[w + 4]) + own * 0.5 * P.g * (hW + hE) * (zE - zW) + k.w * Fn.z - k.z * Fs.z);
+  let dhv = -inv * (k.w * (Fn.y + FY[nI + 3]) - k.z * (Fs.y + FY[sI + 4]) + own * 0.5 * P.g * (hS + hN) * (zN - zS) + k.y * Fe.z - k.x * Fw.z);
+  if (l.mode == 2u) {
+    if (dot(k, k) == 0.0) { return; }
+    let wd = dt * select(1.0, 0.5, P.secondOrder == 1u);
+    var st = U0[c]; st.y = st.y + wd * dhu; st.z = st.z + wd * dhv; st = kadd(st, wd * dh); U0[c] = st;
+    return;
+  }
+  var q = U[c];
+  if (STAGE == 0u) {
+    let st = U0[c]; q.y = q.y + st.y; q.z = q.z + st.z; q = kadd(q, st.x - st.w);
+    U0[c] = select(vec4f(0.0), q, P.secondOrder == 1u);
+    q.y = q.y + dt * dhu; q.z = q.z + dt * dhv;
+    q = kadd(q, dt * dh);
+  } else {
+    let q0 = U0[c];
+    q.y = 0.5 * (q0.y + q.y + dt * dhu); q.z = 0.5 * (q0.z + q.z + dt * dhv);
+    q = kadd(q, 0.5 * ((q0.x - q0.w) - (q.x - q.w) + dt * dh));
+    U0[c] = vec4f(0.0);
+  }
+  var a = A[c];
+  if (q.x < 0.0) { a.w += -(q.x - q.w); q.x = 0.0; q.w = 0.0; }
+  if (q.x <= P.hdry) { q.y = 0.0; q.z = 0.0; }
+  U[c] = q; A[c] = a;
+}
 
 // ---- semi-implicit friction, rainfall, infiltration, max depth
 @compute @workgroup_size(8, 8)
-fn sources(@builtin(global_invocation_id) gid: vec3u) { sourcesAt(gid.x, gid.y); }
+fn sources(@builtin(global_invocation_id) gid: vec3u) { sourcesAt(gid.x, gid.y, true); }
 @compute @workgroup_size(8, 8)
-fn sourcesT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); sourcesAt(c.x, c.y); }
-fn sourcesAt(x: u32, y: u32) {
-  if (x >= P.nx || y >= P.ny) { return; }
+fn sourcesT(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_id) lid: vec3u) { let c = tileCell(wid, lid); sourcesAt(c.x, c.y, ltsCell(c.x, c.y).mode < 2u); }
+fn sourcesAt(x: u32, y: u32, on: bool) {
+  if (x >= P.nx || y >= P.ny || !on) { return; }
   let NX = i32(P.NX);
   let c = (i32(y) + GH) * NX + i32(x) + GH;
   let s = S[c];
@@ -463,9 +557,10 @@ fn sourcesAt(x: u32, y: u32) {
 
 // ---- 1D-2D exchange at drainage inlets (sparse, one thread per inlet; inlets never share a cell)
 @compute @workgroup_size(64)
-fn exchange(@builtin(global_invocation_id) gid: vec3u) {
-  let m = gid.x;
-  if (m >= P.nInlets) { return; }
+fn exchange(@builtin(global_invocation_id) gid: vec3u) { if (gid.x < P.nInlets) { exchangeAt(gid.x); } }
+@compute @workgroup_size(64)
+fn exchangeL(@builtin(global_invocation_id) gid: vec3u) { if (gid.x < P.nInlets && ltsLv(i32(INC[gid.x])) == u32(DT[7])) { exchangeAt(gid.x); } }
+fn exchangeAt(m: u32) {
   let c = i32(INC[m]);
   var q = U[c];
   let dt = DT[0];
@@ -495,7 +590,7 @@ fn exchange(@builtin(global_invocation_id) gid: vec3u) {
 @compute @workgroup_size(64)
 fn tileClear(@builtin(global_invocation_id) gid: vec3u) {
   if (gid.x < P.tiles) { atomicStore(&TF[gid.x], 0u); }
-  if (gid.x < 2u) { atomicStore(&TC[gid.x], 0u); }
+  if (gid.x < 2u * (P.lts + 1u)) { atomicStore(&TC[gid.x], 0u); }
 }
 @compute @workgroup_size(8, 8)
 fn tileWet(@builtin(global_invocation_id) gid: vec3u) {
@@ -523,10 +618,99 @@ fn tileArgs() {
   TA[3] = atomicLoad(&TC[1]); TA[4] = 1u; TA[5] = 1u;
 }
 
+// ---- local time stepping, once per cycle: the cycle (from the domain's top speed), each tile's level, the lists
+@compute @workgroup_size(1)
+fn ltsCycle() {
+  let smax = bitcast<f32>(atomicLoad(&RED));
+  atomicStore(&RED, 0u);
+  let t = DT[1]; let rem = P.tEnd - t; let n = f32(1u << P.lts);
+  var D = 0.0; DT[6] = t;
+  if (rem > 0.0) {
+    let cand = select(P.dtDry, n * LTS_SAFE * P.cfl * P.dx / smax, smax > 0.0);
+    if (cand >= rem) { D = rem; DT[6] = P.tEnd; DT[2] = 0.0; }
+    else { D = cand; let y = D - DT[2]; let tn = t + y; DT[2] = (tn - t) - y; DT[6] = tn; }
+    DT[3] = DT[3] + 1.0;
+  }
+  DT[4] = D / n; DT[5] = t; DT[8] = 0.0;
+}
+// a tile's level: the largest m ≤ L with 2^m·δ within LTS_SAFE of the CFL step of the fastest water in it and its 8
+// neighbours (a wave cannot reach a slower tile within a cycle); all dry: L
+override LTSD: u32 = 0u; // the level slot a pass writes (it reads the other)
+@compute @workgroup_size(64)
+fn ltsLevel(@builtin(global_invocation_id) gid: vec3u) {
+  let tx = (P.nx + TILE - 1u) / TILE; let ty = (P.ny + TILE - 1u) / TILE;
+  if (gid.x >= tx * ty) { return; }
+  let x = gid.x % tx; let y = gid.x / tx; let t = y * P.tilesX + x; let dl = DT[4];
+  var sp = 0.0;
+  for (var b = max(i32(y) - 1, 0); b <= min(i32(y) + 1, i32(ty) - 1); b++) { for (var a = max(i32(x) - 1, 0); a <= min(i32(x) + 1, i32(tx) - 1); a++) {
+    sp = max(sp, bitcast<f32>(TL[ltsLV() + 2u * P.tiles + u32(b) * P.tilesX + u32(a)]));
+  } }
+  var m = P.lts;
+  if (sp > 0.0 && dl > 0.0) { m = u32(clamp(floor(log2(LTS_SAFE * P.cfl * P.dx / sp / dl)), 0.0, f32(P.lts))); }
+  TL[ltsLV() + LTSD * P.tiles + t] = m;
+}
+// no tile more than one level above a face neighbour (L passes, ping-pong between the two slots)
+@compute @workgroup_size(64)
+fn ltsSmooth(@builtin(global_invocation_id) gid: vec3u) {
+  let tx = (P.nx + TILE - 1u) / TILE; let ty = (P.ny + TILE - 1u) / TILE;
+  if (gid.x >= tx * ty) { return; }
+  let x = gid.x % tx; let y = gid.x / tx; let t = y * P.tilesX + x; let src = ltsLV() + (1u - LTSD) * P.tiles;
+  var m = TL[src + t];
+  if (x > 0u) { m = min(m, TL[src + t - 1u] + 1u); } if (x + 1u < tx) { m = min(m, TL[src + t + 1u] + 1u); }
+  if (y > 0u) { m = min(m, TL[src + t - P.tilesX] + 1u); } if (y + 1u < ty) { m = min(m, TL[src + t + P.tilesX] + 1u); }
+  TL[ltsLV() + LTSD * P.tiles + t] = m;
+}
+// per level m: [2m·tiles…) the wet ⊕ 1 tiles, [(2m+1)·tiles…) the wet ⊕ 2 tiles, of level m or of level m + 1 next
+// to a level-m tile (they wait and gather); a tile past the last cell column / row takes its neighbour's level
+fn ltsTile(x: i32, y: i32) -> u32 { return ltsLvIJ(x * i32(TILE), y * i32(TILE)); }
+@compute @workgroup_size(64)
+fn ltsList(@builtin(global_invocation_id) gid: vec3u) {
+  let t = gid.x; if (t >= P.tiles) { return; }
+  let tx = i32(t % P.tilesX); let ty = i32(t / P.tilesX);
+  var d1 = TS[t] > 0u; var d2 = d1;
+  for (var dy = -2; dy <= 2; dy++) { for (var dx = -2; dx <= 2; dx++) {
+    let x = tx + dx; let y = ty + dy;
+    if (x < 0 || y < 0 || x >= i32(P.tilesX) || y >= i32(P.tilesY)) { continue; }
+    let n = u32(y) * P.tilesX + u32(x);
+    if (atomicLoad(&TF[n]) > 0u || TS[n] > 0u) { d2 = true; if (abs(dx) <= 1 && abs(dy) <= 1) { d1 = true; } }
+  } }
+  if (!d2) { return; }
+  let l = ltsTile(tx, ty);
+  var nb = 99u; // the lowest face neighbour's level
+  if (tx > 0) { nb = min(nb, ltsTile(tx - 1, ty)); } if (tx + 1 < i32(P.tilesX)) { nb = min(nb, ltsTile(tx + 1, ty)); }
+  if (ty > 0) { nb = min(nb, ltsTile(tx, ty - 1)); } if (ty + 1 < i32(P.tilesY)) { nb = min(nb, ltsTile(tx, ty + 1)); }
+  for (var m = 0u; m <= P.lts; m++) {
+    if (l != m && !(l == m + 1u && nb == m)) { continue; }
+    if (d1) { TL[2u * m * P.tiles + atomicAdd(&TC[2u * m], 1u)] = t; }
+    TL[(2u * m + 1u) * P.tiles + atomicAdd(&TC[2u * m + 1u], 1u)] = t;
+  }
+}
+@compute @workgroup_size(1)
+fn ltsArgs() {
+  for (var q = 0u; q < 2u * (P.lts + 1u); q++) { TA[3u * q] = atomicLoad(&TC[q]); TA[3u * q + 1u] = 1u; TA[3u * q + 2u] = 1u; }
+  ltsNext(); // the cycle's first record
+}
+// the next record of the cycle (2^(L+1) − 1 of them): in base step k every level m with 2^m | k + 1, finest first
+fn ltsNext() {
+  let r = u32(DT[8]); let n = 1u << P.lts; var c = 0u; var mm = 0u; var kk = 0u;
+  if (r + 1u >= 2u * n) { return; }
+  for (var k = 0u; k < n; k++) { for (var m = 0u; m <= P.lts; m++) { if ((k + 1u) % (1u << m) == 0u) { if (c == r) { mm = m; kk = k; } c++; } } }
+  DT[7] = f32(mm); DT[8] = f32(r + 1u);
+  DT[0] = DT[4] * f32(1u << mm);
+  DT[1] = select(DT[5] + f32(kk + 1u) * DT[4], DT[6], kk + 1u == n);
+}
+
 // ---- CFL time step: workgroup max, then global atomic max on float bits (positive floats sort as u32)
 var<workgroup> wmax: atomic<u32>;
 @compute @workgroup_size(8, 8)
-fn dtReduce(@builtin(global_invocation_id) gid: vec3u, @builtin(local_invocation_index) li: u32) {
+fn dtReduce(@builtin(global_invocation_id) gid: vec3u, @builtin(local_invocation_index) li: u32) { dtReduceAt(gid, li); }
+// local time stepping: also each tile's top speed (a workgroup is a tile)
+@compute @workgroup_size(8, 8)
+fn dtReduceL(@builtin(global_invocation_id) gid: vec3u, @builtin(local_invocation_index) li: u32, @builtin(workgroup_id) wid: vec3u) {
+  dtReduceAt(gid, li);
+  if (li == 0u) { TL[ltsLV() + 2u * P.tiles + wid.y * P.tilesX + wid.x] = atomicLoad(&wmax); }
+}
+fn dtReduceAt(gid: vec3u, li: u32) {
   if (li == 0u) { atomicStore(&wmax, 0u); }
   workgroupBarrier();
   if (gid.x < P.nx && gid.y < P.ny) {
@@ -762,20 +946,29 @@ fn sgExchange(@builtin(global_invocation_id) gid: vec3u) {
 // can hold stale fluxes, but then neither the edge cell nor its ghost holds water, so those are skipped.
 @group(0) @binding(30) var<storage, read_write> EO: array<vec2f>; // per edge face: outflow (m³, − = inflow), Kahan residual
 @compute @workgroup_size(64)
-fn edgeOut(@builtin(global_invocation_id) gid: vec3u) {
-  let m = gid.x; let nx = P.nx; let ny = P.ny;
-  if (m >= 2u * (nx + ny)) { return; }
+fn edgeOut(@builtin(global_invocation_id) gid: vec3u) { if (gid.x < 2u * (P.nx + P.ny)) { edgeOutAt(gid.x); } }
+@compute @workgroup_size(64)
+fn edgeOutL(@builtin(global_invocation_id) gid: vec3u) { // local time stepping: an edge face steps with its edge cell
+  if (gid.x < 2u * (P.nx + P.ny) && ltsLv(edgeFace(gid.x).x) == u32(DT[7])) { edgeOutAt(gid.x); }
+}
+// edge face m: its edge cell, ghost, the cell its flux is stored at, and the outward sign (±1 x-face, ±2 y-face)
+fn edgeFace(m: u32) -> vec4i {
+  let nx = P.nx; let ny = P.ny; let NX = i32(P.NX);
+  if (m < 2u * ny) {
+    let j = i32(m % ny) + GH;
+    if (m >= ny) { let c = j * NX + i32(nx) - 1 + GH; return vec4i(c, c + 1, c + 1, 1); }
+    let c = j * NX + GH; return vec4i(c, c - 1, c, -1);
+  }
+  let k = m - 2u * ny; let i = i32(k % nx) + GH;
+  if (k >= nx) { let c = (i32(ny) - 1 + GH) * NX + i; return vec4i(c, c + NX, c + NX, 2); }
+  let c = GH * NX + i; return vec4i(c, c - NX, c, -2);
+}
+fn edgeOutAt(m: u32) {
   let dt = DT[0];
   if (dt <= 0.0) { return; }
-  let NX = i32(P.NX);
-  var c = 0; var g = 0; var f = 0.0; var sgn = 1.0;
-  if (m < 2u * ny) {
-    let j = i32(m % ny) + GH; let east = m >= ny;
-    if (east) { c = j * NX + i32(nx) - 1 + GH; g = c + 1; f = FX[g * 9]; } else { c = j * NX + GH; g = c - 1; f = FX[c * 9]; sgn = -1.0; }
-  } else {
-    let k = m - 2u * ny; let i = i32(k % nx) + GH; let north = k >= nx;
-    if (north) { c = (i32(ny) - 1 + GH) * NX + i; g = c + NX; f = FY[g * 9]; } else { c = GH * NX + i; g = c - NX; f = FY[c * 9]; sgn = -1.0; }
-  }
+  let ef = edgeFace(m); let c = ef.x; let g = ef.y;
+  var f = FX[ef.z * 9]; if (abs(ef.w) == 2) { f = FY[ef.z * 9]; }
+  let sgn = select(1.0, -1.0, ef.w < 0);
   if (W[c].x <= 0.0 && W[g].x <= 0.0) { return; }
   f = f * TH[select(c, g, (f > 0.0) == (sgn < 0.0))]; // the donor: the edge cell for outflow, the ghost for inflow
   let v = sgn * f * P.dx * dt * select(1.0, 0.5, P.secondOrder == 1u);
@@ -799,9 +992,13 @@ fn udGather(@builtin(global_invocation_id) gid: vec3u) {
 @group(0) @binding(39) var<storage, read> LF: array<u32>;          // per control face: padded cell · 2 + axis (1 = y-face)
 @group(0) @binding(40) var<storage, read_write> CL: array<vec4f>;  // per control face: volume in +, Kahan residual, volume in −, residual (m³)
 @compute @workgroup_size(64)
-fn lineFlux(@builtin(global_invocation_id) gid: vec3u) {
-  let m = gid.x;
-  if (m >= P.nLine) { return; }
+fn lineFlux(@builtin(global_invocation_id) gid: vec3u) { if (gid.x < P.nLine) { lineFluxAt(gid.x); } }
+@compute @workgroup_size(64)
+fn lineFluxL(@builtin(global_invocation_id) gid: vec3u) { // local time stepping: the faces of the level stepping now
+  let m = gid.x; if (m >= P.nLine) { return; }
+  let c = i32(LF[m] / 2u); if (ltsFace(c - select(1, i32(P.NX), LF[m] % 2u == 1u), c)) { lineFluxAt(m); }
+}
+fn lineFluxAt(m: u32) {
   let dt = DT[0];
   if (dt <= 0.0) { return; }
   let code = LF[m]; let c = i32(code / 2u);

@@ -426,6 +426,9 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <select id="dxSel"><option value="1">1 m (DEM resolution)</option><option value="2">2 m + downscale to 1 m</option><option value="4">4 m + downscale to 1 m</option><option value="4s">Speed mode: 4 m subgrid, depths at 1 m (~15× faster)</option><option value="8s">Screening: 8 m subgrid, depths at 1 m (~35× faster, coarser)</option></select></div>
       <div class="field"><label for="curbSel">Street curb burn</label>
         <select id="curbSel"><option value="auto">Auto</option><option value="0.15">15 cm</option><option value="0">Off</option></select></div>
+      <!-- local time stepping (opt-in) -->
+      <label class="toggle" title="Each 8 × 8 tile steps at its own power-of-two step (up to 8× the step the fastest cell allows): faster where a few deep channel cells set the step for a large shallow area. Off with subgrid cells and sediment"><input type="checkbox" id="ltsOn"> Local time stepping (experimental)</label>
+      <!-- /local time stepping -->
       <div class="field"><label for="bathySel" title="Lidar flattens rivers at the flight-day water surface. Where NOAA BlueTopo has surveyed the bed (harbours, estuaries, tidal rivers) that is used; elsewhere this carves an estimated channel from regional bankfull curves (Bieger et al. 2015)">Channel bathymetry</label>
         <select id="bathySel"><option value="off">Lidar surface (none)</option><option value="USA">Estimate: nationwide curve</option><option value="APL">Estimate: Atlantic Plain</option><option value="AHI">Estimate: Appalachian Highlands</option>
           <option value="IPL">Estimate: Interior Plains</option><option value="IHI">Estimate: Interior Highlands</option><option value="LUP">Estimate: Laurentian Upland</option><option value="RMS">Estimate: Rocky Mountains</option>
