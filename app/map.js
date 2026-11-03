@@ -60,6 +60,7 @@ import { MANNING } from '../src/terrain.js';
 import { layerInputs, transformFor } from '../src/infra.js';
 import { toUTM } from '../src/geo.js';
 import * as SSX from '../src/streamstats.js'; // ungauged inflows
+import * as CPD from '../src/compound.js';
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
  * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
@@ -691,8 +692,194 @@ function setTiers() {
   $('tiers').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
 }
 
+// ---- compound flooding and SLR (src/compound.js)
+/**
+ * The tide gauge's datums, SLR curves and NOAA extreme water levels (info), the NOAA prediction a 'predicted' design
+ * tide is cut from (pred, for predKey = station:date), and the joint rain–surge analysis (joint). A design storm takes a
+ * design tide (MHHW + surge + SLR, a tide cycle or a prediction, high or low water at the rain peak) as its water level:
+ * the same series an observed tide is, so the stage boundary, warm-up, start levels and fingerprint treat it the same.
+ */
+const cmpd = { gauge: null, info: null, loading: null, error: null, pred: null, predKey: null, predLoading: null, predError: null, joint: null };
+{ const y = new Date().getUTCFullYear(), o = $('slrYear').options[0]; if (y < 2030 && o.value !== String(y)) { o.value = String(y); o.textContent = `${y} (today)`; } }
+const cmpdEsc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const f2 = (v) => (v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+/** After the tide gauge is found (loadHistory): its datums, SLR and extreme water levels from NOAA CO-OPS. */
+function cmpdLoad(gauge) {
+  Object.assign(cmpd, { gauge, info: null, error: null, pred: null, predKey: null, predError: null, joint: null });
+  $('cmpdCtl').hidden = !gauge; $('cmpdPairs').innerHTML = '';
+  if (!gauge) { cmpd.loading = null; return; }
+  $('cmpdStation').textContent = `Tide gauge ${gauge.id} ${gauge.name}: datums, sea-level rise and extreme water levels (NOAA CO-OPS)…`;
+  cmpd.loading = CPD.fetchTideInfo(gauge.id, fetcher)
+    .then(info => { if (cmpd.gauge === gauge) { cmpd.info = info; if (info.notes.length) log('Tide gauge ' + gauge.id + ': ' + info.notes.join('; '), 'warn'); } },
+      e => { if (cmpd.gauge === gauge) cmpd.error = e.message; })
+    .finally(() => { if (cmpd.gauge !== gauge) return; cmpd.loading = null; cmpdForm(); updateStorm(); });
+}
+/** What the compound controls are set to. */
+function cmpdSettings() {
+  return { mode: $('dtMode').value, phase: $('dtPhase').value, date: $('dtDate').value, surge: surgeM(), slr: { scenario: $('slrScen').value, year: Number($('slrYear').value), m: slrM() } };
+}
+/** The surge on a design tide, m above MHHW (a NOAA extreme water level is the whole high water above MHHW). → { m, label } | null */
+function surgeM() {
+  const v = $('dtSurge').value;
+  if (v === 'none') return { m: 0, label: 'no surge' };
+  if (v === 'custom') { const m = Number($('dtSurgeM').value) || 0; return { m, label: 'custom surge' }; }
+  const T = Number(v.split(':')[1]), m = CPD.ewlAt(cmpd.info?.ewl?.levels, T);
+  return m == null ? null : { m, T, label: `NOAA ${T}-yr high water` };
+}
+/** Sea-level rise (m) since the datum epoch for the scenario and year set (or another year: a historic event's). */
+function slrM(year = Number($('slrYear').value), scen = $('slrScen').value) {
+  const I = cmpd.info; if (!I || scen === 'none') return 0;
+  if (scen === 'trend') { const r = I.ewl?.trendMmYr ?? (I.slr ? I.slr.background * 1000 : null); return r == null ? 0 : r / 1000 * (year - I.datums.epochMid); }
+  return I.slr ? CPD.slrAt(I.slr, scen, year) : 0;
+}
+const slrName = () => ({ none: 'no sea-level rise', trend: 'the observed trend' }[$('slrScen').value] ?? `2022 Interagency ${$('slrScen').value}`);
+/** The rain peak (s from the start): the centre of the heaviest block, the middle for a uniform storm. */
+const peakTime = (st) => { if (!st.depth?.length || st.pattern === 'uniform' || st.pattern === 'constant') return st.durationMin * 30; const k = st.depth.indexOf(Math.max(...st.depth)); return (k + 0.5) * st.blockMin * 60; };
+const predKeyNow = () => `${cmpd.info?.station}:${$('dtDate').value}`;
+/** The NOAA prediction for the design date ± 4 days (a 'predicted' design tide). */
+function cmpdPred() {
+  const I = cmpd.info, date = $('dtDate').value; if (!I || $('dtMode').value !== 'predicted' || !date) return Promise.resolve();
+  const key = predKeyNow(); if (cmpd.predKey === key && (cmpd.pred || cmpd.predLoading)) return cmpd.predLoading ?? Promise.resolve();
+  Object.assign(cmpd, { predKey: key, pred: null, predError: null });
+  const noon = Date.parse(date + 'T12:00Z');
+  cmpd.predLoading = CPD.fetchPrediction(I.station, I.datums.datum, noon - 4 * 864e5, noon + 4 * 864e5, fetcher)
+    .then(p => { if (cmpd.predKey === key) cmpd.pred = p; }, e => { if (cmpd.predKey === key) cmpd.predError = e.message; })
+    .finally(() => { if (cmpd.predKey !== key) return; cmpd.predLoading = null; cmpdForm(); updateStorm(); });
+  return cmpd.predLoading;
+}
+/** The storm with its coastal water level: a design storm's design tide, a historic tide raised for SLR. */
+function withCoast(st) {
+  const I = cmpd.info; if (!st || !I) return st;
+  if (st.pattern === 'historic') {
+    if (!st.wl || !$('slrHist').checked || $('slrScen').value === 'none') return st;
+    const from = new Date(st.t0).getUTCFullYear(), year = Number($('slrYear').value), d = slrM() - slrM(from);
+    return { ...st, wl: { ...st.wl, v: st.wl.v.map(v => v + d), slr: { scenario: $('slrScen').value, from, year, m: d } } };
+  }
+  const mode = $('dtMode').value, sg = surgeM(); if (mode === 'off' || !sg) return st;
+  const pred = mode === 'predicted' ? (cmpd.predKey === predKeyNow() ? cmpd.pred : null) : null; if (mode === 'predicted' && !pred) return st;
+  const slr = slrM(), year = Number($('slrYear').value);
+  // from an hour before the start to a day past the longest tail, so a tide cycle keeps turning however long the run is
+  const wl = CPD.designTide(I.datums, { mode, phase: $('dtPhase').value, peakS: peakTime(st), startS: -3600, endS: st.durationMin * 60 + 25 * 3600, surge: sg.m, slr,
+    pred, predAt: Date.parse($('dtDate').value + 'T12:00Z'), station: I.station, name: cmpd.gauge.name });
+  wl.design = { ...wl.design, surge: sg.label, ...(sg.T ? { surgeT: sg.T } : {}), slr: { scenario: $('slrScen').value, year, m: slr }, epoch: I.datums.epoch, ...(mode === 'predicted' ? { date: $('dtDate').value } : {}) };
+  return { ...st, wl };
+}
+/** Before a run: the station data and a prediction loaded; an error when a design tide is set but cannot be made. */
+async function coastReady() {
+  if (cmpd.loading) await cmpd.loading;
+  const mode = $('dtMode').value; if (stormSrc === 'hist' || mode === 'off') return;
+  if (!cmpd.info) throw new Error(`Design tide: ${cmpd.gauge ? `NOAA CO-OPS datums for ${cmpd.gauge.id} did not load (${cmpd.error ?? 'unknown error'})` : 'no tide gauge within 60 km'}. Set Design tide to None to run without one.`);
+  if (!surgeM()) throw new Error('Design tide: NOAA has no extreme water levels for this station. Pick another surge.');
+  if (mode === 'predicted') { await cmpdPred(); if (!cmpd.pred) throw new Error(`Design tide: no NOAA tide prediction for ${$('dtDate').value} (${cmpd.predError ?? 'no data'}).`); }
+  if (cmpd.info.datums.datum !== 'NAVD88') log(`Design tide: ${cmpd.info.station} has no NAVD88 datum, so the levels are on its MSL; check the DEM datum`, 'warn');
+}
+/** The controls shown and the notes: the station, and what the next run's water level will be. */
+function cmpdForm() {
+  if ($('cmpdCtl').hidden) return;
+  const I = cmpd.info, mode = $('dtMode').value, isHist = stormSrc === 'hist';
+  $('dtRows').hidden = isHist; $('slrHistRow').hidden = !isHist;
+  $('dtPhaseRow').hidden = mode !== 'cycle' && mode !== 'predicted'; $('dtDateRow').hidden = mode !== 'predicted'; $('dtSurgeMRow').hidden = $('dtSurge').value !== 'custom';
+  for (const o of $('slrScen').options) o.disabled = o.value === 'none' ? false : o.value === 'trend' ? !(I?.ewl?.trendMmYr != null || I?.slr) : !I?.slr?.scenarios?.[o.value];
+  for (const o of $('dtSurge').options) if (o.value.startsWith('ewl:')) o.disabled = !I?.ewl?.levels?.length;
+  $('cmpdJoint').disabled = !I || !model;
+  if (!I) { $('cmpdStation').textContent = cmpd.error ? `Tide gauge ${cmpd.gauge?.id}: NOAA CO-OPS datums unavailable (${cmpd.error}).` : $('cmpdStation').textContent; $('cmpdNote').textContent = ''; return; }
+  const d = I.datums, D = d.datum, e100 = CPD.ewlAt(I.ewl?.levels, 100);
+  $('cmpdStation').innerHTML = `NOAA CO-OPS ${I.station} ${cmpdEsc(cmpd.gauge.name)}: MHHW ${f2(d.mhhw)}, MSL ${f2(d.msl)}, MLLW ${f2(d.mllw)} m ${D} (epoch ${d.epoch ?? '?'})` +
+    (e100 != null ? `; NOAA 100-yr high water ${f2(e100)} m above MHHW` : '; no extreme water levels') +
+    (I.slr ? `; Intermediate rise since ${d.epochMid} ${f2(CPD.slrAt(I.slr, 'Intermediate', 2050))} m by 2050, ${f2(CPD.slrAt(I.slr, 'Intermediate', 2100))} m by 2100.` : '; no SLR projections.') +
+    (D !== 'NAVD88' ? ' <span class="pill warn">no NAVD88: levels on MSL</span>' : '');
+  const slr = slrM(), year = $('slrYear').value, sl = $('slrScen').value === 'none' ? 'no sea-level rise' : `${f2(slr)} m of rise (${slrName()}, ${year})`;
+  if (isHist) {
+    const st = hist.storm, from = st?.t0 ? new Date(st.t0).getUTCFullYear() : null;
+    $('cmpdNote').textContent = !$('slrHist').checked ? `Tick to raise the event's observed water level by the rise from its year to ${year} (${slrName()}).` :
+      from ? `The observed level is raised ${f2(slrM() - slrM(from))} m: the rise from ${from} to ${year} (${slrName()}).` : `The observed level is raised by the rise from the event's year to ${year} (${slrName()}).`;
+    return;
+  }
+  const sg = surgeM(), st = currentStorm(), pk = st ? peakTime(st) / 3600 : null;
+  if (mode === 'off') { $('cmpdNote').textContent = `No design tide: the model edges are free outfalls. With one, the open water on the edges takes MHHW (${f2(d.mhhw)} m ${D}) + a surge + ${sl}.`; return; }
+  if (!sg) { $('cmpdNote').textContent = 'NOAA has no extreme water levels here: pick None or a custom surge.'; return; }
+  const add = sg.m + slr, at = pk != null ? ` at the rain peak (${pk.toFixed(1)} h)` : '';
+  $('cmpdNote').textContent = mode === 'still' ? `Still water at ${f2(d.mhhw + add)} m ${D} throughout = MHHW ${f2(d.mhhw)} + ${sg.label} ${f2(sg.m)} + ${sl}.` :
+    mode === 'cycle' ? `A tide between ${f2(d.mllw + add)} and ${f2(d.mhhw + add)} m ${D} (MLLW to MHHW, period ${CPD.M2_HOURS.toFixed(2)} h), ${$('dtPhase').value} water${at}, + ${sg.label} ${f2(sg.m)} + ${sl}.` :
+    cmpd.pred && cmpd.predKey === predKeyNow() ? `NOAA's prediction around ${$('dtDate').value}: its ${$('dtPhase').value} water ${st?.wl?.design?.tideAt ?? ''} moved to the rain peak${pk != null ? ` (${pk.toFixed(1)} h)` : ''}, + ${sg.label} ${f2(sg.m)} + ${sl}.` :
+    cmpd.predError ? `No NOAA prediction for ${$('dtDate').value}: ${cmpd.predError}.` : `NOAA's tide prediction for ${$('dtDate').value}…`;
+}
+function cmpdChanged() { if ($('dtMode').value === 'predicted') cmpdPred(); updateStorm(); }
+for (const id of ['dtMode', 'dtPhase', 'dtDate', 'dtSurge', 'dtSurgeM', 'slrScen', 'slrYear', 'slrHist']) $(id).addEventListener('input', cmpdChanged);
+/** Storm label suffix: the design tide, or the rise added to an observed one. */
+function cmpdLabel(st) {
+  const w = st?.wl; if (!w) return '';
+  if (w.slr && !w.design) return `; observed level raised ${f2(w.slr.m)} m for sea-level rise ${w.slr.from}–${w.slr.year} (${w.slr.scenario})`;
+  if (!w.design) return '';
+  const g = w.design, how = { still: 'still water', cycle: `tide cycle, ${g.phase} water at the rain peak`, predicted: `NOAA prediction (${g.tideAt ?? g.date}), ${g.phase} water at the rain peak` }[g.mode];
+  return `; design tide from NOAA CO-OPS ${w.station} (${w.name}): ${how}, MHHW ${f2(g.mhhw)} m ${w.datum} + ${g.surge} ${f2(g.surgeM)} m + SLR ${f2(g.slrM)} m (${g.slr.scenario === 'none' ? 'none' : `${g.slr.scenario} ${g.slr.year}`}), peak ${f2(Math.max(...w.v))} m on ${run?.stageCells ?? 0} open-water edge cells`;
+}
+/** The joint analysis: rain at the nearest long-record gauge (ACIS) with the tide gauge's daily highest water. */
+$('cmpdJoint').onclick = async () => {
+  const I = cmpd.info, gauge = cmpd.gauge; if (!I || !model) return;
+  const btn = $('cmpdJoint'); btn.disabled = true; btn.textContent = 'Working…';
+  try {
+    const [lon, lat] = model.site, J = await CPD.fetchJoint(lon, lat, I, fetcher, { onProgress: (t) => { $('cmpdJointNote').textContent = t; } });
+    if (cmpd.gauge !== gauge) return;
+    cmpd.joint = J; cmpdJointShow();
+    log(`Joint rain–surge: ${J.gauge.name} (${J.gauge.km.toFixed(0)} km, ${J.rainYears} years) with ${I.station}; τ ${J.samples.rain.tau.toFixed(2)} rain-driven, ${J.samples.wl.tau.toFixed(2)} surge-driven`, 'ok', 'ACIS, NOAA CO-OPS');
+  } catch (e) { console.error(e); $('cmpdJointNote').textContent = 'Joint analysis unavailable: ' + e.message; }
+  finally { btn.disabled = false; btn.textContent = 'Joint rain–surge probability'; }
+};
+const rainUnit = () => (design.units === 'us' ? { u: 'in', f: (mm) => mm / 25.4, dp: 2 } : { u: 'mm', f: (mm) => mm, dp: 0 });
+/** An annual-maximum return period as the nearest Atlas 14 (partial-duration) return period offered. */
+function pairAri(T) {
+  const pds = Math.max(1, -1 / Math.log(1 - 1 / Math.max(T, 1.0001))), opts = [...$('ari').options].map(o => Number(o.value));
+  return { pds, ari: opts.reduce((a, b) => (Math.abs(Math.log(b / pds)) < Math.abs(Math.log(a / pds)) ? b : a)) };
+}
+function cmpdJointShow() {
+  const J = cmpd.joint; if (!J) return;
+  const s = J.samples, ru = rainUnit(), sig = (x) => (Math.abs(x.z) >= 1.96 ? 'significant at 5%' : 'not significant at 5%');
+  $('cmpdJointNote').textContent = `${J.gauge.name}, ${J.gauge.km.toFixed(0)} km (ACIS daily rain, ${J.rainYears} complete years) with ${J.station} (${J.wlSource}). ` +
+    `Rain-driven events: τ ${s.rain.tau.toFixed(2)} (n ${s.rain.n}, ${sig(s.rain)}); surge-driven: τ ${s.wl.tau.toFixed(2)} (n ${s.wl.n}, ${sig(s.wl)}). Gumbel copula; AND = both exceeded in a year.`;
+  const rows = J.design.map((p, k) => { const a = pairAri(p.rainT); return `<tr><td>${cmpdEsc(p.label)}</td><td>${ru.f(p.rainMM).toFixed(ru.dp)} ${ru.u}/day (${p.rainT.toFixed(1)}-yr)</td><td>${f2(p.wlM)} m (${p.wlT.toFixed(1)}-yr)</td><td>${p.andT.toFixed(0)}-yr</td>` +
+    `<td><button class="btn" data-k="${k}" title="Atlas 14 ${a.ari}-yr 24 h (the rain's ${p.rainT.toFixed(1)}-yr annual maximum is a ${a.pds.toFixed(1)}-yr partial-duration event) with a still design tide at MHHW + ${f2(p.wlM)} m">Use</button></td></tr>`; });
+  $('cmpdPairs').innerHTML = `<table><tr><th>${J.designT}-yr design event</th><th>rain</th><th>high water above MHHW</th><th>AND</th><th></th></tr>${rows.join('')}</table>`;
+}
+$('cmpdPairs').onclick = (e) => { const b = e.target.closest('button[data-k]'); const p = b && cmpd.joint?.design[Number(b.dataset.k)]; if (p) cmpdUse(p); };
+/** A design pair as the storm: Atlas 14 24 h at the rain's return period, a design tide at its water level. */
+function cmpdUse(p) {
+  const { ari, pds } = pairAri(p.rainT);
+  if (stormSrc !== 'a14') setStormSource('a14');
+  $('ari').value = String(ari); $('a14dur').value = '1440';
+  if ($('dtMode').value === 'off') $('dtMode').value = 'still';
+  $('dtSurge').value = 'custom'; $('dtSurgeM').value = p.wlM.toFixed(2);
+  updateStorm();
+  log(`Design pair “${p.label}”: Atlas 14 ${ari}-yr 24 h (the pair's ${p.rainMM.toFixed(0)} mm/day is a ${p.rainT.toFixed(1)}-yr annual maximum, ${pds.toFixed(1)}-yr partial duration) with high water ${f2(p.wlM)} m above MHHW, + ${slrName()}`, 'ok');
+}
+/** Batch: SLR variants (on a still MHHW tide when none is set) and the design pairs as storms. */
+function cmpdVariants() {
+  if (!cmpd.info?.slr) return [];
+  const dt = $('dtMode').value === 'off' ? { dtMode: 'still' } : {};
+  return [['slr-int-2050', 'Intermediate', 2050], ['slr-int-2100', 'Intermediate', 2100], ['slr-ih-2100', 'Intermediate-High', 2100], ['slr-high-2100', 'High', 2100]]
+    .map(([key, scen, year]) => ({ key, label: `SLR ${scen} ${year} (+${f2(slrM(year, scen))} m)`, inputs: { slrScen: scen, slrYear: String(year), slrHist: true, ...dt } }));
+}
+function cmpdStorms() {
+  return (cmpd.joint?.design ?? []).map(p => { const { ari } = pairAri(p.rainT);
+    return { key: 'jp-' + p.key, label: `${p.label}: ${ari}-yr 24 h + ${f2(p.wlM)} m`, stormSrc: 'a14', inputs: { ari: String(ari), a14dur: '1440', dtMode: $('dtMode').value === 'off' ? 'still' : $('dtMode').value, dtSurge: 'custom', dtSurgeM: p.wlM.toFixed(2) } }; });
+}
+/** A run's water level for its record (the report's design-tide figure): the series over the run, s from the start. */
+function tideRec(r) {
+  const st = r.storm, w = st?.wl; if (!w) return null;
+  const t0 = st.t0 ?? 0, a = t0 - 36e5, b = t0 + (tStop() + 3600) * 1000, pts = [];
+  w.t.forEach((t, i) => { if (t >= a && t <= b) pts.push([(t - t0) / 1000, +w.v[i].toFixed(3)]); });
+  return { station: w.station, name: w.name, datum: w.datum, kind: w.design ? 'design' : 'observed', design: w.design ?? null, slr: w.slr ?? null, mhhw: cmpd.info?.datums.mhhw ?? null,
+    peak: pts.length ? Math.max(...pts.map(p => p[1])) : null, pts, edgeCells: r.stageCells ?? 0, rainPeakS: peakTime(st) };
+}
+/** For the report (app/report-compound.js). */
+function cmpdReport() {
+  const I = cmpd.info; if (!I) return null;
+  return { station: I.station, name: cmpd.gauge?.name, datums: I.datums, slr: I.slr, ewl: I.ewl ? { levels: I.ewl.levels, trendMmYr: I.ewl.trendMmYr, years: I.ewl.annual.length } : null, joint: cmpd.joint, set: cmpdSettings() };
+}
+// end of compound flooding
+
 // ------------------------------------------------------------------ storm
-const fmtDur = (min) => min < 60 ? `${min} min` : `${+(min / 60).toFixed(2)} h`;
+const fmtDur =(min) => min < 60 ? `${min} min` : `${+(min / 60).toFixed(2)} h`;
 let stormSrc = 'a14';
 function setStormSource(s) {
   stormSrc = s;
@@ -703,7 +890,7 @@ function setStormSource(s) {
 /** The storm the next run will use (null before Atlas 14 is loaded). */
 function currentStorm() {
   const st = stormBase();
-  return st && emu?.rain != null && emu.rain !== 1 ? scaleStorm(st, emu.rain) : st;
+  return withCoast(st && emu?.rain != null && emu.rain !== 1 ? scaleStorm(st, emu.rain) : st); // + the design tide / SLR (compound flooding)
 }
 function stormBase() {
   if (stormSrc === 'hist') return hist.storm;
@@ -712,7 +899,8 @@ function stormBase() {
   const [pattern, peak] = $('pattern').value.split(':');
   return hyetograph(model.atlas14, { ari: emu?.ari ?? Number($('ari').value), durationMin: Number($('a14dur').value), pattern, peak: Number(peak ?? 0.5), which: $('which').value, factor: 1 + Number($('uplift').value) / 100 });
 }
-function stormLabel(st) {
+function stormLabel(st) { return stormLabel0(st) + cmpdLabel(st); }
+function stormLabel0(st) {
   if (!st) return 'none';
   if (st.pattern === 'constant') return `custom constant ${st.peakIntensity} mm/hr for ${fmtDur(st.durationMin)} (${st.total.toFixed(0)} mm)`;
   if (st.pattern === 'historic') return `historic: ${st.name}, ${st.total.toFixed(0)} mm over ${fmtDur(st.durationMin)} from ${new Date(st.t0).toISOString().slice(0, 16).replace('T', ' ')} UTC (${st.source}${st.radar ? '; the radar pattern varies the rain cell by cell, total is the area mean' : ''})` +
@@ -742,7 +930,7 @@ function stormMeta(st) {
 }
 function updateStorm() {
   const st = currentStorm();
-  drawHyeto();
+  drawHyeto(); cmpdForm();
   if (radar.mode === 'storm' || radar.mode === 'model') radarLoad().catch(e => radarNote('Radar unavailable: ' + e.message));
   if (!st) { $('stormTag').textContent = ''; $('stormSummary').textContent = model ? 'Loading the site rainfall record…' : 'Build a model to load the design rainfall for the site.'; return; }
   $('stormTag').textContent = st.pattern === 'constant' ? `${st.total.toFixed(0)} mm` : st.pattern === 'historic' ? `${st.name} · ${st.total.toFixed(0)} mm` : `${st.ari}-yr ${fmtDur(st.durationMin)} · ${st.total.toFixed(0)} mm`;
@@ -801,7 +989,7 @@ async function loadHistory() {
   if (!hist.gridded) $('histSrc').value = 'gauge';
   $('histSrc').querySelector('[value=radar]').disabled = !hist.gridded; // MRMS covers the lower 48 only, as the gridded record does
   $('histSrc').querySelector('[value=gauge]').textContent = asos ? `Airport gauge ${asos.id}, ${asos.km.toFixed(1)} km (5 min)` : 'Airport gauge (none within 30 km)';
-  $('coastRow').hidden = !gauge;
+  $('coastRow').hidden = !gauge; cmpdLoad(gauge);
   if (gauge) $('coastLabel').textContent = `Observed water level at ${gauge.name} (${gauge.km.toFixed(0)} km) on open-water edges`;
   $('histNote').textContent = `${daily.length.toLocaleString()} days of rainfall since ${daily[0].date.slice(0, 4)} (${daily.source}), ${hist.catalog.filter(e => e.cyclone).length} hurricane tracks within 250 km (NOAA HURDAT2)` +
     (gauge ? `, tide gauge ${gauge.id} ${gauge.name} ${gauge.km.toFixed(0)} km away.` : '. No tide gauge within 60 km.');
@@ -983,7 +1171,7 @@ function radarRainField(r, s) {
   }
 }
 /** Water level at simulation time t (s), or null. */
-const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, st.t0 + t * 1000) + (emu?.tide ?? 0) : null);
+const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, (st.t0 ?? 0) + t * 1000) + (emu?.tide ?? 0) : null);
 
 /**
  * Edge cells that see the observed water level (tidalEdgeCells): tidal open water on the edge (NLCD open water or
@@ -1001,8 +1189,8 @@ function stageEdgeCells(c, F, mask, st) {
     const fi = I * F + F / 2, fj = J * F + F / 2, cls = model.nlcd?.[Math.min(fine.ny - 1, fj | 0) * W + Math.min(W - 1, fi | 0)];
     if (cls === 11 || cls === 90 || cls === 95 || near(fi, fj)) water[K] = 1;
   }
-  const t1 = st.t0 + st.durationMin * 60e3 + Number($('tail').value) * 60e3;
-  const top = Math.max(...st.wl.v.filter((_, i) => st.wl.t[i] >= st.t0 - 36e5 && st.wl.t[i] <= t1 + 36e5), stageAt(st, 0)) + (emu?.tide ?? 0);
+  const t0 = st.t0 ?? 0, t1 = t0 + st.durationMin * 60e3 + Number($('tail').value) * 60e3; // a design tide runs from 0
+  const top = Math.max(...st.wl.v.filter((_, i) => st.wl.t[i] >= t0 - 36e5 && st.wl.t[i] <= t1 + 36e5), stageAt(st, 0)) + (emu?.tide ?? 0);
   return tidalEdgeCells(c, mask, water, top);
 }
 
@@ -1010,9 +1198,9 @@ function stageEdgeCells(c, F, mask, st) {
 function drawWL(t) {
   const st = run?.storm ?? currentStorm(), box = $('wlPlot');
   if (!st?.wl) { $('wlFig').hidden = true; return; }
-  $('wlFig').hidden = false; $('wlTitle').textContent = `Observed water level at ${st.wl.name}, m NAVD88`;
+  $('wlFig').hidden = false; $('wlTitle').textContent = `${st.wl.design ? 'Design' : 'Observed'} water level at ${st.wl.name}, m ${st.wl.datum ?? 'NAVD88'}`;
   const W = Math.max(240, box.clientWidth || 340), Hh = 96, L = 34, R = 6, T = 8, B = 76, dur = st.durationMin * 60e3;
-  const pts = st.wl.t.map((tt, i) => [(tt - st.t0) / dur, st.wl.v[i]]).filter(([f]) => f >= 0 && f <= 1);
+  const pts = st.wl.t.map((tt, i) => [(tt - (st.t0 ?? 0)) / dur, st.wl.v[i]]).filter(([f]) => f >= 0 && f <= 1);
   if (!pts.length) { $('wlFig').hidden = true; return; }
   const lo = Math.floor(Math.min(...pts.map(p => p[1])) * 2) / 2, hi = Math.max(lo + 0.5, Math.ceil(Math.max(...pts.map(p => p[1])) * 2) / 2);
   const x = (f) => L + f * (W - L - R), y = (v) => B - (B - T) * (v - lo) / (hi - lo);
@@ -1424,6 +1612,7 @@ function ensureSolver() {
 /** Gauge readings for a run's start levels and river inflow (fetched now, or the ones a paired run already used, so
  *  both runs of a comparison see the same forcing). → false when the run was replaced meanwhile. */
 async function prepareRun(r) {
+  try { await coastReady(); } catch (e) { log(e.message, 'err'); return false; } // the design tide's station data (compound flooding)
   await inflow.ready; // the gauge lists (they load after the build)
   if (run !== r) return false;
   r.gaugeWatch = gaugeWatch(r);
@@ -1662,7 +1851,7 @@ function forcingRecord(r) {
   return {
     storm: st ? { ...stormMeta(st), waterLevel: undefined, depth: st.depth, t0: st.t0 ?? null } : null,
     inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}), ...(e.ungauged ? { ungauged: e.ungauged } : {}) })),
-    tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: $('tCoast').checked, ...(st.wl.observedUntil ? { observedUntil: st.wl.observedUntil, surge: st.wl.surge } : {}), ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
+    tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: st.wl.design ? true : $('tCoast').checked, ...(st.wl.design ? { design: st.wl.design } : {}), ...(st.wl.slr ? { slr: st.wl.slr } : {}), ...(st.wl.observedUntil ? { observedUntil: st.wl.observedUntil, surge: st.wl.surge } : {}), ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
@@ -1719,7 +1908,7 @@ async function finishRecord() {
   const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
     saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), stormInfo: { ari: r.storm?.ari ?? null, durationMin: r.storm?.durationMin ?? null }, batch: r.batchInfo ?? null, geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
     grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
-  rec.wall = r.wall; rec.simulatedS = s.t;
+  rec.wall = r.wall; rec.simulatedS = s.t; rec.tide = tideRec(r);
   rec.inflow = inflowRecord(r); // river inflow hydrographs for the report (ungauged inflows block)
   if (r.gaugeWatch && r.out && r.gaugeWatch.gauges[0].series.at(-1)?.[0] < r.gaugeWatch.t0 + s.t * 1000 - 1) recordGauges(r, r.out, s.t); // the last moment too
   if (r.cso) rec.cso = csoRecord(r, books.hgl, s.t);
@@ -1779,7 +1968,7 @@ async function loadSaved(dir) {
   let ground = null; try { ground = CMP.decodeF32(await readBytes(folder, path('grids/ground.f32'))); } catch { /* existing conditions: the base DEM */ }
   return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
     storm: sm.storm?.label, stormInfo: { ari: sm.storm?.ari ?? null, durationMin: sm.storm?.durationMin ?? null }, batch: sm.batch ?? null, dir, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null,
-    ponds: sm.ponds ?? null, cso: sm.cso ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null, simulatedS: sm.results?.simulatedS ?? null, inflow: sm.inflow ?? null };
+    ponds: sm.ponds ?? null, cso: sm.cso ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null, simulatedS: sm.results?.simulatedS ?? null, inflow: sm.inflow ?? null, tide: sm.tide ?? null };
 }
 async function savedRuns() {
   const folder = projects.current?.folder; if (!folder) return [];
@@ -1961,7 +2150,9 @@ async function runJob(job, note, { resume = false, base = null } = {}) {
 const batchUI = initBatch({
   scenarios: () => design.scenarios.map(sc => sc.name), aris: () => [...$('ari').options].map(o => Number(o.value)), durations: () => [...$('a14dur').options].map(o => ({ value: Number(o.value), label: o.textContent })),
   project: () => projects.current, readText: (p) => readProjectFile(projects.current.folder, p), writeFile: (p, d) => writeProjectFile(projects.current.folder, p, d),
-  runJob, checkpointMeta, inputs: () => ({ dxSel: $('dxSel').value, ari: $('ari').value, a14dur: $('a14dur').value, calManning: $('calManning').value, calInfil: $('calInfil').value, uplift: $('uplift').value }),
+  runJob, checkpointMeta, inputs: () => ({ dxSel: $('dxSel').value, ari: $('ari').value, a14dur: $('a14dur').value, calManning: $('calManning').value, calInfil: $('calInfil').value, uplift: $('uplift').value,
+    ...Object.fromEntries(['dtMode', 'dtPhase', 'dtDate', 'dtSurge', 'dtSurgeM', 'slrScen', 'slrYear', 'slrHist'].map(id => [id, $(id).type === 'checkbox' ? $(id).checked : $(id).value])) }),
+  extraVariants: cmpdVariants, extraStorms: cmpdStorms, // compound flooding: SLR variants, joint design pairs
   stormSrc: () => stormSrc, ready: () => !!(model && device), log,
   // pause at the next frame boundary: a checkpoint first, then the run stops (unrecorded) and resumes from it later
   pause: () => new Promise((res) => { if (!run?.playing || run.record) { res(); return; } run.pauseReq = res; }),
@@ -2170,7 +2361,7 @@ async function checksOf(rec, { threshold = 0.15, wall = 0.10 } = {}) {
 }
 // ------------------------------------------------------------------ end of defensibility checks
 const reportUI = initReport(map, {
-  records: () => [...records].reverse(), savedRuns, loadSaved, analyze: analyzeRecord, eadFamily, checks: checksOf, units: () => design.units, project: () => projects.current, sweep: () => compareUI.sweep(), fema: () => model?.fema ?? null, bfeFreeboard: () => design.active?.settings?.freeboard ?? 0.3,
+  records: () => [...records].reverse(), savedRuns, loadSaved, analyze: analyzeRecord, eadFamily, checks: checksOf, units: () => design.units, project: () => projects.current, compound: cmpdReport, sweep: () => compareUI.sweep(), fema: () => model?.fema ?? null, bfeFreeboard: () => design.active?.settings?.freeboard ?? 0.3,
   profiles: () => design.analysis.features.filter(f => f.properties.type === 'profile' && f.geometry?.coordinates?.length > 1),
   ctx: () => model && { geo: { nx: model.fine.nx, ny: model.fine.ny, x0: model.fine.x0, y0: model.fine.y1 - model.fine.ny * model.fine.dx, dx: model.fine.dx }, z: model.base.z, bld: model.base.bld, toCell: llCell },
   async exportFiles(files, name, bytes) {
@@ -3409,7 +3600,7 @@ async function runFiles() {
   const summary = {
     project: projects.current?.name, savedUTC: new Date().toISOString(), finished: !run.playing && $('runBtn').textContent === 'Done',
     site: model.site, extent: S.area, polygon: S.poly, grid: { nx: c.nx, ny: c.ny, cellM: F, epsg: model.fine.epsg, mode: c.sg ? 'subgrid speed mode (1 m tables; max_depth.asc at 1 m, other grids per solver cell)' : 'standard' },
-    storm: { label: stormLabel(run.storm), ...stormMeta(run.storm) }, drainage: plain(drainLabel()), greenInfrastructure: plain(giLabel()),
+    storm: { label: stormLabel(run.storm), ...stormMeta(run.storm) }, tide: run.record?.tide ?? tideRec(run), drainage: plain(drainLabel()), greenInfrastructure: plain(giLabel()),
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
     batch: run.batchInfo ?? null, // the batch study job (src/batch.js) this run was, for the sensitivity and EAD sections
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
