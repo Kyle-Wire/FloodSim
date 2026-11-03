@@ -228,6 +228,43 @@ this session's runs and the project's saved runs.
 - On the Meyerland design project (25-yr, existing vs proposed), the report's control-line peaks match Compare's
   (49.61 → 41.27 cfs). At that storm most of its streets are full from curb to curb.
 
+**Flooded areas, building damage, EAD and benefit–cost** (Report drawer; `src/areas.js`, `src/damage.js`,
+`app/report-areas.js`, `app/report-damage.js`). Three report sections, for one run or a before / after pair:
+- **Flooded areas:** the peak depth split into connected areas (15 cm by default; 5, 30 or 60 cm in the drawer),
+  ranked by the water they held. Per area:
+  - size, peak volume, max and mean depth, and the area in each depth band;
+  - first arrival and the longest time over 15 cm;
+  - peak speed and depth × velocity, and the worst ARR hazard class;
+  - the streets through it (OSM names) with the length deeper than 30 cm;
+  - the buildings touching it, the NSI structures with water above the floor, the people there at night, the damage;
+  - the share of the water still there at the end, and whether it touches the model edge.
+  
+  A map figure rings and labels each area, with a bar chart of volumes and CSV tables.
+- **Building damage:**
+  - **Structures:** the USACE National Structure Inventory (fetched per area): occupancy, foundation, values, people.
+  - **Curves:** USACE depth–damage functions per occupancy type, vendored from USACE go-consequences (MIT;
+    `tools/build-damage-curves.mjs` regenerates `src/damage-curves.js`). They are EGM 01-03 / 04-01 for
+    single-family homes and HEC-FIA for the rest.
+  - **Water against a building:** the peak level on the open cells next to its OSM footprint, so a rowhouse sees its
+    own front and back, not its neighbour's. Only water at least 10 cm deep counts (set in the drawer), and only in a
+    patch that reaches a street or covers 200 m².
+  - **First floor:** the median ground there plus the NSI foundation height.
+  - **Band:** every curve at its 10th and 90th percentile together.
+- **Expected annual damage:**
+  - **Runs used:** the project's saved runs of the same scenario, design and settings (the forcing fingerprint less
+    the storm) at Atlas 14 return periods of the same duration. A batch study of return periods fills it in.
+  - **Integral:** trapezoids over AEP. Damage falls to zero at AEP 1 when the most frequent storm already does
+    damage, and the tail beyond the rarest storm is held at its damage. Both are flagged when they matter.
+  - **Benefit–cost:** with a pair, the drawer's cost, O&M, real discount rate (default 3 %) and period (default
+    50 years) give the present values, net benefits and the BCR.
+
+Why the two exposure filters: on the South Philadelphia test block (10-yr 1-h), counting any water at a wall
+(0.5 cm) booked $101 M of damage to 528 of 700 structures. Thin sheet flow next to a house with a basement takes
+the basement curve, and rain ponds in 568 enclosed rowhouse yards that have yard drains the model lacks. With both
+filters, water reaches 47 structures, 13 have it above the first floor, and damage is $6.3 M. The yard ponds are
+listed in the table but not counted.
+Damage is buildings only: no vehicles, displacement, emergency costs or life safety.
+
 **FEMA flood zones and base flood elevations** (Data & assumptions → *FEMA flood zones and BFE lines*; `src/fema.js`).
 Build reads FEMA's National Flood Hazard Layer for the area:
 - **The data:** flood zones (S_FLD_HAZ_AR), the BFE lines (S_BFE) and the cross-sections with their regulatory water
@@ -1146,6 +1183,7 @@ node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (8 and 16 bit, 
 node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pixels), advection, a live build with a cell arriving in the nowcast, PrecipRate fill
 node tests/run-validate-tests.mjs  # validation scorecard: peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88
 node tests/run-checkpoint-tests.mjs # checkpoints: state by path (typed arrays in place, a solver root), packing, a SWMM run copied half way
+node tests/run-damage-tests.mjs   # damage and areas: USACE curves, water against walls (rowhouses, sheet flow, enclosed yards), EAD, BCA, area stats (--live: NSI)
 npm run batch -- "<project>"     # a project's batch study headless on the GPU (tools/batch.mjs; --url, --retries, --hours, --headed)
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
@@ -1209,6 +1247,9 @@ src/stormwater.js     outlet structures (rating, links), stage–storage, modifi
 src/compare.js        paired-run comparison: forcing fingerprint, .f32 grids, Δ maps, off-site impact, building and outlet tables
 src/batch.js          batch studies: jobs from storms × scenarios × variants, stable job ids, progress
 src/checkpoint.js     run checkpoints: GPU buffers, SWMM memory and files, the run's JS state by path; packing
+src/areas.js          flooded areas: connected areas of the peak depth with their depth, timing, hazard, streets and buildings; SVG map
+src/damage.js         building damage (NSI structures, water against walls, USACE curves), EAD, benefit–cost
+src/damage-curves.js  USACE depth–damage functions per occupancy type (generated from USACE go-consequences)
 src/report.js         H&H report outputs: hydrograph stats, profiles, HGL path and checks, stage–storage–discharge, gutter spread, SVG charts
 src/fema.js           FEMA NFHL: flood zones, BFE lines and cross-sections, zone and BFE grids
 src/bathymetry.js     estimated channel bathymetry from regional bankfull curves

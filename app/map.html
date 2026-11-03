@@ -315,6 +315,14 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <label class="ifield"><span>Run (after)</span><select id="repB"></select></label>
       <label class="ifield"><span>Manhole freeboard <i id="repFbUnit">ft</i></span><input id="repFb" inputmode="decimal" value="1"></label>
       <label class="ifield"><span>Allowable gutter spread <i id="repSpreadUnit">ft</i></span><input id="repSpread" inputmode="decimal" value="8"></label>
+      <label class="ifield"><span>Flooded areas: peak depth at least</span><select id="repAreaTh"><option value="0.05">5 cm (2 in)</option><option value="0.15" selected>15 cm (6 in)</option><option value="0.3">30 cm (1 ft)</option><option value="0.6">60 cm (2 ft)</option></select></label>
+      <label class="ifield"><span>Damage: least water against a wall</span><select id="repWall" title="Water standing at least this deep next to a building counts against it (thinner sheet flow on pavement does not flood a basement)"><option value="0.05">5 cm (2 in)</option><option value="0.1" selected>10 cm (4 in)</option><option value="0.15">15 cm (6 in)</option><option value="0.3">30 cm (1 ft)</option></select></label>
+      <details class="sub"><summary>Benefit–cost inputs (before = without, after = with the project)</summary>
+        <label class="ifield"><span>Project cost, $</span><input id="repCost" inputmode="decimal" value="0"></label>
+        <label class="ifield"><span>Operation and maintenance, $ a year</span><input id="repOM" inputmode="decimal" value="0"></label>
+        <label class="ifield"><span>Real discount rate, %</span><input id="repRate" inputmode="decimal" value="3.0" title="Set your program's rate: FEMA BCA, the USACE federal rate, or OMB A-94"></label>
+        <label class="ifield"><span>Period of analysis, years</span><input id="repYears" inputmode="decimal" value="50"></label>
+      </details>
       <div class="row"><button class="btn" id="repRefresh" type="button">Refresh list</button></div>
       <p class="note" id="repNote"></p>
       <div class="props" id="repOut"></div>

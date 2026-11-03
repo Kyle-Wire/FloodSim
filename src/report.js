@@ -165,7 +165,7 @@ const fmtTick = (v, step) => { const dp = Math.max(0, -Math.floor(Math.log10(ste
  * A line chart as a standalone SVG string, one y axis. series: [{ name, pts: [[x, y]], role: 'after' | 'before' | 'ground'
  * | 'line', fillBelow?: bool, label?: bool (direct label at the end, default on) }]; refs: horizontal reference lines
  * [{ y, label }]; markers: [{ x, y, label }] (e.g. finished floors). o: { title, xLabel, yLabel, width, height, theme,
- * yMin?, yMax?, zeroY? }. NaN gaps break a line.
+ * yMin?, yMax?, zeroY?, xTicks?: [{ v, label }] (fixed x ticks, e.g. return periods on a log axis) }. NaN gaps break a line.
  */
 export function lineChart(series, o = {}) {
   const T = THEMES[o.theme ?? 'light'], W = o.width ?? 640, H = o.height ?? 300, m = { l: 58, r: 96, t: o.title ? 28 : 12, b: 40 };
@@ -175,13 +175,14 @@ export function lineChart(series, o = {}) {
   if (!pts.length) { x0 = 0; x1 = 1; y0 = 0; y1 = 1; }
   if (o.zeroY) y0 = Math.min(0, y0);
   const pad = (y1 - y0) * 0.06 || 0.5; if (o.yMin == null && !o.zeroY) y0 -= pad; if (o.yMax == null) y1 += pad;
-  const X = niceTicks(x0, x1, 6), Y = niceTicks(y0, y1, 5); y0 = Math.min(y0, Y.ticks[0]); y1 = Math.max(y1, Y.ticks.at(-1));
+  if (o.xTicks) { x0 = Math.min(x0, ...o.xTicks.map(t => t.v)); x1 = Math.max(x1, ...o.xTicks.map(t => t.v)); }
+  const X = o.xTicks ? { ticks: o.xTicks.map(t => t.v), step: 1 } : niceTicks(x0, x1, 6), Y = niceTicks(y0, y1, 5); y0 = Math.min(y0, Y.ticks[0]); y1 = Math.max(y1, Y.ticks.at(-1));
   const px = (x) => m.l + (x - x0) / (x1 - x0 || 1) * (W - m.l - m.r), py = (y) => H - m.b - (y - y0) / (y1 - y0 || 1) * (H - m.t - m.b);
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="system-ui,Segoe UI,sans-serif" font-size="11" role="img" aria-label="${xmlEsc(o.title ?? 'chart')}">`,
     `<rect width="${W}" height="${H}" fill="${T.surface}"/>`];
   if (o.title) out.push(`<text x="${m.l}" y="17" fill="${T.ink}" font-size="12.5" font-weight="600">${xmlEsc(o.title)}</text>`);
   for (const v of Y.ticks) if (v >= y0 - 1e-9 && v <= y1 + 1e-9) out.push(`<line x1="${m.l}" x2="${W - m.r}" y1="${py(v).toFixed(1)}" y2="${py(v).toFixed(1)}" stroke="${T.grid}" stroke-width="1"/><text x="${m.l - 6}" y="${(py(v) + 3.5).toFixed(1)}" fill="${T.muted}" text-anchor="end">${fmtTick(v, Y.step)}</text>`);
-  for (const v of X.ticks) if (v >= x0 - 1e-9 && v <= x1 + 1e-9) out.push(`<text x="${px(v).toFixed(1)}" y="${H - m.b + 15}" fill="${T.muted}" text-anchor="middle">${fmtTick(v, X.step)}</text>`);
+  for (const v of X.ticks) if (v >= x0 - 1e-9 && v <= x1 + 1e-9) out.push(`<text x="${px(v).toFixed(1)}" y="${H - m.b + 15}" fill="${T.muted}" text-anchor="middle">${o.xTicks ? xmlEsc(o.xTicks.find(t => t.v === v).label) : fmtTick(v, X.step)}</text>`);
   out.push(`<line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}" stroke="${T.axis}"/>`);
   if (o.xLabel) out.push(`<text x="${(m.l + W - m.r) / 2}" y="${H - 6}" fill="${T.ink2}" text-anchor="middle">${xmlEsc(o.xLabel)}</text>`);
   if (o.yLabel) out.push(`<text transform="translate(13 ${(m.t + H - m.b) / 2}) rotate(-90)" fill="${T.ink2}" text-anchor="middle">${xmlEsc(o.yLabel)}</text>`);

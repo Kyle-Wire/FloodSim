@@ -19,6 +19,7 @@ const port = Number(process.env.PORT || process.argv[2] || 8766);
 
 const ALLOW = new Set([
   'elevation.nationalmap.gov',      // USGS 3DEP DEM (ImageServer)
+  'nsi.sec.usace.army.mil',         // USACE National Structure Inventory (building damage)
   'overpass-api.de',                // OpenStreetMap buildings, roads, waterways
   'overpass.kumi.systems',          // Overpass mirrors
   'overpass.private.coffee',
@@ -126,7 +127,8 @@ async function projects(req, res, p) {
       try {
         const sm = JSON.parse(await readFile(join(dir, d.name, 'summary.json'), 'utf8'));
         runs.push({ dir: d.name, savedUTC: sm.savedUTC ?? null, scenario: sm.scenario ?? 'Existing conditions', designHash: sm.designHash ?? null, forcingHash: sm.forcingHash ?? null,
-          forcing: sm.forcing ?? null, commit: sm.commit ?? null, storm: sm.storm?.label ?? null, finished: sm.finished ?? null, grids: !!sm.grids });
+          forcing: sm.forcing ?? null, commit: sm.commit ?? null, storm: sm.storm?.label ?? null, ari: sm.storm?.ari ?? null, durationMin: sm.storm?.durationMin ?? null,
+          batch: sm.batch ?? null, finished: sm.finished ?? null, grids: !!sm.grids });
       } catch { /* no summary */ }
     }
     runs.sort((a, b) => String(b.dir).localeCompare(String(a.dir)));

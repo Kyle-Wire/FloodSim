@@ -10,6 +10,8 @@ import { zip } from '../src/export.js';
 import * as FEMA from '../src/fema.js';
 import * as V from '../src/validate.js';
 import { labelImage } from './labels.js';
+import { areasSection } from './report-areas.js';
+import { damageSection, eadSection } from './report-damage.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -21,7 +23,8 @@ export function initReport(map, api) {
   const us = () => api.units() === 'us';
   // display units: length, elevation, flow, volume, spread
   const U = () => (us() ? { len: 'ft', L: (m) => m / FT, q: 'cfs', Q: (v) => v / CF, vol: 'ft³', V: (v) => v / CF, dpL: 2, dpQ: 2 } : { len: 'm', L: (m) => m, q: 'm³/s', Q: (v) => v, vol: 'm³', V: (v) => v, dpL: 2, dpQ: 3 });
-  const settings = () => ({ freeboard: (Number($('repFb').value) || (us() ? 1 : 0.3)) * (us() ? FT : 1), spread: (Number($('repSpread').value) || (us() ? 8 : 2.4)) * (us() ? FT : 1), bfeFreeboard: api.bfeFreeboard?.() ?? 0.3048 });
+  const settings = () => ({ freeboard: (Number($('repFb').value) || (us() ? 1 : 0.3)) * (us() ? FT : 1), spread: (Number($('repSpread').value) || (us() ? 8 : 2.4)) * (us() ? FT : 1), bfeFreeboard: api.bfeFreeboard?.() ?? 0.3048,
+    areaTh: Number($('repAreaTh')?.value) || 0.15, wall: Number($('repWall')?.value) || 0.10, bca: { cost: Number($('repCost')?.value) || 0, om: Number($('repOM')?.value) || 0, rate: (Number($('repRate')?.value) || 0) / 100, years: Number($('repYears')?.value) || 50 } });
 
   // ---------------------------------------------------------------- runs
   async function listRuns() {
@@ -47,6 +50,9 @@ export function initReport(map, api) {
       const [a, b] = await Promise.all([getRun($('repA').value), getRun($('repB').value)]);
       if (!b) { $('repOut').innerHTML = ''; return; }
       if (a && a.forcing?.hash !== b.forcing?.hash) { const ok = C.comparable(a, b); if (!ok.ok) { $('repOut').innerHTML = `<p class="iinfo warn"><b>Not a before / after pair.</b> ${esc(ok.reason)} Pick “None” for a one-run report.</p>`; A = null; B = b; return; } }
+      // flooded areas and building damage per run, and the return-period family for EAD (app/map.js analyzeRecord, eadFamily)
+      if (api.analyze) { $('repOut').innerHTML = '<p class="note">Flooded areas, building damage and expected annual damage…</p>';
+        for (const r of [a, b].filter(Boolean)) { await api.analyze(r, { threshold: settings().areaTh, wall: settings().wall }).catch(e => console.warn('analysis', e)); r.ead = await api.eadFamily?.(r, { wall: settings().wall }).catch(e => { console.warn('EAD', e); return null; }) ?? null; } }
       A = a; B = b; render();
     } catch (e) { console.error(e); $('repOut').innerHTML = `<p class="iinfo warn">${esc(e.message)}</p>`; }
     finally { busy = false; }
@@ -249,6 +255,7 @@ export function initReport(map, api) {
       out.push({ id: 'validation' + key, title: `Validation scorecard${who}`, figures, tables,
         note: `${mark[sc.verdict.status] ? mark[sc.verdict.status].toUpperCase() + ': ' : ''}${sc.verdict.text} Targets are this app's defaults for an urban flood model at 1 m (good / fair), not a published standard. High-water marks: the highest wet 1 m pixel within 3 m of each mark. Gauges: the median water surface of the 9 mapped open-water cells nearest the gauge (within 60 m) at least 10 cm deep, every simulated minute${how ? ` (observed levels: ${how})` : ''}. Rain and books explain a result; the verdict comes from the observations alone.` });
     }
+    for (const sec of [areasSection({ runs, A, theme, size, u, tag }), damageSection({ runs, A, theme, size, tag }), eadSection({ runs, A, theme, size, tag, s: s.bca })]) if (sec) out.push(sec); // app/report-areas.js, app/report-damage.js
     const vs = out.filter(sec => sec.id.startsWith('validation')); // right after the summary
     if (vs.length) { const rest = out.filter(sec => !sec.id.startsWith('validation')); out.length = 0; out.push(rest[0], ...vs, ...rest.slice(1)); }
     return out;
@@ -355,6 +362,8 @@ ${secs.map(sec => `<h2>${esc(sec.title)}</h2><p class="note">${esc(sec.note)}</p
   $('repA').onchange = $('repB').onchange = () => { hglFrom = null; compute(); };
   $('repRefresh').onclick = () => fillPickers().then(compute);
   $('repFb').onchange = $('repSpread').onchange = () => { if (B) render(); };
+  for (const id of ['repCost', 'repOM', 'repRate', 'repYears']) if ($(id)) $(id).onchange = () => { if (B) render(); };
+  for (const id of ['repAreaTh', 'repWall']) if ($(id)) $(id).onchange = () => compute();
   return {
     refresh() { if (!$('repDrawer').hidden) fillPickers(); },
     /** For the console and tests: the sections of the current report. */
