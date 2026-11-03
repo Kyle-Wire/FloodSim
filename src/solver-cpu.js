@@ -7,9 +7,12 @@
 //   - Draining-time flux limiter: a cell never exports more water than it holds (positivity, exact mass)
 //   - Semi-implicit point-wise Manning friction
 //   - Rainfall and infiltration source terms with full mass accounting
+//   - Optional local time stepping (o.lts): 8×8 tiles step at 2^m times a base step (see _cycle)
 // This file is the ground truth the WGSL kernels are verified against.
 
 export const GH = 2; // ghost layers on each side (MUSCL needs two)
+export const LTS_TILE = 8; // local time stepping: tile size (cells), the GPU's active tiles
+export const LTS_SAFE = 0.9; // local time stepping: share of its CFL step a tile may take (its speeds are the cycle start's)
 
 function minmod(a, b) {
   if (a * b <= 0) return 0;
@@ -38,6 +41,7 @@ export class CPUSolver {
    *  hdry         depth below which a cell is dry (m), default 1e-6
    *  hfront       depth below which reconstruction drops to first order, default 1e-3
    *  crest        flood-barrier faces [{ i, j, axis, z, C, ground }] (see GPUSolver); setCrestLevels changes them mid-run
+   *  lts          local time stepping: true (3 levels, steps up to 8× the base step) or the number of levels (1–4)
    *  Every step also tracks the hazard products of src/hazard.js per cell (this.hz, readHazard), as the GPU does.
    */
   constructor(o) {
@@ -95,7 +99,22 @@ export class CPUSolver {
     this.t = 0; this.steps = 0;
     this.vol = { rain: 0, infil: 0, outflow: 0, clipped: 0, initial: 0 };
     this._fillGhostStatic();
+    // local time stepping: per padded cell its tile (a ghost takes its edge cell's), per tile its level, per cell the
+    // flux its finer neighbours have passed it while it waited (aH…, added at its own step); _lev = level stepping now
+    this.lts = o.lts ? (o.lts === true ? 3 : Math.max(1, Math.min(4, o.lts | 0))) : 0; this._lev = -1;
+    if (this.lts) {
+      const tx = Math.ceil((this.nx + 1) / LTS_TILE), ty = Math.ceil((this.ny + 1) / LTS_TILE);
+      this.tilesX = tx; this.tilesY = ty; this.LV = new Int32Array(tx * ty); this.TI = new Int32Array(N); this._tsp = new Float64Array(tx * ty);
+      for (let j = 0; j < this.NY; j++) for (let i = 0; i < this.NX; i++) {
+        const ii = Math.min(Math.max(i - GH, 0), this.nx - 1), jj = Math.min(Math.max(j - GH, 0), this.ny - 1);
+        this.TI[j * this.NX + i] = Math.floor(jj / LTS_TILE) * tx + Math.floor(ii / LTS_TILE);
+      }
+      this.aH = new Float64Array(N); this.aHu = new Float64Array(N); this.aHv = new Float64Array(N);
+      this.cellSteps = 0; this.records = 0;
+    }
   }
+  /** Local time stepping: level of padded cell c (its tile's). */
+  _lv(c) { return this.LV[this.TI[c]]; }
 
   setCrestLevels(zs) {
     this.crest.forEach((f, m) => { const z = Number.isFinite(zs[m]) ? zs[m] : -Infinity; if (f.axis) { this.CY[f.c] = z; this.WY[f.c] = f.C ?? 1.6; } else { this.CX[f.c] = z; this.WX[f.c] = f.C ?? 1.6; } });
@@ -228,36 +247,42 @@ export class CPUSolver {
     this._fillGhost(h, hu, hv);
     this._prims(h, hu, hv);
     // x faces: face (i-1,i) stored at cell i, for i in [GH, NX-GH], j interior
+    // local time stepping (lev ≥ 0): only this level's faces (the lower level of their two cells); the rest keep old fluxes
+    const lev = this._lev, on = (a, b) => lev < 0 || Math.min(this._lv(a), this._lv(b)) === lev, wf = (a, b) => (on(a, b) ? 1 : 0);
+    const near = (c) => lev < 0 || this._lv(c) === lev || this._lv(c) === lev + 1; // cells this level's faces touch
     for (let j = GH; j < NY - GH; j++) for (let i = GH; i <= NX - GH; i++) {
-      const b = j * NX + i; this._face(b - 1, b, 1, true, FX, b * 9, CX[b], WX[b]);
+      const b = j * NX + i; if (on(b - 1, b)) this._face(b - 1, b, 1, true, FX, b * 9, CX[b], WX[b]);
     }
     // y faces: face (j-1,j) stored at cell j
     for (let j = GH; j <= NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
-      const b = j * NX + i; this._face(b - NX, b, NX, false, FY, b * 9, CY[b], WY[b]);
+      const b = j * NX + i; if (on(b - NX, b)) this._face(b - NX, b, NX, false, FY, b * 9, CY[b], WY[b]);
     }
     // draining-time limiter: scale each face's flux by its donor cell's theta = min(1, volume / outgoing volume)
     const TH = this.TH; TH.fill(1);
     const area = dx * dx;
     for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
-      const c = j * NX + i; if (!M[c]) continue;
-      const fw = FX[c * 9], fe = FX[(c + 1) * 9], fs = FY[c * 9], fn = FY[(c + NX) * 9];
+      const c = j * NX + i; if (!M[c] || !near(c)) continue;
+      const fw = FX[c * 9] * wf(c - 1, c), fe = FX[(c + 1) * 9] * wf(c, c + 1), fs = FY[c * 9] * wf(c - NX, c), fn = FY[(c + NX) * 9] * wf(c, c + NX);
       const out = ((fe > 0 ? fe : 0) - (fw < 0 ? fw : 0) + (fn > 0 ? fn : 0) - (fs < 0 ? fs : 0)) * dx * dt;
-      if (out > h[c] * area) TH[c] = h[c] * area / out;
+      // with local time stepping a cell holds its water plus what its finer neighbours have passed it so far: while it
+      // waits (one level coarser), and in the first stage of its own step (the store goes in with the RK start state)
+      const vol = lev >= 0 && (this._lv(c) === lev + 1 || !this._stage) ? Math.max(0, h[c] + this.aH[c]) * area : h[c] * area;
+      if (out > vol) TH[c] = vol / out;
     }
     for (let j = GH; j < NY - GH; j++) for (let i = GH; i <= NX - GH; i++) {
       const b = j * NX + i, f = b * 9, t = TH[FX[f] > 0 ? b - 1 : b];
-      if (t < 1) { FX[f] *= t; FX[f + 1] *= t; FX[f + 2] *= t; }
+      if (t < 1 && on(b - 1, b)) { FX[f] *= t; FX[f + 1] *= t; FX[f + 2] *= t; }
     }
     for (let j = GH; j <= NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
       const b = j * NX + i, f = b * 9, t = TH[FY[f] > 0 ? b - NX : b];
-      if (t < 1) { FY[f] *= t; FY[f + 1] *= t; FY[f + 2] *= t; }
+      if (t < 1 && on(b - NX, b)) { FY[f] *= t; FY[f + 1] *= t; FY[f + 2] *= t; }
     }
     // barrier books (as the GPU barrier kernel): the theta-scaled flux each barrier face passes this stage, booked while
     // the barrier is up and water stands BAR_OVER over its crest; in stage 0 the peak rate, highest water and load
     const wgt = this.secondOrder ? 0.5 : 1, B = this.bar, { Hp, Ep } = this;
     this.crest.forEach((cf, m) => {
       const b = cf.c, a = b - (cf.axis ? NX : 1), crest = (cf.axis ? CY : CX)[b];
-      if ((Hp[a] <= 0 && Hp[b] <= 0) || crest === -Infinity) return;
+      if ((Hp[a] <= 0 && Hp[b] <= 0) || crest === -Infinity || !on(a, b)) return;
       const ea = Hp[a] > 0.005 ? Ep[a] : -Infinity, eb = Hp[b] > 0.005 ? Ep[b] : -Infinity, w = Math.max(ea, eb);
       const q = (cf.axis ? FY : FX)[b * 9], over = w > crest + BAR_OVER;
       if (over) { const v = q * dx * dt * wgt; if (v > 0) B.plus[m] += v; else B.minus[m] -= v; if (Number.isNaN(B.tOver[m]) && v !== 0) B.tOver[m] = this.t; }
@@ -271,27 +296,39 @@ export class CPUSolver {
     let qout = 0;
     for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
       const c = j * NX + i;
-      if (!M[c]) { dh[c] = dhu[c] = dhv[c] = 0; continue; }
+      if (!M[c] || !near(c)) { dh[c] = dhu[c] = dhv[c] = 0; continue; }
       const w = c * 9, e = (c + 1) * 9, sth = c * 9, nth = (c + NX) * 9;
       // x direction: normal = hu (F1), tangential = hv (F2)
       const hW = FX[w + 7], zW = FX[w + 8], hE = FX[e + 5], zE = FX[e + 6];
       // y direction: normal = hv, tangential = hu
       const hS = FY[sth + 7], zS = FY[sth + 8], hN = FY[nth + 5], zN = FY[nth + 6];
       const inv = 1 / dx;
-      dh[c] = -inv * (FX[e] - FX[w] + FY[nth] - FY[sth]);
-      dhu[c] = -inv * ((FX[e + 1] + FX[e + 3]) - (FX[w + 1] + FX[w + 4]) + 0.5 * g * (hW + hE) * (zE - zW)
-        + FY[nth + 2] - FY[sth + 2]);
-      dhv[c] = -inv * ((FY[nth + 1] + FY[nth + 3]) - (FY[sth + 1] + FY[sth + 4]) + 0.5 * g * (hS + hN) * (zN - zS)
-        + FX[e + 2] - FX[w + 2]);
+      if (lev < 0) {
+        dh[c] = -inv * (FX[e] - FX[w] + FY[nth] - FY[sth]);
+        dhu[c] = -inv * ((FX[e + 1] + FX[e + 3]) - (FX[w + 1] + FX[w + 4]) + 0.5 * g * (hW + hE) * (zE - zW)
+          + FY[nth + 2] - FY[sth + 2]);
+        dhv[c] = -inv * ((FY[nth + 1] + FY[nth + 3]) - (FY[sth + 1] + FY[sth + 4]) + 0.5 * g * (hS + hN) * (zN - zS)
+          + FX[e + 2] - FX[w + 2]);
+        continue;
+      }
+      // local time stepping: this level's faces only, and the cell's centred bed-slope term only when it steps itself
+      // (each face's hydrostatic term pairs with it over the cycle, so still water stays still)
+      const kw = wf(c - 1, c), ke = wf(c, c + 1), ks = wf(c - NX, c), kn = wf(c, c + NX), own = this._lv(c) === lev ? 1 : 0;
+      dh[c] = -inv * (ke * FX[e] - kw * FX[w] + kn * FY[nth] - ks * FY[sth]);
+      dhu[c] = -inv * (ke * (FX[e + 1] + FX[e + 3]) - kw * (FX[w + 1] + FX[w + 4]) + own * 0.5 * g * (hW + hE) * (zE - zW)
+        + kn * FY[nth + 2] - ks * FY[sth + 2]);
+      dhv[c] = -inv * (kn * (FY[nth + 1] + FY[nth + 3]) - ks * (FY[sth + 1] + FY[sth + 4]) + own * 0.5 * g * (hS + hN) * (zN - zS)
+        + ke * FX[e + 2] - kw * FX[w + 2]);
     }
-    // boundary mass fluxes (only open boundaries carry flow)
+    // boundary mass fluxes (only open boundaries carry flow); with local time stepping an edge face steps with its edge cell
+    const ek = (c) => (lev < 0 || this._lv(c) === lev ? 1 : 0);
     for (let j = GH; j < NY - GH; j++) {
-      qout -= FX[(j * NX + GH) * 9] * dx;
-      qout += FX[(j * NX + NX - GH) * 9] * dx;
+      qout -= ek(j * NX + GH) * FX[(j * NX + GH) * 9] * dx;
+      qout += ek(j * NX + NX - GH - 1) * FX[(j * NX + NX - GH) * 9] * dx;
     }
     for (let i = GH; i < NX - GH; i++) {
-      qout -= FY[(GH * NX + i) * 9] * dx;
-      qout += FY[((NY - GH) * NX + i) * 9] * dx;
+      qout -= ek(GH * NX + i) * FY[(GH * NX + i) * 9] * dx;
+      qout += ek((NY - GH - 1) * NX + i) * FY[((NY - GH) * NX + i) * 9] * dx;
     }
     return qout;
   }
@@ -320,6 +357,7 @@ export class CPUSolver {
   }
 
   step(dtMax = Infinity) {
+    if (this.lts) return this._cycle(dtMax);
     const dtc = this.computeDt();
     // fully dry domain: cap the step so rainfall is applied gradually (matches GPU dtDry)
     let dt = Math.min(isFinite(dtc) ? dtc : this.dtDry, dtMax);
@@ -345,10 +383,17 @@ export class CPUSolver {
       this._fix(h, hu, hv);
       this.vol.outflow += dt * q;
     }
-    // semi-implicit friction + rain/infiltration
-    const { g, n, hdry, infil, rainField } = this; const r0 = this.rainRate;
+    this._sources(dt, null, this.t + dt);
+    this.t += dt; this.steps++;
+    return dt;
+  }
+
+  /** Semi-implicit friction, rain, infiltration (GI, Green-Ampt), max depth and hazard over dt, in the cells sel picks (null: all), the step ending at tEnd. */
+  _sources(dt, sel, tEnd) {
+    const { h, hu, hv, NX, NY, M, g, n, hdry, infil, rainField } = this; const r0 = this.rainRate, A = this.dx * this.dx;
     let rv = 0, iv = 0;
-    interior(c => {
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
+      const c = j * NX + i; if (!M[c] || (sel && !sel(c))) continue;
       const d = h[c];
       if (d > hdry && n[c] > 0) {
         const u = hu[c] / d, v = hv[c] / d;
@@ -367,14 +412,79 @@ export class CPUSolver {
       h[c] = Math.max(0, d + r - inf); rv += r; iv += d + r - h[c];
       if (h[c] <= hdry) { hu[c] = 0; hv[c] = 0; }
       if (h[c] > this.maxDepth[c]) this.maxDepth[c] = h[c];
-    });
-    this.vol.rain += rv * A; this.vol.infil += iv * A;
-    this.t += dt; this.steps++;
-    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) { // hazard products, as the GPU hazard kernel
-      const c = this.idx(i, j); if (!M[c]) continue;
-      const d = h[c], k = j * this.nx + i; this.hz.cell(k, d, d >= VCUT ? Math.hypot(hu[c], hv[c]) / d : 0, this.t, dt, this.scour ? this.scour.tauC[k] : Infinity, this.scour ? this.scour.n[k] : 0);
     }
-    return dt;
+    this.vol.rain += rv * A; this.vol.infil += iv * A;
+    for (let j = 0; j < this.ny; j++) for (let i = 0; i < this.nx; i++) { // hazard products, as the GPU hazard kernel
+      const c = this.idx(i, j); if (!M[c] || (sel && !sel(c))) continue;
+      const d = h[c], k = j * this.nx + i; this.hz.cell(k, d, d >= VCUT ? Math.hypot(hu[c], hv[c]) / d : 0, tEnd, dt, this.scour ? this.scour.tauC[k] : Infinity, this.scour ? this.scour.n[k] : 0);
+    }
+  }
+
+  /**
+   * Local time stepping: one cycle of P = 2^L base steps δ (L = this.lts). δ is LTS_SAFE times the domain's CFL step (the
+   * dry step / P when all is dry), and the cycle P·δ ends at dtMax at the latest. Each 8×8 tile takes the largest level
+   * m ≤ L whose step 2^m·δ is within LTS_SAFE of its own CFL step at the cycle start; a dry tile takes L, or next to a wet
+   * tile that tile's level (a front moves under 4 cells a cycle, so it never outruns that ring); then no tile is more than
+   * one level above a face neighbour. In base step k every level whose step ends then (2^m divides k + 1) steps, finest
+   * first. A level-m step is the usual SSP-RK2 on the level-m faces (the lower level of their two cells), then sources
+   * and hazard products, all with dt = 2^m·δ. A cell one level coarser waits frozen while its finer neighbours step
+   * against it, gathering the flux they pass it (each RK stage, weighted as the RK average) into a store that joins the
+   * RK start state of its own step, while L is taken at the frozen state the neighbours saw: every face's water goes to
+   * both sides once, so mass is exact, and the pressure a fine face passed meets the bed-slope term it balances in the
+   * same stages, so still water stays still. Draining-time scaling counts a cell's water plus its store (while it waits
+   * and in its first stage), so nothing is drained below zero.
+   */
+  _cycle(dtMax) {
+    const { NX, NY, M, h, hu, hv, g, hdry, LV, _tsp: sp } = this, L = this.lts, P = 1 << L, tx = this.tilesX, ty = this.tilesY;
+    sp.fill(0); let smax = 0;
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) {
+      const c = j * NX + i, d = h[c]; if (!M[c] || d <= hdry) continue;
+      const s = Math.abs(hu[c] / d) + Math.abs(hv[c] / d) + 2 * Math.sqrt(g * d), t = this.TI[c];
+      if (s > sp[t]) sp[t] = s; if (s > smax) smax = s;
+    }
+    const D = Math.min(smax > 0 ? P * LTS_SAFE * this.cfl * this.dx / smax : this.dtDry, dtMax), dl = D / P;
+    for (let t = 0; t < LV.length; t++) LV[t] = sp[t] > 0 ? Math.max(0, Math.min(L, Math.floor(Math.log2(LTS_SAFE * this.cfl * this.dx / sp[t] / dl)))) : L;
+    for (let t = 0; t < LV.length; t++) if (!(sp[t] > 0)) { // a dry tile next to a wet one (8 neighbours) takes its level
+      const x = t % tx, y = (t / tx) | 0;
+      for (let b = Math.max(0, y - 1); b <= Math.min(ty - 1, y + 1); b++) for (let a = Math.max(0, x - 1); a <= Math.min(tx - 1, x + 1); a++) if (sp[b * tx + a] > 0) LV[t] = Math.min(LV[t], LV[b * tx + a]);
+    }
+    for (let p = 0; p < L; p++) for (let t = 0; t < LV.length; t++) { // at most one level above a face neighbour
+      const x = t % tx, y = (t / tx) | 0;
+      if (x > 0) LV[t] = Math.min(LV[t], LV[t - 1] + 1); if (x < tx - 1) LV[t] = Math.min(LV[t], LV[t + 1] + 1);
+      if (y > 0) LV[t] = Math.min(LV[t], LV[t - tx] + 1); if (y < ty - 1) LV[t] = Math.min(LV[t], LV[t + tx] + 1);
+    }
+    const t0 = this.t;
+    for (let k = 0; k < P; k++) for (let m = 0; m <= L; m++) if ((k + 1) % (1 << m) === 0) this._record(m, k === P - 1 ? t0 + D : t0 + (k + 1) * dl, dl * (1 << m));
+    this.t = t0 + D; this.steps++;
+    return D;
+  }
+  /** One level-m step of a local-time-stepping cycle (see _cycle), dt = 2^m·δ, ending at tEnd. */
+  _record(m, tEnd, dt) {
+    const { h, hu, hv, h0, hu0, hv0, dh, dhu, dhv, NX, NY, M, aH, aHu, aHv, hdry } = this, A = this.dx * this.dx;
+    const cells = [], coarse = [];
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) { const c = j * NX + i, l = this._lv(c); if (M[c] && l === m) cells.push(c); else if (M[c] && l === m + 1) coarse.push(c); }
+    const fix = () => { let cl = 0; for (const c of cells) { if (h[c] < 0) { cl -= h[c]; h[c] = 0; } if (h[c] <= hdry) { hu[c] = 0; hv[c] = 0; } } this.vol.clipped += cl * A; };
+    const w = this.secondOrder ? 0.5 * dt : dt, gather = () => { for (const c of coarse) { aH[c] += w * dh[c]; aHu[c] += w * dhu[c]; aHv[c] += w * dhv[c]; } };
+    this._lev = m; this.records++; this.cellSteps += cells.length;
+    if (this.secondOrder) {
+      // what the finer neighbours passed goes in with the RK start state: L is taken at the frozen state the neighbours saw
+      for (const c of cells) { h0[c] = h[c] + aH[c]; hu0[c] = hu[c] + aHu[c]; hv0[c] = hv[c] + aHv[c]; }
+      this._stage = 0; const q1 = this._L(h, hu, hv, dt); gather();
+      for (const c of cells) { h[c] = h0[c] + dt * dh[c]; hu[c] = hu0[c] + dt * dhu[c]; hv[c] = hv0[c] + dt * dhv[c]; }
+      fix();
+      this._stage = 1; const q2 = this._L(h, hu, hv, dt); gather();
+      for (const c of cells) { h[c] = 0.5 * (h0[c] + h[c] + dt * dh[c]); hu[c] = 0.5 * (hu0[c] + hu[c] + dt * dhu[c]); hv[c] = 0.5 * (hv0[c] + hv[c] + dt * dhv[c]); }
+      fix();
+      this.vol.outflow += dt * 0.5 * (q1 + q2);
+    } else {
+      this._stage = 0; const q = this._L(h, hu, hv, dt); gather();
+      for (const c of cells) { h[c] += aH[c] + dt * dh[c]; hu[c] += aHu[c] + dt * dhu[c]; hv[c] += aHv[c] + dt * dhv[c]; }
+      fix();
+      this.vol.outflow += dt * q;
+    }
+    for (const c of cells) aH[c] = aHu[c] = aHv[c] = 0;
+    this._lev = -1;
+    this._sources(dt, (c) => this._lv(c) === m, tEnd);
   }
 
   run(tEnd, onStep) {
