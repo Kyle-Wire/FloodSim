@@ -770,9 +770,11 @@ readings are fetched when the run finishes (at most 20 s). `npm run test:validat
     carved channel is far too small there. The reach below Fairmount Dam is the tidal Schuylkill, a dredged estuary,
     and the curves are fitted to non-tidal alluvial streams: they carve it to about −1.1 m NAVD88.
   - With NOAA BlueTopo's surveyed bed below the dam (Channel bathymetry, above), both gauges track within about
-    0.15 m from base flow to hour 15. At the crest, Fairmount is +0.27 m and 11 min late, and 30th Street is +0.14 m
-    and 66 min late. The 30th Street timing is off because the model has no tide: the observed level falls with the
-    ebb after 14:00, and the model's stays up.
+    0.15 m from base flow to hour 15. 30th Street follows the ebb before the flood: low tide −0.36 m against −0.41 m
+    observed, about 0.1 m high on the falling tide (the boundary is the Philadelphia tide gauge on the Delaware, not
+    the Schuylkill's mouth). At the crest, Fairmount is +0.27 m and 30th Street +0.13 m, 22 min early (with the
+    tide on only part of the channel: +0.14 m, 66 min late). Both crests are flat for hours, so their times are loose:
+    the Fairmount model level is still within 2 cm of its highest at the end of the run.
   - The marks: four of five flooded, bias +0.32 m, RMSE 1.16 m.
     - The three in the pool above the dam read +0.55 to +1.44 m, growing toward the top edge. Philly-7 is 250 m from
       where the river comes in and reads +1.44 m. The flow enters there from rest, over a pool channel that is still
@@ -780,8 +782,8 @@ readings are fetched when the run finishes (at most 20 s). `npm run test:validat
       well upstream of the marks you score.
     - HW Philly-11 (a depth mark near Market Street, 1.83 m observed) stays dry in the model. Its observed level
       (5.44 m) is above the 30th Street crest (4.96 m), so it was probably local ponding, not the river.
-  - The Cherry Street mark (4 m under the bridge deck) is not scored. The books (edge-fix run): surface 9e-7, with the pipes
-    3.6e-6. The gauge-corrected rain over the area (53 mm) is well under the radar alone (91 mm) and the gridded
+  - The Cherry Street mark (4 m under the bridge deck) is not scored. The books (tide-edge run): surface 5e-7, with the
+    pipes 6e-7. The gauge-corrected rain over the area (53 mm) is well under the radar alone (91 mm) and the gridded
     record (86 mm): not explained yet.
 
 **Projects** (header *Projects* / *Save*, Ctrl+S; `app/projects.js`, `/api/projects` in the server, loopback only).
