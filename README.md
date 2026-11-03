@@ -800,6 +800,37 @@ Each project is a folder in `Documents\FloodSim Projects` (override with `FLOODS
 
 Opening a project rebuilds the model from the saved settings, and reloads a historic event if one was used.
 
+**Batch studies and checkpoints** (map button *Batch*; `src/batch.js`, `src/checkpoint.js`, `app/batch-ui.js`,
+`tools/batch.mjs`). A study is many runs, one after another, each filed in the project as an ordinary run:
+- **Jobs:** every combination of design storms (Atlas 14 return periods × durations, or the storm as set now),
+  scenarios (existing conditions and each site-design scenario), and variants. The variants are: as set,
+  roughness × 0.8 or × 1.2, infiltration × 0.5, rain + 10 %, and one cell size coarser. Jobs run storm by storm with
+  existing conditions first, so each with / without pair finishes together.
+- **The study** is saved as `batch.json` in the project, with each job's status, run folder and wall time.
+- **Checkpoints:** a run under way is copied into `runs/_checkpoint/` every few minutes of wall-clock time (default
+  10). The copy holds the GPU solver's buffers byte for byte, SWMM's whole WebAssembly memory with its in-memory
+  report files, and the run's own books and series. It is a few MB, gzip-compressed.
+- **Resume:** a reload, a crash or *Pause* loses at most one checkpoint interval. *Resume* rebuilds the run from the
+  same settings and puts the copy back. The forcing fingerprint must match the checkpoint's, or it refuses.
+- **Headless:** `npm run batch -- "<project folder>"` runs the project's study in headless Chrome/Edge on the
+  machine's GPU. It starts its own server, or reuses one with `--url`. After a browser or GPU crash it relaunches
+  the browser (`--retries`, default 3), and the job under way carries on from its checkpoint. The page form is
+  `map.html?project=<folder>&batch=run`.
+
+Checked in the app on a 2 m model of 520 × 456 cells (10-yr 1-h storm, 158 inlets on a synthesized combined sewer):
+- **Paused and resumed:** a run paused at 0:40, the page reloaded and the run resumed matches the uninterrupted run
+  bit for bit. That covers every result grid (peak depth, level, speed, depth × velocity, wet time, time above
+  15 cm, final depth, hazard), the inlet and pipe results, and SWMM's books. The surface infiltration book differs
+  at 1e-7, the same as between two uninterrupted runs: it depends on when the page reads the GPU totals back.
+- **Headless:** the same job run headless by `tools/batch.mjs` matches the in-app run cell for cell.
+- **Peak-depth fix:** the test found that peak depth at an inlet giving water back (a surcharged manhole) was taken
+  before that step's return flow. The page caught the return only when a frame happened to be read back at that
+  moment. The exchange kernel now takes the peak too, so peak depth no longer depends on wall-clock timing.
+- **Node tests:** `tests/run-checkpoint-tests.mjs` copies a SWMM engine half way through a run into a fresh engine.
+  The two then produce the same 255,600 heads and close with the same continuity.
+
+Not in a checkpoint: the export animation frames (the animation restarts at the resume).
+
 ## Phase 2 — rivers, culverts, storage, green infrastructure
 
 **Rivers** (`src/river.js`). A 1D river from surveyed cross-sections runs in EPA SWMM (dynamic wave): one junction
@@ -1114,6 +1145,8 @@ node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and lis
 node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (8 and 16 bit, all filters), GRIB2, value tables, gauge-corrected totals, timing (--live: Ida)
 node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pixels), advection, a live build with a cell arriving in the nowcast, PrecipRate fill
 node tests/run-validate-tests.mjs  # validation scorecard: peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88
+node tests/run-checkpoint-tests.mjs # checkpoints: state by path (typed arrays in place, a solver root), packing, a SWMM run copied half way
+npm run batch -- "<project>"     # a project's batch study headless on the GPU (tools/batch.mjs; --url, --retries, --hours, --headed)
 # GPU suite: npm run test:gpu runs tests/gpu-browser.html in headless Chrome or Edge (the browser's own WebGPU, so the
 # real GPU) and writes tests/results-gpu.json. No npm packages: it starts its own server on a free port, streams the
 # log, and exits non-zero on a GPU error, page exception, missing adapter or timeout. Options: --url http://localhost:8770
@@ -1174,6 +1207,8 @@ src/gi.js             green infrastructure layers (permeable pavement, rain gard
 src/design.js         site design: proposed buildings, pads, paved areas, demolitions → edited 1 m layers; grading engine, cut / fill log
 src/stormwater.js     outlet structures (rating, links), stage–storage, modified Puls, drawn GI, underdrains, the detention check
 src/compare.js        paired-run comparison: forcing fingerprint, .f32 grids, Δ maps, off-site impact, building and outlet tables
+src/batch.js          batch studies: jobs from storms × scenarios × variants, stable job ids, progress
+src/checkpoint.js     run checkpoints: GPU buffers, SWMM memory and files, the run's JS state by path; packing
 src/report.js         H&H report outputs: hydrograph stats, profiles, HGL path and checks, stage–storage–discharge, gutter spread, SVG charts
 src/fema.js           FEMA NFHL: flood zones, BFE lines and cross-sections, zone and BFE grids
 src/bathymetry.js     estimated channel bathymetry from regional bankfull curves
@@ -1181,6 +1216,7 @@ src/topobathy.js      surveyed bathymetry (NOAA BlueTopo) on the model grid, mer
 src/tiff.js           small GeoTIFF reader (tiled / striped, deflate, float samples, GeoKeys)
 src/window.js         window reruns: the window, edge segments, inflow rates, the edge check, merging
 src/emulator.js       per-project emulator: Latin hypercube, Gaussian processes, PCA of flood fields, leave-one-out, save / load
+tools/batch.mjs       runs a project's batch study headless (tools/headless.mjs: Chrome/Edge over DevTools)
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)

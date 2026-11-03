@@ -481,6 +481,9 @@ fn exchange(@builtin(global_invocation_id) gid: vec3u) {
   }
   x.y = q.x;
   INX[m] = x;
+  // the peak depth is tracked in sources, before this: an inlet giving water back (a surcharged manhole) raises the cell
+  // after it, so take the peak here too, or it is caught only when a frame happens to be read back at that moment
+  var a = A[c]; a.x = max(a.x, q.x); A[c] = a;
 }
 
 // ---- active tiles. Faces (and theta) run on wet tiles grown by 2, the update on wet tiles grown by 1: water moves

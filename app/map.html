@@ -225,6 +225,10 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
   .rail { overflow: visible; }
   .engine, .proj { margin-left: 0; }
 }
+.chips { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; } .chips .chip { display: inline-flex; gap: 4px; align-items: center; }
+.drawer h3.sub { font: 600 12px var(--body); color: var(--muted); margin: 10px 0 4px; }
+#batJobs table { width: 100%; border-collapse: collapse; font-size: 11.5px; } #batJobs th { text-align: left; color: var(--muted); font-weight: 600; padding: 2px 4px; }
+#batJobs td { padding: 2px 4px; border-top: 1px solid var(--rule); } #batJobs tr.ok td:nth-child(3) { color: var(--good); } #batJobs tr.err td:nth-child(3) { color: var(--warn); } #batJobs tr.muted td { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -265,6 +269,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <button class="infra-toggle" id="infraToggle" aria-expanded="false" aria-controls="infra" title="Draw, import or estimate pipes, culverts, structures and storage">Infrastructure <b id="infraCount"></b></button>
       <button class="infra-toggle" id="cmpToggle" aria-expanded="false" aria-controls="cmpDrawer" title="Compare two runs with the same storm and settings: what the design changed">Compare</button>
       <button class="infra-toggle" id="emuToggle" aria-expanded="false" aria-controls="emuDrawer" title="Per-project emulator: instant flood maps across a range of storms and design values, trained on this project&rsquo;s own runs (screening only)">Emulator</button>
+      <button class="infra-toggle" id="batToggle" aria-expanded="false" aria-controls="batDrawer" title="Batch: many runs (design storms × scenarios × sensitivity variants) one after another, each filed in the project, with checkpoints so a stopped run resumes">Batch</button>
       <button class="infra-toggle" id="repToggle" aria-expanded="false" aria-controls="repDrawer" title="Report: hydrographs, pond stage–storage–discharge, storm sewer HGL, water surface profiles and gutter spread, with export">Report</button>
     </div>
     <aside class="drawer wide" id="cmpDrawer" hidden aria-label="Compare drawer">
@@ -290,6 +295,19 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <p class="note" id="swNote">Runs existing conditions and the active scenario at each design storm, one pair after another, and fills the check: post-development peak ≤ pre-development peak at each control line.</p>
         <div class="props" id="swOut"></div>
       </details>
+    </aside>
+    <aside class="drawer wide" id="batDrawer" hidden aria-label="Batch drawer">
+      <header><h2>Batch runs</h2><button class="x" id="batClose" type="button" aria-label="Close drawer">×</button></header>
+      <p class="note">Every combination below is one run, run one after another at full speed and filed in the project (runs folder). The study is kept in the project as batch.json: after a reload or a crash, Resume carries on, and the run under way restarts from its last checkpoint. Headless, with this page closed: <code>npm run batch -- "Project folder"</code>.</p>
+      <h3 class="sub">Design storms (Atlas 14)</h3><div class="chips" id="batStorms"></div>
+      <h3 class="sub">Durations</h3><div class="chips" id="batDurs"></div>
+      <h3 class="sub">Scenarios</h3><div class="chips" id="batScen"></div>
+      <h3 class="sub">Variants</h3><div class="chips" id="batVar"></div>
+      <label class="ifield"><span>Checkpoint every <i>min of wall-clock time</i></span><input id="ckEvery" inputmode="decimal" value="10"></label>
+      <div class="row"><button class="btn" id="batPlan" type="button">Count the runs</button><button class="btn primary" id="batStart" type="button">Start</button>
+        <button class="btn" id="batPause" type="button" disabled>Pause</button><button class="btn" id="batResume" type="button" hidden>Resume</button></div>
+      <p class="note" id="batNote"></p><p class="note" id="batCk"></p>
+      <div class="props" id="batJobs"></div>
     </aside>
     <aside class="drawer wide" id="repDrawer" hidden aria-label="Report drawer">
       <header><h2>Report</h2><button class="x" id="repClose" type="button" aria-label="Close drawer">×</button></header>

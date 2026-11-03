@@ -48,6 +48,8 @@ import * as FEMA from '../src/fema.js';
 import * as WIN from '../src/window.js';
 import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetry.js';
 import { blueTopoGrid, mergeSurvey } from '../src/topobathy.js';
+import * as CK from '../src/checkpoint.js';
+import { initBatch } from './batch-ui.js';
 /**
  * Emulator-run overrides, read where each input is made: { ari (yr, between Atlas 14 columns too), rain (depth
  * factor), inflow (scale on every river hydrograph), tide (m on the observed water level), se (Green-Ampt wetness at
@@ -1517,6 +1519,10 @@ const speedMul = () => { const v = Number($('speed').value); return v >= 100 ? I
 const STEP_QUANTUM = 10;
 async function loop(gen) {
   if (!run || run.gen !== gen || !run.playing) return;
+  if (run.pauseReq) { // a batch pausing: checkpoint, then stop without a record
+    const r = run, done = r.pauseReq; r.pauseReq = null; await saveCheckpoint(r).catch(e => log('Checkpoint failed: ' + e.message, 'warn'));
+    r.finish?.(new Error('Batch paused')); if (run === r) { stopRun(); resetRun(); } done(); return;
+  }
   const s = run.solver, now = performance.now(), wall = Math.min(0.25, (now - run.lastWall) / 1000); run.lastWall = now;
   try {
     const Q = STEP_QUANTUM, atQ = Math.abs(s.t - Q * Math.round(s.t / Q)) < 1e-3, pace = speedMul();
@@ -1559,6 +1565,7 @@ async function loop(gen) {
     if (K > 0 && K >= run.K) run.K = Math.max(1, Math.min(400, Math.round(run.K * Math.min(2, Math.max(0.5, 40 / Math.max(1, ms))))));
     if (run.exchanger && s.t >= run.exchanger.tNext - 1e-6) { await run.exchanger.exchange(); if (run.coupler) drawNetworkState(); }
     run.t = s.t; radarClock(run);
+    if (atQ && projects.current && performance.now() - (run.lastCkpt ??= performance.now()) > ckEveryMs() && s.t < tStop() - 60) { await saveCheckpoint(run).catch(e => log('Checkpoint failed: ' + e.message, 'warn')); if (!run || run.gen !== gen) return; }
     if (wall > 0) run.rtf = run.rtf ? 0.9 * run.rtf + 0.1 * ((s.t - t0) / wall) : (s.t - t0) / wall;
     if (out) {
       run.out = out; run.lastOut = now;
@@ -1587,7 +1594,7 @@ async function loop(gen) {
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
       if (S.obs.length) scoreAndShow();
       const done = run; await finishRecord();
-      if (!done.emu) await projects.runFinished(); done.finish?.(); // filed before anyone (Run both) starts the next run; emulator runs save themselves
+      if (!done.emu && !done.batchJob) await projects.runFinished(); done.finish?.(); // filed before anyone (Run both) starts the next run; emulator runs save themselves
     }
   } catch (e) {
     console.error(e); run.playing = false; log('Solver error: ' + e.message, 'err'); run.finish?.(e); return;
@@ -1804,6 +1811,104 @@ async function runSweep(aris, note, each) {
 const sweep = { cancel: false, running: false };
 /** Stop a sweep now: the run in progress ends (unfinished, not recorded) and no further run starts. */
 function cancelSweep() { sweep.cancel = true; if (run && !run.record) { const r = run; r.finish?.(new Error('Sweep cancelled')); stopRun(); resetRun(); } }
+// ------------------------------------------------------------------ checkpoints (src/checkpoint.js)
+// A run under way is copied into the project (runs/_checkpoint/) every few minutes of wall-clock time: the solver's
+// buffers, SWMM's memory and the run's own books. Resume rebuilds the run from the same settings (the forcing
+// fingerprint must match) and puts the copy back, so a reload, a crash or a headless batch carries on where it stopped.
+const CK_DIR = 'runs/_checkpoint';
+// not copied: the grid and inputs (rebuilt from the same settings), the solver and SWMM (copied separately), the
+// export frames (too large: the animation restarts at the resume), and this page's clocks and handles
+const RUN_SKIP = new Set(['solver', 'c', 'net', 'sw', 'storm', 'inflowReady', 'inflowRaw', 'levelsReady', 'levelSrc', 'view', 'frames', 'done', 'finish', 'record', 'gen', 'playing',
+  'lastWall', 'wall0', 'paceT', 'lastOut', 'lastRead', 'lastDraw', 'lastHz', 'lastCkpt', 'pauseReq', 'swmm', 'window', 'batchJob', 'emu']);
+const ckEveryMs = () => Number($('ckEvery')?.value ?? 10) * 60e3;
+const fmtClock = (t) => `${Math.floor(t / 3600)}:${String(Math.floor(t % 3600 / 60)).padStart(2, '0')}`;
+async function saveCheckpoint(r) {
+  const folder = projects.current?.folder; if (!folder || !r.solver || r.record) return null;
+  const c0 = performance.now(), s = r.solver, gpu = await CK.gpuSnapshot(s);
+  if (run !== r) return null;
+  const meta = { v: 1, t: s.t, savedUTC: new Date().toISOString(), forcing: CMP.fingerprint(forcingRecord(r)).hash, scenario: r.scenario ?? null, job: r.batchJob ?? null,
+    wall: (performance.now() - (r.wall0 ?? performance.now())) / 1000, commit: appCommit, label: $('stormTag').textContent };
+  const parts = { meta, ...Object.fromEntries(Object.entries(gpu).map(([k, v]) => ['gpu:' + k, v])), ...CK.stateParts('solver', CK.solverState(s)), ...CK.stateParts('run', CK.captureState(r, { skip: RUN_SKIP })) };
+  if (r.swmm && !r.swmmClosed) {
+    const sw = CK.swmmSnapshot(r.swmm); parts['swmm:mem'] = sw.memory; parts.swmm = { streams: sw.streams, t: sw.t, files: Object.keys(sw.files) };
+    for (const [f, b] of Object.entries(sw.files)) parts['swmm:file:' + f] = b;
+  }
+  const bytes = await CK.pack(parts);
+  await writeProjectFile(folder, CK_DIR + '/state.ckpt', bytes);
+  await writeProjectFile(folder, CK_DIR + '/meta.json', JSON.stringify({ ...meta, bytes: bytes.length }));
+  r.lastCkpt = performance.now();
+  log(`Checkpoint at ${fmtClock(s.t)} of the run: ${(bytes.length / 1e6).toFixed(0)} MB in ${((performance.now() - c0) / 1000).toFixed(1)} s`, 'ok');
+  return meta;
+}
+async function checkpointMeta() {
+  const folder = projects.current?.folder; if (!folder) return null;
+  try { const m = JSON.parse(await readProjectFile(folder, CK_DIR + '/meta.json')); return m.forcing ? m : null; } catch { return null; }
+}
+async function clearCheckpoint() {
+  const folder = projects.current?.folder; if (!folder) return;
+  await writeProjectFile(folder, CK_DIR + '/meta.json', JSON.stringify({ cleared: new Date().toISOString() })).catch(() => {});
+  await writeProjectFile(folder, CK_DIR + '/state.ckpt', new Uint8Array(0)).catch(() => {});
+}
+/**
+ * Resume the checkpointed run: the run must already be set up from the same settings (resetRun, prepareRun); the solver
+ * is built, then the copy goes back in. Throws when the settings differ from the checkpoint's.
+ */
+async function resumeCheckpoint(r) {
+  const folder = projects.current?.folder; if (!folder) throw new Error('no project open');
+  const meta = await checkpointMeta(); if (!meta) throw new Error('no checkpoint in this project');
+  ensureSolver(); const s = r.solver;
+  const fp = CMP.fingerprint(forcingRecord(r)).hash;
+  if (fp !== meta.forcing) throw new Error(`the checkpoint is of a run with different settings (forcing ${meta.forcing}, now ${fp}): set them back or start afresh`);
+  const P = await CK.unpack(await readBytes(folder, CK_DIR + '/state.ckpt')); if (run !== r) return null;
+  CK.gpuRestore(s, Object.fromEntries(Object.keys(P).filter(k => k.startsWith('gpu:')).map(k => [k.slice(4), new Uint8Array(P[k].buffer, P[k].byteOffset, P[k].byteLength)])));
+  const sv = CK.partsState('solver', P); CK.applyState(s, sv.tree, sv.blobs);
+  const rv = CK.partsState('run', P); CK.applyState(r, rv.tree, rv.blobs);
+  if (P.swmm && r.swmm) CK.swmmRestore(r.swmm, { memory: P['swmm:mem'], streams: P.swmm.streams, t: P.swmm.t, files: Object.fromEntries(P.swmm.files.map(f => [f, P['swmm:file:' + f]])) });
+  r.wall0 = performance.now() - meta.wall * 1000; r.lastCkpt = performance.now(); r.resumedAt = meta.t;
+  r.nextFrame = Math.max(r.nextFrame ?? 0, s.t);
+  log(`Resumed at ${fmtClock(s.t)} of the run (checkpoint of ${new Date(meta.savedUTC).toLocaleString()})`, 'ok');
+  return meta;
+}
+/** Start (or carry on) the current run to its end at full speed. → the record */
+async function runToEnd(note, label) {
+  note?.(`Running ${label}…`); ensureSolver(); run.playing = true; $('runBtn').textContent = 'Pause'; run.lastWall = performance.now(); run.wall0 ??= run.lastWall; loop(run.gen);
+  const e = await run.done; if (e) throw e; return run.record;
+}
+/** Put a batch job's inputs on the page (storm source, fields, scenario). */
+function applyJob(job, base) {
+  if (job.storm.stormSrc && job.storm.stormSrc !== 'current') setStormSource(job.storm.stormSrc);
+  const coarser = { 1: '2', 2: '4', 4: '8s', '4s': '8s', '8s': '8s' };
+  const inputs = { ...(base ?? {}), ...job.storm.inputs, ...job.variant.inputs, ...(job.variant.coarser ? { dxSel: coarser[base?.dxSel ?? $('dxSel').value] } : {}) };
+  for (const [id, v] of Object.entries(inputs)) { const el = $(id); if (!el) continue; if (el.type === 'checkbox') el.checked = !!v; else el.value = v; el.dispatchEvent(new Event('input')); }
+  updateStorm(); design.activate(job.scenario ?? null); applyScenario(); drawDesign();
+}
+/**
+ * One batch job, start to finish (or from the project's checkpoint when it is this job's): its inputs on top of the
+ * study's base inputs, the run, the run filed in the project. → { dir, record }
+ */
+async function runJob(job, note, { resume = false, base = null } = {}) {
+  if (!model || !device) throw new Error('Build a model first.');
+  const speed = $('speed').value; $('speed').value = 100; $('speed').dispatchEvent(new Event('input'));
+  try {
+    applyJob(job, base); resetRun();
+    if (!(await prepareRun(run))) throw new Error('the run was replaced');
+    run.batchJob = job.id;
+    if (resume) { const m = await checkpointMeta(); if (m?.job === job.id) { note?.(`${job.label}: resuming at ${fmtClock(m.t)}…`); await resumeCheckpoint(run); } }
+    const rec = await runToEnd(note, job.label);
+    const dir = await projects.saveRun(job.label);
+    await clearCheckpoint();
+    return { dir: dir?.replace(/^runs\//, '') ?? null, record: rec };
+  } finally { $('speed').value = speed; $('speed').dispatchEvent(new Event('input')); }
+}
+const batchUI = initBatch({
+  scenarios: () => design.scenarios.map(sc => sc.name), aris: () => [...$('ari').options].map(o => Number(o.value)), durations: () => [...$('a14dur').options].map(o => ({ value: Number(o.value), label: o.textContent })),
+  project: () => projects.current, readText: (p) => readProjectFile(projects.current.folder, p), writeFile: (p, d) => writeProjectFile(projects.current.folder, p, d),
+  runJob, checkpointMeta, inputs: () => ({ dxSel: $('dxSel').value, ari: $('ari').value, a14dur: $('a14dur').value, calManning: $('calManning').value, calInfil: $('calInfil').value, uplift: $('uplift').value }),
+  stormSrc: () => stormSrc, ready: () => !!(model && device), log,
+  // pause at the next frame boundary: a checkpoint first, then the run stops (unrecorded) and resumes from it later
+  pause: () => new Promise((res) => { if (!run?.playing || run.record) { res(); return; } run.pauseReq = res; }),
+});
+
 const compareUI = initCompare(map, {
   records: () => [...records].reverse(), savedRuns, loadSaved, runPair, runWindowPair, units: () => design.units,
   runSweep: (aris, note, each) => { sweep.running = true; return runSweep(aris, note, each); }, cancelSweep, detentionTable,
@@ -2962,5 +3067,11 @@ function barrierCSV(rs) {
 }
 const projects = initProjects({ capture: captureProject, layer: () => infra.layer, restore: restoreProject, runFiles, scenarios: scenarioFiles, analysis: () => design.analysis });
 
-window.__floodsim = { get run() { return run; }, get model() { return model; }, get records() { return records; }, map, setArea, infra, design, projects, buildPackage, runFiles, reportUI, compareUI, runWindowPair }; // console debugging
+{ // ?project=<folder>[&batch=run]: open a project at load, and with batch=run carry on with its study (tools/batch.mjs)
+  const qp = new URLSearchParams(location.search), pf = qp.get('project');
+  const built = async () => { for (let i = 0; i < 3600 && !(model && device && !$('runBtn').disabled); i++) await new Promise(r => setTimeout(r, 1000)); }; // the build's last steps (the watershed) finish after open
+  if (pf) projects.open(pf).then(built).then(() => batchUI.opened({ auto: qp.get('batch') === 'run' })).then(st => { window.__batchDone = { ok: true, study: st }; })
+    .catch(e => { log('Opening the project failed: ' + e.message, 'err'); window.__batchDone = { ok: false, error: e.message }; });
+}
+window.__floodsim = { batchUI, saveCheckpoint: () => saveCheckpoint(run), resumeCheckpoint: () => resumeCheckpoint(run), get run() { return run; }, get model() { return model; }, get records() { return records; }, map, setArea, infra, design, projects, buildPackage, runFiles, reportUI, compareUI, runWindowPair }; // console debugging
 gpuReady.then(() => updateSizeNote());

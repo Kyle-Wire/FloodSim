@@ -6,7 +6,13 @@ const P = { NODE_DEPTH: 303, NODE_HEAD: 304, NODE_VOLUME: 305, NODE_LATFLOW: 306
 
 export async function loadSWMM(url = new URL('../vendor/swmm-wasm/swmm.mjs', import.meta.url).href) {
   const { default: create } = await import(url);
-  return new SWMM(await create({ print: () => {}, printErr: () => {} }));
+  // the instance's linear memory, for checkpoints (src/checkpoint.js): the build does not export it, so it is caught
+  // as the module instantiates
+  const W = WebAssembly, inst = W.instantiate, stream = W.instantiateStreaming; let memory = null;
+  const grab = (r) => { const ex = (r.instance ?? r).exports; for (const v of Object.values(ex)) if (v instanceof W.Memory) memory = v; return r; };
+  W.instantiate = (...a) => inst.apply(W, a).then(grab); if (stream) W.instantiateStreaming = (...a) => stream.apply(W, a).then(grab);
+  try { const e = new SWMM(await create({ print: () => {}, printErr: () => {} })); e.memory = memory; return e; }
+  finally { W.instantiate = inst; if (stream) W.instantiateStreaming = stream; }
 }
 
 export class SWMM {
