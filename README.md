@@ -311,7 +311,11 @@ nowcast. Same per-cell rain, books and outputs as a historic radar storm; click 
   correlation (below 0.6 is flagged as poor); with too little rain to match, the latest rain stays where it is. The
   hyetograph draws the nowcast in amber after a marker.
 - **Screening only:** storms grow, decay and turn, and skill of this kind of nowcast falls off within the hour. It
-  answers "if this keeps coming, what floods next", not "what will happen". No tide or surge on a live run yet.
+  answers "if this keeps coming, what floods next", not "what will happen".
+- **Tide on a live run:** with a CO-OPS gauge in reach, the water-level boundary takes the gauge's observations up to
+  now, then NOAA's tide prediction plus the surge now (observed − predicted, the mean over the last hour), held to the
+  end of the run; a gauge without a prediction holds its last reading. Philadelphia, 3 November 2026: observed to
+  12:42 UTC, then the prediction + 0.09 m.
 - Fort Pierce FL, 2 November 2026, 14:38 UTC: loads in about 7 s; 3 h observed (60 mm over the area) and 60 min of
   nowcast (48 mm), motion 23 km/h toward 323° (r = 0.85). `npm run test:nowcast` (`--live`: Philadelphia now).
 
@@ -894,9 +898,19 @@ coast). Loading an event rebuilds its rainfall at the site from one of:
 - **Airport gauge (5 min):** the gauge alone (PHL is 4 km away but caught 106 mm to the site's 150 for Isaias).
 
 Each event is graded against Atlas 14 (5 min to 24 h windows). Where a NOAA CO-OPS tide gauge is within 60 km, its
-observed water level (NAVD88, the 3DEP datum) drives a **water-level boundary** on edge cells that meet open water (NLCD
-water/wetland or a mapped river within 30 m) and the stage at SWMM outfalls that discharge to streams; the run window is
-padded to span the surge peak. The rest of the edge stays a free outfall.
+observed water level (NAVD88, the 3DEP datum) drives a **water-level boundary** on the model edge where tidal water
+leaves it, and the stage at SWMM outfalls that discharge to streams; the run window is padded to span the surge peak.
+The edge cells (`tidalEdgeCells`, `src/waterlevels.js`):
+- start from open water on the edge (NLCD water or wetland, or a mapped river within 30 m) whose lidar surface lies
+  within the tidal range (at most 0.3 m above the run's highest stage);
+- widen along the edge over ground below that highest stage, so the channel holds the level from bank to bank, not
+  only the cells land cover calls water;
+- leave out a pool above a dam, a stream crossing the edge higher up, and a river's closed inflow edge: those stay a
+  free outfall, or a wall, as before.
+At Fairmount this is the tidal Schuylkill at the south edge, 62 cells (124 m) bank to bank. Before, it was 35 cells of
+the channel (land cover marks only its middle as water), plus 138 cells where the tide never applied: the closed
+inflow edge above the dam and a corner 12 m up. The baseflow warm-up holds the tide at its level at the storm's start.
+The rest of the edge stays a free outfall.
 
 **Drainage** (`src/drainage.js`, `src/coupler.js`, `src/swmm.js`). Three tiers, labelled on every output:
 - **Tier 2, synthetic network:** manholes with grate inlets every ~60 m along OSM streets (residential and up), outfalls

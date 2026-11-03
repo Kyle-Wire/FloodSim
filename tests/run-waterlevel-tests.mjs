@@ -2,7 +2,7 @@
 // connected low ground only, each water body takes the nearest gauge, gauge datums need to be surveyed, and NGVD29
 // readings shift to NAVD88.
 // Usage: node tests/run-waterlevel-tests.mjs  (--live: reads the Patapsco at Hollofield gauge and the lidar at it through the local server)
-import { startDepths, components, gaugeSurface, waterNear, nearestCells, surfaceAtGauge, waterBase } from '../src/waterlevels.js';
+import { startDepths, components, gaugeSurface, waterNear, nearestCells, surfaceAtGauge, waterBase, tidalEdgeCells } from '../src/waterlevels.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -80,6 +80,21 @@ if (process.argv.includes('--live')) {
   const lv = await readLevels(['01589000'], fetcher), r = lv.get('01589000'), surf = await gaugeSurface(g, r, fetcher), zw = await lidarSurfaceNear(g.lon, g.lat, fetcher);
   console.log(`Patapsco at Hollofield: ${gs.length} level gauges nearby; latest ${surf.z?.toFixed(2)} m NAVD88 (${surf.how}), flow ${(r.q / 0.0283168).toFixed(0)} cfs; lidar water surface ${zw?.toFixed(2)} m → rise ${(surf.z - zw).toFixed(2)} m`);
   check('live gauge level and lidar surface', surf.z > 50 && zw > 50 && Math.abs(surf.z - zw) < 5);
+}
+
+{ // the tide on the edge: a tidal channel leaving south (bed −3 m, lidar surface 0.5 m) whose land cover marks only its
+  // middle as water, banks at 5 m; a pool above a dam crossing the north edge (surface 3.2 m); a stream at 12 m on the west
+  const nx = 20, ny = 10, N = nx * ny, z = new Float64Array(N).fill(5), zSurf = new Float64Array(N).fill(5), water = new Uint8Array(N), mask = new Uint8Array(N).fill(1);
+  for (let i = 6; i <= 13; i++) { const k = (ny - 1) * nx + i; z[k] = -3; zSurf[k] = 0.5; if (i >= 8 && i <= 11) water[k] = 1; }
+  for (let i = 8; i <= 11; i++) { z[i] = 1.6; zSurf[i] = 3.2; water[i] = 1; }
+  for (let j = 3; j <= 5; j++) { z[j * nx] = zSurf[j * nx] = 12; water[j * nx] = 1; }
+  const c = { nx, ny, z, zSurf, mask }, row = (ks) => ks.map(k => `${k % nx},${(k / nx) | 0}`).sort().join(' ');
+  const got = tidalEdgeCells(c, mask, water, 2.0), want = [6, 7, 8, 9, 10, 11, 12, 13].map(i => (ny - 1) * nx + i);
+  check('tide edge: the whole tidal channel to its banks, not the pool above the dam or the stream up the hill', row(got) === row(want), row(got));
+  const m2 = mask.slice(); m2[(ny - 1) * nx + 10] = 0;
+  const g2 = tidalEdgeCells(c, m2, water, 2.0);
+  check('tide edge: a closed (masked) edge cell is left out', g2.length === 7 && !g2.includes((ny - 1) * nx + 10));
+  check('tide edge: the pool takes the tide once the tide stands above it', tidalEdgeCells(c, mask, water, 3.5).filter(k => k < nx).length === 4);
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall water-level tests passed');

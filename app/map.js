@@ -43,7 +43,7 @@ import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/
 import { gaugeScore, matchEvent } from '../src/validate.js';
 import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, entryEdge, InflowLinks, CFS, basinAreaKm2, areaRatioScale } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
-import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge } from '../src/waterlevels.js';
+import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge, tidalEdgeCells } from '../src/waterlevels.js';
 import * as FEMA from '../src/fema.js';
 import * as WIN from '../src/window.js';
 import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetry.js';
@@ -715,7 +715,8 @@ function stormMeta(st) {
   if (st.pattern === 'record') return { source: 'site-record GEV (L-moments) on annual-maximum daily rainfall × 1.13; pattern of the largest recorded storm with a real hourly record', record: hist.recordSource,
     patternFrom: hist.patternFrom, ari: st.ari, gev: st.gev, climateFactor: st.factor, ...base };
   if (st.pattern === 'historic') return { source: st.source, event: st.name, startUTC: new Date(st.t0).toISOString(), returnPeriods: st.rp, ...base,
-    waterLevel: st.wl ? { station: st.wl.station, name: st.wl.name, datum: st.wl.datum, tUTC: st.wl.t.map(t => new Date(t).toISOString()), m: st.wl.v } : null,
+    waterLevel: st.wl ? { station: st.wl.station, name: st.wl.name, datum: st.wl.datum, tUTC: st.wl.t.map(t => new Date(t).toISOString()), m: st.wl.v,
+      ...(st.wl.observedUntil ? { observedUntilUTC: new Date(st.wl.observedUntil).toISOString(), after: st.wl.surge != null ? { method: 'NOAA CO-OPS tide prediction + surge (mean observed − predicted over the last hour, held)', surgeM: st.wl.surge } : { method: 'last reading held' } } : {}) } : null,
     ...(st.radar ? { radar: { product: `NOAA MRMS ${st.radar.gauged ? st.radar.products + ' hourly' : 'RadarOnly_QPE_01H'}, timed by PrecipRate (2 min), IEM archive; per cell, bilinear from 0.01° pixels`, hash: st.radar.hash,
       areaMM: { used: st.radar.hoursMM, radarOnly: st.radar.radarMM },
       ...(st.radar.live ? { live: { observedUntilUTC: new Date(st.radar.live.observedUntil).toISOString(), nowcastMin: st.radar.live.leadMin, motion: st.radar.live.motion,
@@ -823,6 +824,11 @@ $('liveLoad').onclick = async () => {
   try {
     const obs = Number($('liveObs').value), lead = Number($('liveLead').value), st = await liveStorm(obs, lead);
     if (!st) { $('histNote').textContent = `No rain over the area in the last ${obs} h${lead ? ' or the nowcast' : ''} (NOAA MRMS).`; return; }
+    if ($('tCoast').checked && hist.gauge) { // observed to now, then the tide prediction plus today's surge
+      const end = st.t0 + st.durationMin * 60e3 + (Number($('tail').value) + 60) * 60e3;
+      const wl = await H.fetchLiveWaterLevel(hist.gauge.id, st.t0 - 36e5, Date.now(), end, fetcher).catch(e => { log('Live water level unavailable: ' + e.message, 'warn'); return null; });
+      if (wl) { wl.name = hist.gauge.name; st.wl = wl; }
+    }
     st.rp = stormRP(st);
     hist.storm = st; updateStorm(); if (model && !(run?.solver)) resetRun();
   } catch (err) { console.error(err); $('histNote').textContent = 'Could not load live radar: ' + err.message; }
@@ -843,7 +849,7 @@ function padForSurge(st, wl) {
 }
 function histSummary(st) {
   const rp = st.rp ? Object.entries(st.rp).map(([m, r]) => `${fmtDur(Number(m))} ${r.mm.toFixed(0)} mm ${r.label}`).join(' · ') : '';
-  const wl = st.wl ? ` Water level peaks at ${Math.max(...st.wl.v).toFixed(2)} m NAVD88 (${st.wl.name}).` : '';
+  const wl = st.wl ? ` Water level peaks at ${Math.max(...st.wl.v).toFixed(2)} m ${st.wl.datum} (${st.wl.name})` + (st.wl.observedUntil ? `; observed to ${new Date(st.wl.observedUntil).toISOString().slice(11, 16)} UTC, then ${st.wl.surge != null ? `NOAA's tide prediction ${st.wl.surge >= 0 ? '+' : '−'} ${Math.abs(st.wl.surge).toFixed(2)} m of surge (the last hour's difference, held)` : 'held at the last reading (no tide prediction here)'}.` : '.') : '';
   return `${st.name}: ${st.total.toFixed(0)} mm${st.radar ? ' (mean over the area)' : ''}, peak ${st.peakIntensity.toFixed(0)} mm/hr over ${st.blockMin} min. ${rp ? 'Against Atlas 14 at the site: ' + rp + '.' : ''}${wl} Source: ${st.source}.` +
     (st.radar ? ' ' + radarNoteText(st.radar) : '');
 }
@@ -966,20 +972,24 @@ function radarRainField(r, s) {
 const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, st.t0 + t * 1000) + (emu?.tide ?? 0) : null);
 
 /**
- * Edge cells of the solver grid that meet open water: NLCD open water / wetland under the cell, or a mapped stream or
- * river within 30 m. Only these see the observed water level; the rest of the boundary stays a free outfall.
+ * Edge cells that see the observed water level (tidalEdgeCells): tidal open water on the edge (NLCD open water or
+ * wetland under the cell, or a mapped stream or river within 30 m) and the ground beside it below the run's highest
+ * stage, out to the banks. A pool above a dam, a closed inflow edge and higher ground stay free outfalls.
  */
-function waterEdgeCells(c, F) {
+function stageEdgeCells(c, F, mask, st) {
+  if (!st?.wl) return undefined;
   const fine = model.fine, W = fine.nx, lines = (model.osm.waterways || []).filter(w => /river|stream|canal|tidal/.test(w.kind)).map(w => toCells(fine, w.line));
   const near = (fi, fj) => lines.some(l => { for (let s = 0; s + 1 < l.length; s++) { const [ax, ay] = l[s], [bx, by] = l[s + 1], dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy || 1e-9, t = Math.max(0, Math.min(1, ((fi - ax) * dx + (fj - ay) * dy) / L2)); if (Math.hypot(fi - ax - t * dx, fj - ay - t * dy) * fine.dx < 30) return true; } return false; });
-  const out = [];
+  const water = new Uint8Array(c.nx * c.ny);
   for (let J = 0; J < c.ny; J++) for (let I = 0; I < c.nx; I++) {
     if (I && J && I < c.nx - 1 && J < c.ny - 1) continue;
-    const K = J * c.nx + I; if (!c.mask[K]) continue;
+    const K = J * c.nx + I; if (!mask[K]) continue;
     const fi = I * F + F / 2, fj = J * F + F / 2, cls = model.nlcd?.[Math.min(fine.ny - 1, fj | 0) * W + Math.min(W - 1, fi | 0)];
-    if (cls === 11 || cls === 90 || cls === 95 || near(fi, fj)) out.push(K);
+    if (cls === 11 || cls === 90 || cls === 95 || near(fi, fj)) water[K] = 1;
   }
-  return out;
+  const t1 = st.t0 + st.durationMin * 60e3 + Number($('tail').value) * 60e3;
+  const top = Math.max(...st.wl.v.filter((_, i) => st.wl.t[i] >= st.t0 - 36e5 && st.wl.t[i] <= t1 + 36e5), stageAt(st, 0)) + (emu?.tide ?? 0);
+  return tidalEdgeCells(c, mask, water, top);
 }
 
 /** Water-level chart (single series, m NAVD88) on the hyetograph's time axis. */
@@ -1299,8 +1309,6 @@ function ensureSolver() {
   let infil = c.infil;
   if (drainSrc === 'lumped') { const extra = lumpedInfil(c, c.roadFrac, Number($('lumpRate').value)); infil = c.infil.map((v, k) => v + extra[k]); }
   const coupled = drainSrc === 'network' && run.net && swmmEngine;
-  const st0 = currentStorm(), stageCells = st0?.wl ? waterEdgeCells(c, F) : undefined;
-  run.stageCells = stageCells?.length ?? 0;
   run.culverts = run.culv.length ? new CulvertLinks(run.culv, c.z, { cellArea: F * F }) : null;
   run.watch = run.bars.faces.length ? new BarrierWatch(run.bars, c.z, F) : null;
   const lv0 = run.watch?.levels(0); let crest = run.watch ? run.bars.faces.map((q, m) => ({ i: q.i, j: q.j, axis: q.axis, z: lv0[m], C: q.C, ground: q.ground })) : undefined;
@@ -1320,6 +1328,8 @@ function ensureSolver() {
     entries = [...entries.filter(inR), ...wr.segs.map((s, q) => ({ label: 'window edge ' + q, site: null, at: null, cells: s.cells.filter(k => c.mask[k] && !used.has(k)), flow: WIN.rateOf(wr.base.window.segs[q]?.series ?? [[0, 0, 0, 0]], 3) }))];
   }
   const { entries: inflows, mask } = edgeEntries(c, entries, used);
+  const stageCells = stageEdgeCells(c, F, mask, currentStorm());
+  run.stageCells = stageCells?.length ?? 0;
   inflows.forEach(e => e.cells.forEach(k => used.add(k)));
   for (const e of inflows.filter(e => e.edgeWidth)) log(`${e.name || e.label}: enters across the model edge over ${e.edgeWidth} m of channel; the edge is closed across it and the flow goes in just inside`, 'ok');
   run.inflow = inflows.length ? new InflowLinks(inflows) : null;
@@ -1467,16 +1477,18 @@ async function warmUp(r) {
   const { c, F } = r, T = hours * 3600, t0 = performance.now();
   const { entries, mask } = edgeEntries(c, r.inflowReady.map(e => { const q0 = Math.max(0, typeof e.flow === 'function' ? e.flow(0) : e.flow); return { ...e, flow: () => q0 }; }), new Set());
   if (!entries.length) return;
-  const s = new GPUSolver(device, { nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, inlets: entries.flatMap(e => e.cells), sink: c.inside?.map(v => 1 - v),
+  const storm = currentStorm(), stageCells = stageEdgeCells(c, F, mask, storm); // the tide held at its level at the storm's start
+  const s = new GPUSolver(device, { nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, inlets: entries.flatMap(e => e.cells), sink: c.inside?.map(v => 1 - v), stageCells,
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2 });
+  if (stageCells?.length) s.setStage(stageAt(storm, 0));
   try {
-    const start = startWater(c, F), at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
+    const start = startWater(c, F, stageCells), at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
     s.setDepth((x, y) => Math.max(start ? start.depth[at(x, y)] : 0, c.bathyFill ? c.bathyFill[at(x, y)] : 0));
     const links = new InflowLinks(entries), hub = new LinkHub(s, [links], 2);
     while (s.t < T - 1e-6) { if (run !== r) return; await s.advance(Math.min(T, hub.tNext)); if (s.t >= hub.tNext - 1e-6) await hub.exchange(); }
     const st = await s.readState();
     r.warm = { hours, h: st.h, hu: st.hu, hv: st.hv, volumeIn: links.totals.volume };
-    log(`Baseflow warm-up: ${hours} h of river base flow before the storm (${Math.round(links.totals.volume).toLocaleString()} m³ in, ${((performance.now() - t0) / 1000).toFixed(1)} s)`, 'ok');
+    log(`Baseflow warm-up: ${hours} h of river base flow before the storm${stageCells?.length ? `, the tide held at ${stageAt(storm, 0).toFixed(2)} m on ${stageCells.length} edge cells` : ''} (${Math.round(links.totals.volume).toLocaleString()} m³ in, ${((performance.now() - t0) / 1000).toFixed(1)} s)`, 'ok');
   } finally { s.destroy(); }
 }
 $('runBtn').onclick = async () => {
@@ -1592,7 +1604,7 @@ function forcingRecord(r) {
   return {
     storm: st ? { ...stormMeta(st), waterLevel: undefined, depth: st.depth, t0: st.t0 ?? null } : null,
     inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}) })),
-    tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: $('tCoast').checked, ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
+    tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: $('tCoast').checked, ...(st.wl.observedUntil ? { observedUntil: st.wl.observedUntil, surge: st.wl.surge } : {}), ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },

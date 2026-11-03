@@ -208,6 +208,28 @@ export function waterBase(water, zs, nx, ny, r, tol) {
   return a;
 }
 
+/**
+ * Edge cells that see the observed water level (tide / surge). Seeds: open water on the edge (water[k]) whose lidar
+ * surface is within the tidal range, at most `top` + tol (top: the highest stage of the run); a pool above a dam or a
+ * stream crossing the edge higher up stands above it and stays a free outfall. Each seed widens along the edge over
+ * ground below `top`, so the whole channel to its banks holds the level, not only the cells land cover calls water.
+ * Masked cells (an inflow's closed edge) are left out. → [k…]
+ */
+export function tidalEdgeCells(c, mask, water, top, { tol = 0.3 } = {}) {
+  const { nx, ny, z } = c, zs = c.zSurf ?? z, ring = [];
+  for (let i = 0; i < nx; i++) ring.push(i); // the edge cells in order around the grid
+  for (let j = 1; j < ny; j++) ring.push(j * nx + nx - 1);
+  for (let i = nx - 2; i >= 0 && ny > 1; i--) ring.push((ny - 1) * nx + i);
+  for (let j = ny - 2; j >= 1 && nx > 1; j--) ring.push(j * nx);
+  const n = ring.length, on = new Uint8Array(n), low = (m) => mask[ring[m]] && z[ring[m]] < top;
+  for (let m = 0; m < n; m++) {
+    const k = ring[m]; if (on[m] || !mask[k] || !water[k] || !(zs[k] <= top + tol)) continue;
+    on[m] = 1;
+    for (const d of [1, -1]) for (let s = 1, q = (m + d + n) % n; s < n && !on[q] && low(q); s++, q = (q + d + n) % n) on[q] = 1;
+  }
+  return ring.filter((_, m) => on[m]);
+}
+
 /** Lon/lat → solver cell index (or −1), for a grid with origin x0, y1 (north-up) and cell size F on fine grid `fine`. */
 export function cellAt(fine, c, F, lon, lat) {
   const [x, y] = toUTM(lon, lat, fine.zone), I = Math.floor((x - fine.x0) / (fine.dx * F)), J = Math.floor((fine.y1 - y) / (fine.dx * F));

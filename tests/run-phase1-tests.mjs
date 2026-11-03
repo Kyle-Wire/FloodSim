@@ -182,6 +182,13 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   check('return period inverts Atlas 14', Math.abs(H.returnPeriod(pf, 60, 73).ari - 100) < 1e-9 && H.returnPeriod(pf, 60, 5).label === '< 1-yr');
   const wl = { t: [0, 3600e3, 7200e3], v: [1, 2, 0] };
   check('water level interpolation', H.levelAt(wl, 1800e3) === 1.5 && H.levelAt(wl, -5) === 1 && H.levelAt(wl, 1e9) === 0);
+  // live: observed for an hour 0.3 m above the prediction, then the prediction + 0.3 m to 4 h; no prediction holds the last reading
+  const tide = (t) => Math.sin(2 * Math.PI * t / 44712e3), T = (n, dt) => Array.from({ length: n }, (_, i) => i * dt);
+  const pred = { t: T(41, 360e3), v: T(41, 360e3).map(tide) }, ob = { t: T(11, 360e3), v: T(11, 360e3).map(t => tide(t) + 0.3), station: 'x', datum: 'NAVD88' };
+  const lv = H.liveLevel(ob, pred, 4 * 3600e3), after = lv.t.map((t, i) => [t, lv.v[i]]).filter(([t]) => t > 3600e3);
+  check('live water level: observed, then the prediction plus the surge now', Math.abs(lv.surge - 0.3) < 1e-9 && lv.observedUntil === 3600e3 && after.length === 30 && after.every(([t, v]) => Math.abs(v - tide(t) - 0.3) < 1e-9) && lv.t.at(-1) === 4 * 3600e3, `surge ${lv.surge?.toFixed(3)}, ${after.length} predicted points`);
+  const held = H.liveLevel(ob, null, 4 * 3600e3);
+  check('live water level: no prediction holds the last reading', held.surge === null && held.t.at(-1) === 4 * 3600e3 && held.v.at(-1) === ob.v.at(-1));
   const ewkb = '0103000020E61000000100000005000000DD4BD015DB2054C08D976E1283D04340DD4BD015DB2054C0D7A3703D0A1745404EF38E5374BA52C0D7A3703D0A1745404EF38E5374BA52C08D976E1283D04340DD4BD015DB2054C08D976E1283D04340';
   const bb = H.ewkbBounds(ewkb);
   check('EWKB extent (IEM PA_ASOS)', Math.abs(bb[0] + 80.51) < 0.01 && Math.abs(bb[3] - 42.18) < 0.01, bb.map(v => v.toFixed(2)).join(', '));

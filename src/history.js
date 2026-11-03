@@ -247,18 +247,42 @@ export async function fetchWaterLevel(station, startMs, endMs, fetcher) {
   try { return await fetchWaterLevelIn('NAVD', station, startMs, endMs, fetcher); }
   catch (e) { if (!/datum/i.test(e.message)) throw e; return fetchWaterLevelIn('MSL', station, startMs, endMs, fetcher); }
 }
-async function fetchWaterLevelIn(datum, station, startMs, endMs, fetcher) {
+async function fetchWaterLevelIn(datum, station, startMs, endMs, fetcher, product = 'water_level') {
   const fmt = (t) => iso(new Date(t)).replace(/-/g, '');
   const t = [], v = [];
   for (let a = startMs; a < endMs; a += 30 * day) {
     const b = Math.min(endMs, a + 30 * day - 6e4);
-    const r = await fetcher(`${COOPS}/api/prod/datagetter?product=water_level&station=${station}&begin_date=${fmt(a)}&end_date=${fmt(b)}&datum=${datum}&units=metric&time_zone=gmt&format=json&application=floodsim`);
+    const r = await fetcher(`${COOPS}/api/prod/datagetter?product=${product}&station=${station}&begin_date=${fmt(a)}&end_date=${fmt(b)}&datum=${datum}&units=metric&time_zone=gmt&format=json&application=floodsim${product === 'predictions' ? '&interval=6' : ''}`);
     const j = await r.json();
     if (j.error) throw new Error(`CO-OPS: ${j.error.message}`);
-    for (const d of j.data) { const tt = Date.parse(d.t.replace(' ', 'T') + 'Z'), vv = parseFloat(d.v); if (Number.isFinite(vv) && tt >= startMs && tt <= endMs) { t.push(tt); v.push(vv); } }
+    for (const d of j.data ?? j.predictions ?? []) { const tt = Date.parse(d.t.replace(' ', 'T') + 'Z'), vv = parseFloat(d.v); if (Number.isFinite(vv) && tt >= startMs && tt <= endMs) { t.push(tt); v.push(vv); } }
   }
-  if (!t.length) throw new Error('no water-level data for this window');
+  if (!t.length) throw new Error(`no ${product === 'predictions' ? 'tide prediction' : 'water-level data'} for this window`);
   return { t, v, station, datum: datum === 'NAVD' ? 'NAVD88' : 'MSL' };
+}
+
+/**
+ * The water level for a live run: observed up to `now`, then NOAA's tide prediction plus the surge now (observed −
+ * predicted, the mean over the last `span` ms of observations), carried forward unchanged to `endMs`. A station without
+ * a harmonic prediction (a river gauge) holds its last observation.
+ * → { t, v, station, datum, observedUntil, surge (m, null without a prediction) }
+ */
+export async function fetchLiveWaterLevel(station, startMs, now, endMs, fetcher) {
+  const obs = await fetchWaterLevel(station, startMs, now, fetcher);
+  const pred = await fetchWaterLevelIn(obs.datum === 'NAVD88' ? 'NAVD' : 'MSL', station, startMs, endMs, fetcher, 'predictions').catch(() => null);
+  return liveLevel(obs, pred, endMs);
+}
+/** Observations then prediction + surge (see fetchLiveWaterLevel); obs and pred are { t, v } series. */
+export function liveLevel(obs, pred, endMs, span = 3600e3) {
+  const tEnd = obs.t[obs.t.length - 1], t = [...obs.t], v = [...obs.v];
+  let surge = null;
+  if (pred?.t.length) {
+    const d = obs.t.map((tt, i) => (tt >= tEnd - span ? obs.v[i] - levelAt(pred, tt) : NaN)).filter(Number.isFinite);
+    surge = d.length ? d.reduce((a, b) => a + b, 0) / d.length : 0;
+    pred.t.forEach((tt, i) => { if (tt > tEnd && tt <= endMs) { t.push(tt); v.push(pred.v[i] + surge); } });
+  }
+  if (t[t.length - 1] < endMs) { t.push(endMs); v.push(v[v.length - 1]); }
+  return { t, v, station: obs.station, datum: obs.datum, observedUntil: tEnd, surge };
 }
 
 /** Water level at time `ms` (linear interpolation, held flat beyond the record). */
