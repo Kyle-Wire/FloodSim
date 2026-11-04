@@ -99,6 +99,16 @@ export class CPUSolver {
     this.t = 0; this.steps = 0;
     this.vol = { rain: 0, infil: 0, outflow: 0, clipped: 0, initial: 0 };
     this._fillGhostStatic();
+    // water-level boundary (o.stageCells, as GPUSolver: interior edge cells k whose outward ghosts see the stage):
+    // [ghost, its edge cell] pairs; setStage sets the level
+    this.stageGhosts = []; this.stage = -1e9;
+    for (const k of o.stageCells || []) {
+      const i = k % this.nx, j = (k / this.nx) | 0, s = nIn(i, j), add = (ii, jj) => this.stageGhosts.push([(jj + GH) * this.NX + ii + GH, s]);
+      for (let g2 = 1; g2 <= GH; g2++) {
+        if (i === 0) add(-g2, j); if (i === this.nx - 1) add(this.nx - 1 + g2, j);
+        if (j === 0) add(i, -g2); if (j === this.ny - 1) add(i, this.ny - 1 + g2);
+      }
+    }
     // local time stepping: per padded cell its tile (a ghost takes its edge cell's), per tile its level, per cell the
     // flux its finer neighbours have passed it while it waited (aH…, added at its own step); _lev = level stepping now
     this.lts = o.lts ? (o.lts === true ? 3 : Math.max(1, Math.min(4, o.lts | 0))) : 0; this._lev = -1;
@@ -177,7 +187,14 @@ export class CPUSolver {
       c = (NY - GH + g) * NX + i; s = (bc.north === 'wall' ? NY - GH - 1 - g : NY - GH - 1) * NX + i;
       put(c, s, 1, bc.north === 'wall' ? -1 : 1); if (bc.north === 'outflow') hv[c] = h[c] * outVel(s, s - NX);
     }
+    // water-level boundary: ghost surface held at the stage, the edge cell's velocity carried over (zero gradient)
+    for (const [c, s] of this.stageGhosts) {
+      const hs = this.stage - z[c]; if (!(hs > hdry)) continue;
+      const u = h[s] > hdry ? hu[s] / h[s] : 0, v = h[s] > hdry ? hv[s] / h[s] : 0;
+      h[c] = hs; hu[c] = hs * u; hv[c] = hs * v;
+    }
   }
+  setStage(z) { this.stage = z; }
 
   // ---------- spatial operator L(U) ----------
   _prims(h, hu, hv) {

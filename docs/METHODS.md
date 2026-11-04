@@ -183,6 +183,7 @@ shallow, rough flow. Manning's n is constant in time per cell and does not vary 
 | `open` | Ghost copies the edge cell (transmissive) | Test cases |
 | `outflow` (free outfall) | Ghost velocity = Manning velocity on the water-surface slope toward the edge, minus a threshold slope of 1e-4, capped at critical √(gh); zero if the surface is level or slopes inward, or if the inner neighbour is dry | **Default for every real-terrain model edge** |
 | `stage` (water level) | Ghost surface held at the observed or design level (tide/surge); velocity zero-gradient | Open-water edge cells touching a CO-OPS gauge boundary (`tidalEdgeCells`, `src/waterlevels.js`) |
+| River outlet (`stage`) | The same water-level ghost, at a downstream USGS gauge's recorded water surface carried up the river to the edge by a backwater calculation at its recorded discharge (§3.7) | The edge cells where a river leaves, on the side facing the gauge, when a downstream gauge is set and there is no tide (historic storms) |
 | Polygon sink | Cells outside a drawn polygon are sinks that take no rain; water entering them leaves the model and is booked as outflow (a free overfall at the polygon edge) | Polygon areas |
 
 - Where a river enters across the edge, the edge is closed across the channel plus 10 m each side. The channel is the
@@ -498,6 +499,23 @@ all n together.
 - **Baseflow warm-up**: optionally, rivers run at their start flow for set hours before the storm (not in the subgrid
   mode).
 - Inflow enters through exchange cells and is included in the mass books (§2.7).
+- **River outlet** (`src/outlet.js`; Storm → River leaving the area). A free outfall drains a deep river off the edge
+  as if over a fall, and the river upstream draws down toward it (Manayunk, §5.8: 3.6 m at the edge). When the user
+  sets a downstream USGS gauge on a historic storm, the edge facing the gauge holds a level instead:
+  - **Cells.** Open water on that side of the edge, widened along the edge over ground below the run's highest level
+    (`tidalEdgeCells` with a side). The side is the one the line from the area's centre to the gauge leaves through.
+  - **Level.** At each reading, the gauge's water surface (NAVD88, from its datum as for start levels) plus the
+    backwater rise to the edge at its discharge then. The rise is a standard step in 20 sub-reaches:
+    Δws = Δx · ½(S_f,up + S_f,down), with S_f = (Q/K)² and K = Σ w·d^5/3/n over the edge's own cells. The reach length
+    is entered (the river's length along its channel), or else the straight line from the edge to the gauge.
+  - **Assumptions.** The reach is prismatic, with the edge's cross-section and a level bed, and velocity head is
+    ignored. A reach that widens toward the gauge loses less head than this; bridges, islands and bends lose more.
+    The flow is steady at each reading, and there is no travel time between gauge and edge.
+  - **Check.** `tests/run-outlet-tests.mjs` compares a 1.6 km channel with its downstream end held at 3 m against the
+    same channel cut off halfway, with the outlet level at the cut. The backwater rise matches the gradually-varied-flow
+    solution to 0.1 mm. The cut model holds the full river's level 600 m upstream of the cut to 1 cm, where a free
+    outfall draws it down 0.96 m.
+  - The solver holds one external level, so a run with a tide on its edges does not use the outlet.
 
 ### 3.8 Tides and compound flooding
 
@@ -1049,9 +1067,9 @@ These are recorded in the README as development history. A reviewer should treat
 ### 5.10 Test suites
 
 `npm test` (`tests/run-all.mjs`) runs every CPU suite offline: `tests/run-tests.mjs` and each
-`tests/run-*-tests.mjs` except the GPU runners, 35 suites in all. The GPU suite (`npm run test:gpu`,
+`tests/run-*-tests.mjs` except the GPU runners, 36 suites in all. The GPU suite (`npm run test:gpu`,
 `tests/gpu-suite.js` in headless Chrome/Edge on the machine's GPU) is separate and writes `tests/results-gpu.json`.
-Suites with `--live` also hit the real services; the default runs use recorded responses and fixtures. All 35 CPU suites
+Suites with `--live` also hit the real services; the default runs use recorded responses and fixtures. All 36 CPU suites
 passed when this document was written (`node tests/run-all.mjs`). The GPU suite passed on 3 November 2026, with its
 new 2,112 × 2,112 many-tiles case (§2.9).
 
@@ -1072,6 +1090,7 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-streamstats-tests.mjs` | StreamStats replies, snapping retry, 90 % intervals, NRCS lag and unit hydrograph, report |
 | `run-soil-tests.mjs` | Texture classes, SSURGO rows, ponded Green-Ampt vs analytic, water table, aggregation, grain classes |
 | `run-waterlevel-tests.mjs` | River rise, lake fill, spreading onto connected ground only, datum rules, NGVD29 shift, weir and bridge-deck cases |
+| `run-outlet-tests.mjs` | River outlet: backwater rise against the gradually-varied-flow solution, edge side, and a channel cut off halfway holding the full river's level (a free outfall draws it down 0.96 m) |
 | `run-bathymetry-tests.mjs` | Regional curves, flattened surface, carved section, GeoTIFF, surveyed bed |
 | `run-hecras-tests.mjs` | GeoTIFF and shapefile round trips, `.g01` parsing, bed between sections, the 2D package |
 | `run-bank-tests.mjs` | Friction-angle failure, cohesion, confinement, rapid drawdown, probability vs Monte Carlo |
@@ -1256,7 +1275,7 @@ known limits", "Known limits (solver)" and section caveats, and the code as cite
 
 | Limitation | Effect on results | Mitigation |
 |---|---|---|
-| Model edges are free outfalls (Manning on the surface slope, ≤ critical) | Water reaching the edge leaves. Depth and extent near the edge are **underestimated** where water would pond or back up beyond it; nothing flows in from outside. A deep river leaving the model draws down toward the edge like a waterfall: at Manayunk (§5.8), 3.6 m at the edge and 1.5 m at a gauge 2.4 km upstream. | Draw the area well beyond the area of interest; read the edge checks (§6.1); use a tidal stage edge where applicable. |
+| Model edges are free outfalls (Manning on the surface slope, ≤ critical) | Water reaching the edge leaves. Depth and extent near the edge are **underestimated** where water would pond or back up beyond it; nothing flows in from outside. A deep river leaving the model draws down toward the edge like a waterfall: at Manayunk (§5.8), 3.6 m at the edge and 1.5 m at a gauge 2.4 km upstream. | Draw the area well beyond the area of interest; read the edge checks (§6.1); use a tidal stage edge where applicable, and where a river leaves, a river outlet held from a downstream gauge (§3.7; historic storms, a prismatic backwater reach). |
 | Upstream runoff is excluded unless the model runs on its watershed or has an inflow | Flooding **underestimated** wherever ground outside drains in. | Trace the watershed and run on it, or add gauged or StreamStats inflow. |
 | Polygon areas: the network is built over the bounding box, so inlets outside the polygon sit in dry sink cells | Minor: those inlets receive nothing. | Use a box, or accept. |
 | River inflow enters through exchange cells two rows inside a closed edge, with no momentum-carrying boundary | Near-entry water surface can be distorted. README: Ida at Fairmount, the mark 250 m from the inflow read +1.44 m high. | Draw the box well upstream of the reach of interest. |

@@ -10,6 +10,7 @@
 // above bankfull starts the floodplain wet. Bathymetry below the lidar surface is still not represented.
 import { fetchDEM } from './ingest.js';
 import { gridFromLonLatBox, toUTM } from './geo.js';
+import { onSide } from './outlet.js';
 
 const NWIS = 'https://waterservices.usgs.gov/nwis';
 const FT = 0.3048;
@@ -25,11 +26,20 @@ const rdb = (text) => {
 export async function findLevelGauges([w, s, e, n], fetcher) {
   const r = await fetcher(`${NWIS}/site/?format=rdb&bBox=${w.toFixed(5)},${s.toFixed(5)},${e.toFixed(5)},${n.toFixed(5)}&siteType=ST,LK,ES&parameterCd=${Object.keys(LEVEL_PARAMS).join(',')}&hasDataTypeCd=iv&siteOutput=expanded`);
   if (!r.ok) return [];
-  return rdb(await r.text()).map(o => ({
-    site: o.site_no, name: o.station_nm, kind: o.site_tp_cd, lon: Number(o.dec_long_va), lat: Number(o.dec_lat_va),
-    datumM: o.alt_va !== '' && Number.isFinite(Number(o.alt_va)) ? Number(o.alt_va) * FT : null, datum: o.alt_datum_cd || null,
-    acyM: o.alt_acy_va !== '' && Number.isFinite(Number(o.alt_acy_va)) ? Number(o.alt_acy_va) * FT : null,
-  })).filter(g => g.site && Number.isFinite(g.lon));
+  return rdb(await r.text()).map(siteRow).filter(g => g.site && Number.isFinite(g.lon));
+}
+const siteRow = (o) => ({
+  site: o.site_no, name: o.station_nm, kind: o.site_tp_cd, lon: Number(o.dec_long_va), lat: Number(o.dec_lat_va),
+  datumM: o.alt_va !== '' && Number.isFinite(Number(o.alt_va)) ? Number(o.alt_va) * FT : null, datum: o.alt_datum_cd || null,
+  acyM: o.alt_acy_va !== '' && Number.isFinite(Number(o.alt_acy_va)) ? Number(o.alt_acy_va) * FT : null,
+});
+
+/** One gauge by site number, anywhere (a downstream gauge outside the area). → { site, name, kind, lon, lat, datumM, datum, acyM } | null */
+export async function levelGauge(site, fetcher) {
+  const r = await fetcher(`${NWIS}/site/?format=rdb&sites=${encodeURIComponent(site)}&siteOutput=expanded`);
+  if (!r.ok) return null;
+  const g = rdb(await r.text()).map(siteRow)[0];
+  return g?.site && Number.isFinite(g.lon) ? g : null;
 }
 
 /**
@@ -213,17 +223,18 @@ export function waterBase(water, zs, nx, ny, r, tol) {
  * surface is within the tidal range, at most `top` + tol (top: the highest stage of the run); a pool above a dam or a
  * stream crossing the edge higher up stands above it and stays a free outfall. Each seed widens along the edge over
  * ground below `top`, so the whole channel to its banks holds the level, not only the cells land cover calls water.
- * Masked cells (an inflow's closed edge) are left out. → [k…]
+ * Masked cells (an inflow's closed edge) are left out. `side` ('north' | 'south' | 'east' | 'west') keeps seeds and
+ * their widening to one side (a river outlet: the side facing its downstream gauge). → [k…]
  */
-export function tidalEdgeCells(c, mask, water, top, { tol = 0.3 } = {}) {
+export function tidalEdgeCells(c, mask, water, top, { tol = 0.3, side = null } = {}) {
   const { nx, ny, z } = c, zs = c.zSurf ?? z, ring = [];
   for (let i = 0; i < nx; i++) ring.push(i); // the edge cells in order around the grid
   for (let j = 1; j < ny; j++) ring.push(j * nx + nx - 1);
   for (let i = nx - 2; i >= 0 && ny > 1; i--) ring.push((ny - 1) * nx + i);
   for (let j = ny - 2; j >= 1 && nx > 1; j--) ring.push(j * nx);
-  const n = ring.length, on = new Uint8Array(n), low = (m) => mask[ring[m]] && z[ring[m]] < top;
+  const n = ring.length, on = new Uint8Array(n), here = (m) => !side || onSide(ring[m], nx, ny, side), low = (m) => here(m) && mask[ring[m]] && z[ring[m]] < top;
   for (let m = 0; m < n; m++) {
-    const k = ring[m]; if (on[m] || !mask[k] || !water[k] || !(zs[k] <= top + tol)) continue;
+    const k = ring[m]; if (on[m] || !here(m) || !mask[k] || !water[k] || !(zs[k] <= top + tol)) continue;
     on[m] = 1;
     for (const d of [1, -1]) for (let s = 1, q = (m + d + n) % n; s < n && !on[q] && low(q); s++, q = (q + d + n) % n) on[q] = 1;
   }

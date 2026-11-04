@@ -44,7 +44,8 @@ import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/
 import { gaugeScore, matchEvent } from '../src/validate.js';
 import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, entryEdge, InflowLinks, CFS, basinAreaKm2, areaRatioScale } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
-import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge, gaugeWater, tidalEdgeCells } from '../src/waterlevels.js';
+import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge, gaugeWater, tidalEdgeCells, levelGauge } from '../src/waterlevels.js';
+import { edgeSection, outletSeries, sideToward } from '../src/outlet.js';
 import * as FEMA from '../src/fema.js';
 import * as WIN from '../src/window.js';
 import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetry.js';
@@ -1191,7 +1192,39 @@ function radarRainField(r, s) {
   }
 }
 /** Water level at simulation time t (s), or null. */
-const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, (st.t0 ?? 0) + t * 1000) + (emu?.tide ?? 0) : null);
+const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, (st.t0 ?? 0) + t * 1000) + (emu?.tide ?? 0)
+  : run?.outlet ? H.levelAt(run.outlet.series, (st?.t0 ?? 0) + t * 1000) : null); // else a river outlet's level (outletFor)
+
+/**
+ * A river leaving the model (River inflow → Downstream gauge): the edge cells facing the gauge where the river crosses
+ * (tidalEdgeCells on that side, up to the run's highest level), and their level over the storm, the gauge's recorded
+ * water surface carried up the reach to the edge at its recorded discharge (src/outlet.js). Only without a tide: the
+ * solver holds one external level. → { cells, series: { t, v, down, q }, L, side, g, how } | null
+ */
+function outletFor(r, c, F, mask) {
+  const o = r.outletReady; if (!o) return null;
+  const fine = model.fine, w = F * fine.dx, [gx, gy] = toUTM(o.g.lon, o.g.lat, fine.zone);
+  const I = (gx - fine.x0) / w, J = (fine.y1 - gy) / w, side = sideToward(c.nx, c.ny, I, J);
+  const lines = (model.osm.waterways || []).filter(l => /river|stream|canal/.test(l.kind)).map(l => toCells(fine, l.line));
+  const water = waterCells(c, F, fine, model.nlcd, lines), top = Math.max(...o.level.map(p => p[1]));
+  const cells = tidalEdgeCells(c, mask, water, top, { side });
+  if (!cells.length) { log(`River outlet: no open water on the ${side} edge, toward ${o.g.name}; the edges stay free outfalls`, 'warn'); return null; }
+  // the reach: as entered, else straight from the middle of the edge's cells to the gauge (a river that bends is longer)
+  const mid = cells[cells.length >> 1], L = Number($('outLen').value) > 0 ? Number($('outLen').value) : Math.hypot(I - (mid % c.nx + 0.5), J - (((mid / c.nx) | 0) + 0.5)) * w;
+  const series = outletSeries(edgeSection(c, cells, w), o.level, o.flow, L);
+  return { cells, series, L, side, g: o.g, how: o.how, entered: Number($('outLen').value) > 0 };
+}
+/** The downstream gauge's recorded level and discharge over the storm (a historic storm only). → { g, level: [[t, m]], flow: [[t, m³/s]], how } | null */
+async function prepareOutlet() {
+  const site = $('outGauge').value.trim(), st = currentStorm(); if (!site) return null;
+  if (!st?.t0) { log('River outlet: needs a historic storm (the downstream gauge’s record); the edges stay free outfalls', 'warn'); return null; }
+  const g = await levelGauge(site, fetcher); if (!g) throw new Error(`no USGS site ${site}`);
+  const t0 = st.t0 - 36e5, t1 = st.t0 + (st.durationMin + Number($('tail').value)) * 60e3 + 36e5;
+  const lv = await levelSeries(g, fetcher, t0, t1); if (!lv.series?.length) throw new Error(`${g.name}: ${lv.why}`);
+  const flow = (await gaugeFlows(site, t0, t1, fetcher).catch(() => [])).map(f => [f.t, f.q]);
+  if (!flow.length) log(`River outlet: ${g.name} has no discharge record over the storm; its level is held at the edge with no rise up the reach`, 'warn');
+  return { g, level: lv.series, flow, how: lv.how };
+}
 
 /**
  * Edge cells that see the observed water level (tidalEdgeCells): tidal open water on the edge (NLCD open water or
@@ -1579,7 +1612,13 @@ function ensureSolver() {
     entries = [...entries.filter(inR), ...wr.segs.map((s, q) => ({ label: 'window edge ' + q, site: null, at: null, cells: s.cells.filter(k => c.mask[k] && !used.has(k)), flow: WIN.rateOf(wr.base.window.segs[q]?.series ?? [[0, 0, 0, 0]], 3) }))];
   }
   const { entries: inflows, mask } = edgeEntries(c, entries, used);
-  const stageCells = stageEdgeCells(c, F, mask, currentStorm());
+  let stageCells = stageEdgeCells(c, F, mask, currentStorm());
+  run.outlet = stageCells ? null : outletFor(run, c, F, mask);
+  if (run.outlet) {
+    stageCells = run.outlet.cells; const o = run.outlet, pk = o.series.v.indexOf(Math.max(...o.series.v));
+    log(`River outlet: the ${o.side} edge (${o.cells.length} cells) holds ${o.g.name}'s level carried ${(o.L / 1000).toFixed(2)} km up the river${o.entered ? '' : ' (straight-line distance; enter the river length if it bends)'}: ` +
+      `${o.series.v[0].toFixed(2)} m NAVD88 at the start, ${o.series.v[pk].toFixed(2)} m at its crest (gauge ${o.series.down[pk].toFixed(2)} m + ${(o.series.v[pk] - o.series.down[pk]).toFixed(2)} m at ${Math.round(o.series.q[pk]).toLocaleString()} m³/s)`, 'ok', 'USGS NWIS');
+  } else if (stageCells && run.outletReady) log('River outlet: not used with a tide on the edges (the solver holds one external level)', 'warn');
   run.stageCells = stageCells?.length ?? 0;
   inflows.forEach(e => e.cells.forEach(k => used.add(k)));
   for (const e of inflows.filter(e => e.edgeWidth)) log(`${e.name || e.label}: enters across the model edge over ${e.edgeWidth} m of channel; the edge is closed across it and the flow goes in just inside`, 'ok');
@@ -1637,7 +1676,7 @@ async function prepareRun(r) {
   if (run !== r) return false;
   r.gaugeWatch = gaugeWatch(r);
   if (pairPrep) {
-    r.levelsReady = pairPrep.levelsReady; r.inflowReady = pairPrep.inflowReady; scaleRunInflow(r);
+    r.levelsReady = pairPrep.levelsReady; r.inflowReady = pairPrep.inflowReady; r.outletReady = pairPrep.outletReady ?? null; scaleRunInflow(r);
     if (r.levelsReady) r.levelSrc = await levelSources(r.levelsReady, r.c, r.F);
     await warmUp(r);
     return run === r && !r.solver;
@@ -1646,6 +1685,7 @@ async function prepareRun(r) {
     try { r.levelsReady = await prepareLevels(); if (r.levelsReady) r.levelSrc = await levelSources(r.levelsReady, r.c, r.F); } catch (e) { log('Gauge levels: ' + e.message, 'warn'); }
   }
   try { r.inflowReady = await prepareInflow(); } catch (e) { log('River inflow: ' + e.message, 'warn'); r.inflowReady = []; }
+  try { r.outletReady = await prepareOutlet(); } catch (e) { log('River outlet: ' + e.message + '; the edges stay free outfalls', 'warn'); r.outletReady = null; }
   scaleRunInflow(r);
   await warmUp(r);
   return run === r && !r.solver;
@@ -1755,7 +1795,8 @@ async function warmUp(r) {
   const { c, F } = r, T = hours * 3600, t0 = performance.now();
   const { entries, mask } = edgeEntries(c, r.inflowReady.map(e => { const q0 = Math.max(0, typeof e.flow === 'function' ? e.flow(0) : e.flow); return { ...e, flow: () => q0 }; }), new Set());
   if (!entries.length) return;
-  const storm = currentStorm(), stageCells = stageEdgeCells(c, F, mask, storm); // the tide held at its level at the storm's start
+  const storm = currentStorm(); let stageCells = stageEdgeCells(c, F, mask, storm); // the tide (or a river outlet) held at its level at the storm's start
+  if (!stageCells) { r.outlet = outletFor(r, c, F, mask); stageCells = r.outlet?.cells; }
   const s = new GPUSolver(device, { nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, inlets: entries.flatMap(e => e.cells), sink: c.inside?.map(v => 1 - v), stageCells,
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2 });
   if (stageCells?.length) s.setStage(stageAt(storm, 0));
@@ -1766,7 +1807,7 @@ async function warmUp(r) {
     while (s.t < T - 1e-6) { if (run !== r) return; await s.advance(Math.min(T, hub.tNext)); if (s.t >= hub.tNext - 1e-6) await hub.exchange(); }
     const st = await s.readState();
     r.warm = { hours, h: st.h, hu: st.hu, hv: st.hv, volumeIn: links.totals.volume };
-    log(`Baseflow warm-up: ${hours} h of river base flow before the storm${stageCells?.length ? `, the tide held at ${stageAt(storm, 0).toFixed(2)} m on ${stageCells.length} edge cells` : ''} (${Math.round(links.totals.volume).toLocaleString()} m³ in, ${((performance.now() - t0) / 1000).toFixed(1)} s)`, 'ok');
+    log(`Baseflow warm-up: ${hours} h of river base flow before the storm${stageCells?.length ? `, the ${r.outlet ? 'river outlet' : 'tide'} held at ${stageAt(storm, 0).toFixed(2)} m on ${stageCells.length} edge cells` : ''} (${Math.round(links.totals.volume).toLocaleString()} m³ in, ${((performance.now() - t0) / 1000).toFixed(1)} s)`, 'ok');
   } finally { s.destroy(); }
 }
 $('runBtn').onclick = async () => {
@@ -1900,6 +1941,7 @@ function forcingRecord(r) {
     inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}), ...(e.ungauged ? { ungauged: e.ungauged } : {}) })),
     tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: st.wl.design ? true : $('tCoast').checked, ...(st.wl.design ? { design: st.wl.design } : {}), ...(st.wl.slr ? { slr: st.wl.slr } : {}), ...(st.wl.observedUntil ? { observedUntil: st.wl.observedUntil, surge: st.wl.surge } : {}), ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
+    outlet: r.outletReady ? { site: r.outletReady.g.site, length: Number($('outLen').value) || null, readings: r.outletReady.level.length, flows: r.outletReady.flow.length } : null,
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
@@ -2036,7 +2078,7 @@ async function runPair(note) {
   try {
     design.activate(null); applyScenario(); drawDesign(); resetRun();
     if (!(await prepareRun(run))) throw new Error('the run was replaced');
-    pairPrep = { levelsReady: run.levelsReady, inflowReady: run.inflowReady };
+    pairPrep = { levelsReady: run.levelsReady, inflowReady: run.inflowReady, outletReady: run.outletReady };
     const fp = CMP.fingerprint(forcingRecord(run)).hash;
     const before = baselines.get(fp) ?? await toEnd('existing conditions');
     if (before === baselines.get(fp) && !run.record) note('Existing conditions with these settings already ran: reusing it.');
@@ -2072,7 +2114,7 @@ async function runWindowPair(note, bufferM = 150, { self = false } = {}) { // se
   try {
     design.activate(null); applyScenario(); drawDesign(); windowNext = { mode: 'record', rect }; resetRun(); windowNext = null;
     if (!(await prepareRun(run))) throw new Error('the run was replaced');
-    pairPrep = { levelsReady: run.levelsReady, inflowReady: run.inflowReady };
+    pairPrep = { levelsReady: run.levelsReady, inflowReady: run.inflowReady, outletReady: run.outletReady };
     const fp = CMP.fingerprint(forcingRecord(run)).hash, cached = [...records].reverse().find(x => !x.scenario && x.forcing?.hash === fp && same(x.window?.rect, rect));
     const before = cached ?? await toEnd('existing conditions (booking the window’s edge)');
     if (cached) note('Existing conditions with these settings and this window already ran: reusing it.');
@@ -2238,7 +2280,7 @@ async function runAt(scName, over, label, note) {
   try {
     design.activate(scName); applyScenario(); drawDesign(); resetRun();
     if (!(await prepareRun(run))) throw new Error('the run was replaced');
-    emuPrep ??= { levelsReady: run.levelsReady, inflowReady: run.inflowRaw ?? run.inflowReady };
+    emuPrep ??= { levelsReady: run.levelsReady, inflowReady: run.inflowRaw ?? run.inflowReady, outletReady: run.outletReady };
     note?.('running'); run.emu = true; ensureSolver(); run.playing = true; $('runBtn').textContent = 'Pause'; run.lastWall = performance.now(); run.wall0 ??= run.lastWall; loop(run.gen);
     const e = await run.done; if (e) throw e;
     const r = run, dir = await projects.saveRun(label);
@@ -2255,10 +2297,11 @@ async function forcingAt(over, F) {
     let levelsReady = null, inflowReady = [];
     if ($('startWater').value === 'gauge') { try { levelsReady = await prepareLevels(); } catch { /* none nearby */ } }
     try { inflowReady = await prepareInflow(); } catch { /* none */ }
-    emuPrep = { levelsReady, inflowReady };
+    let outletReady = null; try { outletReady = await prepareOutlet(); } catch { /* none */ }
+    emuPrep = { levelsReady, inflowReady, outletReady };
   }
   emu = over;
-  try { return CMP.fingerprint(forcingRecord({ storm: currentStorm(), inflowReady: over?.inflow != null && over.inflow !== 1 ? scaleInflow(emuPrep?.inflowReady, over.inflow) : emuPrep?.inflowReady ?? [], levelsReady: emuPrep?.levelsReady, F })); }
+  try { return CMP.fingerprint(forcingRecord({ storm: currentStorm(), inflowReady: over?.inflow != null && over.inflow !== 1 ? scaleInflow(emuPrep?.inflowReady, over.inflow) : emuPrep?.inflowReady ?? [], levelsReady: emuPrep?.levelsReady, outletReady: emuPrep?.outletReady, F })); }
   finally { emu = null; }
 }
 const groundCache = new Map();
@@ -3012,6 +3055,10 @@ async function rasFiles() {
     cells.forEach(k => taken.add(k));
     RAS.edgeRuns(cells, c.nx, c.ny).forEach((r, i, all) => bcs.push({ name: `Tide ${st.wl.name ?? st.wl.station ?? ''}${all.length > 1 ? ' ' + (i + 1) : ''}`.trim(), kind: 'stage', line: lineXY(r),
       series: sample(t => stageAt(st, t), 360), note: `observed water level${st.wl.station ? ` (NOAA CO-OPS ${st.wl.station})` : ''}, m NAVD88` }));
+  } else if (run?.outlet) { // a river outlet: the run's edge level (the downstream gauge carried up the reach)
+    const o = run.outlet; o.cells.forEach(k => taken.add(k));
+    RAS.edgeRuns(o.cells, c.nx, c.ny).forEach((r, i, all) => bcs.push({ name: `Outlet ${o.g.site}${all.length > 1 ? ' ' + (i + 1) : ''}`, kind: 'stage', line: lineXY(r),
+      series: sample(t => stageAt(st, t), 360), note: `USGS ${o.g.site} (${o.g.name}) water surface + backwater over ${Math.round(o.L)} m at its discharge, m NAVD88` }));
   }
   // the rest of the edge: FloodSim's free outfall, as normal depth on the ground slope near the edge (0.05 % to 5 %)
   const free = []; for (let J = 0; J < c.ny; J++) for (let I = 0; I < c.nx; I++) { if (I && J && I < c.nx - 1 && J < c.ny - 1) continue; const k = J * c.nx + I; if (c.mask[k] && !taken.has(k)) free.push(k); }
@@ -3239,7 +3286,7 @@ function startWater(c, F, stageCells) {
   if (!sources.length) { $('startNote').textContent = 'No usable gauge level for this run: the water bodies start at the lidar surface.' + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : ''); return null; }
   const s = startDepths(c, water, sources, { surfR: Math.ceil(60 / (F * model.fine.dx)) }); // decks and bank pixels within 60 m take the river under them
   let vol = 0, wet = 0; for (let k = 0; k < s.depth.length; k++) if (s.depth[k] > 0) { vol += s.depth[k]; wet++; }
-  const A = (F * model.fine.dx) ** 2, msg = `Starting water: ${fmtVol(vol * A)} on ${(wet * A / 1e4).toFixed(2)} ha.` + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : '') + (tide != null && stageCells?.length ? ` Tidal water at ${tide.toFixed(2)} m NAVD88.` : '');
+  const A = (F * model.fine.dx) ** 2, msg = `Starting water: ${fmtVol(vol * A)} on ${(wet * A / 1e4).toFixed(2)} ha.` + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : '') + (tide != null && stageCells?.length ? ` ${run.outlet ? 'River outlet edge' : 'Tidal water'} at ${tide.toFixed(2)} m NAVD88.` : '');
   $('startNote').textContent = msg; log(msg, 'ok', 'USGS NWIS');
   return s;
 }
@@ -3272,7 +3319,7 @@ async function setupInflow() {
   }).join('');
   for (let i = 0; i < inflow.entries.length; i++) for (const id of ['inGauge', 'inFlow', 'inLag', 'inScale']) $(id + i).onchange = () => { if (model && (!run || !run.solver)) resetRun(); inflowNoteUpdate(); areaNote(i); };
   for (let i = 0; i < inflow.entries.length; i++) ungaugedWire(i);
-  for (const id of ['inExp', 'warmUp']) $(id).onchange = () => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
+  for (const id of ['inExp', 'warmUp', 'outGauge', 'outLen']) $(id).onchange =() => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
   inflowNoteUpdate();
   inflow.entries.forEach((en, i) => { // the drainage area where each river enters (USGS NLDI), in the background
     const [lo, la] = ll(en.at); en.area = basinAreaKm2(lo, la, fetcher).then((a) => { en.areaKm2 = a.areaKm2; areaNote(i); return a; }).catch((e) => { en.areaErr = e.message; areaNote(i); return null; });
