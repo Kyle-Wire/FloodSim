@@ -42,7 +42,7 @@ export async function readBytesOptional(folder, path) { const r = await api('/ap
  * @param analysis  () => control lines and site boundary FeatureCollection
  */
 export function initProjects({ capture, layer, restore, runFiles, scenarios = () => [], analysis = () => null }) {
-  let current = null; // { folder, name }
+  let current = null, lastSaved = null; // { folder, name }; the run filed last { folder, dir, run }
   try { current = JSON.parse(localStorage.getItem('floodsim.project')); } catch { /* storage off */ }
   const show = () => {
     $('projName').textContent = current ? current.name : 'Unsaved project'; $('projName').title = current ? `Documents\\FloodSim Projects\\${current.folder}` : '';
@@ -69,6 +69,7 @@ export function initProjects({ capture, layer, restore, runFiles, scenarios = ()
     const files = await runFiles(); if (!files) { status('No finished run to save', 'warn'); return null; }
     const dir = 'runs/' + stamp() + (label ? '_' + folderName(label).replace(/ /g, '-').slice(0, 30) : '');
     for (const f of files) await writeFile(current.folder, dir + '/' + f.path, f.data);
+    lastSaved = { folder: current.folder, dir, run: files.run ?? null };
     status(`Run saved to ${dir}`, 'ok'); return dir;
   }
   async function open(folder) {
@@ -125,7 +126,7 @@ export function initProjects({ capture, layer, restore, runFiles, scenarios = ()
 
   return {
     get current() { return current; },
-    save, saveRun, open,
+    save, saveRun, open, get lastSaved() { return lastSaved; },
     /** A run finished: file it in the project when auto-save is on. */
     async runFinished() { if (current && $('projAutoRun').checked) await saveRun().catch(err => status('Saving the run failed: ' + err.message, 'err')); },
     close() { current = null; show(); },

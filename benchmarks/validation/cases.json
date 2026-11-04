@@ -1,0 +1,26 @@
+[
+ {
+  "id": "manayunk-ida",
+  "title": "Manayunk, Philadelphia — Ida 2021, Schuylkill River flood",
+  "project": "Manayunk Ida 2021",
+  "about": "The Schuylkill through Manayunk crested 13.0 m at the Manayunk gauge on 2 Sept 2021. 11 USGS high-water marks scored (3 under bridge decks are not), the Manayunk and Wissahickon gauges inside the model; the river outlet holds the Philadelphia gauge (Fairmount Dam) carried up the river. docs/METHODS.md §5.8."
+ },
+ {
+  "id": "forest-hills-ida",
+  "title": "Forest Hills, Queens — Ida 2021, street and basement flooding",
+  "project": "Forest Hills Ida 2021",
+  "about": "72 mm fell in one hour at about 9 pm on 1 Sept 2021 over a combined-sewer area. USGS high-water marks (flash flooding), the USGS depth maps made from them, and NYC 311 street-flooding reports. docs/METHODS.md §5.9."
+ },
+ {
+  "id": "forest-hills-ida-band",
+  "title": "Forest Hills, Queens — Ida 2021, uncertainty band (4 m speed mode)",
+  "project": "Forest Hills Ida 2021 band",
+  "about": "The Forest Hills case in the 4 m speed mode (depths at 1 m) with its batch variants: roughness × 0.8 and × 1.2, infiltration × 0.5, the 8 m screening mode. The band is the spread of the five runs at each mark (src/uncertainty.js). docs/METHODS.md §5.9, §5.11."
+ },
+ {
+  "id": "forest-hills-dep-moderate",
+  "title": "Forest Hills, Queens — against the NYC DEP Moderate Stormwater Flood Map",
+  "project": "Forest Hills DEP Moderate",
+  "about": "A 2.13 in/hr design storm (NYC DEP Moderate, current sea level) against DEP's own InfoWorks ICM map of it: another model, not an observation, so it does not count in a verdict. docs/METHODS.md §5.10."
+ }
+]

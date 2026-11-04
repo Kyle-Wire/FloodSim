@@ -906,7 +906,26 @@ validated and why. The report shows the gauges' observed and modelled hydrograph
 has `scorecard.csv`, `high_water_marks.csv` and the figures; `summary.json` keeps the inputs (`validation`). Gauge
 readings are fetched when the run finishes (at most 20 s). `npm run test:validate`.
 - A level mark more than 1 m below the lidar ground at its point is not scored, and the table says why: it sits under a
-  structure the lidar sees as ground (a bridge or deck), where the model's water is rain on top of it.
+  structure the lidar sees as ground (a bridge or deck), where the model's water is rain on top of it. Nor is a mark
+  whose USGS description puts it inside a building or in a basement: its level is below the street, and the model has
+  only the street (Forest Hills' basement marks sat 1.6 m under the street water beside them). STN marks are named
+  with their site (*HWM-1 (NYQUE31277)*) and keep that description.
+- **Flood maps** (`src/floodmaps.js`; Calibrate → *Import flood map*). A map of flooding is
+  scored cell by cell at 1 m against the run's peak depth, flooded at 4 in and over, buildings left out: hit rate (the
+  map's flooded cells the model floods, ≥ 70 / 50 %), critical success index (hits / (hits + misses + false alarms),
+  ≥ 50 / 30 %), the false-alarm ratio, the flooded area model / map, a table by depth band and, for a map with depths,
+  the depth error where both flood. It takes GeoJSON polygons with a depth (`depth_m`, or a depth field in the
+  observations' units), or the NYC DEP Stormwater Flood Maps' `Flooding_Category` (1: 4 in to 1 ft, 2: over 1 ft;
+  3, future high tides, skipped), where model patches under DEP's 0.25-acre floor are dropped. Features with
+  `mask: true` are where a map was made, and only cells inside them are scored. The USGS inundation maps of Ida 2021
+  in New York City (Capurso and others, 2023) are each surveyed mark's level less the lidar within 250 m of it. They are
+  made from the marks, so they are not independent of them, and their layers are pixel squares, about 50 MB a mark,
+  too much to fetch in the app: `benchmarks/nyc/` has Forest Hills' 13 mapped marks merged into 0.25 ft bands with
+  their buffers as masks. DEP's maps are
+  another model (InfoWorks ICM), so they go in the scorecard as a comparison and not in its verdict. Maps load with
+  the project (a project can also name a map by `{ "href": "/benchmarks/nyc/….geojson" }`, loaded when it opens), and
+  scores added after a run go into its filed `summary.json` too. Clipped DEP maps for the Forest Hills example are in
+  `benchmarks/nyc/`.
 
 **Rain against nearby gauges** (*Report* drawer, with the scorecard; `src/rainqa.js`, `app/report-rainqa.js`). When a
 run of a historic or live storm finishes, the rain it used is checked against the gauges within 25 km (nearest first, at
@@ -1226,6 +1245,10 @@ Philadelphia, every PWD inlet (85,603 citywide, ~±1 ft), outfalls and the combi
 snapped to its street; grates within 12 m share a manhole but keep their own exchange cell; grates > 25 m from a
 modelled street get a lateral (≤ 60 m) or are reported unconnected. PWD does not publish its mains, so pipes stay
 synthetic and the tier is labelled 2+. Add a city by appending its ArcGIS layer URLs to `UTILITIES`.
+New York City (NYC DEP) comes from NYC Open Data (Socrata): catch basins (2w2g-fk3i) and outfalls (8rjn-kpsh). Its
+combined-sewer test is the share of the area outside DEP's separate-storm-sewer (MS4) drainage areas, bundled as
+`src/nyc-ms4.js` (438 polygons, simplified to 30 m), since that layer is a download only: under half separate counts as
+combined. The Forest Hills box is 10 % separate (combined), with 3,534 catch basins and 95 outfalls.
 
 **Your own data** (`src/linked.js`, `src/network-real.js`). Under Area → "Your own drainage data", paste links to public
 ArcGIS layers (…/FeatureServer/0, …/MapServer/1) or GeoJSON files for pipes, inlets and outfalls; Check links shows what
@@ -1258,6 +1281,12 @@ combined balance −0.002 %.
   it was 1.3 m low with the river leaving across a free-outfall edge. With a river outlet held from the Philadelphia
   gauge it is 0.8 m low at the Manayunk gauge and 0.6–1.1 m low at the wet river marks (all 11 scored: bias −0.66 m,
   RMSE 0.85 m), evenly along the reach (docs/METHODS.md §5.8).
+- The *Forest Hills, Queens NY* example (Ida 2021) is street flooding from rain alone: 3.6 × 5.2 km, 18.7M 1 m cells
+  on a 2 m solver, DEP's real catch basins on a synthesized combined sewer, 20 h of gauge-corrected radar rain in
+  2.4 h. Against the 25 outdoor USGS marks the model is low: bias −0.20 m, RMSE 0.62 m, 18 of 25 flooded, 0.5 m low
+  on the hill around Austin St and 0.7 m at the low end by the Grand Central Pkwy. It floods 33 % of USGS's mapped
+  flooded cells (CSI 14 %). Its rain is 0.8 of the nearby gauges, and its sewer, sized for the 10-yr storm, never
+  surcharged, while 311 took 89 sewer-backup calls: both point the same way (docs/METHODS.md §5.9).
 - The *Laurelhurst, Portland OR* example links the City of Portland's open combined-sewer mains and inlets with the
   datum offset: 370 mains (335 combined) and 476 inlets in 1.3 km², 446 SWMM conduits (420 surveyed, inverts from the layer). The dev proxy only reaches links on public https hosts (never localhost or private
 addresses), GET only, and every request must carry the app's `x-floodsim` header, so other web pages cannot use it.
@@ -1305,6 +1334,11 @@ surface plus the backwater rise up that reach at its recorded discharge (standar
 cross-section, taken as prismatic). Without it a deep river pours off the edge as if over a fall and draws down
 upstream. At Manayunk it cut the gauge's crest error from −1.51 to −0.80 m; the prismatic reach leaves out the bridges
 and islands below, and the edge there still sat about 0.5 m low (docs/METHODS.md §3.7, §5.8).
+*Reach → lidar cross-sections* steps up the real river instead: the NHDPlus main stem from the gauge to the edge,
+sections every 200 m from the 3 m DEM with a channel carved under the water the lidar sees, velocity heads and
+contraction / expansion losses. It needs the channel's depth (*Channel depth*, else the bathymetry's): at Manayunk the
+edge level moves 0.4 m per metre of it, so prismatic stays the default where the channel is not surveyed
+(`node tools/outlet-reach.mjs` prints both for a gauge and a box).
 Where a river enters across the edge, the edge is closed across it, the channel plus 10 m each side. The channel is
 the run of edge cells within 1.5 m of the lowest lidar water surface near the entry. The flow goes in over that width,
 two rows inside. Before this, the flow went into the 12 lowest cells at the entry point. There it mounded up and poured
@@ -1492,7 +1526,7 @@ node tests/run-calibrate-tests.mjs # calibration: observation import, scoring, s
 node tests/run-inflow-tests.mjs   # river inflow: LP3, hydrographs, river entries, inflow books, STN marks (--live: a real gauge)
 node tests/run-soil-tests.mjs     # soils: texture classes, SSURGO rows, ponded Green-Ampt vs analytic, water table, aggregation, grain classes
 node tests/run-waterlevel-tests.mjs # starting water levels: river rise, lake fill, spreading, gauge datums (--live: a real gauge)
-node tests/run-outlet-tests.mjs     # river outlet: backwater rise vs the GVF solution; a cut river holds its level, a free outfall draws it down
+node tests/run-outlet-tests.mjs     # river outlet: backwater rise vs the GVF solution; a cut river holds its level, a free outfall draws it down; the cross-section reach
 node tests/run-bank-tests.mjs     # bank stability: friction-angle failure, cohesion, confinement, rapid drawdown, probability, bank tops
 node tests/run-report-tests.mjs   # report: hydrographs, profiles, HGL flags, stage–storage–discharge, gutter spread, charts
 node tests/run-fema-tests.mjs     # FEMA NFHL: zone codes, BFE between lines, zone and BFE grids (--live: Meyerland)
@@ -1504,7 +1538,10 @@ node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process,
 node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and listing URLs, frame at a time (--live: Ida's frames)
 node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (8 and 16 bit, all filters), GRIB2, value tables, gauge-corrected totals, timing (--live: Ida)
 node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pixels), advection, a live build with a cell arriving in the nowcast, PrecipRate fill
-node tests/run-validate-tests.mjs  # validation scorecard: peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88
+node tests/run-validate-tests.mjs  # validation scorecard: peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88, flood-map lines
+node tests/run-floodmap-tests.mjs  # flood maps: polygons onto cells, the 0.25-acre floor, hit rate / false alarms / CSI, depth bands and error, masks, DEP classes
+node tests/run-uncertainty-tests.mjs # uncertainty bands: marks inside / outside the variants' spread, the variant that moves them most, map-score ranges
+npm run validate                   # validation suite: each case's latest run scored into benchmarks/validation (tools/validate.mjs; --run [--ensemble] runs them again)
 node tests/run-streamstats-tests.mjs # ungauged inflow: StreamStats replies, snapping retry, 90 % intervals, NRCS lag and unit hydrograph, report section (--live: Wissahickon)
 node tests/run-checkpoint-tests.mjs # checkpoints: state by path (typed arrays in place, a solver root), packing, a SWMM run copied half way
 node tests/run-damage-tests.mjs   # damage and areas: USACE curves, water against walls (rowhouses, sheet flow, enclosed yards), EAD, BCA, area stats (--live: NSI)
@@ -1563,7 +1600,11 @@ src/hazard.js         hazard classes (ARR 2019 H1–H6, FD2320), force, d·v, du
 src/subgrid.js        subgrid speed mode: 1 m storage / conveyance tables per cell and face, 1 m depth output
 src/watershed.js      watersheds from 3DEP: priority flood, D8, upstream trace, local watershed past a river
 src/calibrate.js      observations (high-water marks, depths, reports, USGS STN), run scoring, parameter sweeps
-src/validate.js       validation scorecard: marks, gauge peaks and timing, rain sources, books against targets
+src/validate.js       validation scorecard: marks, gauge peaks and timing, flood maps, rain sources, books against targets
+src/floodmaps.js      reference flood maps (USGS depth maps, NYC DEP Stormwater Flood Maps) scored cell by cell against a run
+src/uncertainty.js    uncertainty bands: observations against the spread of a base run and its batch variants
+src/outlet.js         river outlet: the downstream gauge's level carried up to the edge (prismatic, or lidar cross-sections along NHDPlus)
+src/nyc-ms4.js        NYC DEP separate-storm-sewer (MS4) drainage areas, simplified, for the combined-sewer test
 src/rainqa.js         rain QA: ASOS hourly and CoCoRaHS daily gauges within 25 km against the storm's rain, over its own hours
 src/inflow.js         upstream river inflow: USGS gauges, recorded and design (LP3) hydrographs, entry cells
 src/soil.js           SSURGO soil hydraulics, Green-Ampt parameters per cell (wetness, water table)
@@ -1594,6 +1635,8 @@ src/hecras.js         HEC-RAS handoff: .g01 cross-sections into the channel bed;
 src/window.js         window reruns: the window, edge segments, inflow rates, the edge check, merging
 src/emulator.js       per-project emulator: Latin hypercube, Gaussian processes, PCA of flood fields, leave-one-out, save / load
 tools/batch.mjs       runs a project's batch study headless (tools/headless.mjs: Chrome/Edge over DevTools)
+tools/validate.mjs    the validation suite: scores each case in benchmarks/validation, keeps the history, writes its summary
+tools/outlet-reach.mjs a river outlet's edge level two ways (prismatic, lidar cross-sections) for a gauge and a box
 tools/build-swmm.mjs  compiles vendor/swmm (EPA SWMM 5.2.4 source) with Emscripten
 server/server.mjs     dev server + cached open-data proxy
 app/map.html, map.js  Phase 1 map app (MapLibre 2D viewer, build/run/export)

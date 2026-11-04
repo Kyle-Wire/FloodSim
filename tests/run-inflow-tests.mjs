@@ -40,12 +40,13 @@ check('normal quantiles', Math.abs(normInv(0.99) - 2.326348) < 1e-5 && Math.abs(
 }
 {
   const marks = fromSTN([
-    { latitude: 39.94, longitude: -75.15, elev_ft: 20, vertical_datum_name: 'NAVD88', label: 'A', hwm_quality_name: 'Good: +/- 0.10 ft', event_name: '2021 Ida', height_above_ground: 2 },
+    { latitude: 39.94, longitude: -75.15, elev_ft: 20, vertical_datum_name: 'NAVD88', label: 'A', hwm_quality_name: 'Good: +/- 0.10 ft', event_name: '2021 Ida', height_above_ground: 2, site_number: 'PAPHI1', location_description: 'Seed line on door' },
     { latitude: 39.941, longitude: -75.151, elev_ft: 812, vertical_datum_name: 'local control point', label: 'B', height_above_ground: 1.5, event_name: '2021 Ida' },
     { latitude: 39.942, longitude: -75.152, elev_ft: 30, vertical_datum_name: 'NGVD29', label: 'C', event_name: '2021 Ida' },
     { latitude: 45, longitude: -70, elev_ft: 20, vertical_datum_name: 'NAVD88', label: 'far', event_name: '2021 Ida' }], [-75.16, 39.93, -75.14, 39.95]);
-  const a = marks.find(m => m.name === 'A'), b = marks.find(m => m.name === 'B');
+  const a = marks.find(m => m.name === 'A (PAPHI1)'), b = marks.find(m => m.name === 'B');
   check('STN marks: NAVD88 elevations, height above ground otherwise, no other datums, inside the box only', marks.length === 2 && Math.abs(a.wse - 20 * 0.3048) < 1e-9 && b.depth === 1.5 * 0.3048 && b.wse == null, JSON.stringify(marks.map(m => m.name)));
+  check('STN marks: named with their site, where they were found kept', a.where === 'Seed line on door' && b.where === '');
 }
 
 { // a river entering across the edge (row 0, a free outfall) into a 24 m channel; the far end is a wall, so whatever

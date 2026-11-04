@@ -242,7 +242,7 @@ export function initReport(map, api) {
 
     // 7. validation scorecard: each run of a real storm, against what was observed (after the summary)
     for (const [role, r] of runs) {
-      const v = r.validation; if (!v?.observed) continue;
+      const v = r.validation; if (!v?.observed && !v?.floodMaps?.length) continue;
       const sc = V.scorecard({ ...v, gauges: v.gauges.filter(g => g.score || !/reading the gauge/.test(g.why)) }), who = A ? ` (${tag(role).toLowerCase()})` : '', key = A ? '_' + role : '';
       const signed = (x, dp) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${fmtNum(Math.abs(x), dp)}`;
       const value = (it) => (it.value == null || (typeof it.value === 'number' && !Number.isFinite(it.value)) ? '–' : it.unit === 'm' ? `${/RMSE/.test(it.label) ? fmtNum(u.L(it.value), 2) : signed(u.L(it.value), 2)} ${u.len}`
@@ -253,6 +253,10 @@ export function initReport(map, api) {
       const mark = { good: '✓ good', fair: '~ fair', poor: '✕ poor', info: '' };
       const rows = sc.items.map(it => ({ group: it.group, check: it.label, value: value(it), target: target(it), status: mark[it.status], note: it.note }));
       const tables = [{ name: 'scorecard' + key, title: 'Checks (target: good / fair)', cols: [['group', 'group'], ['check', 'check'], ['value', 'value'], ['target', 'target_good_fair'], ['status', 'status'], ['note', 'note']], rows }];
+      if (v.floodMaps?.length) tables.push({ name: 'flood_maps' + key, title: 'Flood maps, cell by cell (flooded at 4 in and over, buildings left out)',
+        cols: [['map', 'map'], ['cells', 'cells_scored', 0], ['mapped', 'map_flooded_cells', 0], ['model', 'model_flooded_cells', 0], ['hit', 'hit_rate_pct', 0], ['far', 'false_alarm_ratio_pct', 0], ['csi', 'csi_pct', 0], ['bias', `depth_bias_${u.len}`, 2], ['rmse', `depth_rmse_${u.len}`, 2]],
+        rows: v.floodMaps.map(m => ({ map: m.name, cells: m.cells, mapped: m.mapped, model: m.modelWet, hit: (m.hitRate ?? NaN) * 100, far: (m.falseAlarmRatio ?? NaN) * 100, csi: (m.csi ?? NaN) * 100,
+          bias: m.depth ? u.L(m.depth.bias) : NaN, rmse: m.depth ? u.L(m.depth.rmse) : NaN })) });
       if (v.hwm?.points?.length) tables.push({ name: 'high_water_marks' + key, title: `Observations${v.event ? ': ' + v.event.replace('USGS STN, ', 'USGS high-water marks, ') : ''}`,
         cols: [['name', 'mark'], ['kind', 'kind'], ['observed', `observed_${u.len}`, 2], ['model', `model_${u.len}`, 2], ['error', `error_${u.len}`, 2], ['call', 'flooded_call_or_note']],
         rows: v.hwm.points.map(p => ({ name: p.name, kind: p.kind ?? 'flooded / dry', observed: p.observed == null ? NaN : u.L(p.observed), model: p.model == null ? NaN : u.L(p.model), error: p.error == null ? NaN : u.L(p.error), call: p.call ?? '' }))

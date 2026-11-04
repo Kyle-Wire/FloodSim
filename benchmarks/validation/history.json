@@ -1,0 +1,150 @@
+[
+ {
+  "case": "manayunk-ida",
+  "run": "2026-11-04_034702",
+  "saved": "2026-11-04T08:46:58.683Z",
+  "marks": {
+   "n": 11,
+   "rmse": 1.36,
+   "bias": -0.88,
+   "within15": 0.091,
+   "hits": 8,
+   "misses": 3,
+   "calls": 11
+  },
+  "marksFrom": "scored in the app after the run (docs/METHODS.md §5.8)",
+  "gauges": [
+   {
+    "site": "01473800",
+    "name": "Schuylkill River at Manayunk, Philadelphia, PA",
+    "error": -1.511,
+    "lagMin": -23
+   },
+   {
+    "site": "01474000",
+    "name": "Wissahickon Creek at Mouth, Philadelphia, PA",
+    "error": -1.379,
+    "lagMin": -654
+   }
+  ],
+  "maps": [],
+  "scored": "2026-11-04T21:16:15.571Z",
+  "commit": "1adcf35+dirty",
+  "runCommit": "33794a1d85c9+dirty",
+  "storm": "historic: Ida",
+  "simulatedH": 19.53,
+  "wallH": 7.36,
+  "mass": 4.183906768566675e-7,
+  "checks": {
+   "good": 1,
+   "fair": 1,
+   "poor": 5
+  },
+  "verdict": "poor"
+ },
+ {
+  "case": "manayunk-ida",
+  "scored": "2026-11-04T21:19:10.441Z",
+  "commit": "1adcf35+dirty",
+  "runCommit": "f5e2632c5db6+dirty",
+  "run": "2026-11-04_134609",
+  "saved": "2026-11-04T18:46:05.915Z",
+  "storm": "historic: Ida",
+  "simulatedH": 19.53,
+  "wallH": 6.8,
+  "marks": {
+   "n": 11,
+   "rmse": 0.85,
+   "bias": -0.66,
+   "within15": 0,
+   "hits": 9,
+   "misses": 2,
+   "calls": 11
+  },
+  "gauges": [
+   {
+    "site": "01473800",
+    "name": "Schuylkill River at Manayunk, Philadelphia, PA",
+    "error": -0.803,
+    "lagMin": -7
+   },
+   {
+    "site": "01474000",
+    "name": "Wissahickon Creek at Mouth, Philadelphia, PA",
+    "error": 0.932,
+    "lagMin": 2
+   }
+  ],
+  "maps": [],
+  "mass": 2.775831253840979e-7,
+  "checks": {
+   "good": 3,
+   "fair": 0,
+   "poor": 4
+  },
+  "verdict": "poor",
+  "marksFrom": "scored in the app after the run (docs/METHODS.md §5.8)",
+  "note": "river outlet (91b0845)"
+ },
+ {
+  "case": "forest-hills-ida",
+  "scored": "2026-11-04T23:33:01.728Z",
+  "commit": "1adcf35+dirty",
+  "runCommit": "1adcf35a90c1+dirty",
+  "run": "2026-11-04_182532",
+  "saved": "2026-11-04T23:25:29.157Z",
+  "storm": "historic: Ida",
+  "simulatedH": 20,
+  "wallH": 2.4,
+  "marks": {
+   "n": 25,
+   "rmse": 0.615,
+   "bias": -0.205,
+   "within15": 0.16,
+   "hits": 18,
+   "misses": 7,
+   "calls": 25
+  },
+  "gauges": [],
+  "maps": [
+   {
+    "name": "USGS mapped inundation, Ida 2021, Forest Hills (Capurso and others, 2023)",
+    "observed": true,
+    "hitRate": 0.32860063211213364,
+    "csi": 0.14302416330348222,
+    "falseAlarmRatio": 0.7979233706611748,
+    "areaRatio": 1.6261189291769287,
+    "depthBias": -0.37438769420305107,
+    "depthRMSE": 0.4718269673574323
+   },
+   {
+    "name": "NYC DEP Stormwater Flood Map, Moderate (2.13 in/hr), current sea level",
+    "observed": false,
+    "hitRate": 0.31193139388294244,
+    "csi": 0.050648309311012454,
+    "falseAlarmRatio": 0.9429814840636719,
+    "areaRatio": 5.4707034857110735,
+    "depthBias": null,
+    "depthRMSE": null
+   },
+   {
+    "name": "NYC DEP Stormwater Flood Map, Extreme (3.66 in/hr), 2080 sea level",
+    "observed": false,
+    "hitRate": 0.1604049390425852,
+    "csi": 0.09450041631201334,
+    "falseAlarmRatio": 0.8130051885719318,
+    "areaRatio": 0.857804223644401,
+    "depthBias": null,
+    "depthRMSE": null
+   }
+  ],
+  "mass": 0.000056887654197685335,
+  "checks": {
+   "good": 0,
+   "fair": 1,
+   "poor": 9
+  },
+  "verdict": "poor",
+  "note": "indoor and basement marks not scored (USGS descriptions), rescored from the filed levels"
+ }
+]

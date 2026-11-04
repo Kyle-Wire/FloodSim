@@ -515,6 +515,23 @@ all n together.
     same channel cut off halfway, with the outlet level at the cut. The backwater rise matches the gradually-varied-flow
     solution to 0.1 mm. The cut model holds the full river's level 600 m upstream of the cut to 1 cm, where a free
     outfall draws it down 0.96 m.
+  - **Reach from lidar cross-sections** (an option: Reach → lidar cross-sections). The river's path from the gauge to
+    the edge is the NHDPlus main stem upstream of the gauge (USGS NLDI). Sections are cut across it every 200 m,
+    300 m to each side, from the 3 m 3DEP DEM. The water the lidar sees (ground within 0.15 m of the lowest point near
+    the centreline) gets a parabolic channel carved under it. Its depth is the one entered, else the channel depth the
+    bathymetry step used, else 2 m. A standard step through the sections carries the gauge's level to the edge, with
+    velocity heads, the friction slope from the mean conveyance and contraction / expansion losses of 0.1 / 0.3 of the
+    change in velocity head. A section too tight for the flow takes its critical depth. The tests check normal depth on
+    a slope (2.226 m against 2.226 m), a level bed against the prismatic step (3.27 against 3.26 m), a reach twice as
+    wide as its edge against a hand step (3.01 against 2.99 m), a choke at critical depth, and the carved area (80 m²
+    against 2/3 · 40 · 3).
+  - **Which to use: the channel depth decides it.** At Manayunk (`tools/outlet-reach.mjs`; the Philadelphia gauge's
+    crest, 6.37 m and 3,540 m³/s), the cross-section reach puts the edge 0.4 m higher for each metre of the channel
+    depth the lidar cannot see. With the regional curve's 2.74 m it gives 11.91 m, about 1.2 m above the marks near
+    the edge; a 5–6 m channel matches them. The prismatic step gives 10.03 m on the app's edge section, which crosses
+    the river at a slant, and 11.50 m on one square to the river. Neither is tuned to the marks. Prismatic stays the
+    default, and the cross-section reach is for a river whose channel depth is known (a survey, BlueTopo, a HEC-RAS
+    model): without one, the choice moves the edge level by more than the error it is meant to fix.
   - The solver holds one external level, so a run with a tide on its edges does not use the outlet.
 
 ### 3.8 Tides and compound flooding
@@ -756,7 +773,7 @@ Changes under about 1 cm are within its error, so an off-site impact must be con
 ## 5. Verification and validation
 
 **Verification** (does the code solve the equations correctly) is extensive. **Validation** against observed floods
-in the repository is limited (§5.6–5.9, §5.11).
+in the repository is limited (§5.6–5.12, §5.14).
 
 ### 5.1 Code verification (analytic and internal-consistency tests)
 
@@ -918,7 +935,7 @@ Run on 3 November 2026 at commit `08a4162` (+ the water-balance fix of `2535d75`
   the nearest, CoCoRaHS NJ-CN-24 at 8.2 km, **1.04**; Philadelphia International (ASOS, 10 km) 1.44; Wyndmoor
   (CoCoRaHS, 13 km, 130 mm) 0.53. Ida's totals ranged from 48 to 130 mm across 25 km, so no single gauge is decisive;
   the median sits in the scorecard's *fair* band (|ratio − 1| = 0.17). The gauge-adjusted product being 33 % under
-  radar-only matches the Fairmount run of §5.9 and is not yet explained.
+  radar-only matches the Fairmount run of §5.12 and is not yet explained.
 - **Books.** Surface −7e-6, surface + sewers +3e-4. The report's water balance closes to 187 ft³ of 596,380 ft³ in:
   rain on the ground 310,917; roof rain piped to the combined sewers 264,097; sanitary flow 21,048; to the pipe
   outfalls 518,101; infiltration 26,814; off the model edge 15,301; standing at the end 35,870. (This run found the
@@ -927,7 +944,7 @@ Run on 3 November 2026 at commit `08a4162` (+ the water-balance fix of `2535d75`
 - **Depths: not validated at this site.** USGS STN holds 262 Ida marks in Pennsylvania, 43 around Philadelphia, all on
   the Schuylkill (Fairmount to Manayunk); none falls in this block, and no street-flooding observations are published
   for it. Peak depth in the model: 0.76 m. The marks that exist are riverine; the Fairmount run of
-  §5.9 used five of them, and the Manayunk reach has 15 (§5.8).
+  §5.12 used five of them, and the Manayunk reach has 15 (§5.8).
 
 What this shows: the rain QA, water books and report work end to end on a real storm, and the rain the model used is
 consistent with the gauge network to within its spread. It does not show that the modelled depths are right.
@@ -1083,7 +1100,111 @@ reads the right water. The river outlet removes the edge drawdown that put the f
 0.6–1.1 m low along the whole reach, about half the first run's error. That is not yet a validation of river levels:
 for planning, read a Schuylkill-type river's flood levels here as likely low by up to about 1 m.
 
-### 5.9 Earlier observation comparisons recorded in the README
+### 5.9 Street flooding in a combined-sewer area — Forest Hills, Queens, Ida, 1 Sept 2021
+
+The first validation here of street flooding from rain alone, with no river, against observed depths. Run on
+4 November 2026 in the app from the *Forest Hills, Queens NY* example.
+
+- **Model.** 3.6 × 5.2 km (Forest Hills, Rego Park, Kew Gardens and the edge of Flushing Meadows), 18.7M 1 m cells, a
+  2 m solver (4.7M cells), 30,049 buildings as walls.
+- **Drainage.** NYC DEP's 3,785 real catch basins in and around the box (NYC Open Data), 3,631 of them in the model,
+  on a synthesized combined sewer (DEP does not publish its pipes): 217 km of pipe, 0.3–2.7 m, to 171 outfalls, sized
+  by the rational method for the 10-yr storm. The box is 10 % separate storm sewer by DEP's MS4 drainage areas, so
+  combined. Roof downspouts 100 % to the sewer, sanitary flow and CSO regulators on.
+- **Rain.** MRMS gauge-corrected, timed by the 2-min radar rate, over an 18 h window from 13:06 UTC on 1 Sept: 135 mm
+  over the area, 72 mm of it in the hour from 21:34 local time (2.8 in/hr, above DEP's 10-yr design storm of
+  2.13 in/hr and below its 100-yr, 3.66 in/hr). A 2 h tail after the window.
+- **Observations.** USGS high-water marks from the STN *2021 Ida* event, *Flash flooding* (mostly heights above
+  ground at doors, walls and cars); the USGS depth maps made from 13 of them (`benchmarks/nyc/`); and NYC 311 reports
+  from 6 pm on 1 Sept to noon on 2 Sept: 16 *Street Flooding*, 4 flooded catch basins and 89 *Sewer Backup*. A 311
+  report sits at the address the caller gave, not at the water, so it is scored against the highest peak depth within
+  15 and 30 m, against the same at 3,000 random open cells.
+
+**The run.** 72,000 s in 2.4 h of computing; books 5.7e-5 at the surface, 3.0e-5 with the pipes, nothing added by the
+wet / dry clip. Of 2.53M m³ of rain (0.51M of it on roofs, piped to the sewer), the sewer took 1.44M (57 %), the ground
+0.37M (14 %), the edges 0.08M; 0.67M (27 %) stood on the ground at the end. The sewer never surcharged onto the
+streets (SWMM's flooding: 0), on a night when 311 took 89 sewer-backup calls from the box. The rain QA reads the model low: 135 mm over the area against LaGuardia's 171 mm (6.6 km away) and
+Central Park's 179 mm; the 12 gauges within 14 km give a median model / gauge of 0.83 (0.56–2.05; JFK and Wall
+Street had 66 mm). MRMS radar alone gave 168 mm; its gauge correction took the area to 135 mm.
+
+**Marks.** 31 marks at 15 sites. Six are not scored. USGS found four of them inside buildings or on a basement door:
+*seed line on basement wall of building* (NYQUE31277), *bottom of ramp inside delivery door* (NYQUE31276) and *outside
+of basement door* (NYQUE31290). Their levels are below the street, and the model has only the street. The two at
+NYQUE31277 had scored +1.56 and +1.59 m: the street water beside a basement. The scorer now skips a mark whose USGS
+description puts it inside or in a basement (`INDOORS` in `src/calibrate.js`). The first scoring, with them, was bias
+−0.07 m and RMSE 0.73 m over 27 marks.
+
+| Where (height above NAVD88) | Marks | Model − observed | What the marks show |
+|---|---|---|---|
+| Grand Central Pkwy service road at 62nd Dr, the low end toward Flushing Meadows (3.7–3.8 m) | 5 | −0.62 to −0.83 m, 2 dry in the model | 0.7 m of water on fences and walls |
+| Forest Hills' hill, Austin St, Ascan Ave, Continental Ave, Tennis Pl (18.8–25.7 m) | 10 | −0.17 to −0.85 m, mean −0.50 m, 5 dry | 0.4–0.8 m against posts, poles and shop fronts |
+| Juno St, Ingram St, 69th Ave (12.0–13.9 m) | 6 | −0.40 to +0.16 m, mean −0.01 m | |
+| Alleys to the garages behind 64th Rd and 68th Ave (9.9–10.1 m) | 4 | +0.56, +0.56, +1.26, +1.23 m | 0.2–0.3 m up garage doors and an alley wall, in alleys a few metres wide |
+| **All 25 scored** | | **bias −0.20 m, RMSE 0.62 m, MAE 0.52 m; 4 within 15 cm; 18 of 25 flooded** | |
+
+**The USGS depth maps.** USGS mapped 13 of the sites: each mark's level less the lidar ground, within 250 m of it.
+Inside those buffers (1.38M open 1 m cells), the map floods 14.3 ha at 4 in and over and the model 23.3 ha. The model
+floods 33 % of the map's flooded cells; 80 % of what it floods there the map has dry (CSI 14 %). Where both flood, the
+model is 0.37 m shallower (RMSE 0.47 m), and in every 1 ft band most of the map's cells are shallower in the model.
+The map is a flat plane at one mark's level carried 250 m over the ground. On Forest Hills' slopes that is not how water
+stands, so part of the extent disagreement is the map's. The depth bias agrees with the marks: the model is shallow.
+
+**NYC DEP's maps, against Ida.** Ida's peak hour (2.8 in/hr) lies between DEP's Moderate (2.13 in/hr) and Extreme
+(3.66 in/hr) design storms. Counted as DEP counts (4 in and over, patches of 0.25 acre and over, buildings out), the
+model floods 136 ha of the box: 5.5 times Moderate's 25 ha and 0.86 times Extreme's 159 ha. In extent, it sits
+between them, as the storm does. But the places differ: the model floods 31 % of Moderate's flooded cells and 16 % of
+Extreme's (CSI 5 % and 9 %). The like-for-like test is §5.10.
+
+**311 reports.** All 20 street-flooding and catch-basin reports have 10 cm or more within 15 m in the model, and
+11 of them 30 cm. But so do 97 % and 46 % of 3,000 random open cells. Of the 89 sewer backups, 40 % have 30 cm within
+15 m. In this run the model floods some cell within 15 m of almost everywhere, so a report's address cannot tell
+the model right from wrong. The 311 test as built has no power here, and it is not in the scorecard.
+
+**What this shows.** The solver, sewer coupling and books hold for an 18.7M-cell, 20-hour pluvial run with 3,631
+inlets. Against observed street depths the model is low: 0.2 m on average over the 25 outdoor marks, 0.5 m on the hill
+and 0.7 m at the low end, with 7 of 25 flooded places dry. It also floods different places from both USGS's and
+DEP's maps. Nothing was tuned. Two inputs could each explain much of the low bias: the rain, 0.8 of the nearby gauges,
+and the sewer. The sewer here is synthesized, sized for a 10-yr storm at 10 min (138 mm/hr) by the rational method,
+and it never surcharged. NYC's own was mostly built for about 1.75 in/hr (44 mm/hr) and backed up into basements
+across the box, so the model's drains take water the real ones could not.
+Pipes sized for the 5-yr storm are the next test (§5.11). For planning in a combined-sewer area like this one, read
+the model's street depths as likely low by 0.2–0.7 m in a storm well past the sewer's design, until a run with the
+real network or the city's design capacity says otherwise.
+
+### 5.10 Against another model's map — NYC DEP Stormwater Flood Maps
+
+NYC DEP mapped where its *Moderate Stormwater Flood* (2.13 in/hr, at current sea level) puts 4 in and over, with
+InfoWorks ICM on its own sewer network (1D) and the surface (2D), and kept patches of 0.25 acre and over. DEP does not
+publish the hyetograph or the network. The FloodSim run gives the same box a constant 55 mm/hr for 1 h (the input's
+nearest step to 54.1 mm/hr) with a 2 h tail, at 2 m, the drainage as in §5.9, and scores it against DEP's map the way
+DEP drew it (`benchmarks/validation`, case *forest-hills-dep-moderate*). Two models of one design storm: agreement
+would not make either right, and disagreement says where they differ, not which is wrong.
+
+### 5.11 The validation suite and its uncertainty bands
+
+`node tools/validate.mjs` scores every case in `benchmarks/validation/cases.json` from the latest finished run filed
+in its project. It uses the same scorecard as the app (`src/validate.js`), adds each score to
+`benchmarks/validation/history.json`, and rewrites `benchmarks/validation/README.md`: the latest score of each case,
+the change from the run before, and each case's history. `--run` runs every case again headless first
+(`tools/batch.mjs`, one job of the project's storm as set), so a release can be held to the one before it. A case's
+project is installed from `benchmarks/validation/<case>/project.json` when the projects folder lacks it.
+
+- **Cases.** Manayunk (§5.8), Forest Hills under Ida (§5.9) and Forest Hills against DEP's Moderate map (§5.10, a
+  comparison only).
+- **History so far.** The two Manayunk runs: marks RMSE 1.36 → 0.85 m and the Manayunk gauge −1.51 → −0.80 m with the
+  river outlet. Their marks were scored in the app after each run was filed, before scores added after a run went into
+  its `summary.json` (they do now); the history says so.
+- **Uncertainty bands** (`src/uncertainty.js`). `--run --ensemble` adds the batch variants (roughness × 0.8 and × 1.2,
+  infiltration × 0.5, one cell size coarser), and `--variants-only` runs them beside a base run made by hand. At each
+  mark the band runs from the lowest to the highest level the runs give. The history keeps how many marks fall inside
+  it, its mean width, and the mean shift each variant makes. The report's Sensitivity section has the same table per
+  mark, and the flood-map scores' range across the runs. A mark inside the band is one the model reaches with
+  plausible inputs. A mark outside it points at something no variant moves: the channel, an edge, the rain, the ground
+  model. With one input changed at a time and four or five runs, this is a sensitivity band, not a probability.
+  `tests/run-uncertainty-tests.mjs` checks marks inside, above and below a band, the variant that moves the levels
+  most, marks a member did not score, and the map-score ranges.
+
+### 5.12 Earlier observation comparisons recorded in the README
 
 These are recorded in the README as development history. A reviewer should treat them as partial validation:
 
@@ -1099,12 +1220,12 @@ These are recorded in the README as development history. A reviewer should treat
 - **Ellicott City, 30 July 2016, MRMS**: 164 mm over the area in about 4 h against NWS-reported about 6.6 in (168 mm).
   This is a rainfall check, not a flood-depth validation.
 
-### 5.10 Test suites
+### 5.13 Test suites
 
 `npm test` (`tests/run-all.mjs`) runs every CPU suite offline: `tests/run-tests.mjs` and each
-`tests/run-*-tests.mjs` except the GPU runners, 36 suites in all. The GPU suite (`npm run test:gpu`,
+`tests/run-*-tests.mjs` except the GPU runners, 38 suites in all. The GPU suite (`npm run test:gpu`,
 `tests/gpu-suite.js` in headless Chrome/Edge on the machine's GPU) is separate and writes `tests/results-gpu.json`.
-Suites with `--live` also hit the real services; the default runs use recorded responses and fixtures. All 36 CPU suites
+Suites with `--live` also hit the real services; the default runs use recorded responses and fixtures. All 38 CPU suites
 passed when this document was written (`node tests/run-all.mjs`). The GPU suite passed on 3 November 2026, with its
 new 2,112 × 2,112 many-tiles case (§2.9).
 
@@ -1120,12 +1241,12 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-lts-tests.mjs` | Local time stepping vs global (CPU fp64): dam breaks, still water, deep channel + floodplain |
 | `run-subgrid-tests.mjs` | Subgrid tables: storage, conveyance, curbs, porosity, level ↔ volume |
 | `run-watershed-tests.mjs` | Depression filling, D8, upstream trace, outlines, rivers from off the DEM |
-| `run-calibrate-tests.mjs` | Observation import, run scoring, sweep plan |
-| `run-inflow-tests.mjs` | LP3, hydrographs, river entries, inflow books, STN marks |
+| `run-calibrate-tests.mjs` | Observation import, run scoring, marks under a deck or indoors not scored, sweep plan |
+| `run-inflow-tests.mjs` | LP3, hydrographs, river entries, inflow books, STN marks (datums, names with their site, where found) |
 | `run-streamstats-tests.mjs` | StreamStats replies, snapping retry, 90 % intervals, NRCS lag and unit hydrograph, report |
 | `run-soil-tests.mjs` | Texture classes, SSURGO rows, ponded Green-Ampt vs analytic, water table, aggregation, grain classes |
 | `run-waterlevel-tests.mjs` | River rise, lake fill, spreading onto connected ground only, datum rules, NGVD29 shift, weir and bridge-deck cases |
-| `run-outlet-tests.mjs` | River outlet: backwater rise against the gradually-varied-flow solution, edge side, and a channel cut off halfway holding the full river's level (a free outfall draws it down 0.96 m) |
+| `run-outlet-tests.mjs` | River outlet: backwater rise against the gradually-varied-flow solution, edge side, a channel cut off halfway holding the full river's level (a free outfall draws it down); the reach through cross-sections: normal depth, a widening reach against a hand step, a choke at critical depth, sections cut from a ground model |
 | `run-bathymetry-tests.mjs` | Regional curves, flattened surface, carved section, GeoTIFF, surveyed bed |
 | `run-hecras-tests.mjs` | GeoTIFF and shapefile round trips, `.g01` parsing, bed between sections, the 2D package |
 | `run-bank-tests.mjs` | Friction-angle failure, cohesion, confinement, rapid drawdown, probability vs Monte Carlo |
@@ -1135,7 +1256,9 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-report-tests.mjs` | Hydrograph stats, profiles, HGL path and flags, stage–storage–discharge, gutter spread, charts |
 | `run-damage-tests.mjs` | USACE curves, water against walls (rowhouses, sheet flow, enclosed yards), EAD, BCA, area stats |
 | `run-checks-tests.mjs` | Edge distance and flooding by side, points near the edge, run against run, sensitivity, statuses, difference map |
-| `run-validate-tests.mjs` | Gauge peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88 |
+| `run-validate-tests.mjs` | Gauge peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88, flood-map lines (another model's map not in the verdict) |
+| `run-floodmap-tests.mjs` | Flood maps: polygons onto cells (holes, clipping), the 0.25-acre floor, hits / misses / false alarms, CSI, depth bands and error, masks, buildings left out, DEP classes, empty polygons skipped |
+| `run-uncertainty-tests.mjs` | Marks against the variants' band (inside, above, below), the variant that moves them most, unscored marks left out, flood-map score ranges |
 | `run-rainqa-tests.mjs` | Gauge reading hours across DST, ASOS hours and CoCoRaHS reports in the storm window, scoring rules, Ida at PHL |
 | `run-fema-tests.mjs` | NFHL zone codes, BFE between lines, zone and BFE grids |
 | `run-compound-tests.mjs` | Datums, SLR to the epoch, design tides, GEV, Kendall's τ, Gumbel copula, isolines, design pairs |
@@ -1145,12 +1268,13 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-window-tests.mjs` | Window, edge segments, inflow rates, edge check, merging |
 | `run-radar-tests.mjs`, `run-mrms-tests.mjs`, `run-nowcast-tests.mjs` | Radar overlay frames; MRMS PNG/GRIB2 decoding, gauge-corrected totals, timing; storm motion and advection |
 
-### 5.11 What has not been validated
+### 5.14 What has not been validated
 
-- **No street-level urban pluvial event with observed depths** is documented as a validation case in the repository.
-  The Davis comparison is model to model, and the README notes that its residual-ponding difference needs observations
-  to resolve. Ida at South Street (§5.6) and Portland (§5.7) are run end to end on real storms, but neither site has
-  observed street depths.
+- **Street flooding from rain** has one observed case, Forest Hills under Ida (§5.9), and it is not passed: the
+  model is 0.2 m low on average over 25 outdoor marks (0.5–0.7 m on the hill and at the low end), and it floods
+  different places from USGS's and DEP's maps. Its sewer is synthesized and its rain is 0.8 of the nearby gauges;
+  neither has been replaced by the real thing. Marks indoors or in basements cannot be compared at all. The Davis
+  comparison is model to model; Ida at South Street (§5.6) and Portland (§5.7) have no observed street depths.
 - **River levels.** Manayunk (§5.8) was 1.3 m low against 9 river marks and its gauge from the free-outfall edge.
   With the river outlet it is 0.84 m low against those marks (RMSE 0.85 m over all 11) and −0.80 m at the gauge,
   evenly along the reach: about 0.5 m from the outlet's prismatic reach and the rest from the estimated channel or

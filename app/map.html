@@ -558,7 +558,9 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
         <p class="vlabel">River leaving the area</p>
         <label class="field"><span>Downstream USGS gauge (site number)</span><input id="outGauge" type="text" inputmode="numeric" placeholder="none: free outfall" style="width:9em"></label>
         <label class="field"><span>River length from the edge to it (m; blank: straight line)</span><input id="outLen" type="number" step="100" min="0" style="width:6em"></label>
-        <p class="note" id="outNote">A free outfall drains a deep river off the edge as if over a fall, and the river upstream draws down. With a gauge downstream (historic storms), the edge facing it holds the gauge’s recorded level, carried up the reach at its recorded flow (a backwater calculation on the edge’s own cross-section). Not with a tide on the edges.</p>
+        <label class="field"><span>Reach to the gauge</span><select id="outReach"><option value="prismatic" selected>The edge’s own section, all the way</option><option value="sections">Cross-sections cut from the lidar</option></select></label>
+        <label class="field"><span>Channel depth below the water there (m; blank: the model’s estimate)</span><input id="outDepth" type="number" step="0.5" min="0" style="width:5em"></label>
+        <p class="note" id="outNote">A free outfall drains a deep river off the edge as if over a fall, and the river upstream draws down. With a gauge downstream (historic storms), the edge facing it holds the gauge’s recorded level, carried up the reach at its recorded flow: a backwater calculation on the edge’s own cross-section, or a standard step through cross-sections cut from the lidar along the river (USGS NHDPlus) to the gauge. The lidar does not see under the water: the channel there is estimated, and the level depends on it (about 0.4 m per metre of depth on the Schuylkill). Not with a tide on the edges.</p>
       </div>
     </section>
 
@@ -669,6 +671,9 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
       <div class="row" style="margin-top:4px"><button class="btn" id="hwmBtn" type="button" disabled title="Surveyed high-water marks from the USGS Short-Term Network near this area">USGS high-water marks</button>
         <select id="hwmEvent" aria-label="Flood event" hidden></select></div>
       <p class="note" id="obsNote">CSV with lat, lon and a water surface elevation (wse / elev), a depth, or flooded yes / no; or GeoJSON points with the same fields.</p>
+      <div class="row" style="margin-top:4px"><button class="btn" id="mapsImport" type="button" title="GeoJSON polygons with a depth (depth_m, or a depth field in the units above), or NYC DEP Stormwater Flood Map categories; features with mask: true are where the map was made">Import flood map</button><button class="btn" id="mapsClear" type="button">Clear maps</button></div>
+      <input type="file" id="mapsFile" hidden accept=".geojson,.json">
+      <p class="note" id="mapsNote">Flood maps to score runs against, cell by cell at 1 m (flooded at 4 in and over): GeoJSON polygons with a depth (a USGS post-event depth map; mask features limit it to where it was made) or NYC DEP Stormwater Flood Map categories. Forest Hills’ are in benchmarks/nyc.</p>
       <div class="field"><label for="calManning">Roughness (Manning n) ×</label><output id="calManningOut"></output><input type="range" id="calManning" min="0.6" max="1.6" step="0.05" value="1"></div>
       <div class="field"><label for="calInfil">Infiltration ×</label><output id="calInfilOut"></output><input type="range" id="calInfil" min="0.25" max="2" step="0.05" value="1"></div>
       <div class="field"><label for="calClog">Inlet clogging</label><output id="calClogOut"></output><input type="range" id="calClog" min="0" max="0.7" step="0.05" value="0"></div>

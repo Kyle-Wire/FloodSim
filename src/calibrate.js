@@ -47,18 +47,24 @@ export function parseObservations(text, { units = 'ft' } = {}) {
 }
 function splitCSV(line) { const out = []; let cur = '', q = false; for (const ch of line) { if (ch === '"') q = !q; else if (ch === ',' && !q) { out.push(cur); cur = ''; } else cur += ch; } out.push(cur); return out; }
 
+/** A mark's own description that puts it indoors or below the street: inside a building, in a basement. */
+export const INDOORS = /\b(inside|interior|indoors|basement)\b/i;
 /**
  * Score a run. at(lon, lat, radius) → { ground, wse } (wse = highest modelled water surface within radius, or null if
  * dry). → { points: [{ ...obs, ground, model, error, kind, skip? }], n, bias, mae, rmse, within15, hits, misses, falseAlarms,
  * skipped, score }. A level mark more than 1 m below the lidar ground at its point is not scored (skip says why): it is
  * under a structure the lidar sees as ground, a bridge or deck (Ida's Cherry Street mark sits 4 m under the deck), and
- * the model's water there is rain on top of it.
+ * the model's water there is rain on top of it. Nor is a mark whose description (`where`, USGS location_description)
+ * puts it inside a building or in a basement (INDOORS): Ida's Forest Hills basement marks sit 1.5 m below the street water.
  * score: RMSE of levels (m) plus 0.25 m per wrong flooded / dry call, so a sweep can rank runs with mixed observations.
  */
 export function scoreRun(obs, at, radius = 3) {
   const pts = [], e = []; let hits = 0, misses = 0, falseAlarms = 0, wrong = 0, calls = 0, skipped = 0;
   for (const o of obs) {
     const m = at(o.lon, o.lat, radius); if (!m) continue;
+    if (INDOORS.test(o.where ?? '')) { // a basement or a room: not the water outside, which is all the model has
+      pts.push({ ...o, ground: m.ground, kind: o.wse != null ? 'level' : 'depth', skip: `inside a building or below grade (USGS: “${o.where.trim().slice(0, 60)}”): not scored` }); skipped++; continue;
+    }
     if (o.wse != null && m.ground != null && o.wse < m.ground - 1) { // under a bridge or deck: not on the model's ground
       pts.push({ ...o, ground: m.ground, kind: 'level', skip: `${(m.ground - o.wse).toFixed(1)} m below the lidar ground there (under a bridge or deck): not scored` }); skipped++; continue;
     }
@@ -89,12 +95,13 @@ export function sweepPlan(chosen, levels = 3, max = 27) {
 /**
  * USGS Short-Term Network high-water marks (api.waterdata.usgs.gov/stnservices) inside a lon/lat box → observations.
  * NAVD88 elevations become water levels; a mark on any other datum (mostly local control points) keeps its height above
- * ground as a depth when it has one; the rest are left out. Every mark is a flooded point.
+ * ground as a depth when it has one; the rest are left out. Every mark is a flooded point; `where` keeps where it was
+ * found (scoreRun skips the ones indoors).
  */
 export function fromSTN(records, [w, s, e, n]) {
   return records.filter(h => h.longitude >= w && h.longitude <= e && h.latitude >= s && h.latitude <= n).flatMap(h => {
-    const base = { name: String(h.label || h.site_number || `HWM ${h.id}`), lon: h.longitude, lat: h.latitude, flooded: true,
-      source: `USGS STN, ${h.event_name}`, quality: h.hwm_quality_name ?? '', environment: h.environment ?? '' };
+    const base = { name: h.label && h.site_number ? `${h.label} (${h.site_number})` : String(h.label || h.site_number || `HWM ${h.id}`), lon: h.longitude, lat: h.latitude, flooded: true,
+      source: `USGS STN, ${h.event_name}`, quality: h.hwm_quality_name ?? '', environment: h.environment ?? '', where: h.location_description ?? '' };
     if (/NAVD\s*88/i.test(h.vertical_datum_name ?? '') && Number.isFinite(h.elev_ft)) return [{ ...base, wse: h.elev_ft * FT }];
     if (h.height_above_ground > 0) return [{ ...base, depth: h.height_above_ground * FT }];
     return [];

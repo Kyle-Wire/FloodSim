@@ -41,11 +41,13 @@ import { sedimentCells } from '../src/sediment.js';
 import { findBanks, bankClass, BANK_CLASSES, UNRATED } from '../src/banks.js';
 import { scourCells, scourClass, SCOUR_CLASSES, NOT_ERODIBLE } from '../src/scour.js';
 import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/calibrate.js';
+import { fromGeoJSONMap, scoreFloodMap, DEP_CLASSES } from '../src/floodmaps.js';
+import { markBands, mapBands } from '../src/uncertainty.js';
 import { gaugeScore, matchEvent } from '../src/validate.js';
 import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, entryEdge, InflowLinks, CFS, basinAreaKm2, areaRatioScale } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
 import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge, gaugeWater, tidalEdgeCells, levelGauge } from '../src/waterlevels.js';
-import { edgeSection, outletSeries, sideToward } from '../src/outlet.js';
+import { edgeSection, outletSeries, sideToward, riverPath, pathToEdge, cutSections, outletSeriesReach, edgeAsSection } from '../src/outlet.js';
 import * as FEMA from '../src/fema.js';
 import * as WIN from '../src/window.js';
 import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetry.js';
@@ -88,6 +90,7 @@ const EXAMPLES = [
     links: { pipes: ["https://www.portlandmaps.com/od/rest/services/COP_OpenData_Utilities/MapServer/108?where=LAYER_GROUP%20IN%20(%27SEWER%20PIPES%27%2C%27STORM%20PIPES%27)%20AND%20SERVSTAT%3D%27IN%27"],
       inlets: ["https://www.portlandmaps.com/od/rest/services/COP_OpenData_Utilities/MapServer/105?where=UNITTYPE%3D%27INLET%27"], datum: 2.10 } },
   { name: 'Manayunk, Philadelphia PA', why: 'Schuylkill flood: Ida 2021, 15 USGS high-water marks and a river gauge', box: [-75.262, 40.0135, -75.200, 40.0445] },
+  { name: 'Forest Hills, Queens NY', why: 'Ida 2021 street flooding: 31 USGS high-water marks, USGS depth maps, NYC DEP flood maps', box: [-73.870, 40.702, -73.828, 40.748] },
   { name: 'Meyerland, Houston TX', why: 'flat, bayou-side, flash flooding', box: [-95.4740, 29.6790, -95.4620, 29.6880] },
   { name: 'Ellicott City MD', why: 'steep valley, 2016 and 2018 flash floods', box: [-76.8020, 39.2650, -76.7930, 39.2710] },
   { name: 'Miami Beach FL', why: 'tidal and storm-surge flooding', box: [-80.1390, 25.7880, -80.1290, 25.7960] },
@@ -1210,9 +1213,10 @@ function outletFor(r, c, F, mask) {
   const cells = tidalEdgeCells(c, mask, water, top, { side });
   if (!cells.length) { log(`River outlet: no open water on the ${side} edge, toward ${o.g.name}; the edges stay free outfalls`, 'warn'); return null; }
   // the reach: as entered, else straight from the middle of the edge's cells to the gauge (a river that bends is longer)
-  const mid = cells[cells.length >> 1], L = Number($('outLen').value) > 0 ? Number($('outLen').value) : Math.hypot(I - (mid % c.nx + 0.5), J - (((mid / c.nx) | 0) + 0.5)) * w;
-  const series = outletSeries(edgeSection(c, cells, w), o.level, o.flow, L);
-  return { cells, series, L, side, g: o.g, how: o.how, entered: Number($('outLen').value) > 0 };
+  const mid = cells[cells.length >> 1], L = Number($('outLen').value) > 0 ? Number($('outLen').value) : o.reach ? o.reach.length : Math.hypot(I - (mid % c.nx + 0.5), J - (((mid / c.nx) | 0) + 0.5)) * w;
+  // through the reach's lidar sections, the edge's own as the last; else the edge's section held all the way
+  const sec = edgeSection(c, cells, w), series = o.reach ? outletSeriesReach([...o.reach.sections, edgeAsSection(sec, L)], o.level, o.flow) : outletSeries(sec, o.level, o.flow, L);
+  return { cells, series, L, side, g: o.g, how: o.how, entered: Number($('outLen').value) > 0, reach: o.reach ? { sections: o.reach.sections.length, depth: o.reach.depth } : null };
 }
 /** The downstream gauge's recorded level and discharge over the storm (a historic storm only). → { g, level: [[t, m]], flow: [[t, m³/s]], how } | null */
 async function prepareOutlet() {
@@ -1223,7 +1227,32 @@ async function prepareOutlet() {
   const lv = await levelSeries(g, fetcher, t0, t1); if (!lv.series?.length) throw new Error(`${g.name}: ${lv.why}`);
   const flow = (await gaugeFlows(site, t0, t1, fetcher).catch(() => [])).map(f => [f.t, f.q]);
   if (!flow.length) log(`River outlet: ${g.name} has no discharge record over the storm; its level is held at the edge with no rise up the reach`, 'warn');
-  return { g, level: lv.series, flow, how: lv.how };
+  const reach = $('outReach').value === 'sections' ? await outletReach(site).catch((e) => { log(`River outlet: no cross-sections (${e.message}); the edge's own section is held all the way`, 'warn'); return null; }) : null;
+  return { g, level: lv.series, flow, how: lv.how, reach };
+}
+/** Cross-sections from the lidar along the main stem from the gauge up to where it enters the model (src/outlet.js). */
+async function outletReach(site) {
+  const fine = model.fine, zone = fine.zone, x1 = fine.x0 + fine.nx * fine.dx, y0 = fine.y1 - fine.ny * fine.dx;
+  const path = (await riverPath(site, fetcher)).map(([lon, lat]) => toUTM(lon, lat, zone));
+  const reach = pathToEdge(path, (x, y) => x >= fine.x0 && x <= x1 && y >= y0 && y <= fine.y1);
+  if (!reach) throw new Error('the river from the gauge never reaches the model');
+  // ground over the reach at 3 m; the channel under the water: as entered, else the model's largest carved channel's
+  const half = 300, dx = 3, xs = reach.line.map(p => p[0]), ys = reach.line.map(p => p[1]);
+  const g = { x0: Math.min(...xs) - half - 20, y0: Math.min(...ys) - half - 20, x1: Math.max(...xs) + half + 20, y1: Math.max(...ys) + half + 20, dx, epsg: fine.epsg };
+  g.nx = Math.ceil((g.x1 - g.x0) / dx); g.ny = Math.ceil((g.y1 - g.y0) / dx);
+  const { z } = await fetchDEM(g, fetcher);
+  const sample = (x, y) => {
+    const fi = (x - g.x0) / dx - 0.5, fj = (g.y1 - y) / dx - 0.5, i = Math.floor(fi), j = Math.floor(fj);
+    if (i < 0 || j < 0 || i >= g.nx - 1 || j >= g.ny - 1) return NaN;
+    const a = fi - i, b = fj - j, k = j * g.nx + i, v = (1 - a) * (1 - b) * z[k] + a * (1 - b) * z[k + 1] + (1 - a) * b * z[k + g.nx] + a * b * z[k + g.nx + 1];
+    return v > -1000 ? v : NaN;
+  };
+  const big = [...(model.bathy?.comps ?? [])].sort((a, b) => b.areaKm2 - a.areaKm2)[0];
+  const depth = Number($('outDepth').value) > 0 ? Number($('outDepth').value) : big?.dc ?? 2;
+  const sections = cutSections(reach.line, sample, { half, dc: depth, n: { chan: 0.035, bank: 0.06 } });
+  if (sections.length < 2) throw new Error('too few sections');
+  log(`River outlet: ${sections.length} cross-sections over ${(reach.length / 1000).toFixed(2)} km of river to the gauge, the channel ${depth.toFixed(1)} m under the lidar water (${Number($('outDepth').value) > 0 ? 'as entered' : 'the model’s estimate'})`);
+  return { sections, length: reach.length, depth };
 }
 
 /**
@@ -1616,7 +1645,7 @@ function ensureSolver() {
   run.outlet = stageCells ? null : outletFor(run, c, F, mask);
   if (run.outlet) {
     stageCells = run.outlet.cells; const o = run.outlet, pk = o.series.v.indexOf(Math.max(...o.series.v));
-    log(`River outlet: the ${o.side} edge (${o.cells.length} cells) holds ${o.g.name}'s level carried ${(o.L / 1000).toFixed(2)} km up the river${o.entered ? '' : ' (straight-line distance; enter the river length if it bends)'}: ` +
+    log(`River outlet: the ${o.side} edge (${o.cells.length} cells) holds ${o.g.name}'s level carried ${(o.L / 1000).toFixed(2)} km up the river${o.reach ? ` through ${o.reach.sections} lidar cross-sections` : o.entered ? '' : ' (straight-line distance; enter the river length if it bends)'}: ` +
       `${o.series.v[0].toFixed(2)} m NAVD88 at the start, ${o.series.v[pk].toFixed(2)} m at its crest (gauge ${o.series.down[pk].toFixed(2)} m + ${(o.series.v[pk] - o.series.down[pk]).toFixed(2)} m at ${Math.round(o.series.q[pk]).toLocaleString()} m³/s)`, 'ok', 'USGS NWIS');
   } else if (stageCells && run.outletReady) log('River outlet: not used with a tide on the edges (the solver holds one external level)', 'warn');
   run.stageCells = stageCells?.length ?? 0;
@@ -1731,6 +1760,7 @@ function validationOf(r, rec) {
   return {
     observed: !!st?.t0, event: S.obsEvent ?? null,
     hwm: hwmOf(sc),
+    floodMaps: S.maps.length ? scoreMaps() : [],
     rain: st?.t0 ? { source: st.source ?? st.name, gauged: R ? (s.hours ? s.gaugeHours / s.hours : 0) : null, usedMM: R ? R.hoursMM : st.total, radarMM: R ? R.radarMM : null, siteMM: R?.siteMM ?? null } : null,
     mass: { surface: m.rel ?? 0, combined: r.netMass?.combinedRel ?? null, clipped: m.clipped ?? 0, rain: m.rain ?? 0 },
     gauges: r.gaugeWatch ? r.gaugeWatch.gauges.map(gw => ({ site: gw.g.site, name: gw.g.name, model: gw.series, obs: null, score: null, why: gw.cells.length ? 'reading the gauge…' : 'no open water mapped within 60 m of the gauge' })) : [],
@@ -1941,7 +1971,8 @@ function forcingRecord(r) {
     inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}), ...(e.ungauged ? { ungauged: e.ungauged } : {}) })),
     tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: st.wl.design ? true : $('tCoast').checked, ...(st.wl.design ? { design: st.wl.design } : {}), ...(st.wl.slr ? { slr: st.wl.slr } : {}), ...(st.wl.observedUntil ? { observedUntil: st.wl.observedUntil, surge: st.wl.surge } : {}), ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
-    outlet: r.outletReady ? { site: r.outletReady.g.site, length: Number($('outLen').value) || null, readings: r.outletReady.level.length, flows: r.outletReady.flow.length } : null,
+    outlet: r.outletReady ? { site: r.outletReady.g.site, length: Number($('outLen').value) || null, readings: r.outletReady.level.length, flows: r.outletReady.flow.length,
+      reach: r.outletReady.reach ? { sections: r.outletReady.reach.sections.length, km: r.outletReady.reach.length / 1000, depth: r.outletReady.reach.depth } : 'prismatic' } : null,
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
@@ -2425,7 +2456,8 @@ async function sensitivityFamily(rec, { wall = 0.10 } = {}) {
   const member = async (key, r) => {
     const one = r ? await loadSaved(r.dir) : rec; if (one.grids.max_depth.length !== N) return null;
     const an = await analyzeRecord(one, { areas: false, wall });
-    return { key, label: one.batch?.variantLabel ?? key, dir: one.dir ?? null, maxDepth: one.grids.max_depth, damage: an?.damage.totals ?? null, commit: one.commit ?? null };
+    return { key, label: one.batch?.variantLabel ?? key, dir: one.dir ?? null, maxDepth: one.grids.max_depth, damage: an?.damage.totals ?? null, commit: one.commit ?? null,
+      points: one.validation?.hwm?.points ?? null, floodMaps: one.validation?.floodMaps ?? null }; // for the marks' band (src/uncertainty.js)
   };
   const base = baseRow ? await member('base', baseRow) : await member('base', null); if (!base) return null;
   const variants = [];
@@ -2448,7 +2480,8 @@ async function checksOf(rec, { threshold = 0.15, wall = 0.10 } = {}) {
   const input = { edge, books: b && { rain: b.rain, outflow: b.outflow, inflow: b.inflow ?? 0 }, mass: rec.validation?.mass ?? null, watershed, inflow: b?.inflow > 0 ? `${Math.round(b.inflow).toLocaleString()} m³ in` : null,
     left: { peak: peak * A1, final: final * A1 }, runLength: rec.simulatedS && stormS ? { stop: rec.simulatedS, storm: stormS } : null,
     points: hwm.length ? CHK.nearEdge(hwm, llCell, dist, fine.nx, fine.ny) : null, features: feats.length ? CHK.nearEdge(feats, llCell, dist, fine.nx, fine.ny) : null, sens: rows, sensVersions: !!sens?.versions, tideEdges: rec.forcing.parts?.tide !== CMP.hashOf(null) && !!$('tCoast')?.checked };
-  rec.checks = { threshold, list: CHK.checkList(input), edge, sens: sens && { base: sens.base, variants: sens.variants, rows, versions: sens.versions }, geo: { nx: fine.nx, ny: fine.ny, bld } };
+  const members = sens ? [sens.base, ...sens.variants] : [], band = sens ? { marks: markBands(members), maps: mapBands(members) } : null;
+  rec.checks = { threshold, list: CHK.checkList(input), edge, sens: sens && { base: sens.base, variants: sens.variants, rows, versions: sens.versions, band }, geo: { nx: fine.nx, ny: fine.ny, bld } };
   return rec.checks;
 }
 // ------------------------------------------------------------------ end of defensibility checks
@@ -3319,7 +3352,7 @@ async function setupInflow() {
   }).join('');
   for (let i = 0; i < inflow.entries.length; i++) for (const id of ['inGauge', 'inFlow', 'inLag', 'inScale']) $(id + i).onchange = () => { if (model && (!run || !run.solver)) resetRun(); inflowNoteUpdate(); areaNote(i); };
   for (let i = 0; i < inflow.entries.length; i++) ungaugedWire(i);
-  for (const id of ['inExp', 'warmUp', 'outGauge', 'outLen']) $(id).onchange =() => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
+  for (const id of ['inExp', 'warmUp', 'outGauge', 'outLen', 'outReach', 'outDepth']) $(id).onchange =() => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
   inflowNoteUpdate();
   inflow.entries.forEach((en, i) => { // the drainage area where each river enters (USGS NLDI), in the background
     const [lo, la] = ll(en.at); en.area = basinAreaKm2(lo, la, fetcher).then((a) => { en.areaKm2 = a.areaKm2; areaNote(i); return a; }).catch((e) => { en.areaErr = e.message; areaNote(i); return null; });
@@ -3553,10 +3586,66 @@ function scoreNow() {
   return scoreRun(S.obs, at);
 }
 const ftm = (m) => `${m >= 0 ? '+' : '−'}${Math.abs(m / 0.3048).toFixed(2)} ft (${Math.abs(m * 100).toFixed(0)} cm)`;
+/** Scores added after the run was filed in the project (marks picked, maps loaded): its summary.json takes them too. */
+async function refileValidation() {
+  const ls = projects.lastSaved; if (!ls || ls.run !== run || !run.record?.validation) return;
+  try {
+    const p = `${ls.dir}/summary.json`, sm = JSON.parse(await readProjectFile(ls.folder, p));
+    sm.validation = run.record.validation; await writeProjectFile(ls.folder, p, JSON.stringify(sm, null, 1));
+  } catch (e) { console.warn('refiling the scores:', e.message); }
+}
+// ------------------------------------------------------------------ reference flood maps (src/floodmaps.js)
+S.maps = [];
+/** Every loaded reference map scored against the finished run's peak depth on the 1 m grid (buildings left out). */
+function scoreMaps() {
+  if (!run?.hmax || !model) return [];
+  const fine = model.fine, d = run.F === 1 ? run.hmax : toFine(run.c, run.hmax, 1), toCell = ([lon, lat]) => fine.lonlatToCell(lon, lat);
+  return S.maps.map(ref => ({ ...scoreFloodMap(ref, { nx: fine.nx, ny: fine.ny, dx: fine.dx, toCell, depth: d, exclude: model.f.bld }, { minArea: ref.minArea ?? 0 }), source: ref.source ?? null, observed: ref.observed !== false }));
+}
+/** Score the maps against the finished run (if any), keep them in its record and show them. */
+function mapsShow() {
+  const sc = run?.hmax && !run.playing && run.solver ? scoreMaps() : null;
+  if (sc && run.record?.validation) { run.record.validation.floodMaps = sc; refileValidation(); }
+  mapsNote(sc);
+}
+function mapsNote(scores = null) {
+  const pct = (v) => (v == null ? '–' : `${Math.round(v * 100)} %`);
+  $('mapsNote').innerHTML = !S.maps.length ? $('mapsNote').dataset.empty
+    : S.maps.map((m, i) => { const sc = scores?.[i]; return `<b>${m.name}</b>: ${m.polys.length.toLocaleString()} polygons${m.mask ? ', mapped near its marks only' : ''}` +
+      (sc ? `. Flooded ≥ 4 in: hit rate ${pct(sc.hitRate)}, false alarms ${pct(sc.falseAlarmRatio)}, CSI ${pct(sc.csi)}; area model / map ${sc.areaRatio?.toFixed(2) ?? '–'}${sc.depth ? `; depth where both flood: bias ${sc.depth.bias >= 0 ? '+' : '−'}${Math.abs(sc.depth.bias).toFixed(2)} m, RMSE ${sc.depth.rmse.toFixed(2)} m` : ''}` : ''); }).join('<br>');
+}
+$('mapsNote').dataset.empty = $('mapsNote').textContent;
+/** A reference map from GeoJSON: NYC DEP Stormwater Flood Maps carry Flooding_Category; anything else needs a depth
+ *  field (depth_m in metres, else in the observations' units). DEP maps keep patches of 0.25 acre and up. */
+function mapFromGeoJSON(gj, fileName) {
+  const props = [...new Set((gj.features ?? []).slice(0, 50).flatMap(f => Object.keys(f.properties ?? {})))];
+  const dep = props.includes('Flooding_Category'), field = dep ? 'Flooding_Category' : props.includes('depth_m') ? 'depth_m' : props.find(k => /depth|inundation/i.test(k));
+  if (!field) throw new Error('no Flooding_Category or depth field');
+  const m = fromGeoJSONMap(gj, dep ? { field, classes: DEP_CLASSES, name: gj.name ?? fileName } : { field, units: field === 'depth_m' || $('obsUnits').value !== 'ft' ? 'm' : 'ft', name: gj.name ?? fileName });
+  if (!m.polys.length) throw new Error('no polygons with a usable ' + field);
+  return { ...m, source: 'file', observed: !dep, minArea: dep ? 1011.7 : 0 };
+}
+/** A project's maps: kept whole, or { href } to a GeoJSON file the app serves (the benchmark cases: benchmarks/nyc). */
+async function loadMaps(list) {
+  const out = [];
+  for (const m of list ?? []) {
+    if (!m.href) { out.push(m); continue; }
+    try { out.push({ ...mapFromGeoJSON(await (await fetch(m.href)).json(), m.href.split('/').pop()), href: m.href }); }
+    catch (e) { log(`Flood map ${m.href} not loaded: ${e.message}`, 'warn'); }
+  }
+  return out;
+}
+$('mapsImport').onclick = () => $('mapsFile').click();
+$('mapsFile').onchange = async () => {
+  const file = $('mapsFile').files[0]; $('mapsFile').value = ''; if (!file) return;
+  try { S.maps = [...S.maps, mapFromGeoJSON(JSON.parse(await file.text()), file.name)]; mapsShow(); }
+  catch (e) { $('mapsNote').textContent = 'Import failed: ' + e.message; }
+};
+$('mapsClear').onclick = () => { S.maps = []; mapsNote(); };
 function scoreAndShow() {
   const sc = scoreNow(); if (!sc) return null;
   drawObs(sc.points);
-  if (run.record?.validation) Object.assign(run.record.validation, { hwm: hwmOf(sc), event: S.obsEvent ?? null }); // observations picked after the run
+  if (run.record?.validation) { Object.assign(run.record.validation, { hwm: hwmOf(sc), event: S.obsEvent ?? null }); refileValidation(); } // observations picked after the run
   const lines = [];
   if (sc.n) lines.push(`<b>Levels and depths (${sc.n}):</b> bias ${ftm(sc.bias)}, mean error ${ftm(sc.mae).slice(1)}, RMSE ${ftm(sc.rmse).slice(1)}, ${Math.round(sc.within15 * 100)} % within 15 cm`);
   if (sc.calls) lines.push(`<b>Flooded / dry:</b> ${sc.hits} flooded in both, ${sc.misses} missed, ${sc.falseAlarms} false alarms of ${sc.calls}`);
@@ -3619,7 +3708,7 @@ function captureProject() {
   }
   return { version: 1, area: S.area, poly: S.poly, place: $('findNote').textContent.split('. Now')[0] || '', stormSrc, drainSrc, inputs,
     hist: stormSrc === 'hist' ? { event: $('histEvent').value, label: $('histEvent').selectedOptions[0]?.textContent ?? '', date: $('histEvent').value === 'date' ? $('histDate').value : null } : null,
-    view: { center: map.getCenter().toArray(), zoom: map.getZoom() }, infraUnits: $('infraUnits').value, obs: S.obs,
+    view: { center: map.getCenter().toArray(), zoom: map.getZoom() }, infraUnits: $('infraUnits').value, obs: S.obs, maps: S.maps.map(m => (m.href ? { href: m.href } : m)),
     activeScenario: design.active?.name ?? null, designUnits: design.units };
 }
 /**
@@ -3654,7 +3743,7 @@ function applyInputs(inputs) {
 }
 async function restoreProject(pj, layer, scenarios = [], analysis = null) {
   stopRun(); model = null; logEl.textContent = '';
-  applyInputs(pj.inputs); infra.setLayer(layer); S.obs = pj.obs ?? []; drawObs(); obsNote();
+  applyInputs(pj.inputs); infra.setLayer(layer); S.obs = pj.obs ?? []; drawObs(); obsNote(); S.maps = await loadMaps(pj.maps); mapsNote();
   design.setScenarios(loadScenarios(scenarios), pj.activeScenario); design.setAnalysis(analysis); compareUI.clear(); emulatorUI.reset();
   setStormSource(pj.stormSrc ?? 'a14'); setDrainSource(pj.drainSrc ?? 'network');
   if (!pj.area) { log(`Opened ${pj.name}: no area saved yet`, 'warn'); return; }
@@ -3770,7 +3859,7 @@ async function runFiles() {
     if (rec.ground) files.push({ path: 'grids/ground.f32', data: CMP.encodeF32(rec.ground) }, { path: 'grids/ground.hdr', data: hdr });
     if (rec.lines.length) files.push({ path: 'control_lines.csv', data: CMP.toCSV(rec.lines.flatMap(l => CMP.hydrograph(l.series).map(([t, q], m) => ({ line: l.id, name: l.name, t, q, out: CMP.hydrograph(l.series, 2)[m]?.[1], back: CMP.hydrograph(l.series, 3)[m]?.[1] }))), [['line', 'line'], ['name', 'name'], ['t', 'time_s', 0], ['q', 'net_flow_m3s', 5], ['out', 'flow_to_plus_m3s', 5], ['back', 'flow_to_minus_m3s', 5]]) });
   }
-  return files.map(f => ({ path: f.path, data: typeof f.data === 'string' ? enc.encode(f.data) : f.data }));
+  return Object.assign(files.map(f => ({ path: f.path, data: typeof f.data === 'string' ? enc.encode(f.data) : f.data })), { run }); // which run (projects.lastSaved: scores added after it was filed)
 }
 function barrierCSV(rs) {
   const n = (v, d = 3) => (v == null || !Number.isFinite(v) ? '' : String(+v.toFixed(d))), min = (t) => (t == null ? '' : n(t / 60, 2));

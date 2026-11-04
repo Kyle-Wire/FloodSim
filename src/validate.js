@@ -1,7 +1,9 @@
 // Validation scorecard: one checklist a reviewer can read, for a run of a real storm. It gathers what the app can check
 // against the world and against itself:
 //   observations   USGS high-water marks or the user's own (src/calibrate.js scoreRun): level RMSE and bias, and
-//                  flooded marks the model left dry; USGS gauges inside the area: the peak water level and its time
+//                  flooded marks the model left dry; USGS gauges inside the area: the peak water level and its time;
+//                  mapped flooding (src/floodmaps.js: USGS post-event depth maps), cell by cell: hit rate and CSI
+//   comparison     another model's flood map (NYC DEP Stormwater Flood Maps): the same scores, not counted in the verdict
 //   rain           where the rain came from (gauge-corrected or radar-only), how far the sources disagree, and the rain
 //                  against nearby ASOS and CoCoRaHS gauges (src/rainqa.js)
 //   integrity      the mass balance (surface, and with the pipes), water clipped by the wet / dry fix
@@ -12,6 +14,8 @@ export const TARGETS = {
   hwmRMSE: [0.15, 0.30],      // m: high-water marks, root-mean-square error of the level (good, fair)
   hwmBias: [0.10, 0.20],      // m: their mean error, either sign
   hitRate: [0.8, 0.6],        // share of flooded marks the model floods (at least)
+  mapHit: [0.7, 0.5],         // share of a flood map's flooded cells the model floods (at least)
+  mapCSI: [0.5, 0.3],         // critical success index against a flood map, hits / (hits + misses + false alarms) (at least)
   gaugePeak: [0.15, 0.30],    // m: a gauge's peak water level
   gaugeTime: [30, 60],        // min: the time of that peak
   mass: [1e-4, 1e-3],         // surface mass balance, |error| / all the water in (start, rain, rivers, tide)
@@ -61,7 +65,7 @@ export function matchEvent(events, storm) {
  */
 export function scorecard(input, T = TARGETS) {
   const items = [], add = (group, label, [value, unit], target, status, note = '') => items.push({ group, label, value, unit, target, status, note });
-  const { hwm, gauges = [], rain, mass, observed } = input;
+  const { hwm, gauges = [], floodMaps = [], rain, mass, observed } = input;
   const short = gauges.some(g => g.score?.obsAtEnd); // the river was still rising at the end: the marks record a crest the run never reached
   const shortNote = 'the gauges were still rising when the run ended: marks record the crest, so the model reads low here; run longer (Keep running after the storm)';
   // observations
@@ -69,7 +73,7 @@ export function scorecard(input, T = TARGETS) {
     add('observations', `High-water marks: RMSE of the level (${hwm.n})`, [hwm.rmse, 'm'], T.hwmRMSE, level(hwm.rmse, T.hwmRMSE), short ? shortNote : '');
     add('observations', 'High-water marks: bias (model − observed)', [hwm.bias, 'm'], T.hwmBias, level(Math.abs(hwm.bias), T.hwmBias), short ? shortNote : '');
     add('observations', 'High-water marks within 15 cm', [hwm.within15, 'share'], null, 'info');
-    if (hwm.skipped) add('observations', 'High-water marks not scored', [hwm.skipped, 'text'], null, 'info', 'more than 1 m below the lidar ground at the mark: under a bridge or deck the lidar sees as ground');
+    if (hwm.skipped) add('observations', 'High-water marks not scored', [hwm.skipped, 'text'], null, 'info', 'under a bridge or deck the lidar sees as ground (more than 1 m below it), or indoors or in a basement by the mark’s own description');
   }
   if (hwm?.calls) {
     const wet = hwm.hits + hwm.misses, rate = wet ? hwm.hits / wet : null;
@@ -80,6 +84,15 @@ export function scorecard(input, T = TARGETS) {
     const s = g.score, end = s.obsAtEnd ? 'the gauge was still rising when the run ended' : s.modelAtEnd ? 'the model was still rising when the run ended' : '';
     add('observations', `Gauge ${g.site} ${g.name}: ${s.obsAtEnd || s.modelAtEnd ? 'highest level in the run' : 'peak level'} (model − observed)`, [s.error, 'm'], T.gaugePeak, level(Math.abs(s.error), T.gaugePeak), end);
     add('observations', `Gauge ${g.site} ${g.name}: peak time (model − observed)`, [s.lag, 'min'], T.gaugeTime, s.obsAtEnd || s.modelAtEnd ? 'info' : level(Math.abs(s.lag), T.gaugeTime), end);
+  }
+  // flood maps, cell by cell at 4 in and over
+  for (const m of floodMaps) {
+    if (!m.mapped) continue;
+    const g = m.observed === false ? 'comparison' : 'observations', who = m.name.split(' (')[0];
+    const note = m.observed === false ? 'another model’s map, not an observation' : m.kind === 'depth' && m.name.startsWith('USGS') ? 'made from the high-water marks and the lidar within 250 m of each: not independent of the marks' : '';
+    add(g, `${who}: its flooded cells the model floods`, [m.hitRate, 'share'], T.mapHit, level(m.hitRate, T.mapHit, true), note);
+    add(g, `${who}: critical success index`, [m.csi, 'share'], T.mapCSI, level(m.csi, T.mapCSI, true), `false-alarm ratio ${m.falseAlarmRatio == null ? '–' : Math.round(m.falseAlarmRatio * 100) + ' %'}; flooded area model / map ${m.areaRatio?.toFixed(2) ?? '–'}`);
+    if (m.depth) add(g, `${who}: depth where both flood, bias (model − map)`, [m.depth.bias, 'm'], T.hwmBias, level(Math.abs(m.depth.bias), T.hwmBias), `RMSE ${m.depth.rmse.toFixed(2)} m over ${m.depth.n.toLocaleString()} cells`);
   }
   // rain
   if (rain) {

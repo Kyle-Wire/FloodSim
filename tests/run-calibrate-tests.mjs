@@ -36,6 +36,11 @@ check('GeoJSON depths and flooded reports', gj.length === 3 && gj[0].depth === 0
   const sc = scoreRun([{ name: 'deck', lon: 1, lat: 0, wse: 4.45 }, { name: 'bank', lon: 2, lat: 0, wse: 4.0 }], at);
   check('a mark more than 1 m under the lidar ground is not scored, and says why', sc.skipped === 1 && sc.n === 1 && Math.abs(sc.bias - 0.2) < 1e-9 && /under a bridge or deck/.test(sc.points[0].skip), sc.points[0].skip);
 }
+{ // a mark USGS found in a basement (Ida, Forest Hills NYQUE31277): its level is below the street the model floods
+  const at = () => ({ ground: 10.8, wse: 11.3 });
+  const sc = scoreRun([{ name: 'cellar', lon: 1, lat: 0, wse: 9.7, where: 'Seed line on basement wall of building.' }, { name: 'street', lon: 2, lat: 0, wse: 11.1, where: 'Seed line on blue street light pole.' }], at);
+  check('a mark inside a building or basement is not scored, and says why', sc.skipped === 1 && sc.n === 1 && Math.abs(sc.bias - 0.2) < 1e-9 && /inside a building or below grade/.test(sc.points[0].skip), sc.points[0].skip);
+}
 
 console.log(fails ? `\n${fails} FAILED` : '\nall calibration tests passed');
 process.exit(fails ? 1 : 0);

@@ -85,5 +85,15 @@ const MIN = 60e3, T0 = Date.parse('2021-09-01T18:00Z');
   check('levels: no readings', d.series === null && /no level/.test(d.why));
 }
 
+// ---- flood maps: an observed map counts in the verdict; another model's map is a comparison only
+{
+  const m = (o) => ({ name: 'X (y)', kind: 'depth', mapped: 100, hitRate: 0.8, csi: 0.55, falseAlarmRatio: 0.2, areaRatio: 1, depth: { n: 80, bias: -0.05, rmse: 0.2 }, ...o });
+  const sc = scorecard({ floodMaps: [m({})], observed: true });
+  const lines = sc.items.filter(i => i.label.startsWith('X:'));
+  check('flood map: hit rate, CSI and depth bias lines, all good', lines.length === 3 && lines.every(i => i.status === 'good' && i.group === 'observations') && sc.verdict.status === 'good');
+  const cmp = scorecard({ floodMaps: [m({ observed: false, csi: 0.1, depth: null })], observed: false });
+  check('another model’s map: a comparison, poor CSI not in the verdict', cmp.items.every(i => i.group === 'comparison') && cmp.items.find(i => /critical/.test(i.label)).status === 'poor' && cmp.verdict.status === 'info');
+}
+
 console.log(fails ? `\n${fails} check(s) FAILED` : '\nall passed');
 process.exit(fails ? 1 : 0);

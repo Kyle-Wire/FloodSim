@@ -34,6 +34,7 @@ const ALLOW = new Set([
   'data.rcc-acis.org',              // ACIS (NOAA Regional Climate Centers): long daily rain records for the joint rain–surge analysis
   'services.arcgis.com',            // city utility layers (e.g. Philadelphia Water inlets, combined-sewer area)
   'mapservices.pasda.psu.edu',      // PASDA (Pennsylvania) utility layers
+  'data.cityofnewyork.us',          // NYC Open Data (Socrata): DEP catch basins and outfalls
   'geocoding.geo.census.gov',       // US Census address geocoder
   'nominatim.openstreetmap.org',    // place-name search fallback (OSM; light, cached use only)
   'epsg.io',                        // coordinate-system definitions for imported GIS files

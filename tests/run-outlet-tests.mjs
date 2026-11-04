@@ -3,7 +3,7 @@
 // downstream, where a free outfall draws it down.
 // Usage: node tests/run-outlet-tests.mjs
 import { CPUSolver } from '../src/solver-cpu.js';
-import { edgeSection, conveyance, backwater, outletSeries, sideToward, onSide } from '../src/outlet.js';
+import { edgeSection, conveyance, backwater, outletSeries, sideToward, onSide, stepUp, cutSections, sectionHydraulics, pathToEdge } from '../src/outlet.js';
 import { tidalEdgeCells } from '../src/waterlevels.js';
 
 let fails = 0;
@@ -52,6 +52,39 @@ function channel(nx, edge, T = 4000) {
   check('backwater stage at the cut matches the full river there', Math.abs(edge - full.ws(80)) < 0.03, `${edge.toFixed(3)} vs ${full.ws(80).toFixed(3)} m`);
   check('with the outlet the cut model holds the river’s level upstream', Math.abs(cut.ws(20) - full.ws(20)) < 0.03, `${cut.ws(20).toFixed(3)} vs ${full.ws(20).toFixed(3)} m`);
   check('a free outfall draws the same river down', full.ws(20) - free.ws(20) > 0.5, `${free.ws(20).toFixed(3)} vs ${full.ws(20).toFixed(3)} m`);
+}
+
+{
+  // the reach from cross-sections: on a sloping prismatic channel, normal depth stays normal depth up the reach
+  const S0 = 0.001, yn = (Q / (W * dx) * n / Math.sqrt(S0)) ** 0.6, wall = (x) => S0 * x + 100;
+  const secs = [];
+  for (let x = 0; x <= 2000; x += 100) { const s = [-1e-3, 0, 25, 50, 50.001], b = S0 * x; secs.push({ x, s, z: [wall(x), b, b, b, wall(x)], n: s.map(() => n) }); }
+  const r = stepUp(secs, Q, yn);
+  check('standard step: normal depth holds on a slope', Math.abs(r.ws - 2 - yn) < 0.01 && r.critical === 0, `${(r.ws - 2).toFixed(3)} vs ${yn.toFixed(3)} m`);
+  // on a level bed, its rise is close to the backwater step's (which leaves out the velocity head)
+  const flat = secs.map(sx => ({ ...sx, z: [100, 0, 0, 0, 100], x: sx.x * 0.4 })), bw = backwater(sec, Q, down, 800);
+  check('standard step on a level bed: close to the prismatic backwater', Math.abs(stepUp(flat, Q, down).ws - bw) < 0.05, `${stepUp(flat, Q, down).ws.toFixed(3)} vs ${bw.toFixed(3)} m`);
+  // a reach twice as wide below the edge: the wide channel's GVF rise over 800 m (no velocity head: ~1 cm), then it drops into the
+  // narrow edge section by the gain in velocity head plus 0.1 of it lost
+  const wide = secs.map(sx => ({ ...sx, s: [-1e-3, 0, 50, 100, 100.001], z: [100, 0, 0, 0, 100], x: sx.x * 0.4 }));
+  wide.push({ x: 800, s: [-1e-3, 0, 25, 50, 50.001], z: [100, 0, 0, 0, 100], n: wide[0].n });
+  const yw = (down ** (13 / 3) + 13 / 3 * (Q / 100 * n) ** 2 * 800) ** (3 / 13), vh = (v) => v * v / 19.62;
+  let yE = yw; for (let it = 0; it < 50; it++) yE = yw + vh(Q / (100 * yw)) - vh(Q / (50 * yE)) - 0.1 * (vh(Q / (50 * yE)) - vh(Q / (100 * yw)));
+  const rw = stepUp(wide, Q, down).ws;
+  check('a reach wider than the edge: its own rise, then the drop into the edge', Math.abs(rw - yE) < 0.03 && rw < bw - 0.2, `${rw.toFixed(3)} vs ${yE.toFixed(3)} m by hand, ${bw.toFixed(3)} m prismatic`);
+  // a section too tight for the flow takes its critical depth
+  const tight = [{ x: 0, s: [-1e-3, 0, 50, 50.001], z: [100, 0, 0, 100], n: [n, n, n, n] }, { x: 10, s: [-1e-3, 0, 2, 2.001], z: [100, 0, 0, 100], n: [n, n, n, n] }];
+  const t = stepUp(tight, Q, 0.5), yc = ((Q / 2) ** 2 / 9.81) ** (1 / 3);
+  check('a choke takes its critical depth', t.critical === 1 && Math.abs(t.ws - yc) < 0.02, `${t.ws.toFixed(3)} vs yc ${yc.toFixed(3)} m`);
+  // sections from a ground model: a valley with flat water 40 m wide gets its parabolic channel, conveyance from the panels
+  const ground = (x, y) => (Math.abs(y) <= 20 ? 5 : 5.5 + 0.05 * (Math.abs(y) - 20));
+  const cs = cutSections([[0, 0], [1000, 0]], ground, { spacing: 250, half: 200, step: 2, dc: 3 });
+  const mid = cs[0], centre = mid.z[mid.s.indexOf(0)];
+  check('cut sections: one per 250 m, the water 40 m wide, carved 3 m at the centre', cs.length === 5 && Math.abs(mid.width - 40) < 2.1 && Math.abs(centre - 2) < 1e-6, `${cs.length} sections, ${mid.width} m, centre ${centre}`);
+  const h = sectionHydraulics(mid, 5);
+  check('cut sections: the carved area is the parabola\'s, 2/3 · 40 · 3', Math.abs(h.A - 80) / 80 < 0.03 && Math.abs(h.T - 40) < 2.1, `${h.A.toFixed(1)} m², top ${h.T.toFixed(1)} m`);
+  const p = pathToEdge([[0, 0], [100, 0], [300, 0]], (x) => x >= 150);
+  check('the path stops where it enters the model', Math.abs(p.length - 150) < 1e-6 && p.line.length === 3);
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall passed');
