@@ -201,6 +201,24 @@ export async function runGpuSuite(device, log = console.log, { only } = {}) {
       `wet ${(100 * wet / N).toFixed(1)}%  untiled ${a.ms.toFixed(0)} ms, tiled ${b.ms.toFixed(0)} ms (×${(a.ms / b.ms).toFixed(2)})  mass rel=${b.s.mass.rel.toExponential(2)}`);
   }
 
+  // More active tiles than one dispatch dimension takes (WebGPU: 65,535 workgroups): rain on all 69,696 tiles of a
+  // 2,112 × 2,112 grid. The lists go out in rows; before, the whole dispatch was dropped and the water froze
+  {
+    const nx = 2112, ny = 2112, dx = 2, N = nx * ny, z = new Float64Array(N);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = 30 - 0.002 * i * dx + 0.4 * Math.sin(j / 37) * Math.cos(i / 29);
+    const opts = { nx, ny, dx, z, manning: 0.03, bc: { east: 'outflow' } };
+    const run = async (tiles) => {
+      const g = new GPUSolver(device, { ...opts, tiles }); g.setDepth(() => 0); g.rainRate = 80 * MMHR;
+      await g.advance(300); const ts = await g.tileStats(), s = await g.readState(); g.destroy(); return { ts, s };
+    };
+    const a = await run(false), b = await run(true);
+    let dmax = 0, moving = 0; for (let k = 0; k < N; k++) { dmax = Math.max(dmax, Math.abs(a.s.h[k] - b.s.h[k])); if (Math.hypot(b.s.hu[k], b.s.hv[k]) > 1e-6) moving++; }
+    results.manyTiles = { tiled: b.ts.tiled, tiles: b.ts.tiles, active: b.ts.update, maxDiff: dmax, movingFrac: moving / N, massRel: b.s.mass.rel };
+    log(`many tiles (${nx}×${ny}, ${b.ts.tiled ? `${b.ts.update}/${b.ts.tiles} active` : 'NOT tiled on this device'}): max|h_tiled-h_full|=${dmax.toExponential(1)} m  ` +
+      `moving ${(100 * moving / N).toFixed(1)}% of cells  mass rel=${b.s.mass.rel.toExponential(2)}`);
+    if (b.ts.tiled && !(dmax < 1e-6 && moving > 0.5 * N && Math.abs(b.s.mass.rel) < 1e-4)) throw new Error('many tiles: the tiled solver lost the flow over 65,535 active tiles');
+  }
+
   // Flood barriers: a wall across a sloping 2D basin with a gap-free diagonal leg, overtopped, then a second barrier
   // raised mid-run; GPU (tiled and untiled) vs CPU depths and barrier books
   {

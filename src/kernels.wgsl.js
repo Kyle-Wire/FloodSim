@@ -71,6 +71,13 @@ override STAGE: u32 = 0u;
 override LIST: u32 = 1u;
 override TRACKMAX: bool = true; // tiled entry points: 1 = update list (wet ⊕ 1), 2 = flux list (wet ⊕ 2)
 const TILE: u32 = 8u;
+// workgroups per dimension of a tile-list dispatch: WebGPU allows 65,535, and a list over that (all 72,044 tiles of a
+// 2,652 × 1,732 grid while it rains) was dropped whole, so the water froze while the inlets kept filling
+const TMAXG: u32 = 32768u;
+// TL's tail: the length of each tile list (as in TC), where the tiled kernels can read it
+fn tlTail() -> u32 { return P.tiles * select(2u, 2u * (P.lts + 1u) + 3u, P.lts > 0u); }
+// indirect args (x, y, 1) for a list of n tiles
+fn tileDispatch(o: u32, n: u32) { TA[o] = min(n, TMAXG); TA[o + 1u] = max(1u, (n + TMAXG - 1u) / TMAXG); TA[o + 2u] = 1u; }
 
 fn lim(a: f32, b: f32) -> f32 {
   if (a * b <= 0.0) { return 0.0; }
@@ -259,9 +266,12 @@ fn faceYAt(x: u32, y: u32, on: bool) {
   for (var k = 0; k < 9; k++) { FY[b * 9 + k] = o[k]; }
 }
 // interior cell handled by a tiled workgroup: tile from the list, cell from the local id (local time stepping: the lists
-// of the level stepping now, DT[7]; 0 otherwise)
+// of the level stepping now, DT[7]; 0 otherwise). A list longer than TMAXG goes out as TMAXG × rows workgroups, and the
+// last row's surplus gets a cell past the grid, which every tiled kernel skips.
 fn tileCell(wid: vec3u, lid: vec3u) -> vec2u {
-  let t = TL[(2u * u32(DT[7]) + select(0u, 1u, LIST == 2u)) * P.tiles + wid.x];
+  let q = 2u * u32(DT[7]) + select(0u, 1u, LIST == 2u); let k = wid.y * TMAXG + wid.x;
+  if (k >= TL[tlTail() + q]) { return vec2u(P.nx + 1u, P.ny + 1u); }
+  let t = TL[q * P.tiles + k];
   return vec2u((t % P.tilesX) * TILE + lid.x, (t / P.tilesX) * TILE + lid.y);
 }
 
@@ -614,8 +624,8 @@ fn tileList(@builtin(global_invocation_id) gid: vec3u) {
 }
 @compute @workgroup_size(1)
 fn tileArgs() {
-  TA[0] = atomicLoad(&TC[0]); TA[1] = 1u; TA[2] = 1u;
-  TA[3] = atomicLoad(&TC[1]); TA[4] = 1u; TA[5] = 1u;
+  let n1 = atomicLoad(&TC[0]); let n2 = atomicLoad(&TC[1]);
+  tileDispatch(0u, n1); tileDispatch(3u, n2); TL[tlTail()] = n1; TL[tlTail() + 1u] = n2;
 }
 
 // ---- local time stepping, once per cycle: the cycle (from the domain's top speed), each tile's level, the lists
@@ -687,7 +697,7 @@ fn ltsList(@builtin(global_invocation_id) gid: vec3u) {
 }
 @compute @workgroup_size(1)
 fn ltsArgs() {
-  for (var q = 0u; q < 2u * (P.lts + 1u); q++) { TA[3u * q] = atomicLoad(&TC[q]); TA[3u * q + 1u] = 1u; TA[3u * q + 2u] = 1u; }
+  for (var q = 0u; q < 2u * (P.lts + 1u); q++) { let n = atomicLoad(&TC[q]); tileDispatch(3u * q, n); TL[tlTail() + q] = n; }
   ltsNext(); // the cycle's first record
 }
 // the next record of the cycle (2^(L+1) − 1 of them): in base step k every level m with 2^m | k + 1, finest first

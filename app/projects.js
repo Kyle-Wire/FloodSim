@@ -15,8 +15,16 @@ const q = (o) => new URLSearchParams(o).toString();
 export const folderName = (name) => name.replace(/[^\w\-()&,' ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Project';
 export const stamp = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}${String(d.getSeconds()).padStart(2, '0')}`;
 
+// the most one request carries: a browser can fail a big upload outright (the desktop app's browser pane drops the tab
+// past ~300 MB; a checkpoint of a 4.6M-cell run is larger)
+const PIECE = 64e6;
 export async function writeFile(folder, path, data) {
-  await api('/api/projects/file?' + q({ folder, path }), { method: 'POST', body: typeof data === 'string' ? new TextEncoder().encode(data) : data });
+  const b = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+  if (b.byteLength <= PIECE) { await api('/api/projects/file?' + q({ folder, path }), { method: 'POST', body: b }); return; }
+  const u = b instanceof Uint8Array ? b : new Uint8Array(b.buffer ?? b, b.byteOffset ?? 0, b.byteLength), n = Math.ceil(u.byteLength / PIECE);
+  for (let k = 0; k < n; k++) {
+    await api('/api/projects/file?' + q({ folder, path, piece: k, ...(k === n - 1 ? { last: 1 } : {}) }), { method: 'POST', body: u.subarray(k * PIECE, (k + 1) * PIECE) });
+  }
 }
 export async function readFile(folder, path) { return (await api('/api/projects/file?' + q({ folder, path }))).text(); }
 export async function readBytes(folder, path) { return new Uint8Array(await (await api('/api/projects/file?' + q({ folder, path }))).arrayBuffer()); }

@@ -181,7 +181,7 @@ export class GPUSolver {
       OUT: mk(this.nx * this.ny * 8), TH: mk(N * 4), RF: mk(N * 4),
       INC: mk(this.INCh.byteLength), INQ: mk(this.INCh.length * 4), INX: mk(this.INCh.length * 16), STG: mk(N * 4),
       // local time stepping: two lists per level, then the tile levels (two slots) and speeds
-      TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 4 * (this.lts ? 2 * (this.lts + 1) + 3 : 2)), TC: mk(8 * (this.lts + 1)),
+      TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 4 * (this.lts ? 2 * (this.lts + 1) + 3 : 2) + 8 * (this.lts + 1)), TC: mk(8 * (this.lts + 1)), // TL: the lists, then their lengths (tlTail)
       TA: mk(24 * (this.lts + 1), GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
       GI: mk(N * 16), GS: mk(N * 16), GAP: mk(N * 16),
       CR: mk(N * 16), BF: mk(this.BFh.byteLength), BQ: mk(this.BFh.length * 48), HZ: mk(N * 64), LF: mk(this.LFh.byteLength), CL: mk(this.LFh.length * 16), UDC: mk(this.UDCh.byteLength), UDX: mk(this.UDCh.length * 4), SCR: mk(N * 16), SDA: mk(this.sed ? N * 80 : 16), SDB: mk(this.sed ? N * 80 : 16), SDP: mk(this.sed ? N * 16 : 16), SE0: mk(this.sed ? N * 32 : 16), BK: mk(this.BKh.byteLength), BR: mk(this.BRh.byteLength),
@@ -223,7 +223,7 @@ export class GPUSolver {
       sgHazard: [0, 1, 5, 6, 7, 8, 27, 28, 32], sgDt: [0, 1, 9, 28], sgPack: [0, 1, 5, 6, 10, 28], sgExchange: [0, 1, 8, 13, 14, 15, 28],
       update: [0, 1, 2, 3, 5, 6, 7, 8, 11], theta: [0, 1, 2, 3, 5, 6, 8, 11], sources: [0, 1, 3, 7, 8, 12, 22, 23, 31],
       dtReduce: [0, 1, 3, 9], dtFinal: [0, 8, 9], pack: [0, 1, 10], exchange: [0, 1, 8, 13, 14, 15],
-      tileClear: [0, 17, 20], tileWet: [0, 1, 12, 17], tileList: [0, 17, 18, 19, 20], tileArgs: [20, 21],
+      tileClear: [0, 17, 20], tileWet: [0, 1, 12, 17], tileList: [0, 17, 18, 19, 20], tileArgs: [0, 19, 20, 21],
     };
     const T = (u) => [...u, 19];
     const make = (entry, binds, constants) => {
@@ -252,7 +252,7 @@ export class GPUSolver {
     if (this.lts) { const L = [19]; Object.assign(this.k, {
       dtReduceL: make('dtReduceL', [...uses.dtReduce, 19]), primT: make('primT', [...uses.prim, 8, 19], { LIST: 1 }), primGhost: make('primGhost', uses.prim), primGhostRec: make('primGhostRec', [...uses.prim, 8]), ltsCycle: make('ltsCycle', [0, 8, 9]), faceXYT: make('faceXYT', T([...new Set([...uses.faceX, ...uses.faceY])]), { LIST: 2 }),
       ltsLevel: make('ltsLevel', [0, 8, 19], { LTSD: this.lts % 2 }), ltsSmooth: [0, 1].map(d => make('ltsSmooth', [0, 19], { LTSD: d })),
-      ltsList: make('ltsList', uses.tileList), ltsArgs: make('ltsArgs', [...uses.tileArgs, 0, 8]),
+      ltsList: make('ltsList', uses.tileList), ltsArgs: make('ltsArgs', [...uses.tileArgs, 8]),
       thetaL: [0, 1].map(st => make('thetaT', T(uses.theta), { LIST: 2, STAGE: st })), barrierL: [0, 1].map(st => make('barrierL', [...uses.barrier, ...L], { STAGE: st })),
       edgeOutL: make('edgeOutL', [...uses.edgeOut, ...L]), exchangeL: make('exchangeL', [...uses.exchange, ...L]),
       ...(this.nLine ? { lineFluxL: make('lineFluxL', [0, 4, 5, 6, 8, 11, 39, 40, ...L]) } : {}),

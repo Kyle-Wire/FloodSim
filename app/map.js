@@ -73,7 +73,7 @@ let windowNext = null;
 
 const $ = (id) => document.getElementById(id);
 const MMHR = 1 / 1000 / 3600;
-const MAX_FINE = 3000 * 3000;           // 1 m DEM cells we are willing to hold in the page
+const MAX_FINE = 20e6;                   // 1 m DEM cells we are willing to hold in the page (Manayunk, 5.3 × 3.4 km: 18M)
 /** Example sites across the US, each exercising something different. `links` pre-fills the linked-data panel. */
 const EXAMPLES = [
   { name: 'Eastwick, Philadelphia PA', why: 'low-lying, tidal creek, repeatedly flooded', box: [-75.2475, 39.9055, -75.2355, 39.9145] },
@@ -86,6 +86,7 @@ const EXAMPLES = [
     // City of Portland datum, NAVD88 = City + 2.10 ft
     links: { pipes: ["https://www.portlandmaps.com/od/rest/services/COP_OpenData_Utilities/MapServer/108?where=LAYER_GROUP%20IN%20(%27SEWER%20PIPES%27%2C%27STORM%20PIPES%27)%20AND%20SERVSTAT%3D%27IN%27"],
       inlets: ["https://www.portlandmaps.com/od/rest/services/COP_OpenData_Utilities/MapServer/105?where=UNITTYPE%3D%27INLET%27"], datum: 2.10 } },
+  { name: 'Manayunk, Philadelphia PA', why: 'Schuylkill flood: Ida 2021, 18 USGS high-water marks', box: [-75.262, 40.0135, -75.200, 40.0445] },
   { name: 'Meyerland, Houston TX', why: 'flat, bayou-side, flash flooding', box: [-95.4740, 29.6790, -95.4620, 29.6880] },
   { name: 'Ellicott City MD', why: 'steep valley, 2016 and 2018 flash floods', box: [-76.8020, 39.2650, -76.7930, 39.2710] },
   { name: 'Miami Beach FL', why: 'tidal and storm-surge flooding', box: [-80.1390, 25.7880, -80.1290, 25.7960] },
@@ -1821,7 +1822,9 @@ async function loop(gen) {
     if (need <= 0) K = 0;
     if (run.paceT != null) { const allow = run.paceT - s.t; K = allow <= 0 ? 0 : Math.min(K, Math.max(1, Math.ceil(allow / (s.dtAvg || 1)))); } // the speed setting
     const t0 = s.t, c0 = performance.now();
-    const wantOut = frameDue || s.t + need >= tStop() - 1e-3 || !run.out || now - run.lastOut > 150; // full readback only to draw / save
+    // full readback only to draw / save, at most every 150 ms, and on a large grid no more than about a fifth of the wall
+    // time (Manayunk, 4.6M cells: a frame's readback and its passes over the cells took ~0.3 s, the run crawled at 0.7×)
+    const wantOut = frameDue || s.t + need >= tStop() - 1e-3 || !run.out || now - run.lastOut > Math.max(150, 4 * (run.outCost ?? 0));
     const out = await s.frame(tEnd, K, wantOut);
     if (!run || run.gen !== gen) return;
     const ms = performance.now() - c0;
@@ -1831,7 +1834,7 @@ async function loop(gen) {
     if (atQ && projects.current && performance.now() - (run.lastCkpt ??= performance.now()) > ckEveryMs() && s.t < tStop() - 60) { await saveCheckpoint(run).catch(e => log('Checkpoint failed: ' + e.message, 'warn')); if (!run || run.gen !== gen) return; }
     if (wall > 0) run.rtf = run.rtf ? 0.9 * run.rtf + 0.1 * ((s.t - t0) / wall) : (s.t - t0) / wall;
     if (out) {
-      run.out = out; run.lastOut = now;
+      run.out = out; run.lastOut = now; const b0 = performance.now();
       const N = run.c.nx * run.c.ny;
       // peak depth: the solver's own, tracked every step (readMassNow); a frame is read right after the inlet exchange, so
       // its depths at exchange cells hold one step's lump of returned water and would make the peak depend on when frames
@@ -1842,7 +1845,11 @@ async function loop(gen) {
       if (run.gaugeWatch && s.t >= run.gaugeWatch.next) recordGauges(run, out, s.t);
       if (run.watch) { run.watch.books(s.t, await s.readBarriers()); if (!run || run.gen !== gen) return; }
       if (!document.hidden) drawDepth(); // keep solving in the background; draw only when someone can see it
-      if (now - run.lastRead > 2500) { run.lastRead = now; await readMass(); if (!run || run.gen !== gen) return; }
+      run.outCost = ms + performance.now() - b0;
+      // the books and exact peak depths: every 2.5 s, or less often where a full read costs more (≤ ~10 % of the wall time)
+      if (now - run.lastRead > Math.max(2500, 10 * (run.readCost ?? 0))) {
+        run.lastRead = now; const r0 = performance.now(); await readMass(); if (!run || run.gen !== gen) return; run.readCost = performance.now() - r0;
+      }
       readouts();
     }
     if (s.t >= tStop() - 1e-3) {
@@ -2096,7 +2103,7 @@ const CK_DIR = 'runs/_checkpoint';
 // not copied: the grid and inputs (rebuilt from the same settings), the solver and SWMM (copied separately), the
 // export frames (too large: the animation restarts at the resume), and this page's clocks and handles
 const RUN_SKIP = new Set(['solver', 'c', 'net', 'sw', 'storm', 'inflowReady', 'inflowRaw', 'levelsReady', 'levelSrc', 'view', 'frames', 'done', 'finish', 'record', 'gen', 'playing',
-  'lastWall', 'wall0', 'paceT', 'lastOut', 'lastRead', 'lastDraw', 'lastHz', 'lastCkpt', 'pauseReq', 'swmm', 'window', 'batchJob', 'batchInfo', 'emu']);
+  'lastWall', 'wall0', 'paceT', 'lastOut', 'lastRead', 'lastDraw', 'lastHz', 'lastCkpt', 'massWarned', 'pauseReq', 'swmm', 'window', 'batchJob', 'batchInfo', 'emu']);
 const ckEveryMs = () => Number($('ckEvery')?.value ?? 10) * 60e3;
 const fmtClock = (t) => `${Math.floor(t / 3600)}:${String(Math.floor(t % 3600 / 60)).padStart(2, '0')}`;
 async function saveCheckpoint(r) {
@@ -2412,6 +2419,9 @@ async function readMassNow() {
     const m = run.mass, inTransit = (run.culverts?.pending.reduce((a, p) => a + p.vol, 0) ?? 0) + (run.outlets?.inTransit ?? 0);
     m.culvertInTransit = inTransit; m.volume += inTransit; m.rel = (m.volume - m.expected) / Math.max(1e-30, Math.abs(m.expected), run.solver.vol.initial + m.rain + Math.max(0, -m.exchanged) + Math.max(0, -m.outflow));
   }
+  // books 10× past the scorecard's fail mark while running: say so now, not at the end (a solver that stopped moving
+  // water while the river inflow went on put the books 68 % out for two hours of a run before anyone looked)
+  if (!run.massWarned && Math.abs(run.mass.rel) > 1e-2) { run.massWarned = true; log(`The water books are ${(run.mass.rel * 100).toFixed(1)} % out at ${fmtClock(run.solver.t)}: this run's results are not reliable. Stop it and check the solver (GPU errors in the console, a stuck river entry).`, 'err'); }
   const zs = run.c.sg ? run.c.z : null; // subgrid: the solver reports the peak level; keep depth at the lowest point
   for (let k = 0; k < st.hmax.length; k++) { const h = zs ? st.hmax[k] - zs[k] : st.hmax[k]; if (h > run.hmax[k]) run.hmax[k] = h; }
   if (run.watch) infra.setBarrierResults(run.watch.results());

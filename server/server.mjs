@@ -6,7 +6,7 @@
 // GET /api/version → { commit, dirty }: the app commit, part of every run's forcing fingerprint.
 // GET /api/bluetopo?bbox=w,s,e,n → { scheme, tiles }: NOAA BlueTopo bathymetry tiles under a box (from its tile index).
 import { createServer } from 'node:http';
-import { readFile, writeFile, mkdir, stat, readdir } from 'node:fs/promises';
+import { readFile, writeFile, appendFile, rename, mkdir, stat, readdir } from 'node:fs/promises';
 import { spawn, spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -158,7 +158,14 @@ async function projects(req, res, p) {
   }
   if (p === '/api/projects/file' && req.method === 'POST') {
     const chunks = []; for await (const c of req) chunks.push(c);
-    await mkdir(join(file, '..'), { recursive: true }); await writeFile(file, Buffer.concat(chunks)); return send(res, 200, 'saved');
+    await mkdir(join(file, '..'), { recursive: true });
+    // a large file comes in pieces (?piece=k&last=1, app/projects.js) into <file>.part, renamed over the file after the
+    // last, so a save cut off part way never replaces a good file
+    const piece = q.get('piece');
+    if (piece == null) { await writeFile(file, Buffer.concat(chunks)); return send(res, 200, 'saved'); }
+    await (piece === '0' ? writeFile : appendFile)(file + '.part', Buffer.concat(chunks));
+    if (q.get('last')) await rename(file + '.part', file);
+    return send(res, 200, 'saved');
   }
   if (p === '/api/projects/reveal' && req.method === 'POST') { // open the folder in Explorer / Finder
     await mkdir(file, { recursive: true });

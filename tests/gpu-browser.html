@@ -7,7 +7,7 @@ const log = (...a) => { const s = a.join(' '); out.textContent += s + '\n'; cons
 window.__done = (async () => {
   const adapter = await navigator.gpu?.requestAdapter();
   if (!adapter) { log('No WebGPU adapter'); return { error: 'no adapter' }; }
-  const device = await adapter.requestDevice({ requiredLimits: { maxStorageBuffersPerShaderStage: Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10) } });
+  const device = await adapter.requestDevice({ requiredLimits: { maxStorageBuffersPerShaderStage: Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10), maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize, maxBufferSize: adapter.limits.maxBufferSize } }); // as app/map.js: the many-tiles grid needs big buffers
   log(`storage buffers per stage: ${device.limits.maxStorageBuffersPerShaderStage}`);
   device.onuncapturederror = e => log('GPU error: ' + e.error.message);
   log('adapter: ' + (adapter.info?.architecture || '?'));
