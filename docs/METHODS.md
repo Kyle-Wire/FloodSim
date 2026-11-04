@@ -980,7 +980,8 @@ observations were found for this storm, and the box would need the upstream catc
 ### 5.8 Historic river flood — the Schuylkill at Manayunk, Ida, 1–2 Sept 2021
 
 Run on 3–4 November 2026 at commit `33794a1`, in the app, from the *Manayunk, Philadelphia PA* example: the
-first validation here against a full set of surveyed high-water marks and a gauge inside the model.
+first validation here against a full set of surveyed high-water marks and a gauge inside the model. Rerun on 4 November
+with the river outlet code of `91b0845` (the run record says `f5e2632+dirty`: the page loaded before that commit) and a river outlet on the south edge (§3.7), everything else the same; the rerun is at the end.
 
 - **Model.** 5.3 × 3.4 km (Flat Rock Dam to East Falls, with Roxborough and the lower Wissahickon), 18.4M 1 m DEM
   cells, a 2 m solver (4.6M cells, 72,044 active tiles at the peak). Buildings as walls, no drainage, gauge start
@@ -995,7 +996,7 @@ first validation here against a full set of surveyed high-water marks and a gaug
 - **Books.** 4.2e-7 after 70,320 s (19.5 h of storm, 7.4 h of computing). In: river 201.2M m³, rain 1.80M, at the
   start 1.82M; out: the edge 198.0M, infiltration 0.92M, standing at the end 5.88M.
 
-**Result: the river is about 1.3 m low through Manayunk.**
+**Result of the first run: the river is about 1.3 m low through Manayunk.**
 
 | Observation | Observed | Model | Error |
 |---|---|---|---|
@@ -1019,7 +1020,7 @@ edge. Philly-19 itself is dry in the model, and its score (−0.65 m) is its gro
 roughness may add to the error, but they cannot be separated from the edge in this run. The fix needs a river outlet
 that does not draw the water down: an area that reaches the Fairmount pool, or a normal-depth or stage edge for a
 river leaving the model. Neither was in this run, and the edge checks did not catch it: they measure flooding at the
-edge, not how the water surface slopes toward it.
+edge, not how the water surface slopes toward it. The rerun below adds the stage edge.
 
 **The Wissahickon ponds at its mouth.** Above the 5 m falls at Ridge Avenue, the model's creek peaks at 12.5 m, 1.4 m
 over the gauge's crest, and spreads over Ridge Avenue. The DEM there, the falls with the road and its bridge, passes
@@ -1044,9 +1045,43 @@ What the run found and fixed:
    water stood at 14.6 m, above a river that crested at 13.2 m there; its own pixel was dry. Marks now take water only
    from ground no higher than their own, plus 30 cm.
 
+**Rerun with the river outlet.** The south edge's 104 river cells held the Philadelphia gauge (01474500, Fairmount
+Dam: crest 6.37 m NAVD88 and 3,540 m³/s at 13:30 UTC) carried 6.7 km up the river by the backwater step: 3.49 m at the
+start, 9.96 m at the Manayunk crest (12:15) and 10.03 m at Philadelphia's. Books 2.8e-7 after the same 70,320 s, in 6.8 h
+of computing. In: river 201.2M m³, rain 1.80M, at the start 1.47M (the gauge pool fix, item 4 above); out: the edge
+196.9M, infiltration 0.92M, standing at the end 6.64M.
+
+| Observation | Observed | First run | With the outlet |
+|---|---|---|---|
+| Manayunk gauge (01473800), crest | 13.01 m, 12:15 UTC | −1.51 m, 23 min early | **−0.80 m** (12.21 m), 7 min early |
+| The same 9 river marks | 10.97–13.53 m | −0.31 to −1.85 m, mean −1.29 m | **−0.32 to −1.10 m, mean −0.84 m** |
+| 7 of them wet in the model | | mean −1.52 m | **mean −0.94 m** (−0.61 to −1.10) |
+| East Falls-1, 20 m from the edge | 10.64 m | +1.82 m (Wissahickon ponding) | **−0.51 m** |
+| All 11 scored marks | | bias −0.88 m, RMSE 1.36 m; 8 of 11 flooded right | **bias −0.66 m, RMSE 0.85 m**, none within 15 cm; 9 of 11 flooded right |
+| Wissahickon gauge (01474000), its pool, peak | 11.07 m | +1.39 m | +0.93 m |
+
+The drawdown toward the edge is gone: the error no longer grows downstream. Philly-20, 1 km above the edge, went from
+−1.85 to −0.82 m, and the wet marks now sit within 0.5 m of one another (−0.61 to −1.10 m) along the 3 km reach. Two
+marks are still dry in the model, Manayunk-10 and Philly-19, and score at their ground (−0.32 and −0.66 m).
+
+**The river is still about 0.9 m low, evenly.** Two parts can be told apart:
+
+- **The edge is about 0.5 m low.** East Falls-1, beside the edge, is −0.51 m. The outlet's reach is prismatic: the
+  edge's own section, unchanged for 6.7 km, on a level bed, with no bridges or islands (§3.7). The reach down to
+  Fairmount has bridges, Peters Island and the bends below East Falls; each holds water back that the step
+  leaves out.
+- **The rest, about 0.4 m, is in the model.** Above the edge the slope is also low. The channel is the regional
+  curve, not a survey (BlueTopo stops at Fairmount Dam), and the roughness comes from land cover; either would do it,
+  and this run cannot separate them. The Norristown inflow is not lagged for the 20 km between, which puts the gauge's
+  crest early but does not lower it.
+
+Nothing was tuned to the marks. A surveyed channel, or a HEC-RAS reach from East Falls to Fairmount for the edge
+level, would be the next test.
+
 What this shows: the solver, checkpoints and books hold for a 4.6M-cell, 19.5-hour river flood, and the scorecard now
-reads the right water. It does not validate river levels. Where a deep river leaves the model, the free-outfall edge
-alone can put the levels a metre or more low, kilometres upstream.
+reads the right water. The river outlet removes the edge drawdown that put the first run 1.3 m low; the levels are now
+0.6–1.1 m low along the whole reach, about half the first run's error. That is not yet a validation of river levels:
+for planning, read a Schuylkill-type river's flood levels here as likely low by up to about 1 m.
 
 ### 5.9 Earlier observation comparisons recorded in the README
 
@@ -1116,9 +1151,10 @@ new 2,112 × 2,112 many-tiles case (§2.9).
   The Davis comparison is model to model, and the README notes that its residual-ponding difference needs observations
   to resolve. Ida at South Street (§5.6) and Portland (§5.7) are run end to end on real storms, but neither site has
   observed street depths.
-- **River levels.** Manayunk (§5.8) is 1.3 m low against 9 river marks and its gauge, mostly from the free-outfall
-  edge. A rerun with a river outlet that does not draw the water down is needed before river levels count as
-  validated.
+- **River levels.** Manayunk (§5.8) was 1.3 m low against 9 river marks and its gauge from the free-outfall edge.
+  With the river outlet it is 0.84 m low against those marks (RMSE 0.85 m over all 11) and −0.80 m at the gauge,
+  evenly along the reach: about 0.5 m from the outlet's prismatic reach and the rest from the estimated channel or
+  roughness. River levels are not yet validated.
 - **EA Tests 8A/8B** (urban rain with a surcharging sewer) have not been run.
 - **No observed pipe flows or pipe levels** have been compared (the Bellinge dataset is proposed).
 - **Synthetic sewer networks** have not been compared with real networks for the same area.
@@ -1275,7 +1311,7 @@ known limits", "Known limits (solver)" and section caveats, and the code as cite
 
 | Limitation | Effect on results | Mitigation |
 |---|---|---|
-| Model edges are free outfalls (Manning on the surface slope, ≤ critical) | Water reaching the edge leaves. Depth and extent near the edge are **underestimated** where water would pond or back up beyond it; nothing flows in from outside. A deep river leaving the model draws down toward the edge like a waterfall: at Manayunk (§5.8), 3.6 m at the edge and 1.5 m at a gauge 2.4 km upstream. | Draw the area well beyond the area of interest; read the edge checks (§6.1); use a tidal stage edge where applicable, and where a river leaves, a river outlet held from a downstream gauge (§3.7; historic storms, a prismatic backwater reach). |
+| Model edges are free outfalls (Manning on the surface slope, ≤ critical) | Water reaching the edge leaves. Depth and extent near the edge are **underestimated** where water would pond or back up beyond it; nothing flows in from outside. A deep river leaving the model draws down toward the edge like a waterfall: at Manayunk (§5.8), 3.6 m at the edge and 1.5 m at a gauge 2.4 km upstream. | Draw the area well beyond the area of interest; read the edge checks (§6.1); use a tidal stage edge where applicable, and where a river leaves, a river outlet held from a downstream gauge (§3.7; historic storms, a prismatic backwater reach: at Manayunk it cut the gauge error to −0.80 m and left the edge about 0.5 m low). |
 | Upstream runoff is excluded unless the model runs on its watershed or has an inflow | Flooding **underestimated** wherever ground outside drains in. | Trace the watershed and run on it, or add gauged or StreamStats inflow. |
 | Polygon areas: the network is built over the bounding box, so inlets outside the polygon sit in dry sink cells | Minor: those inlets receive nothing. | Use a box, or accept. |
 | River inflow enters through exchange cells two rows inside a closed edge, with no momentum-carrying boundary | Near-entry water surface can be distorted. README: Ida at Fairmount, the mark 250 m from the inflow read +1.44 m high. | Draw the box well upstream of the reach of interest. |

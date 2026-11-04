@@ -1255,7 +1255,9 @@ combined balance −0.002 %.
 - The *Manayunk, Philadelphia PA* example (Ida 2021) is the largest: 5.3 × 3.4 km, 18.4M 1 m cells on a 2 m solver, with
   the Schuylkill (Norristown gauge) and Wissahickon Creek flowing in. The page holds up to 20M 1 m cells
   (`MAX_FINE`), and the readbacks space out with their cost. Scored against 15 USGS marks and the Manayunk gauge
-  it is 1.3 m low, mostly because the river leaves across a free-outfall edge (docs/METHODS.md §5.8).
+  it was 1.3 m low with the river leaving across a free-outfall edge. With a river outlet held from the Philadelphia
+  gauge it is 0.8 m low at the Manayunk gauge and 0.6–1.1 m low at the wet river marks (all 11 scored: bias −0.66 m,
+  RMSE 0.85 m), evenly along the reach (docs/METHODS.md §5.8).
 - The *Laurelhurst, Portland OR* example links the City of Portland's open combined-sewer mains and inlets with the
   datum offset: 370 mains (335 combined) and 476 inlets in 1.3 km², 446 SWMM conduits (420 surveyed, inverts from the layer). The dev proxy only reaches links on public https hosts (never localhost or private
 addresses), GET only, and every request must carry the app's `x-floodsim` header, so other web pages cannot use it.
@@ -1301,7 +1303,8 @@ A river leaving the area can hold a level too (Storm → River leaving the area,
 enter a downstream USGS gauge and the river's length to it. The edge facing the gauge holds the gauge's recorded water
 surface plus the backwater rise up that reach at its recorded discharge (standard step on the edge's own
 cross-section, taken as prismatic). Without it a deep river pours off the edge as if over a fall and draws down
-upstream (docs/METHODS.md §3.7, §5.8).
+upstream. At Manayunk it cut the gauge's crest error from −1.51 to −0.80 m; the prismatic reach leaves out the bridges
+and islands below, and the edge there still sat about 0.5 m low (docs/METHODS.md §3.7, §5.8).
 Where a river enters across the edge, the edge is closed across it, the channel plus 10 m each side. The channel is
 the run of edge cells within 1.5 m of the lowest lidar water surface near the entry. The flow goes in over that width,
 two rows inside. Before this, the flow went into the 12 lowest cells at the entry point. There it mounded up and poured
