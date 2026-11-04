@@ -44,7 +44,7 @@ import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/
 import { gaugeScore, matchEvent } from '../src/validate.js';
 import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, entryEdge, InflowLinks, CFS, basinAreaKm2, areaRatioScale } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
-import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge, tidalEdgeCells } from '../src/waterlevels.js';
+import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge, gaugeWater, tidalEdgeCells } from '../src/waterlevels.js';
 import * as FEMA from '../src/fema.js';
 import * as WIN from '../src/window.js';
 import { CURVES, flatWater, accumulation, carveChannels } from '../src/bathymetry.js';
@@ -86,7 +86,7 @@ const EXAMPLES = [
     // City of Portland datum, NAVD88 = City + 2.10 ft
     links: { pipes: ["https://www.portlandmaps.com/od/rest/services/COP_OpenData_Utilities/MapServer/108?where=LAYER_GROUP%20IN%20(%27SEWER%20PIPES%27%2C%27STORM%20PIPES%27)%20AND%20SERVSTAT%3D%27IN%27"],
       inlets: ["https://www.portlandmaps.com/od/rest/services/COP_OpenData_Utilities/MapServer/105?where=UNITTYPE%3D%27INLET%27"], datum: 2.10 } },
-  { name: 'Manayunk, Philadelphia PA', why: 'Schuylkill flood: Ida 2021, 18 USGS high-water marks', box: [-75.262, 40.0135, -75.200, 40.0445] },
+  { name: 'Manayunk, Philadelphia PA', why: 'Schuylkill flood: Ida 2021, 15 USGS high-water marks and a river gauge', box: [-75.262, 40.0135, -75.200, 40.0445] },
   { name: 'Meyerland, Houston TX', why: 'flat, bayou-side, flash flooding', box: [-95.4740, 29.6790, -95.4620, 29.6880] },
   { name: 'Ellicott City MD', why: 'steep valley, 2016 and 2018 flash floods', box: [-76.8020, 39.2650, -76.7930, 39.2710] },
   { name: 'Miami Beach FL', why: 'tidal and storm-surge flooding', box: [-80.1390, 25.7880, -80.1290, 25.7960] },
@@ -1662,18 +1662,24 @@ function gaugeWatch(r) {
   const water = waterCells(c, F, fine, model.nlcd, lines), gauges = [];
   for (const g of inflow.levels) {
     const k = cellAt(fine, c, F, g.lon, g.lat); if (k < 0 || !c.mask[k] || (c.inside && !c.inside[k])) continue;
-    gauges.push({ g, cells: nearestCells(c, waterNear(c, water, k, R), k), series: [] });
+    gauges.push({ g, cells: nearestCells(c, waterNear(c, water, k, R), k, 200), series: [], wse: [] });
   }
   return gauges.length ? { t0: st.t0, gauges, next: 0 } : null;
 }
 /** The level at each gauge: the median water surface of the 9 nearest channel cells at least 10 cm deep (a bank cell
- *  wet with rain, or the far side of a weir, is not the gauge's water). */
+ *  wet with rain is not the gauge's water). Each cell's surface is kept too: once the gauge's readings are in, the
+ *  series is taken again from the water body it reads (fillGauges), not the far side of a dam beside it. */
 function recordGauges(r, out, t) {
   const w = r.gaugeWatch, z = r.c.z; w.next = t + 60;
   for (const gw of w.gauges) {
-    const v = []; for (const q of gw.cells) { const h = out[2 * q]; if (h > 0.1) { v.push(z[q] + h); if (v.length === 9) break; } }
-    v.sort((a, b) => a - b); gw.series.push([w.t0 + t * 1000, v.length ? v[v.length >> 1] : NaN]);
+    const row = gw.cells.map(q => (out[2 * q] > 0.1 ? Math.round((z[q] + out[2 * q]) * 1000) / 1000 : null));
+    gw.wse?.push(row); gw.series.push([w.t0 + t * 1000, median9(row)]);
   }
+}
+/** The median of the first 9 wet (non-null) of these surfaces, nearest first, or NaN. */
+function median9(row, use = null) {
+  const v = []; for (let i = 0; i < row.length && v.length < 9; i++) if (row[i] != null && (!use || use[i])) v.push(row[i]);
+  v.sort((a, b) => a - b); return v.length ? v[v.length >> 1] : NaN;
 }
 /**
  * The scorecard's inputs from a finished run: the high-water marks (scored now), the rain's sources, the books; the
@@ -1697,7 +1703,13 @@ async function fillGauges(r, v) {
     const t1 = gw.series.at(-1)?.[0] ?? w.t0;
     try {
       const o = await levelSeries(gw.g, fetcher, w.t0 - 3600e3, t1 + 3600e3);
-      if (!o.series) { out.why = o.why; return; }
+      if (!o.series?.length) { out.why = o.why ?? 'no readings in the run window'; return; }
+      const first = o.series.reduce((a, p) => (Math.abs(p[0] - w.t0) < Math.abs(a[0] - w.t0) ? p : a)), mine = new Set(gaugeWater(r.c, gw.cells, first[1]));
+      if (gw.wse?.length === gw.series.length && mine.size < gw.cells.length) { // the water body its reading at the start says it reads
+        const use = gw.cells.map(q => mine.has(q)); gw.series = gw.series.map(([t], m) => [t, median9(gw.wse[m], use)]); out.model = gw.series;
+        const zs = r.c.zSurf ?? r.c.z, top = Math.max(...[...mine].map(q => zs[q]));
+        out.reads = `water with its lidar surface at ${(top - 1).toFixed(2)}–${top.toFixed(2)} m, ${mine.size} of the ${gw.cells.length} water cells nearest it (its reading at the start: ${first[1].toFixed(2)} m)`;
+      }
       out.obs = o.series; out.how = o.how; out.score = gaugeScore(o.series, gw.series.filter(([, z]) => Number.isFinite(z)));
       out.why = out.score ? '' : 'the model channel stayed dry there';
     } catch (e) { out.why = 'gauge readings unavailable: ' + e.message; }
@@ -1814,7 +1826,7 @@ async function loop(gen) {
     if (run.exchanger) tEnd = Math.min(tEnd, run.exchanger.tNext);          // stop exactly at each 1D–2D / culvert exchange
     if (run.watch) { const lv = run.watch.levels(s.t); if (lv && !run.winCrest) s.setCrestLevels(lv); tEnd = Math.min(tEnd, run.watch.next(s.t)); } // deployable barriers go up on time
     if (run.winCrest) windowCrests(s);
-    const every = Number($('frameEvery').value), frameDue = every > 0 && tEnd >= run.nextFrame - 1e-6;
+    const every = frameEvery(), frameDue = every > 0 && tEnd >= run.nextFrame - 1e-6;
     if (every > 0) tEnd = Math.min(tEnd, Math.max(run.nextFrame, s.t));       // and at each saved export frame
     const need = tEnd - s.t;
     // adaptive batch: aim for ~40 ms of GPU work per submit, but never queue steps past tEnd (they would be dt = 0 work)
@@ -2466,13 +2478,22 @@ function hazardNote() {
   }
 }
 
+// export frames held in the page at most: past it every other frame goes and the interval doubles (Manayunk's 4.6M cells,
+// a frame each 5 min over 19.5 h, came to 8.6 GB, and its checkpoints, which carry the frames, could no longer be allocated)
+const FRAME_BYTES = 1.5e9;
+/** The export frame interval this run keeps, in s (0: off): the chosen one, doubled each time the frames were thinned. */
+const frameEvery = () => Number($('frameEvery').value) * (run.frameStep ?? 1);
 function saveFrame(out) {
-  const every = Number($('frameEvery').value);
+  const every = frameEvery();
   if (!every || run.solver.t + 1e-6 < run.nextFrame) return;
   const N = run.c.nx * run.c.ny, d = new Float32Array(N), v = new Float32Array(N);
   for (let k = 0; k < N; k++) { d[k] = out[2 * k]; v[k] = out[2 * k + 1]; }
   run.frames.push({ t: run.solver.t, depth: d, speed: v });
-  run.nextFrame = (Math.floor(run.solver.t / every) + 1) * every;
+  if (run.frames.length * 8 * N > FRAME_BYTES) {
+    run.frames = run.frames.filter((_, i) => i % 2 === 0); run.frameStep = (run.frameStep ?? 1) * 2;
+    log(`Export frames now every ${Math.round(frameEvery() / 60)} min: at the one chosen they would pass ${(FRAME_BYTES / 1e9).toFixed(1)} GB in the page`, 'warn');
+  }
+  run.nextFrame = (Math.floor(run.solver.t / frameEvery()) + 1) * frameEvery();
 }
 
 function readouts() {
@@ -3134,7 +3155,7 @@ async function levelSources(prep, c, F) {
     const k = cellAt(fine, c, F, g.lon, g.lat), near = waterNear(c, water, k, R), en = entryOf.get(site);
     if (near.length && (g.kind === 'LK' || g.kind === 'ES')) { sources.push({ cells: near, level: surf.z }); notes.push(`${g.name}: ${surf.z.toFixed(2)} m NAVD88, flat (${surf.how})`); continue; }
     if (near.length) { // a river gauge in the area: its rise over the lidar water surface right there
-      const rise = Math.max(0, surf.z - surfaceAtGauge(c, near, k)); sources.push({ cells: near, rise });
+      const rise = Math.max(0, surf.z - surfaceAtGauge(c, near, k, surf.z)); sources.push({ cells: gaugeWater(c, near, surf.z), rise }); // its pool, not the tailwater beside it
       notes.push(`${g.name}: ${surf.z.toFixed(2)} m NAVD88, ${rise.toFixed(2)} m above the lidar water surface (${surf.how})`); continue;
     }
     if (en) { // an inflow gauge outside the area: its rise over the lidar surface at the gauge, carried down the river
@@ -3466,7 +3487,10 @@ function drawObs(points = S.obs) {
       'circle-color': ['match', ['get', 'call'], 'right', '#5cd68f', 'missed', '#ff5d5d', 'false alarm', '#f0b44c', '#ffffff'] } });
   } else map.getSource('obs').setData(fc);
 }
-/** Peak water surface near a point from the finished run: the highest wet 1 m pixel within r metres. */
+/** Peak water surface near a point from the finished run: the highest wet 1 m pixel within r metres whose ground is not
+ *  above the point's (+30 cm of lidar noise). Water on higher ground beside a mark, rain running down a wall top or a
+ *  steeper street, is not the water that reached it: Manayunk-5 (Ida) took 14.6 m from such a pixel 3 m away, above a
+ *  river that crested at 13.2 m there. */
 function scoreNow() {
   if (!run?.hmax || !model) return null;
   const fine = model.fine, f = model.f, d = run.F === 1 ? run.hmax : toFine(run.c, run.hmax, 1);
@@ -3474,7 +3498,7 @@ function scoreNow() {
     const [ci, cj] = fine.lonlatToCell(lon, lat), i0 = Math.floor(ci), j0 = Math.floor(cj); if (i0 < 0 || j0 < 0 || i0 >= fine.nx || j0 >= fine.ny) return null;
     const R = Math.ceil(r / fine.dx); let best = null, ground = f.z[j0 * fine.nx + i0];
     for (let j = Math.max(0, j0 - R); j <= Math.min(fine.ny - 1, j0 + R); j++) for (let i = Math.max(0, i0 - R); i <= Math.min(fine.nx - 1, i0 + R); i++) {
-      if (Math.hypot(i - i0, j - j0) * fine.dx > r) continue; const k = j * fine.nx + i; if (f.bld[k] || !(d[k] > 0.01)) continue;
+      if (Math.hypot(i - i0, j - j0) * fine.dx > r) continue; const k = j * fine.nx + i; if (f.bld[k] || !(d[k] > 0.01) || f.z[k] > ground + 0.3) continue;
       const w = f.z[k] + d[k]; if (best == null || w > best) best = w;
     }
     return { ground, wse: best };

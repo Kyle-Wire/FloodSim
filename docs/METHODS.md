@@ -215,6 +215,12 @@ The grid is cut into 8×8 tiles. Each step marks tiles holding any water, plus t
 Fluxes run on wet tiles grown by two tiles and updates on wet tiles grown by one, through indirect dispatch. Water moves
 less than one cell per RK stage and everything is active while it rains, so the result is **bit-identical** to the
 untiled solver (tested, §5.1). This needs 9 storage buffers per shader stage; below that the solver runs untiled.
+A tile list goes out as rows of at most 32,768 workgroups, because WebGPU allows 65,535 per dimension and the browser
+drops a larger indirect dispatch whole. Before this was fixed, a grid of more than about 4.2 million solver cells (65,535
+tiles) froze once rain made every tile active. The faces, the update and the sources stopped, while the time step, the
+edge books and the inlet exchange ran on. The first Manayunk run (§5.8) hit this: its river entries piled up 9.9 km deep
+and its books went 68 % out. The GPU suite now runs a 2,112 × 2,112 grid in rain, with 70,225 active tiles, against
+the untiled solver, and a run logs an error as soon as its books are 1 % out.
 
 ### 2.10 Local time stepping (LTS, opt-in, off by default)
 
@@ -400,7 +406,8 @@ All requests go through the local proxy (`server/server.mjs`), which caches resp
   carves nothing. README example: at Fairmount the curves carved the tidal Schuylkill to −1.1 m NAVD88 where BlueTopo
   has it surveyed to −8.2 m (median −2.8 m).
 - **Starting water levels** (`src/waterlevels.js`). With *Gauge levels* (the default), river water rises in parallel by
-  the gauge's level minus the lidar water surface at the gauge (the median of the 9 nearest water cells). Lakes fill flat
+  the gauge's level minus the lidar water surface at the gauge: the median of the 9 nearest water cells on the water
+  body its reading is on, the highest flat surface at or below it (a gauge above a dam reads the pool, §5.8). Lakes fill flat
   to the reading, tidal water starts at the tide level, and water then spreads onto connected ground below its level.
   Rules guard against bridge decks and 30 m land-cover pixels mapped as water. Ungauged water stays at the lidar
   surface.
@@ -731,7 +738,7 @@ Changes under about 1 cm are within its error, so an off-site impact must be con
 ## 5. Verification and validation
 
 **Verification** (does the code solve the equations correctly) is extensive. **Validation** against observed floods
-in the repository is limited (§5.6–5.8, §5.10).
+in the repository is limited (§5.6–5.9, §5.11).
 
 ### 5.1 Code verification (analytic and internal-consistency tests)
 
@@ -893,7 +900,7 @@ Run on 3 November 2026 at commit `08a4162` (+ the water-balance fix of `2535d75`
   the nearest, CoCoRaHS NJ-CN-24 at 8.2 km, **1.04**; Philadelphia International (ASOS, 10 km) 1.44; Wyndmoor
   (CoCoRaHS, 13 km, 130 mm) 0.53. Ida's totals ranged from 48 to 130 mm across 25 km, so no single gauge is decisive;
   the median sits in the scorecard's *fair* band (|ratio − 1| = 0.17). The gauge-adjusted product being 33 % under
-  radar-only matches the Fairmount run of §5.8 and is not yet explained.
+  radar-only matches the Fairmount run of §5.9 and is not yet explained.
 - **Books.** Surface −7e-6, surface + sewers +3e-4. The report's water balance closes to 187 ft³ of 596,380 ft³ in:
   rain on the ground 310,917; roof rain piped to the combined sewers 264,097; sanitary flow 21,048; to the pipe
   outfalls 518,101; infiltration 26,814; off the model edge 15,301; standing at the end 35,870. (This run found the
@@ -902,8 +909,7 @@ Run on 3 November 2026 at commit `08a4162` (+ the water-balance fix of `2535d75`
 - **Depths: not validated at this site.** USGS STN holds 262 Ida marks in Pennsylvania, 43 around Philadelphia, all on
   the Schuylkill (Fairmount to Manayunk); none falls in this block, and no street-flooding observations are published
   for it. Peak depth in the model: 0.76 m. The marks that exist are riverine; the Fairmount run of
-  §5.8 used five of them, and the Manayunk reach (about 15 marks, most rated excellent, ±0.05 ft, 2–9 ft above ground)
-  is the next validation site.
+  §5.9 used five of them, and the Manayunk reach has 15 (§5.8).
 
 What this shows: the rain QA, water books and report work end to end on a real storm, and the rain the model used is
 consistent with the gauge network to within its spread. It does not show that the modelled depths are right.
@@ -953,7 +959,78 @@ What this shows: a real public sewer layer on a local datum can be linked, built
 and the model checks both catch what is wrong with the setup. It does not validate depths: no depth or flow
 observations were found for this storm, and the box would need the upstream catchment first.
 
-### 5.8 Earlier observation comparisons recorded in the README
+### 5.8 Historic river flood — the Schuylkill at Manayunk, Ida, 1–2 Sept 2021
+
+Run on 3–4 November 2026 at commit `33794a1`, in the app, from the *Manayunk, Philadelphia PA* example: the
+first validation here against a full set of surveyed high-water marks and a gauge inside the model.
+
+- **Model.** 5.3 × 3.4 km (Flat Rock Dam to East Falls, with Roxborough and the lower Wissahickon), 18.4M 1 m DEM
+  cells, a 2 m solver (4.6M cells, 72,044 active tiles at the peak). Buildings as walls, no drainage, gauge start
+  levels. Channel: no BlueTopo above Fairmount Dam, so the Appalachian Highlands regional curve (104 m × 2.9 m
+  bankfull for the Schuylkill), 1.12M m³ carved under the lidar water.
+- **Inflow.** Schuylkill at Norristown (01473500) × 1.017 for the drainage area at the north edge: peak 3,428 m³/s
+  (121,000 cfs) at hour 14.7, not lagged for the 20 km between. Wissahickon Creek at its mouth (01474000) × 0.950
+  where it enters the north edge and × 0.991 where it comes back in on the east edge (it leaves the area between).
+- **Rain.** MRMS gauge-corrected, timed by the 2-min radar rate: 98 mm over the area (radar alone 142 mm). Rain QA: 11
+  of 12 gauges within 25 km scored, model ÷ gauge median 0.97 (0.62–2.06), the nearest (CoCoRaHS Wyndmoor, 2 km)
+  0.81. Rain is under 1 % of the water in: the river carried 201M m³.
+- **Books.** 4.2e-7 after 70,320 s (19.5 h of storm, 7.4 h of computing). In: river 201.2M m³, rain 1.80M, at the
+  start 1.82M; out: the edge 198.0M, infiltration 0.92M, standing at the end 5.88M.
+
+**Result: the river is about 1.3 m low through Manayunk.**
+
+| Observation | Observed | Model | Error |
+|---|---|---|---|
+| Manayunk gauge (01473800), crest | 13.01 m, 12:15 UTC | 11.50 m, 11:52 UTC | −1.51 m, 23 min early |
+| 9 river high-water marks (levels) | 11.70–13.53 m | | −0.31 to −1.85 m, mean −1.29 m |
+| All 11 scored marks | | | bias −0.88 m, RMSE 1.36 m, 1 within 15 cm; 8 of 11 flooded calls right |
+| Wissahickon gauge (01474000), its pool, peak | 11.07 m | 12.46 m | +1.39 m |
+
+Three marks sit under the lidar's bridge decks (1.7–6.6 m below its ground) and are not scored. The eleventh mark,
+East Falls-1, lies 20 m from the edge, in the water ponded at the Wissahickon's mouth (below); the model checks flag
+it. The gauge follows the rise to within about 0.5 m until 01:00 UTC, early because the inflow is not lagged. After
+that it falls behind and stays 1.0–1.5 m under the record to the crest.
+
+**Why: the south edge draws the river down.** The Schuylkill leaves the model across its south edge at East Falls,
+which is a free outfall (§2.7, §7.1). In a 10 m deep flood, the Manning velocity on the surface slope toward the edge
+runs close to critical, so the edge behaves like a waterfall. The model's crest profile steepens toward it. It falls
+1.2 m per km above the gauge, 2.7 per km over the last 1.4 km, and stands near 7 m at the edge. The marks show about
+1 m per km all the way to East Falls (10.6 m), where the Fairmount pool holds the river up. The error grows downstream
+the same way: −0.3 to −1.7 m at the marks around the gauge, about −3 m at the river beside Philly-19, 250 m from the
+edge. Philly-19 itself is dry in the model, and its score (−0.65 m) is its ground. The channel estimate and the
+roughness may add to the error, but they cannot be separated from the edge in this run. The fix needs a river outlet
+that does not draw the water down: an area that reaches the Fairmount pool, or a normal-depth or stage edge for a
+river leaving the model. Neither was in this run, and the edge checks did not catch it: they measure flooding at the
+edge, not how the water surface slopes toward it.
+
+**The Wissahickon ponds at its mouth.** Above the 5 m falls at Ridge Avenue, the model's creek peaks at 12.5 m, 1.4 m
+over the gauge's crest, and spreads over Ridge Avenue. The DEM there, the falls with the road and its bridge, passes
+less water than the creek carried. This was not diagnosed further.
+
+What the run found and fixed:
+
+1. More than 65,535 active tiles froze the solver. The first run's river entries piled up 9.9 km deep, and its books
+   were 68 % out at hour 4. Dispatches are now two-dimensional (§2.9).
+2. Checkpoints failed. A 4.6M-cell checkpoint is 2.7 GB raw; packing it whole built a Blob the browser could not read
+   back, and the desktop app's browser pane dropped single uploads of about 300 MB. The packing now streams, and uploads
+   go in 64 MB pieces (§8.6). A failed checkpoint was also retried every step (66 tries in 15 minutes), which slowed the
+   run; it now waits its interval.
+3. The export depth frames grew without bound: 235 frames of 37 MB, 8.6 GB in the page. Late in the run that left no
+   room to allocate a checkpoint. Past 1.5 GB, every other frame now goes and the interval doubles.
+4. The Wissahickon gauge was scored against the wrong water. Its nine nearest water cells were mostly the tailwater
+   below the falls at 3 m, not the pool at 8 m that it reads. That gave −1.38 m at the crest, when the pool was
+   +1.39 m. The same cells set the starting level, 4.25 m over the tailwater, which started East Falls about 0.7M m³
+   too full; it drained in the first hour. A gauge now reads the highest flat water surface at or below its reading
+   (`gaugeWater` in `src/waterlevels.js`), both for the starting level and in the scorecard.
+5. A high-water mark took water from higher ground beside it. Manayunk-5 scored +1.39 m from a pixel 3 m away whose
+   water stood at 14.6 m, above a river that crested at 13.2 m there; its own pixel was dry. Marks now take water only
+   from ground no higher than their own, plus 30 cm.
+
+What this shows: the solver, checkpoints and books hold for a 4.6M-cell, 19.5-hour river flood, and the scorecard now
+reads the right water. It does not validate river levels. Where a deep river leaves the model, the free-outfall edge
+alone can put the levels a metre or more low, kilometres upstream.
+
+### 5.9 Earlier observation comparisons recorded in the README
 
 These are recorded in the README as development history. A reviewer should treat them as partial validation:
 
@@ -969,13 +1046,14 @@ These are recorded in the README as development history. A reviewer should treat
 - **Ellicott City, 30 July 2016, MRMS**: 164 mm over the area in about 4 h against NWS-reported about 6.6 in (168 mm).
   This is a rainfall check, not a flood-depth validation.
 
-### 5.9 Test suites
+### 5.10 Test suites
 
 `npm test` (`tests/run-all.mjs`) runs every CPU suite offline: `tests/run-tests.mjs` and each
 `tests/run-*-tests.mjs` except the GPU runners, 35 suites in all. The GPU suite (`npm run test:gpu`,
 `tests/gpu-suite.js` in headless Chrome/Edge on the machine's GPU) is separate and writes `tests/results-gpu.json`.
 Suites with `--live` also hit the real services; the default runs use recorded responses and fixtures. All 35 CPU suites
-passed when this document was written (`node tests/run-all.mjs`); the GPU suite was not run for this document.
+passed when this document was written (`node tests/run-all.mjs`). The GPU suite passed on 3 November 2026, with its
+new 2,112 × 2,112 many-tiles case (§2.9).
 
 | Suite | Verifies |
 |---|---|
@@ -1013,12 +1091,15 @@ passed when this document was written (`node tests/run-all.mjs`); the GPU suite 
 | `run-window-tests.mjs` | Window, edge segments, inflow rates, edge check, merging |
 | `run-radar-tests.mjs`, `run-mrms-tests.mjs`, `run-nowcast-tests.mjs` | Radar overlay frames; MRMS PNG/GRIB2 decoding, gauge-corrected totals, timing; storm motion and advection |
 
-### 5.10 What has not been validated
+### 5.11 What has not been validated
 
 - **No street-level urban pluvial event with observed depths** is documented as a validation case in the repository.
   The Davis comparison is model to model, and the README notes that its residual-ponding difference needs observations
   to resolve. Ida at South Street (§5.6) and Portland (§5.7) are run end to end on real storms, but neither site has
-  observed street depths; the Manayunk reach of the Schuylkill (USGS STN Ida high-water marks) is the next candidate.
+  observed street depths.
+- **River levels.** Manayunk (§5.8) is 1.3 m low against 9 river marks and its gauge, mostly from the free-outfall
+  edge. A rerun with a river outlet that does not draw the water down is needed before river levels count as
+  validated.
 - **EA Tests 8A/8B** (urban rain with a surcharging sewer) have not been run.
 - **No observed pipe flows or pipe levels** have been compared (the Bellinge dataset is proposed).
 - **Synthetic sewer networks** have not been compared with real networks for the same area.
@@ -1086,10 +1167,13 @@ published standard, and a reviewer can apply others:
 
 The verdict comes from the observations alone; books that do not close make it poor outright. Scoring rules:
 
-- A mark is compared with the highest modelled water surface within 3 m. A mark left dry scores against its ground.
+- A mark is compared with the highest modelled water surface within 3 m, on ground no higher than the mark's own
+  (+30 cm): water on a wall top or a steeper street beside it is not the water that reached it. A mark left dry
+  scores against its ground.
 - A level mark more than 1 m below the lidar ground (under a bridge or deck) is not scored.
 - The model's level at a gauge is the median water surface of the 9 nearest mapped open-water cells (within 60 m) at
-  least 10 cm deep, every simulated minute.
+  least 10 cm deep, every simulated minute, on the water body the gauge's first reading is on: the highest flat water
+  surface at or below that reading (a pool above a dam, not the tailwater beside it).
 - A peak the run cut off (still rising at the end) is not scored for timing. Marks record the crest, so a run that
   stops early reads low.
 
@@ -1172,7 +1256,7 @@ known limits", "Known limits (solver)" and section caveats, and the code as cite
 
 | Limitation | Effect on results | Mitigation |
 |---|---|---|
-| Model edges are free outfalls (Manning on the surface slope, ≤ critical) | Water reaching the edge leaves. Depth and extent near the edge are **underestimated** where water would pond or back up beyond it; nothing flows in from outside. | Draw the area well beyond the area of interest; read the edge checks (§6.1); use a tidal stage edge where applicable. |
+| Model edges are free outfalls (Manning on the surface slope, ≤ critical) | Water reaching the edge leaves. Depth and extent near the edge are **underestimated** where water would pond or back up beyond it; nothing flows in from outside. A deep river leaving the model draws down toward the edge like a waterfall: at Manayunk (§5.8), 3.6 m at the edge and 1.5 m at a gauge 2.4 km upstream. | Draw the area well beyond the area of interest; read the edge checks (§6.1); use a tidal stage edge where applicable. |
 | Upstream runoff is excluded unless the model runs on its watershed or has an inflow | Flooding **underestimated** wherever ground outside drains in. | Trace the watershed and run on it, or add gauged or StreamStats inflow. |
 | Polygon areas: the network is built over the bounding box, so inlets outside the polygon sit in dry sink cells | Minor: those inlets receive nothing. | Use a box, or accept. |
 | River inflow enters through exchange cells two rows inside a closed edge, with no momentum-carrying boundary | Near-entry water surface can be distorted. README: Ida at Fairmount, the mark 250 m from the inflow read +1.44 m high. | Draw the box well upstream of the reach of interest. |
@@ -1379,7 +1463,11 @@ Opening a project rebuilds the model from the saved settings and reloads a histo
 
 `src/checkpoint.js`. Every few minutes of wall time (default 10) the run under way is copied to `runs/_checkpoint/`.
 The copy holds every GPU storage buffer byte for byte, SWMM's whole WebAssembly memory with its in-memory report
-files, and the run's JS state by path, gzip-compressed (a few MB). *Resume* rebuilds the run from the same settings,
+files, and the run's JS state by path, gzip-compressed. That is a few MB for a small area and about 0.5 GB for a
+4.6-million-cell run (2.7 GB before compression). The parts go through the compressor 16 MB at a time and come back a
+part at a time, because one buffer of the whole run cannot be read back in a browser. The file goes to the local server
+in 64 MB pieces and replaces the previous checkpoint only after the last piece. A failed checkpoint is logged and tried
+again after the full interval. *Resume* rebuilds the run from the same settings,
 restores the copy, and refuses if the fingerprint differs. The README reports a run paused, reloaded and resumed
 matching the uninterrupted run bit for bit (infiltration book 1e-7, the same as between two uninterrupted runs). Export
 animation frames are not checkpointed.

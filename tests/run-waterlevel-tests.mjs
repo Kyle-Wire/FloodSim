@@ -2,7 +2,7 @@
 // connected low ground only, each water body takes the nearest gauge, gauge datums need to be surveyed, and NGVD29
 // readings shift to NAVD88.
 // Usage: node tests/run-waterlevel-tests.mjs  (--live: reads the Patapsco at Hollofield gauge and the lidar at it through the local server)
-import { startDepths, components, gaugeSurface, waterNear, nearestCells, surfaceAtGauge, waterBase, tidalEdgeCells } from '../src/waterlevels.js';
+import { startDepths, components, gaugeSurface, waterNear, nearestCells, surfaceAtGauge, gaugeWater, waterBase, tidalEdgeCells } from '../src/waterlevels.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -45,6 +45,17 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   check('with a carved channel, the surface at a gauge is still the lidar one', surfaceAtGauge({ ...c, z: bed, zSurf: z }, near, k) === 3);
   const s = startDepths({ ...c, mask: new Uint8Array(nx * ny).fill(1) }, water, [{ cells: [k], rise: 0.4 }], { surfR: 6 });
   check('a pool above a weir keeps its own surface: it rises right up to the weir', Math.abs(s.depth[2 * nx + 14] - 0.4) < 1e-6 && Math.abs(s.depth[2 * nx + 15] - 0.4) < 1e-6, `${s.depth[2 * nx + 14].toFixed(2)}, ${s.depth[2 * nx + 15].toFixed(2)}`);
+}
+{ // a gauge on the lip of a 5 m falls (Wissahickon Creek at its mouth): a sloping face between an 8 m pool and 3 m
+  // tailwater, the tailwater and the face nearest it. Its reading (8.46 m) says it reads the pool.
+  const nx = 30, ny = 5, z = new Float64Array(nx * ny), water = new Uint8Array(nx * ny).fill(1);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = i < 10 ? 8 : i < 14 ? 8 - (i - 9) : 3; // pool, face 7–4 m, tailwater
+  const c = { nx, ny, z }, k = 2 * nx + 14, near = waterNear(c, water, k, 8);
+  check('without a reading, the nearest water at a falls is mostly the tailwater', surfaceAtGauge(c, near, k) < 5);
+  const pool = gaugeWater(c, near, 8.46);
+  check('with its reading, a gauge above a falls reads the pool', pool.length > 0 && pool.every(q => z[q] > 7) && surfaceAtGauge(c, near, k, 8.46) === 8, `${pool.length} cells`);
+  check('a reading below the pool takes the tailwater', gaugeWater(c, near, 3.4).every(q => z[q] <= 3.4) && surfaceAtGauge(c, near, k, 3.4) === 3);
+  check('a reading under every water surface falls back to all the cells', gaugeWater(c, near, 1).length === near.length);
 }
 { // a river (rows 9–10, surface 1 m) under a bridge deck at 9 m (columns 20–22, flagged water by the river line), with
   // a yard at 3 m beside the deck: a parallel rise of 0.4 m must not start the yard under the deck's level

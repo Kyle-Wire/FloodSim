@@ -247,10 +247,29 @@ export function nearestCells(c, cells, k, n = Infinity) {
  * a gauge above a weir or dam has the tailwater below it within 60 m, and a rise measured from there would start the
  * pool metres too high (Fairmount Dam on the Schuylkill: 2.7 m).
  */
-export function surfaceAtGauge(c, cells, k) {
+export function surfaceAtGauge(c, cells, k, level = null) {
   const zs = c.zSurf ?? c.z; // the lidar surface, not a carved channel bed (startDepths rises from the same surface)
-  const z = nearestCells(c, cells, k, 9).map(q => zs[q]).sort((a, b) => a - b);
+  const z = nearestCells(c, gaugeWater(c, cells, level), k, 9).map(q => zs[q]).sort((a, b) => a - b);
   return z.length ? z[z.length >> 1] : null;
+}
+
+/**
+ * The water a gauge reads, of the water cells near it, given a reading (m NAVD88): the highest flat water surface (≥ 5
+ * cells within ±25 cm of each other) at or below the reading + 15 cm, and the cells within 1 m under it. A gauge at a dam
+ * has both the pool and the tailwater within 60 m, and the nearest water may be the wrong one: Wissahickon Creek at its
+ * mouth reads the pool at 8 m above the falls at Ridge Avenue, and its nine nearest water cells were mostly the 3 m
+ * tailwater below them. Without a reading, or with no such surface under it: all the cells.
+ */
+export function gaugeWater(c, cells, level = null) {
+  if (level == null || !cells.length) return cells;
+  const zs = c.zSurf ?? c.z, under = cells.filter(q => zs[q] <= level + 0.15), v = under.map(q => zs[q]).sort((a, b) => a - b);
+  let top = null;
+  for (let a = v.length - 1, b = v.length - 1; a >= 0; a--) { // from the top down: the first height with 5 cells within ±25 cm
+    while (v[b] > v[a] + 0.25) b--;
+    let lo = a; while (lo > 0 && v[lo - 1] >= v[a] - 0.25) lo--;
+    if (b - lo + 1 >= 5) { top = v[a]; break; }
+  }
+  return top == null ? cells : under.filter(q => zs[q] > top - 1);
 }
 
 /** Water cells within r cells of cell k. */

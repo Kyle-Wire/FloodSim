@@ -866,7 +866,7 @@ nearby and the inflow gauges, at the storm start for a historic storm or their l
 **Calibration** (section 6; `src/calibrate.js`). Import observations (CSV or GeoJSON points, feet or metres NAVD88):
 high-water marks (water surface elevation), observed depths, or flooded / dry reports (311 complaints, photos).
 - Every finished run is scored: a mark is compared with the highest modelled water surface within 3 m (marks sit on
-  walls and doors); a mark left dry scores its ground. Levels: bias, mean error, RMSE, share within 15 cm.
+  walls and doors), on ground no higher than the mark's own (+30 cm); a mark left dry scores its ground. Levels: bias, mean error, RMSE, share within 15 cm.
   Reports: flooded in both, missed, false alarms. Points on the map turn green / red / amber.
 - Three settings, by hand or by sweep: roughness (Manning n ×), infiltration ×, and inlet clogging (share of each
   grate's opening blocked by debris). The sweep runs every combination (2 or 3 values each: 8 or 27 runs, in the
@@ -890,8 +890,9 @@ for an urban model at 1 m, not a published standard (`TARGETS`):
   each USGS level gauge inside the model, its peak water level (± 0.15 / 0.30 m) and the time of that peak (± 30 / 60
   min) against the gauge's record in NAVD88 (an elevation series, or gage height on a surveyed national datum; NGVD29
   through NOAA NCAT). The model's level there is the median water surface of the 9 mapped open-water cells nearest the
-  gauge (within 60 m) that are at least 10 cm deep, every simulated minute (a bank wet with rain, or the far side of a
-  weir, is not the gauge's water). A peak the run cut off (still rising at its end) is not scored for timing;
+  gauge (within 60 m) that are at least 10 cm deep, every simulated minute (a bank wet with rain is not the gauge's
+  water), on the water body its first reading is on: the highest flat surface at or below it, so a gauge above a dam
+  reads the pool, not the tailwater beside it. A peak the run cut off (still rising at its end) is not scored for timing;
 - rain: the source (gauge-corrected or radar-only), the gauge-corrected totals against radar alone, and against the
   site's gridded daily record (a coarse grid: a gap there points at the record as often as the radar); and against the
   independent point gauges within 25 km (below): the median model / gauge (1 ± 0.15 / 0.30) and the nearest gauge's;
@@ -979,7 +980,10 @@ Opening a project rebuilds the model from the saved settings, and reloads a hist
 - **The study** is saved as `batch.json` in the project, with each job's status, run folder and wall time.
 - **Checkpoints:** a run under way is copied into `runs/_checkpoint/` every few minutes of wall-clock time (default
   10). The copy holds the GPU solver's buffers byte for byte, SWMM's whole WebAssembly memory with its in-memory
-  report files, and the run's own books and series. It is a few MB, gzip-compressed.
+  report files, and the run's own books and series, gzip-compressed: a few MB for a block, about 0.5 GB for the
+  4.6M-cell Manayunk model (2.7 GB raw). Packing streams in 16 MB pieces, and the copy goes to the server in 64 MB
+  pieces (a `.part` file renamed over the old copy at the end), since a browser can fail one upload of several
+  hundred MB outright. A checkpoint that fails waits its full interval before the next try.
 - **Resume:** a reload, a crash or *Pause* loses at most one checkpoint interval. *Resume* rebuilds the run from the
   same settings and puts the copy back. The forcing fingerprint must match the checkpoint's, or it refuses.
 - **Headless:** `npm run batch -- "<project folder>"` runs the project's study in headless Chrome/Edge on the
@@ -1002,7 +1006,9 @@ Checked in the app on a 2 m model of 520 × 456 cells (10-yr 1-h storm, 158 inle
 - **Node tests:** `tests/run-checkpoint-tests.mjs` copies a SWMM engine half way through a run into a fresh engine.
   The two then produce the same 255,600 heads and close with the same continuity.
 
-Not in a checkpoint: the export animation frames (the animation restarts at the resume).
+Not in a checkpoint: the export animation frames (the animation restarts at the resume). The frames held in the page
+stop at 1.5 GB: past that, every other frame goes and the interval doubles (Manayunk's frames each 5 minutes came to
+8.6 GB, and then a checkpoint could not be allocated).
 
 ## Phase 2 — rivers, culverts, storage, green infrastructure
 
@@ -1246,6 +1252,10 @@ combined balance −0.002 %.
   or a combined unit code (Portland's `CSML`) marks a pipe combined. When most linked pipes are, the build sets the
   combined-sewer defaults (roof downspouts 100 % to the sewer, sanitary flow and CSO regulators on), as it does inside
   Philadelphia's combined-sewer area.
+- The *Manayunk, Philadelphia PA* example (Ida 2021) is the largest: 5.3 × 3.4 km, 18.4M 1 m cells on a 2 m solver, with
+  the Schuylkill (Norristown gauge) and Wissahickon Creek flowing in. The page holds up to 20M 1 m cells
+  (`MAX_FINE`), and the readbacks space out with their cost. Scored against 15 USGS marks and the Manayunk gauge
+  it is 1.3 m low, mostly because the river leaves across a free-outfall edge (docs/METHODS.md §5.8).
 - The *Laurelhurst, Portland OR* example links the City of Portland's open combined-sewer mains and inlets with the
   datum offset: 370 mains (335 combined) and 476 inlets in 1.3 km², 446 SWMM conduits (420 surveyed, inverts from the layer). The dev proxy only reaches links on public https hosts (never localhost or private
 addresses), GET only, and every request must carry the app's `x-floodsim` header, so other web pages cannot use it.
@@ -1385,7 +1395,9 @@ with inlets or stage cells, and builds two lists on the GPU: wet tiles grown by 
 (fluxes, theta). Those kernels run through `dispatchWorkgroupsIndirect` on the lists only; water moves less than a cell
 per RK stage, so the result is bit-identical to the full grid (tested). While it rains everything is active. 4.3× faster
 on a 1600×1600 dam break with ~7% of tiles wet. Needs 9 storage buffers per shader stage (requested from the adapter;
-below that the solver runs untiled).
+below that the solver runs untiled). A dispatch is at most 65,535 workgroups along a dimension, and a larger indirect
+one is dropped whole, so the lists dispatch in rows of 32,768 tiles: above about 4.2M cells the solver otherwise froze
+with the river entries still filling (tested on a 2,112 × 2,112 grid, 70,225 tiles, bit-identical to untiled).
 Bed elevations are stored relative to the domain minimum for fp32 headroom.
 
 **Local time stepping (opt-in, `lts: true`; the "Local time stepping" box under the cell size).** One global step is
