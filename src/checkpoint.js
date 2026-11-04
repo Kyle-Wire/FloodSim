@@ -153,18 +153,45 @@ export async function pack(parts) {
     else head.parts[k] = { json: v ?? null }; // (undefined would drop the key, and the part would read back as binary)
   }
   const hj = new TextEncoder().encode(JSON.stringify(head)), len = new Uint8Array(new Uint32Array([hj.length]).buffer);
-  const raw = new Blob([len, hj, ...bins]);
-  return new Uint8Array(await new Response(raw.stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+  // fed to the compressor a part at a time: one Blob of all of them (2.7 GB for a 4.6M-cell run) could not be read
+  // back, and the browser said only "Failed to fetch"
+  return collect(chunked([len, hj, ...bins]).pipeThrough(new CompressionStream('gzip')));
 }
-/** The parts of a packed file. */
+/** The parts of a packed file. Inflated a part at a time into its own array (no buffer the size of the whole run). */
 export async function unpack(bytes) {
-  const raw = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
-  const hl = new DataView(raw.buffer).getUint32(0, true), head = JSON.parse(new TextDecoder().decode(raw.subarray(4, 4 + hl))), base = 4 + hl, out = {};
-  for (const [k, p] of Object.entries(head.parts)) {
+  const rd = chunked([bytes]).pipeThrough(new DecompressionStream('gzip')).getReader();
+  let buf = new Uint8Array(0), bo = 0;
+  const take = async (dst) => { // the next dst.length bytes of the inflated stream
+    for (let o = 0; o < dst.length;) {
+      if (bo >= buf.length) { const { value, done } = await rd.read(); if (done) throw new Error('the checkpoint file ends early'); buf = value; bo = 0; continue; }
+      const n = Math.min(dst.length - o, buf.length - bo); dst.set(buf.subarray(bo, bo + n), o); o += n; bo += n;
+    }
+    return dst;
+  };
+  const hl = new DataView((await take(new Uint8Array(4))).buffer).getUint32(0, true), head = JSON.parse(new TextDecoder().decode(await take(new Uint8Array(hl)))), out = {};
+  let at = 0;
+  for (const [k, p] of Object.entries(head.parts).sort((a, b) => (a[1].off ?? -1) - (b[1].off ?? -1))) {
     if ('json' in p) { out[k] = p.json; continue; }
-    const C = CTORS[p.type] ?? Uint8Array, b = raw.slice(base + p.off, base + p.off + p.len);
+    if (p.off > at) await take(new Uint8Array(p.off - at)); // padding
+    const C = CTORS[p.type] ?? Uint8Array, b = await take(new Uint8Array(p.len)); at = p.off + p.len;
     out[k] = new C(b.buffer, 0, p.len / C.BYTES_PER_ELEMENT);
   }
+  rd.cancel().catch(() => {});
+  return out;
+}
+/** A stream of the arrays' bytes, at most 16 MB a chunk. */
+function chunked(arrays) {
+  let i = 0, o = 0;
+  return new ReadableStream({ pull(ctl) {
+    while (i < arrays.length && o >= arrays[i].byteLength) { i++; o = 0; }
+    if (i >= arrays.length) { ctl.close(); return; }
+    const a = arrays[i], n = Math.min(16e6, a.byteLength - o); ctl.enqueue(new Uint8Array(a.buffer, a.byteOffset + o, n).slice()); o += n;
+  } });
+}
+async function collect(stream) {
+  const rd = stream.getReader(), chunks = []; let n = 0;
+  for (;;) { const { value, done } = await rd.read(); if (done) break; chunks.push(value); n += value.byteLength; }
+  const out = new Uint8Array(n); let o = 0; for (const c of chunks) { out.set(c, o); o += c.byteLength; }
   return out;
 }
 /** A JS state (captureState) as pack parts and back: the tree as JSON, each blob as its own part. */

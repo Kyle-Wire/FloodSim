@@ -1831,7 +1831,7 @@ async function loop(gen) {
     if (K > 0 && K >= run.K) run.K = Math.max(1, Math.min(400, Math.round(run.K * Math.min(2, Math.max(0.5, 40 / Math.max(1, ms))))));
     if (run.exchanger && s.t >= run.exchanger.tNext - 1e-6) { await run.exchanger.exchange(); if (run.coupler) drawNetworkState(); }
     run.t = s.t; radarClock(run);
-    if (atQ && projects.current && performance.now() - (run.lastCkpt ??= performance.now()) > ckEveryMs() && s.t < tStop() - 60) { await saveCheckpoint(run).catch(e => log('Checkpoint failed: ' + e.message, 'warn')); if (!run || run.gen !== gen) return; }
+    if (atQ && projects.current && performance.now() - (run.lastCkpt ??= performance.now()) > ckEveryMs() && s.t < tStop() - 60) { run.lastCkpt = performance.now(); await saveCheckpoint(run).catch(e => log('Checkpoint failed: ' + e.message, 'warn')); if (!run || run.gen !== gen) return; }
     if (wall > 0) run.rtf = run.rtf ? 0.9 * run.rtf + 0.1 * ((s.t - t0) / wall) : (s.t - t0) / wall;
     if (out) {
       run.out = out; run.lastOut = now; const b0 = performance.now();
