@@ -475,7 +475,19 @@ all n together.
 - **MRMS radar** (`src/mrms.js`). Per-pixel hourly totals (gauge-corrected where the archive has them), timed within
   the hour by the 30 two-minute rate frames. Overflowed or missing frames are filled from raw 16-bit `PrecipRate` where
   available, else shaped by the area's mean pattern, and counted. Each solver cell takes its rain bilinearly from the
-  0.01° pixels. The forcing record carries a hash of the frames.
+  0.01° pixels. The forcing record carries a hash of the frames. A second choice keeps the radar's own hourly totals
+  (radar-only, not adjusted to gauges).
+- **MRMS fitted to rain gauges** (`src/raingauge.js`, Rainfall "Radar fitted to USGS rain gauges"). The radar-only
+  rain is fitted to the USGS tipping-bucket gauges (NWIS 00045, 5-minute) within 10 km of the area, for cities whose
+  networks are denser than MRMS's correction can use. Each gauge's hourly rain is set against the radar at its pixel
+  (bilinear). A gauge that reported in under 90 % of the hours the radar had rain there, or with under 5 mm in both, is
+  left out. Log ratios ln((G + 1) / (R + 1)), capped at 3× either way, are spread by inverse distance 1 / (d² + d0²)
+  with a neutral weight 1 / (10 km)² on no change. They are taken either hour by hour or on storm totals. Each
+  candidate (hourly or storm; d0 = 1, 3 or 8 km) predicts every gauge's hours from the other gauges, and the one with the
+  smallest RMS error per gauge-hour is kept, but only if it beats the radar alone; otherwise the radar-only rain stands.
+  The 2-minute frames and hourly totals take their hour's field. The run record keeps every gauge (totals, wettest
+  hour, the leave-one-out prediction) and every candidate's score. With no gauges that reported, the gauge-corrected
+  radar is used instead. `tests/run-raingauge-tests.mjs`.
 - **Live radar and nowcast** (`src/nowcast.js`). Observed MRMS to the latest frame, then 0–90 min of Lagrangian
   persistence nowcast (storm motion from the correlation of two 10-minute totals; a correlation below 0.6 is flagged).
   **Screening only.**
@@ -1294,9 +1306,23 @@ past it (USGS: 224,000 m³), 58 % soaked in, and the books close (−0.001 %; co
 of it in one hour: about the 20-year hour here (Atlas 14), against the 2.6-year (gauge-corrected) and 5-year
 (radar-only) hours the model was given. The storm was patchy. The 16 other gauges within 10 km caught 41–112 mm (peak
 hours 18–83 mm), so a gauge correction 5 km off the cell can as easily pull the radar down as up. At 111 mm on 2.5–2.7 km² the
-creek's 224,000 m³ is a runoff ratio of 75–80 %, plausible for a paved watershed in a cloudburst. So the rain is the
-largest part of the gap, and the next step is the radar fitted to the gauges inside the area, not more work on the
-drainage.
+creek's 224,000 m³ is a runoff ratio of 75–80 %, plausible for a paved watershed in a cloudburst.
+
+That paragraph set the gauge against the area's mean. Set against the radar at its own pixel over the model's hours,
+CRN-47 caught 106 mm where the radar had 88 mm, 20 % more. The real difference is the wettest hour: 71 mm at the
+gauge, 42 mm in the radar there. The radar's storm total was nearly right. It read the cloudburst core 40 % low, and a
+2.5 km² paved watershed floods on its peak intensity. So the rain explains part of the gap, through the peak hour more
+than the total. The infiltration (58–63 % of the rain) and the area the pipes drain to the gauge remain open.
+
+**The radar fitted to the gauges** (`src/raingauge.js`, §3.6). The 27 USGS gauges within 10 km all pass the record
+checks. Fitted on storm totals, no smoothing predicts a left-out gauge better than the radar does (5.1–5.3 mm RMS per
+gauge-hour against 5.1): the gauges are 3–5 km apart and this storm's cells were smaller. Fitted hour by hour with
+d0 = 1 km, the error falls to 3.8 mm, so that fit is kept. Over the model area the storm total barely moves (89 to
+90 mm, radar-only base), but the wettest hour goes from 48 to 60 mm. The gauges' own leave-one-out also shows the
+limit: from the other gauges alone, CRN-47's wettest hour is predicted at 41 mm. A cell as small as this one is found
+only by a gauge inside it.
+
+Run on the fitted rain (project "Edwards Branch Charlotte 2025 gauge-fit"): to come.
 
 ### 5.13 Earlier observation comparisons recorded in the README
 
@@ -1373,7 +1399,7 @@ new 2,112 × 2,112 many-tiles case (§2.9).
   With the river outlet it is 0.84 m low against those marks (RMSE 0.85 m over all 11) and −0.80 m at the gauge,
   evenly along the reach: about 0.5 m from the outlet's prismatic reach and the rest from the estimated channel or
   roughness. River levels are not yet validated.
-- **EA Tests 8A/8B** (urban rain with a surcharging sewer) have not been run.
+- **EA Tests 8A/8B** (urban rain with a surcharging sewer) have not been run: the specification is public but the input files are not (`benchmarks/ea/TEST8.md`, with a request to the EA drafted). Where the model stands against FEMA's acceptance criteria: `docs/ACCEPTANCE.md`.
 - **No observed pipe flows or pipe levels** have been compared (the Bellinge dataset is proposed).
 - **Synthetic sewer networks** have not been compared with real networks for the same area.
 - **Damage and EAD** have not been compared with claims or observed losses.
@@ -1503,7 +1529,32 @@ Caveats (from the code):
   or Green-Ampt K-based) everywhere.
 - **Sensitivity rows are informational.** Only the grid test has pass marks.
 
-### 6.4 A reviewer's checklist
+### 6.4 Calibration and split-sample validation (`tools/calibrate.mjs`)
+
+FEMA's two-dimensional guidance (Guidance Document 81, Nov 2023, §3.4 and §4) asks that 2D roughness be "validated
+through calibration" against historic floods. The usual bar for a mapping model is levels within 0.5 ft (0.15 m) of
+the high-water marks. A model tuned and scored on the same storm shows only that it can be fitted, so FloodSim
+calibrates by split sample:
+
+1. **Tune.** The calibration case's project is copied to "<project> (calibration)" with any study-wide inputs
+   (`--set`, e.g. the rain source), so the sweep never mixes with the suite's own runs. Every combination of the
+   `--vary` values runs headless. The knobs are the app's Calibration inputs: `calManning` (all n ×), `calInfil`
+   (infiltration capacity ×) and `calClog` (inlet clogging).
+2. **Score.** Each run is scored by every level error its summary holds: each high-water mark scored (marks under
+   decks or indoors are skipped, §6.2) and each gauge's peak level, model − observed (`tools/suite.mjs`
+   `levelErrors`). The combination with the smallest RMS is kept.
+3. **Freeze and test.** Each validation case (storms the tuning never saw, at the same site) runs twice, as set and
+   with the kept values, and both are scored the same way.
+4. **Record.** The study goes in `benchmarks/validation/calibration.json`, and `benchmarks/validation/CALIBRATION.md`
+   lists the sweep, the values kept and the validation storms against the target. A study with no validation storm is
+   labelled a fit, not a calibration.
+
+The knobs are physical and the same everywhere (all n, all infiltration). The forcing is not tuned: rain is an input
+to get right (§3.6), not a parameter to fit. A tuned value that does not carry over to the other storms, for example
+infiltration tuned in summer and tested on a winter storm on wet ground, is a finding about the model's soil
+physics, not a calibration.
+
+### 6.5 A reviewer's checklist
 
 1. Commit and fingerprint recorded in `summary.json`; commit not `+dirty` for a submitted result.
 2. Model checks: no Problem rows unexplained, and edge rows in particular.
@@ -1678,7 +1729,9 @@ Every finished run in a project is saved as `runs/<date_time>/` (`app/projects.j
   of MRMS frames); river inflow; tide and surge; start water levels (the gauge readings used); antecedent soil moisture
   and water table; grid size and speed mode; solver settings; run length; sediment, debris and bank options; drainage,
   green infrastructure, infrastructure layer and calibration; model area; and **app commit** (from `/api/version`, with
-  `+dirty` when the working tree has uncommitted changes).
+  `+dirty` when code that can change a result differs from that commit: `app`, `src`, `server`, `vendor`, `dist`,
+  `tools` and the package files, untracked files included, Markdown not; `tools/codestate.mjs`). The changed files are
+  listed in the record as `codeChanged`. Docs and the validation suite's own score files do not make a run dirty.
 - **Design hash** (`designHash`). An FNV-1a hash over the bytes of the built 1 m model layers: z, buildings and
   heights, roads, land cover, n, infiltration, soil group, pervious share, critical shear, texture, grains, bedrock,
   collapse/swell classes, Green-Ampt parameters and building ids. It therefore captures the downloaded terrain, land

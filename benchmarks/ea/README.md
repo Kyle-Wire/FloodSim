@@ -18,7 +18,7 @@ May 2010 test specifications.
 | 6A | Lab dam break past a building | 1010×56 @ 0.1 m | **12 / 14** | — | −4e-7 | 37 s |
 | 6B | Same at field scale (×20) | 1010×56 @ 2 m | **13 / 13** | — | −2e-5 | 55 s |
 | 7 | 1D river linked to 2D floodplains, 72 h | 150×400 @ 20 m + 42-section river | **18 / 22** | — | −3.8e-5 (river 0.09 %) | 14 min |
-| 8A/8B | Urban rainfall, surcharging sewer (Glasgow) | — | not run (data not published; EA supplies on request) | | | |
+| 8A/8B | Urban rainfall, surcharging sewer (Glasgow) | — | not run: inputs not in the public archive; see [TEST8.md](TEST8.md) | | | |
 
 **88 / 94** reported measures fall inside the spread of the participating packages, and every probe series in
 Tests 1, 2, 4 and 5 sits inside the envelope of the seven independently run codes.
