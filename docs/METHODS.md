@@ -62,7 +62,7 @@ FloodSim results should not be used, on their own, for any of the following:
 3. **Life-safety decisions** (evacuation, warning thresholds, road closures) based on the **emulator** (`src/emulator.js`)
    or the **radar nowcast** (`src/nowcast.js`) alone. Both are labelled screening-only in the code and README. The
    emulator is a statistical surrogate valid only inside its trained parameter box for one scenario and one model build.
-   The nowcast is Lagrangian persistence with no growth or decay.
+   The nowcast is Lagrangian persistence; its ensemble perturbs motion and intensity with assumed, not fitted, spreads.
 4. **Regulatory sewer-system compliance** (CSO long-term control plans, consent decrees). Combined-sewer regulators,
    population and dry-weather flow are generic planning defaults, not the utility's structures or census data (§3.8),
    and the model is single-event (no continuous simulation).
@@ -472,9 +472,43 @@ all n together.
   the hour by the 30 two-minute rate frames. Overflowed or missing frames are filled from raw 16-bit `PrecipRate` where
   available, else shaped by the area's mean pattern, and counted. Each solver cell takes its rain bilinearly from the
   0.01° pixels. The forcing record carries a hash of the frames.
-- **Live radar and nowcast** (`src/nowcast.js`). Observed MRMS to the latest frame, then 0–90 min of Lagrangian
-  persistence nowcast (storm motion from the correlation of two 10-minute totals; a correlation below 0.6 is flagged).
-  **Screening only.**
+- **Radar and nowcast** (Storm → *Radar & nowcast*; `src/nowcast.js`). A storm source of its own for rain that is
+  coming in. **Screening only.**
+  - *Observed:* MRMS over the area for the last 1, 3 or 6 h to the latest 2-minute frame (about 6 min old), as for a
+    historic radar storm (gauge-corrected whole hours where the archive has them, then the part hour from the frames).
+  - *Nowcast* (0–90 min): the storm's motion from the correlation of two 10-minute totals 20 min apart over a box 1.5°
+    round the area (√rain, coarse to fine, sub-pixel); the last 10 minutes' mean rate is moved at that velocity
+    (Lagrangian persistence). The frame for lead L is the rate moved for L + 1 + 5 min, the 5 being the age of the mean.
+    The match's correlation r is shown; below 0.6 it is flagged as poor; with too little rain to match, the rain stays
+    in place.
+  - *Ensemble* (10, 20 or 40 members plus persistence): each member moves the same rain with speed × e^(0.2·z₁),
+    direction + 15°·z₂ (turned in km, not in pixels) and intensity × e^(0.5·z₃·t), t in hours after the latest frame,
+    the factor held within ¼–4×. z₁, z₂, z₃ are independent standard normals on a Latin hypercube (the quantiles at
+    (i + ½)/n, shuffled by a fixed seed), so a small ensemble spans the spread evenly and a reload gives the same
+    members. The spreads stand for typical nowcast errors in motion and for growth and decay that persistence cannot
+    see; they are assumed, not fitted to the storm, so the band is a sensitivity band, not a probability.
+  - *Over the area* (`incoming`, `ensembleSummary`): for each member, the area-mean rain per 2-minute block; arrival is
+    the first block at ≥ 1 mm/hr after the latest frame ("raining now" when one of the last three observed blocks
+    was); the depth and the peak over the lead. The panel gives the members' 10th, 50th and 90th percentiles (an
+    arrival past the lead counts as later than every arrival), the share of members with rain in the lead, and draws
+    the P10–P90 of the rate over the nowcast on the hyetograph. With the 1 mm/hr threshold on the area mean, a cell
+    clipping one corner of a large area "arrives" later than it does at that corner.
+  - *The rain a run uses:* persistence, or the members whose depth over the lead is nearest the P10, P50 and P90 (dry,
+    middle and wet case). Batch lists the four as storms, so the flood band is the batch's runs side by side.
+  - *Rolling live:* while a run of a live nowcast plays, every minute the page asks for newer 2-minute frames. They
+    replace the nowcast blocks after the one under way (`rollForward`); the motion is matched again at the newest frame
+    and the blocks after it are nowcast afresh for the run's member. Blocks the run has already rained stay as they were
+    and are counted in the log and the run record. *Wait for the radar* holds the run's clock at the latest frame, so it
+    uses observed rain throughout, about 6 minutes behind real time. A rolled run's frames hash changes, so it cannot be
+    resumed from a checkpoint; batch jobs and replays never roll.
+  - *Replay:* an issue time in the past rebuilds the nowcast as it would have been issued then (from the latest frame
+    at or before it) from the IEM archive, and sums the frames that followed over the lead as a check against the band.
+    The observed part uses what the archive holds now, so hours a live run would have had radar-only may be
+    gauge-corrected. A saved project with a radar storm reopens as a replay of the same issue time.
+  - *Limits:* a nowcast moves existing rain; it does not start new cells, and skill of this kind falls off after
+    30–60 min (the hyetograph marks 60 min on a 90-min lead). Example: Ida over South Street, Philadelphia, issued
+    1 September 2021 23:30 UTC with a 60-min lead: motion 58 km/h toward 41° (r = 0.85); members' P10–P90 1.3–5.8 mm
+    over the area (persistence 2.8 mm); 5.7 mm fell.
 - **Rain QA** (`src/rainqa.js`). After a historic or live run, the rain used is compared with up to 12 independent
   gauges within 25 km: at most 4 ASOS hourly and the rest CoCoRaHS daily. Scoring rules: ≥ 90 % of hours (ASOS) or every
   report (CoCoRaHS), ≥ 2.5 mm, reports adding ≤ 18 h beyond the storm, and never the storm's own source gauge. The
@@ -1266,7 +1300,7 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-checkpoint-tests.mjs` | State capture by path, packing, a SWMM run copied half way (same 255,600 heads, same continuity) |
 | `run-emulator-tests.mjs` | Latin hypercube, GP, closed-form LOO vs refitting (2e-10), PCA, synthetic floods, Atlas 14 between columns |
 | `run-window-tests.mjs` | Window, edge segments, inflow rates, edge check, merging |
-| `run-radar-tests.mjs`, `run-mrms-tests.mjs`, `run-nowcast-tests.mjs` | Radar overlay frames; MRMS PNG/GRIB2 decoding, gauge-corrected totals, timing; storm motion and advection |
+| `run-radar-tests.mjs`, `run-mrms-tests.mjs`, `run-nowcast-tests.mjs` | Radar overlay frames; MRMS PNG/GRIB2 decoding, gauge-corrected totals, timing; storm motion and advection; the nowcast ensemble (members, band, arrival order) and rolling new frames in |
 
 ### 5.14 What has not been validated
 
@@ -1477,7 +1511,7 @@ known limits", "Known limits (solver)" and section caveats, and the code as cite
 | Historic rainfall from the gridded record or the nearest ASOS gauge | Site rain can differ greatly (Isaias: PHL 106 mm vs the site's 150 mm). | Use MRMS; read the rain QA. |
 | MRMS: radar-only before May 2015 or where gauge-corrected totals are missing; 8-bit rate overflow above about 150 mm/hr | Radar-only can be biased high or low. Overflow handling changes the within-hour timing at the cloudburst core. | Summary lists radar-only hours and filled frames; check rain QA. |
 | Gauge-corrected MRMS can disagree strongly with other sources (Ida at Fairmount: 53 mm vs radar-only 91 mm and gridded 86 mm; unexplained in the README) | Rain volume uncertainty of tens of percent for some events. | Compare sources; report the range. |
-| Nowcast is persistence advection, with no growth or decay | Skill falls within the hour. | Screening only. |
+| Nowcast is persistence advection; the ensemble's motion and growth spreads are assumed, not fitted to the storm | Skill falls within the hour; a new cell forming over the area is missed by every member; the P10–P90 is not a calibrated probability. | Screening only; the panel shows the motion correlation and flags past 60 min; replay past storms to see how the band does there. |
 
 ### 7.5 Rivers, tides and compound flooding
 
