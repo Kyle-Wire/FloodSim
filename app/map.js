@@ -8,7 +8,7 @@ import { applyDesign, floodedBuildings, resolvedValues, hashFine, withValues, de
 import { downscaleDepth, volumeRatio } from '../src/downscale.js';
 import { zip, png16, exr, buildingsGLB } from '../src/export.js';
 import { fetchAtlas14, hyetograph, constantStorm, rainAt, rainDepthTo, ddf, fitGEV, annualMaxima24h, recordStorm, wettest24, gevQuantile, pdsToAms } from '../src/storm.js';
-import { synthNetwork, toINP, lumpedInfil, addTanks, outfallCells } from '../src/drainage.js';
+import { synthNetwork, toINP, lumpedInfil, addTanks, outfallCells, ROUTING_DEFAULTS } from '../src/drainage.js';
 import * as CSO from '../src/cso.js';
 import { giLayers, GI } from '../src/gi.js';
 import { drawnGI, OutletLinks, UnderdrainLinks, detentionTable } from '../src/stormwater.js';
@@ -1382,7 +1382,7 @@ function setDrainSource(d) {
   if (model) resetRun();
 }
 $('drainSrc').onclick = (e) => { const b = e.target.closest('button'); if (b && !(run?.solver)) setDrainSource(b.dataset.d); };
-for (const id of ['designAri', 'spacing', 'lumpRate', 'downspout', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'inletArea', 'inletPerim', 'inletCw', 'inletCo', 'inletCrest', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates']) $(id).addEventListener('change', () => { if (model && !(run?.solver)) resetRun(); });
+for (const id of ['designAri', 'spacing', 'lumpRate', 'downspout', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'inletType', 'inletArea', 'inletPerim', 'inletCw', 'inletCo', 'inletCrest', 'swmmPreset', 'swmmStep', 'swmmVarStep', 'swmmHeadTol', 'swmmTrials', 'swmmMinArea', 'swmmSurcharge', 'swmmDamping', 'swmmNormal', 'swmmMinSlope', 'swmmLengthen', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates']) $(id).addEventListener('change', () => { if (model && !(run?.solver)) resetRun(); });
 for (const [id, fmt] of [['giPave', v => v + ' %'], ['giGarden', v => v + ' %'], ['giRoof', v => v + ' %'], ['giTank', v => (v > 0 ? Number(v).toLocaleString() + ' m³' : 'none')]]) {
   const show = () => { $(id + 'Out').textContent = fmt($(id).value); }; $(id).addEventListener('input', show); show();
 }
@@ -1721,7 +1721,7 @@ function ensureSolver() {
     run.swmm = swmmEngine; run.swmmClosed = false;
     run.twoWay = $('twoWay').checked;
     if (run.cso) csoBeforeRun(run);
-    run.inp = toINP(run.net, model.fine, { durationS: Math.ceil(tStop() / 60) * 60 + 3600, title: 'FloodSim synthetic network (data tier 2)', pressurise: run.twoWay });
+    run.inp = toINP(run.net, model.fine, { durationS: Math.ceil(tStop() / 60) * 60 + 3600, title: 'FloodSim synthetic network (data tier 2)', pressurise: run.twoWay, routing: swmmRouting() });
     run.swmm.open(run.inp);
     run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofStages ? run.roofStages[0].roofArea ?? run.roof?.roofArea : run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay, returns: run.netReturns });
     $('netReadouts').hidden = false;
@@ -2025,7 +2025,7 @@ function forcingRecord(r) {
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
-    drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), ...inletRecord(), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
+    drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), ...inletRecord(), ...routingRecord(), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
     area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume), ...(model.bathy.surveyed ? { bathySurveyed: { source: 'NOAA BlueTopo', tiles: model.bathy.surveyed.tiles, volume: Math.round(model.bathy.surveyed.volume) } } : {}), ...(model.bathy.xs ? { bathyXS: { source: model.bathy.xs.source, volume: Math.round(model.bathy.xs.volume) } } : {}) } : {}) },
     commit: appCommit,
   };
@@ -3068,7 +3068,7 @@ async function buildPackage() {
   };
   if (infra.layer.features.length) files.push({ name: 'drainage/infrastructure.geojson', data: enc.encode(JSON.stringify(infra.layer)) });
   if (run?.net) {
-    files.push({ name: 'drainage/network.inp', data: enc.encode(run.inp ?? toINP(run.net, fine, { durationS: Math.ceil(tStop() / 60) * 60 + 3600 })) });
+    files.push({ name: 'drainage/network.inp', data: enc.encode(run.inp ?? toINP(run.net, fine, { durationS: Math.ceil(tStop() / 60) * 60 + 3600, routing: swmmRouting() })) });
     if (run.swmmReport) files.push({ name: 'drainage/swmm_report.rpt', data: enc.encode(run.swmmReport) });
     meta.drainage = { tier: run.net.tier === 1 ? 1 : run.net.stats.realInlets ? '2+' : 2,
       kind: run.net.drawn ? 'infrastructure layer (drawn / imported pipes)' : run.net.tier === 1 ? 'linked utility pipes' : run.net.stats.realInlets && model.util ? `real ${model.util.utility.name} inlets, synthetic pipes` : 'synthetic street-following network',
@@ -3635,9 +3635,11 @@ $('hwmBtn').onclick = async () => {
 
 // ------------------------------------------------------------------ calibration
 const cal = () => ({ manning: Number($('calManning').value), infil: Number($('calInfil').value), clog: Number($('calClog').value) });
-/** Drainage → Inlet hydraulics, each value clamped to its field's range (a blank or bad entry takes the field's default). */
+/** A number field's value clamped to its range; a blank or bad entry takes the field's default. */
+function numField(id) { const el = $(id), x = Number(el.value); return el.value !== '' && Number.isFinite(x) ? Math.min(Number(el.max), Math.max(Number(el.min), x)) : Number(el.defaultValue); }
+/** Drainage → Inlet hydraulics. */
 function inletHydraulics() {
-  const v = (id) => { const el = $(id), x = Number(el.value); return el.value !== '' && Number.isFinite(x) ? Math.min(Number(el.max), Math.max(Number(el.min), x)) : Number(el.defaultValue); };
+  const v = numField;
   return { opts: { inletArea: v('inletArea'), inletPerim: v('inletPerim'), Cw: v('inletCw'), Co: v('inletCo') }, crest: v('inletCrest') / 100 };
 }
 /** The inlet hydraulics for a run's forcing record, only when changed from the defaults: runs made before the fields existed keep their fingerprint. */
@@ -3645,6 +3647,58 @@ const inletRecord = () => {
   const ih = inletHydraulics(), changed = ['inletArea', 'inletPerim', 'inletCw', 'inletCo', 'inletCrest'].some(id => Number($(id).value) !== Number($(id).defaultValue));
   return changed ? { inlets: { ...ih.opts, crestM: ih.crest } } : {};
 };
+// Kind of inlet: each fills the four grate fields (area, weir length, Cw, Co); the crest stays as set. Editing a field
+// shows the kind it now matches, or Custom.
+const INLET_FIELDS = ['inletArea', 'inletPerim', 'inletCw', 'inletCo'];
+const INLET_TYPES = {
+  typical: { v: [0.2, 2, 0.5, 0.6], hint: 'A 0.6 × 0.35 m street grate. The model’s default.' },
+  hec22: { v: [0.2, 2, 0.37, 0.67], hint: 'The same grate with the FHWA HEC-22 grate coefficients (weir 1.66 SI, orifice 0.67). Takes a little less while the water is shallow.' },
+  small: { v: [0.1, 1.4, 0.5, 0.6], hint: 'About 0.4 × 0.3 m, as in yards, alleys and parking lots.' },
+  large: { v: [0.4, 3, 0.5, 0.6], hint: 'Two street grates side by side.' },
+  curb: { v: [0.2, 1.5, 0.28, 0.67], hint: 'A 1.5 m opening about 13 cm high in the face of the curb, with the HEC-22 curb-opening weir coefficient (1.25 SI).' },
+};
+function syncInletType(keep) {
+  const cur = INLET_FIELDS.map(id => Number($(id).value));
+  const k = keep ?? Object.keys(INLET_TYPES).find(t => INLET_TYPES[t].v.every((x, i) => x === cur[i])) ?? 'custom';
+  $('inletType').value = k;
+  $('inletTypeHint').textContent = INLET_TYPES[k]?.hint ?? 'Your own numbers. Pick a kind of inlet to start again from one.';
+}
+$('inletType').addEventListener('change', () => {
+  const t = INLET_TYPES[$('inletType').value];
+  if (t) INLET_FIELDS.forEach((id, i) => { $(id).value = t.v[i]; });
+  syncInletType(t ? undefined : 'custom');
+});
+for (const id of INLET_FIELDS) $(id).addEventListener('input', () => syncInletType());
+syncInletType();
+// Drainage → Pipe solver settings: SWMM's dynamic-wave options (src/drainage.js ROUTING_DEFAULTS), with presets that fill
+// every field. The head tolerance is entered in mm.
+const SWMM_FIELDS = ['swmmStep', 'swmmVarStep', 'swmmHeadTol', 'swmmTrials', 'swmmMinArea', 'swmmSurcharge', 'swmmDamping', 'swmmNormal', 'swmmMinSlope', 'swmmLengthen'];
+const SWMM_BALANCED = { swmmStep: 1, swmmVarStep: 0.75, swmmHeadTol: 1.5, swmmTrials: 8, swmmMinArea: 1.2, swmmSurcharge: 'SLOT', swmmDamping: 'PARTIAL', swmmNormal: 'BOTH', swmmMinSlope: 0, swmmLengthen: true };
+const SWMM_PRESETS = {
+  balanced: SWMM_BALANCED,
+  accurate: { ...SWMM_BALANCED, swmmStep: 0.5, swmmVarStep: 0.5, swmmHeadTol: 0.5, swmmTrials: 20 },
+  fast: { ...SWMM_BALANCED, swmmStep: 2, swmmHeadTol: 5, swmmTrials: 4 },
+};
+const swmmField = (id) => { const el = $(id); return el.type === 'checkbox' ? el.checked : el.tagName === 'SELECT' ? el.value : Number(el.value); };
+function swmmRouting() {
+  return { routingStep: numField('swmmStep'), variableStep: numField('swmmVarStep'), headTol: numField('swmmHeadTol') / 1000, maxTrials: Math.round(numField('swmmTrials')),
+    minSurfArea: numField('swmmMinArea'), minSlope: numField('swmmMinSlope'), surcharge: $('swmmSurcharge').value, inertialDamping: $('swmmDamping').value,
+    normalFlowLimited: $('swmmNormal').value, lengthen: $('swmmLengthen').checked };
+}
+/** The SWMM settings for a run's forcing record, only those changed from the defaults (older runs keep their fingerprint). */
+const routingRecord = () => {
+  const ch = Object.entries(swmmRouting()).filter(([k, x]) => typeof x === 'number' ? Math.abs(x - ROUTING_DEFAULTS[k]) > 1e-12 : x !== ROUTING_DEFAULTS[k]);
+  return ch.length ? { routing: Object.fromEntries(ch) } : {};
+};
+function syncSwmmPreset() {
+  $('swmmPreset').value = Object.keys(SWMM_PRESETS).find(k => SWMM_FIELDS.every(id => swmmField(id) === SWMM_PRESETS[k][id])) ?? 'custom';
+}
+$('swmmPreset').addEventListener('change', () => {
+  const pr = SWMM_PRESETS[$('swmmPreset').value]; if (!pr) return;
+  for (const id of SWMM_FIELDS) { const el = $(id); if (el.type === 'checkbox') el.checked = pr[id]; else el.value = pr[id]; }
+});
+for (const id of SWMM_FIELDS) $(id).addEventListener('input', syncSwmmPreset);
+syncSwmmPreset();
 for (const [id, f] of [['calManning', v => `${Number(v).toFixed(2)}×`], ['calInfil', v => `${Number(v).toFixed(2)}×`], ['calClog', v => `${Math.round(v * 100)} %`]]) {
   const upd = () => { $(id + 'Out').textContent = f($(id).value); }; $(id).addEventListener('input', upd); upd();
   $(id).addEventListener('change', () => { if (model && (!run || !run.solver)) resetRun(); });

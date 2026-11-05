@@ -489,23 +489,66 @@ With tier 2 or 2+ pipes, HGL and surcharge results are indicative only (docs/MET
 During a run the readouts show **Into pipes**, **Back onto streets**, **Surcharged manholes** and **SWMM / combined
 balance**.
 
-**Inlet hydraulics** (Advanced, under the network settings) sets how every grate takes water. A grate works as a weir
-while the water over it is shallow, C<sub>w</sub>·P·h<sup>1.5</sup>·√(2g), and as an orifice once it is deep,
-C<sub>o</sub>·A·√(2gh), whichever is smaller. h is the depth over the crest. When the pipes back up it is a submerged
-orifice on the head difference. Each field shows its source and conversions when you hover over it.
+**Inlet hydraulics** (Advanced, under the network settings) sets how fast water leaves the street through each inlet.
+You do not need to know the equations to use it: pick a **Kind of inlet** and the four grate fields fill in, with a
+line under the list saying what that kind is. Change any number and the list shows **Custom**; pick a kind again to go
+back. Bigger openings, higher coefficients and a lower crest all take more water off the street.
+
+| Kind of inlet | Open area | Edge | C<sub>w</sub> | C<sub>o</sub> |
+|---|---|---|---|---|
+| **Typical street grate** (default) | 0.2 m² | 2.0 m | 0.5 | 0.6 |
+| **Street grate, FHWA HEC-22 coefficients** | 0.2 m² | 2.0 m | 0.37 | 0.67 |
+| **Small yard or alley grate** (about 0.4 × 0.3 m) | 0.1 m² | 1.4 m | 0.5 | 0.6 |
+| **Double grate** | 0.4 m² | 3.0 m | 0.5 | 0.6 |
+| **Curb opening** (1.5 m long, about 13 cm high) | 0.2 m² | 1.5 m | 0.28 | 0.67 |
+
+A grate works as a weir while the water over it is shallow, C<sub>w</sub>·P·h<sup>1.5</sup>·√(2g), and as an orifice
+once it is deep, C<sub>o</sub>·A·√(2gh), whichever is smaller. h is the depth over the crest. When the pipes back up it
+is a submerged orifice on the head difference. Each field has a one-line explanation under it and shows its source and
+conversions when you hover over it.
 
 | Field | Default | Notes |
 |---|---|---|
-| **Grate opening, clear area** | 0.2 m² per grate | A 0.6 × 0.35 m grate. HEC-22 grates are about 0.1–0.3 m² clear. |
-| **Weir length** | 2.0 m per grate | The edge water spills over: the perimeter, less any side against the curb. |
-| **Weir coefficient C<sub>w</sub>** | 0.5 | In Q = C<sub>w</sub>·P·h<sup>1.5</sup>·√(2g). That is C ≈ 2.2 (SI) or 4.0 (US) in Q = C·P·h<sup>1.5</sup>. HEC-22's grate value, 1.66 SI (3.0 US), is C<sub>w</sub> ≈ 0.37. |
-| **Orifice coefficient C<sub>o</sub>** | 0.6 | HEC-22 uses 0.67 for grates. |
-| **Crest above the street** | 0 cm | For inlets that do not set their own. Water below the crest does not drain. |
+| **Open area of the grate** | 0.2 m² per grate | The clear opening (A). A 0.6 × 0.35 m grate. HEC-22 grates are about 0.1–0.3 m² clear. |
+| **Edge water spills over** | 2.0 m per grate | The weir length (P): the perimeter, less any side against the curb. |
+| **Shallow-water efficiency (C<sub>w</sub>)** | 0.5 | In Q = C<sub>w</sub>·P·h<sup>1.5</sup>·√(2g). That is C ≈ 2.2 (SI) or 4.0 (US) in Q = C·P·h<sup>1.5</sup>. HEC-22's grate value, 1.66 SI (3.0 US), is C<sub>w</sub> ≈ 0.37; its curb-opening value, 1.25 SI (2.3 US), is C<sub>w</sub> ≈ 0.28. |
+| **Deep-water efficiency (C<sub>o</sub>)** | 0.6 | HEC-22 uses 0.67. |
+| **Inlet sits above the street** | 0 cm | The crest, for inlets that do not set their own. Water below it does not drain. |
 
 Changing any of them resets the run. A run made with values other than the defaults records them in its forcing
 fingerprint (**drainage → inlets**), so two runs with different inlet settings are not taken as the same forcing.
 Debris on the grates is set per inlet in the Infrastructure drawer, or area-wide with **Inlet clogging** under
 Calibrate.
+
+**Pipe solver settings** (Advanced, under Inlet hydraulics) controls how SWMM, the pipe model, works out the flow. The
+defaults suit most runs. The quickest way to try something is the **Speed or accuracy** list:
+
+| Choice | Longest step | Step shortening | Levels settle to | Tries per step |
+|---|---|---|---|---|
+| **Balanced** (default) | 1 s | 0.75 | 1.5 mm | 8 |
+| **More accurate, slower** | 0.5 s | 0.5 | 0.5 mm | 20 |
+| **Faster, rougher** | 2 s | 0.75 | 5 mm | 4 |
+
+Changing a field by hand shows **Custom**. To judge a change, run and read **SWMM / combined balance**: within ±1 %
+SWMM kept track of all the water; if it is worse than with Balanced, the change cost accuracy. Compare and Report
+pair only runs with the same forcing, so they do not set two runs with different inlet or solver settings side by side;
+read each run's readouts and summary instead.
+
+| Field | SWMM option | Default | What it does |
+|---|---|---|---|
+| **Longest time step** | ROUTING_STEP | 1 s | 0.1–2 s. Water passes between the pipes and the street every 2 s, so 2 s is the most. |
+| **Step shortening** | VARIABLE_STEP | 0.75 | The safety factor on the Courant step of the shortest pipes; 0 keeps a fixed step. |
+| **Levels must settle to** | HEAD_TOLERANCE | 1.5 mm | Each step repeats until every node's level changes by less than this. Entered in mm. |
+| **Tries per step** | MAX_TRIALS | 8 | The most times a step repeats to settle. |
+| **Smallest manhole water area** | MIN_SURFAREA | 1.2 m² | The least surface area at every node. Larger is steadier. |
+| **When a pipe runs full** (Methods) | SURCHARGE_METHOD | Preissmann slot | Or EXTRAN. On the surcharged South Street network EXTRAN's continuity error was −4.6 to −6 %, the slot's −0.35 %. |
+| **Damping of fast-changing flow** (Methods) | INERTIAL_DAMPING | Partial | Or Full (steadiest) or None. |
+| **Limit flow to normal flow** (Methods) | NORMAL_FLOW_LIMITED | Slope or Froude | Or either alone. |
+| **Flattest pipe slope** (Methods) | MIN_SLOPE | 0 % | Flatter pipes are steepened to this. |
+| **Lengthen very short pipes** (Methods) | LENGTHENING_STEP | On | On sets it to the routing step; off, 0. |
+
+Changing any of them resets the run. Settings other than the defaults go into the forcing fingerprint
+(**drainage → routing**), and every run's `drainage/network.inp` holds the options it used.
 
 ### 6.4 Combined sewer
 

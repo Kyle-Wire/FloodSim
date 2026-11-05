@@ -1,7 +1,7 @@
 // Combined-sewer tests (src/cso.js, the .inp sections in src/drainage.js, run in the SWMM WebAssembly engine):
 // dry-weather flow equals its pattern's integral, a regulator sends the interceptor no more than its capacity and the
 // rest over the weir, a flap gate keeps a high tide out of the pipes, overflow events split on the dry-period rule,
-// and people per manhole follow the land cover.
+// people per manhole follow the land cover, and the pipe solver settings (Drainage) reach the .inp and keep the books.
 // Usage: node tests/run-cso-tests.mjs  (needs vendor/swmm-wasm, `npm run build:swmm`)
 import { loadSWMM, SWMM } from '../src/swmm.js';
 import { toINP, DESIGN_DEFAULTS } from '../src/drainage.js';
@@ -105,6 +105,25 @@ function drive(inp, T, { at = null, q = () => 0, each = null, stage = null } = {
   check('report section: overflow figures and tables', sec?.id === 'cso' && sec.figures.length === 2 && sec.figures.every(f => f.svg.startsWith('<svg')) && sec.tables[0].rows[0].events === 1 && Math.abs(sec.tables[1].rows[0].capture - 100 * 360 / 780) < 1e-9,
     `${sec?.figures.length} figures, ${sec?.tables.map(t => t.rows.length).join(' + ')} rows`);
   check('report section: none without combined-sewer books', csoSection({ runs: [['after', {}]], A: null, theme: 'light', size: {}, u, tag: () => 'Run' }) === null);
+}
+
+{ // Drainage → Pipe solver settings: toINP's routing options (the defaults unchanged), and each preset runs in SWMM
+  const opt = (inp) => inp.split('[OPTIONS]')[1].split('\n[')[0];
+  const base = opt(toINP(line(), fine));
+  check('pipe solver defaults write the same options as before',
+    ['ROUTING_STEP 1', 'VARIABLE_STEP 0.75', 'LENGTHENING_STEP 1', 'MIN_SURFAREA 1.2', 'NORMAL_FLOW_LIMITED BOTH', 'INERTIAL_DAMPING PARTIAL', 'SURCHARGE_METHOD SLOT', 'MIN_SLOPE 0', 'MAX_TRIALS 8', 'HEAD_TOLERANCE 0.0015'].every(l => base.includes('\n' + l + '\n')));
+  const set = opt(toINP(line(), fine, { routing: { routingStep: 0.5, variableStep: 0.5, lengthen: false, minSurfArea: 2.5, headTol: 0.0005, maxTrials: 20, minSlope: 0.1, surcharge: 'EXTRAN', inertialDamping: 'FULL', normalFlowLimited: 'SLOPE' } }));
+  check('pipe solver settings reach the .inp',
+    ['ROUTING_STEP 0.5', 'VARIABLE_STEP 0.5', 'LENGTHENING_STEP 0', 'MIN_SURFAREA 2.5', 'NORMAL_FLOW_LIMITED SLOPE', 'INERTIAL_DAMPING FULL', 'SURCHARGE_METHOD EXTRAN', 'MIN_SLOPE 0.1', 'MAX_TRIALS 20', 'HEAD_TOLERANCE 0.0005'].every(l => set.includes('\n' + l + '\n')));
+  const throws = (r) => { try { toINP(line(), fine, { routing: r }); return false; } catch { return true; } };
+  check('a bad method or a zero step is refused', throws({ surcharge: 'SLOTS' }) && throws({ routingStep: 0 }) && throws({ headTol: NaN }) && !throws({ variableStep: 0 }));
+  const T = 3600, q = (t) => t < 600 ? 0.5 * t / 600 : t < 1200 ? 0.5 * (1200 - t) / 600 : 0, vin = 0.5 * 1200 / 2;
+  for (const [name, routing] of [['Balanced', {}], ['More accurate', { routingStep: 0.5, variableStep: 0.5, headTol: 0.0005, maxTrials: 20 }],
+    ['Faster', { routingStep: 2, headTol: 0.005, maxTrials: 4 }], ['EXTRAN, full damping, no lengthening', { surcharge: 'EXTRAN', inertialDamping: 'FULL', lengthen: false }]]) {
+    const c = SWMM.continuity(drive(toINP(line(3, 0.45), fine, { durationS: T, routing }), T, { at: 'J0', q }));
+    const out = (c.externalOutflow + c.flooding + c.finalStored) * 1000;
+    check(`pipe solver "${name}": the water is all accounted for`, Math.abs(c.errorPct) < 1 && Math.abs(out - vin) / vin < 0.02, `continuity ${c.errorPct} %, out + flooded + stored ${out.toFixed(1)} of ${vin} m³`);
+  }
 }
 
 swmm.dispose();

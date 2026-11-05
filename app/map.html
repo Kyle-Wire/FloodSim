@@ -202,6 +202,7 @@ details.adv > summary:hover { color: var(--ink); }
 .field input[type=range] { grid-column: 1 / -1; width: 100%; margin: 2px 0 0; }
 .field select, .field input[type=number], .field input[type=date], .field input[type=text] { max-width: 100%; min-width: 0; font: 12.5px var(--body); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 5px; padding: 5px 7px; }
 .field input[type=number] { font-family: var(--mono); font-size: 12px; }
+.field .hint { grid-column: 1 / -1; color: var(--muted); font-size: 11.5px; line-height: 1.35; text-wrap: pretty; }
 .rep-fig { margin-top: 8px; } .rep-fig svg { display: block; max-width: 100%; height: auto; border-radius: 4px; border: 1px solid var(--hair); }
 .emu-num { width: 64px; box-sizing: border-box; font: 12px var(--mono); background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 2px 4px; }
 .emu-slider { grid-template-columns: 1fr; } .emu-slider input[type=range] { width: 100%; }
@@ -666,13 +667,56 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
         <div class="field"><label for="downspout">Roof downspouts connected to the sewer</label><output id="downspoutOut"></output><input type="range" id="downspout" min="0" max="100" step="5" value="0"></div>
         <label class="toggle" title="When the pipes back up, manholes pressurise and water comes back up through the inlets on the head difference (as in HEC-RAS), instead of spilling at the rim"><input type="checkbox" id="twoWay" checked> Two-way inlet exchange</label>
         <details class="adv" id="inletCtl">
-          <summary>Inlet hydraulics <small>Grate, coefficients, crest</small></summary>
-          <p class="note">Each grate takes water as a weir while the water is shallow, C<sub>w</sub>·P·h<sup>1.5</sup>·√(2g), and as an orifice once it is deep, C<sub>o</sub>·A·√(2gh), the smaller of the two. h is the depth over the crest. When the pipes back up, the grate works as a submerged orifice on the head difference. The values apply to every grate. An inlet drawn with the <b>Infrastructure</b> tool can set its own crest, and debris is set per inlet there or area-wide under Calibrate.</p>
-          <div class="field"><label for="inletArea" title="Clear opening of one grate. FHWA HEC-22 grates are about 0.1–0.3 m² clear; the default is a 0.6 × 0.35 m grate">Grate opening, clear area (m² per grate)</label><input id="inletArea" type="number" step="0.01" min="0.01" max="5" value="0.2" style="width:5em"></div>
-          <div class="field"><label for="inletPerim" title="Length of the grate's edge water spills over: its perimeter, less any side against the curb">Weir length (m per grate)</label><input id="inletPerim" type="number" step="0.1" min="0.1" max="20" value="2" style="width:5em"></div>
-          <div class="field"><label for="inletCw" title="In Q = Cw·P·h^1.5·√(2g). 0.5 equals C ≈ 2.2 in Q = C·P·h^1.5 (SI), 4.0 in US units. HEC-22’s grate weir coefficient, 1.66 SI (3.0 US), is Cw ≈ 0.37">Weir coefficient C<sub>w</sub></label><input id="inletCw" type="number" step="0.01" min="0.05" max="1.5" value="0.5" style="width:5em"></div>
-          <div class="field"><label for="inletCo" title="In Q = Co·A·√(2gh). 0.6 is a sharp-edged opening; HEC-22 uses 0.67 for grates">Orifice coefficient C<sub>o</sub></label><input id="inletCo" type="number" step="0.01" min="0.05" max="1" value="0.6" style="width:5em"></div>
-          <div class="field"><label for="inletCrest" title="How far the opening sits above the street around it: a gully lip, a raised kerb inlet. Water below it does not drain. 0 = level with the street">Crest above the street (cm)</label><input id="inletCrest" type="number" step="0.5" min="0" max="100" value="0" style="width:5em"></div>
+          <summary>Inlet hydraulics <small>How much each grate takes</small></summary>
+          <p class="note">How fast water leaves the street through each storm drain inlet. Pick the kind of inlet, or set the numbers yourself. Bigger openings, higher coefficients and a lower crest take more water off the street. The values apply to every inlet; one drawn with the <b>Infrastructure</b> tool can set its own crest, and debris is set per inlet there or area-wide under Calibrate.</p>
+          <div class="field"><label for="inletType">Kind of inlet</label><select id="inletType">
+            <option value="typical" selected>Typical street grate</option>
+            <option value="hec22">Street grate, FHWA HEC-22 coefficients</option>
+            <option value="small">Small yard or alley grate</option>
+            <option value="large">Double grate</option>
+            <option value="curb">Curb opening (a slot in the curb)</option>
+            <option value="custom">Custom (my own numbers)</option>
+          </select><small class="hint" id="inletTypeHint"></small></div>
+          <div class="field"><label for="inletArea" title="Clear opening of one grate. FHWA HEC-22 grates are about 0.1–0.3 m² clear; the default is a 0.6 × 0.35 m grate">Open area of the grate (m²)</label><input id="inletArea" type="number" step="0.01" min="0.01" max="5" value="0.2" style="width:5em"><small class="hint">The holes only, not the bars. Limits the flow once water is deep over the grate.</small></div>
+          <div class="field"><label for="inletPerim" title="Length of the grate's edge water spills over: its perimeter, less any side against the curb">Edge water spills over (m)</label><input id="inletPerim" type="number" step="0.1" min="0.1" max="20" value="2" style="width:5em"><small class="hint">The grate's outline, less any side against the curb. Limits the flow while water is shallow.</small></div>
+          <div class="field"><label for="inletCw" title="In Q = Cw·P·h^1.5·√(2g). 0.5 equals C ≈ 2.2 in Q = C·P·h^1.5 (SI), 4.0 in US units. HEC-22’s grate weir coefficient, 1.66 SI (3.0 US), is Cw ≈ 0.37">Shallow-water efficiency (C<sub>w</sub>)</label><input id="inletCw" type="number" step="0.01" min="0.05" max="1.5" value="0.5" style="width:5em"><small class="hint">Weir coefficient. Higher lets more water spill in over the edge.</small></div>
+          <div class="field"><label for="inletCo" title="In Q = Co·A·√(2gh). 0.6 is a sharp-edged opening; HEC-22 uses 0.67 for grates">Deep-water efficiency (C<sub>o</sub>)</label><input id="inletCo" type="number" step="0.01" min="0.05" max="1" value="0.6" style="width:5em"><small class="hint">Orifice coefficient. Higher lets more water pour through the openings.</small></div>
+          <div class="field"><label for="inletCrest" title="How far the opening sits above the street around it: a gully lip, a raised kerb inlet. Water below it does not drain. 0 = level with the street">Inlet sits above the street (cm)</label><input id="inletCrest" type="number" step="0.5" min="0" max="100" value="0" style="width:5em"><small class="hint">Water shallower than this stays on the street. 0 = level with it.</small></div>
+          <p class="note">The grate takes the smaller of a weir, C<sub>w</sub>·P·h<sup>1.5</sup>·√(2g), and an orifice, C<sub>o</sub>·A·√(2gh), with h the depth over the crest; when the pipes back up, a submerged orifice on the head difference. Hover over a field for its source.</p>
+        </details>
+        <details class="adv" id="swmmCtl">
+          <summary>Pipe solver settings <small>SWMM routing</small></summary>
+          <p class="note">How SWMM, the pipe model, works out the flow in the pipes. The defaults suit most runs. To try a setting: change it, run, then read <b>SWMM / combined balance</b> below. Within ±1 % means SWMM kept track of all the water; if it gets worse, go back towards Balanced. Every run records the settings it used.</p>
+          <div class="field"><label for="swmmPreset">Speed or accuracy</label><select id="swmmPreset">
+            <option value="balanced" selected>Balanced (default)</option>
+            <option value="accurate">More accurate, slower</option>
+            <option value="fast">Faster, rougher</option>
+            <option value="custom">Custom (my own settings)</option>
+          </select></div>
+          <div class="field"><label for="swmmStep" title="SWMM ROUTING_STEP, seconds">Longest time step (s)</label><input id="swmmStep" type="number" step="0.1" min="0.1" max="2" value="1" style="width:5em"><small class="hint">Shorter follows fast changes more closely and runs slower. Water passes between the pipes and the street every 2 s, so 2 s is the most.</small></div>
+          <div class="field"><label for="swmmVarStep" title="SWMM VARIABLE_STEP: the safety factor on the Courant time step of the shortest conduits. 0 = a fixed step">Step shortening (0 = never)</label><input id="swmmVarStep" type="number" step="0.05" min="0" max="2" value="0.75" style="width:5em"><small class="hint">SWMM takes shorter steps where water moves fast through short pipes. Lower is more cautious.</small></div>
+          <div class="field"><label for="swmmHeadTol" title="SWMM HEAD_TOLERANCE, entered here in mm (default 1.5 mm = 0.0015 m)">Levels must settle to (mm)</label><input id="swmmHeadTol" type="number" step="0.1" min="0.1" max="50" value="1.5" style="width:5em"><small class="hint">Each step repeats until every manhole level changes by less than this. Smaller is more exact and slower.</small></div>
+          <div class="field"><label for="swmmTrials" title="SWMM MAX_TRIALS">Tries per step</label><input id="swmmTrials" type="number" step="1" min="1" max="100" value="8" style="width:5em"><small class="hint">How many times a step may repeat to settle before SWMM moves on.</small></div>
+          <div class="field"><label for="swmmMinArea" title="SWMM MIN_SURFAREA, m², at every junction">Smallest manhole water area (m²)</label><input id="swmmMinArea" type="number" step="0.1" min="0.1" max="50" value="1.2" style="width:5em"><small class="hint">Every manhole is treated as having at least this much water surface, which keeps levels from jumping. Larger is steadier but slower to respond.</small></div>
+          <details class="adv" id="swmmMethods">
+            <summary>Methods <small>For engineers</small></summary>
+            <div class="field"><label for="swmmSurcharge" title="SWMM SURCHARGE_METHOD">When a pipe runs full</label><select id="swmmSurcharge">
+              <option value="SLOT" selected>Preissmann slot (smoother, default)</option>
+              <option value="EXTRAN">EXTRAN (SWMM's original method)</option>
+            </select></div>
+            <div class="field"><label for="swmmDamping" title="SWMM INERTIAL_DAMPING">Damping of fast-changing flow</label><select id="swmmDamping">
+              <option value="PARTIAL" selected>Partial (default)</option>
+              <option value="FULL">Full (steadiest)</option>
+              <option value="NONE">None (full momentum)</option>
+            </select></div>
+            <div class="field"><label for="swmmNormal" title="SWMM NORMAL_FLOW_LIMITED">Limit flow to normal flow</label><select id="swmmNormal">
+              <option value="BOTH" selected>By slope or Froude number (default)</option>
+              <option value="SLOPE">By slope only</option>
+              <option value="FROUDE">By Froude number only</option>
+            </select></div>
+            <div class="field"><label for="swmmMinSlope" title="SWMM MIN_SLOPE, percent">Flattest pipe slope (%)</label><input id="swmmMinSlope" type="number" step="0.01" min="0" max="5" value="0" style="width:5em"><small class="hint">Flatter pipes are steepened to this. 0 keeps every slope as built.</small></div>
+            <label class="toggle" title="SWMM LENGTHENING_STEP: equal to the routing step, or 0 when off"><input type="checkbox" id="swmmLengthen" checked> Lengthen very short pipes to keep up with the step</label>
+          </details>
         </details>
         <label class="toggle"><input type="checkbox" id="tNet" checked> Show network on map</label>
         <dl class="readouts" id="netReadouts" style="margin-top:12px" hidden>

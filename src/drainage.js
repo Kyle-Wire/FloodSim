@@ -396,8 +396,19 @@ class MinHeap {
 
 // ------------------------------------------------------------------ SWMM input file
 
+/** SWMM's dynamic-wave settings as the app writes them (Drainage → Pipe solver settings sets them per run).
+ *  routingStep s, the longest step; variableStep the Courant safety factor (0 = fixed step); lengthen: short conduits are
+ *  lengthened to the routing step; minSurfArea m² at every node; headTol m; minSlope %. */
+export const ROUTING_DEFAULTS = Object.freeze({ routingStep: 1, variableStep: 0.75, lengthen: true, minSurfArea: 1.2, headTol: 0.0015,
+  maxTrials: 8, minSlope: 0, surcharge: 'SLOT', inertialDamping: 'PARTIAL', normalFlowLimited: 'BOTH' });
+const ROUTING_CHOICES = { surcharge: ['SLOT', 'EXTRAN'], inertialDamping: ['PARTIAL', 'FULL', 'NONE'], normalFlowLimited: ['BOTH', 'SLOPE', 'FROUDE'] };
+
 /** SWMM 5 .inp for the network, metric (CMS), dynamic wave. Coordinates in the grid's UTM CRS. */
-export function toINP(net, fine, { durationS = 7200, routingStep = 1, surcharge = 'SLOT', title = 'FloodSim synthetic network', pressurise = false } = {}) {
+export function toINP(net, fine, { durationS = 7200, routingStep = 1, surcharge = 'SLOT', title = 'FloodSim synthetic network', pressurise = false, routing = {} } = {}) {
+  const r = { ...ROUTING_DEFAULTS, routingStep, surcharge, ...routing };
+  for (const [k, ok] of Object.entries(ROUTING_CHOICES)) if (!ok.includes(r[k])) throw new Error(`toINP: ${k} must be one of ${ok.join(', ')}, not ${r[k]}`);
+  for (const k of ['routingStep', 'variableStep', 'minSurfArea', 'headTol', 'maxTrials', 'minSlope']) if (!(Number.isFinite(r[k]) && r[k] >= 0)) throw new Error(`toINP: ${k} must be a number ≥ 0, not ${r[k]}`);
+  if (!(r.routingStep > 0 && r.minSurfArea > 0 && r.headTol > 0 && r.maxTrials >= 1)) throw new Error('toINP: the routing step, node area, head tolerance and trials must be above 0');
   // pressurise: manholes surcharge above their rims (30 m) instead of spilling; water comes back up through the inlets on
   // the head difference (Coupler twoWay), as HEC-RAS does
   const surDepth = pressurise ? 30 : (net.opts.surDepth ?? 0);
@@ -409,9 +420,9 @@ export function toINP(net, fine, { durationS = 7200, routingStep = 1, surcharge 
     'FLOW_UNITS CMS', 'INFILTRATION HORTON', 'FLOW_ROUTING DYNWAVE', 'LINK_OFFSETS DEPTH', 'ALLOW_PONDING NO', 'SKIP_STEADY_STATE NO',
     'START_DATE 01/01/2000', 'START_TIME 00:00:00', 'REPORT_START_DATE 01/01/2000', 'REPORT_START_TIME 00:00:00',
     `END_DATE ${endDate}`, `END_TIME ${hms(durationS % 86400)}`, 'REPORT_STEP 00:05:00', 'WET_STEP 00:01:00', 'DRY_STEP 00:01:00',
-    `ROUTING_STEP ${routingStep}`, 'VARIABLE_STEP 0.75', `LENGTHENING_STEP ${routingStep}`, // SWMM lengthens any conduit too short for the step
-    'MIN_SURFAREA 1.2', 'NORMAL_FLOW_LIMITED BOTH',
-    'INERTIAL_DAMPING PARTIAL', `SURCHARGE_METHOD ${surcharge}`, 'MIN_SLOPE 0', 'MAX_TRIALS 8', 'HEAD_TOLERANCE 0.0015', 'THREADS 1', '');
+    `ROUTING_STEP ${r.routingStep}`, `VARIABLE_STEP ${r.variableStep}`, `LENGTHENING_STEP ${r.lengthen ? r.routingStep : 0}`, // SWMM lengthens any conduit too short for the step
+    `MIN_SURFAREA ${r.minSurfArea}`, `NORMAL_FLOW_LIMITED ${r.normalFlowLimited}`, `INERTIAL_DAMPING ${r.inertialDamping}`,
+    `SURCHARGE_METHOD ${r.surcharge}`, `MIN_SLOPE ${r.minSlope}`, `MAX_TRIALS ${Math.round(r.maxTrials)}`, `HEAD_TOLERANCE ${r.headTol}`, 'THREADS 1', '');
   L.push('[JUNCTIONS]', ';;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded');
   for (const n of net.nodes) if (!n.outfall && !n.storageArea) L.push(`${pad(n.name, 16)} ${pad(f3(n.invert), 10)} ${pad(f3(n.depth), 10)} 0          ${pad(surDepth, 10)} 0`);
   if (net.nodes.some(n => n.storageArea)) { // tanks: constant plan area over the manhole depth (FUNCTIONAL A = 0 + 0·d^0 + C)
