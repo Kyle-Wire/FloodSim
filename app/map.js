@@ -1634,8 +1634,9 @@ function ensureSolver() {
     crest = [...(crest ?? []), ...wf.map(f => ({ i: f.i, j: f.j, axis: f.axis, z: 1e6, C: 1.7, ground: NaN }))];
   }
   run.outlets = run.sw.outlets.length ? new OutletLinks(run.sw.outlets, c.z, { cellArea: F * F }) : null;
-  // outfalls that discharge inside the model give their water back to the ground there (an endwall into a creek)
-  run.netReturns = coupled ? outfallCells(run.net.nodes, model.fine.nx, { ...c, F }, new Set([...(run.outlets?.cells ?? []), ...run.net.inlets.map(g => g.cell)])) : [];
+  // outfalls that discharge inside the model give their water back to the ground there (an endwall into a creek); not on
+  // a cell another exchange point uses (a culvert end sits at the endwall), since two in one cell lose one's water
+  run.netReturns = coupled ? outfallCells(run.net.nodes, model.fine.nx, { ...c, F }, new Set([...(run.outlets?.cells ?? []), ...run.net.inlets.map(g => g.cell), ...(run.culverts?.cells ?? [])])) : [];
   if (run.netReturns.length) { const st = run.net.stats, open = (st.interiorEnds ?? 0) - (st.placedOutfalls ?? 0) - (st.openEnds ?? 0);
     log(`${run.netReturns.length} outfall${run.netReturns.length > 1 ? 's' : ''} inside the area put their water back on the ground`, 'ok',
       [st.placedOutfalls ? `${st.placedOutfalls} from the outfall layer` : '', st.openEnds ? `${st.openEnds} other pipe ends (separate storm sewer: water comes out where the pipe ends)` : '',
@@ -1660,6 +1661,8 @@ function ensureSolver() {
   for (const e of inflows.filter(e => e.edgeWidth)) log(`${e.name || e.label}: enters across the model edge over ${e.edgeWidth} m of channel; the edge is closed across it and the flow goes in just inside`, 'ok');
   run.inflow = inflows.length ? new InflowLinks(inflows) : null;
   const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
+  const shared = cells.length - new Set(cells).size; // the exchange kernel runs one thread per point: a shared cell loses water
+  if (shared) log(`${shared} exchange point${shared > 1 ? 's share a cell' : ' shares a cell'} with another: the surface books will not close`, 'warn');
   run.solver = new GPUSolver(device, {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
     sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, underdrains: coupled && run.sw.under.length ? run.sw.under.flatMap(g => g.cells) : undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: rainBase0(run, c),
