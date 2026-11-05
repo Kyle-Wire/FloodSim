@@ -45,7 +45,7 @@ a:hover { text-decoration-color: var(--accent); }
   padding: 8px max(20px, env(safe-area-inset-right, 0px)) 12px max(20px, env(safe-area-inset-left, 0px)); background: var(--surface); border-bottom: 1px solid var(--line); }
 .topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--grad-ramp); }
 h1 { font-weight: 800; font-size: 19px; letter-spacing: -0.02em; margin: 0; display: flex; align-items: center; gap: 9px; }
-h1 .logo { width: 24px; height: 24px; }
+h1 .logo { width: 38px; height: 42px; margin: -6px 0 -8px; display: block; color: var(--ink); --logo-paper: var(--surface); cursor: crosshair; touch-action: none; }
 h1 em { font-style: normal; color: var(--muted); font-weight: 500; }
 .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); flex: 1 1 120px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .topbar a { font-size: 12.5px; font-weight: 500; color: var(--ink-2); }
@@ -307,9 +307,7 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
 <body>
 <div class="app">
   <header class="topbar">
-    <h1><svg class="logo" viewBox="0 0 16 16" aria-hidden="true">
-      <polygon points="8,1 15,4.5 8,8 1,4.5" fill="#8fe3ff"/><polygon points="1,4.5 8,8 8,15 1,11.5" fill="#1a78bd"/><polygon points="15,4.5 8,8 8,15 15,11.5" fill="#0a3466"/>
-      <polygon points="1,7 8,10.5 15,7 15,8 8,11.5 1,8" fill="#3fb4ea" opacity="0.9"/></svg><span>Flood<em>Sim</em></span></h1>
+    <h1><canvas class="logo" id="logo" title="Drag across the water; click to splash" aria-hidden="true"></canvas><span>Flood<em>Sim</em></span></h1>
     <span class="tag">2D urban flood model · 3DEP lidar · OSM · NLCD · SSURGO · NOAA · SWMM</span>
     <div class="proj">
       <button class="pbtn" id="projBtn" type="button" title="Open or create a project">Projects</button>
@@ -854,6 +852,8 @@ new MutationObserver(() => {
   if (wasDisabled && !dis && steps('areaSec').open) steps('stormSec').open = true;
   wasDisabled = dis;
 }).observe($('runBtn'), { attributes: true, attributeFilter: ['disabled'] });
+// the mark: water in the cube; it rains while a run plays
+import('./logo.js').then(({ mountLogo }) => mountLogo($('logo'), { rainWhile: () => $('runBtn').textContent === 'Pause' }));
 $('runReport').onclick = () => { if ($('repToggle').getAttribute('aria-expanded') !== 'true') $('repToggle').click(); };
 // an opened step scrolls its header to the top of the rail
 for (const d of document.querySelectorAll('details.step')) d.addEventListener('toggle', () => { if (d.open) d.parentElement.scrollIntoView({ block: 'nearest' }); });
