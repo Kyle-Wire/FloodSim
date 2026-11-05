@@ -1,0 +1,26 @@
+<!doctype html><meta charset="utf-8"><title>Gate C coupled cases</title>
+<style>body { font: 13px/1.5 ui-monospace, monospace; background: #0d1117; color: #c9d1d9; margin: 16px; } pre { white-space: pre-wrap; }</style>
+<pre id="log">Gate C: coupled 1D–2D verification cases (benchmark1d2d A12-010 to A12-012). ?cases=A12-010,A12-011,A12-012
+</pre>
+<script type="module">
+import { runCase } from './coupled.mjs';
+import { CASES } from './cases.mjs';
+const out = document.getElementById('log'), log = (s) => { out.textContent += s + '\n'; console.log(s); };
+window.__done = (async () => {
+  const adapter = await navigator.gpu?.requestAdapter(); if (!adapter) { log('No WebGPU adapter'); return { error: 'no adapter' }; }
+  const device = await adapter.requestDevice({ requiredLimits: { maxStorageBuffersPerShaderStage: Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10) } });
+  device.onuncapturederror = (e) => log('GPU error: ' + e.error.message);
+  const ids = (new URLSearchParams(location.search).get('cases') ?? Object.keys(CASES).join(',')).split(','), summary = {};
+  for (const id of ids) for (const twoWay of [false, true]) {
+    try {
+      const r = await runCase(device, id, twoWay);
+      const name = `gatec-coupled-${id.toLowerCase()}${twoWay ? '-twoway' : ''}`;
+      const res = await fetch(`/api/bench-results?name=${name}`, { method: 'POST', headers: { 'x-floodsim': '1' }, body: JSON.stringify(r) });
+      log(`${id} ${r.title} — ${r.exchange} (${r.wallSeconds.toFixed(0)} s, saved ${res.ok})`);
+      for (const x of r.scores) log(`  ${x.ok ? 'PASS' : 'FAIL'}  ${x.what}: ${x.value.toFixed(4)} (exact ${x.expected}, ${x.tol})`);
+      summary[name] = r.scores.map(x => x.ok);
+    } catch (e) { log(`${id} failed: ${e.message}`); summary[id] = { error: e.message }; }
+  }
+  return summary;
+})();
+</script>

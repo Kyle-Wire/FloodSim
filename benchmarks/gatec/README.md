@@ -158,8 +158,11 @@ PowerShell `Start-Process` from the project folder, the only way it would comput
 - Decide the residual-ponding question with data: a case with observed levels in the pipes and on the street (the
   Bellinge urban drainage dataset, CC BY 4.0, has gauged levels and rainfall) rather than a second model.
 - Two further HEC-RAS cases, with the tools now in place: RD-52 §4.3.3 (rainfall over a model urban layout, Cea 2008, with measured
-discharges) built and run headless in HEC-RAS, and the benchmark1d2d surcharge cases (A12-010/011/012), whose
-HEC-RAS pipe inputs are published.
+discharges) built and run headless in HEC-RAS, and the benchmark1d2d surcharge cases (A12-010/011/012) in HEC-RAS,
+whose pipe inputs are published.
+- Done 5 Nov 2026: FloodSim on the benchmark1d2d surcharge cases against their exact answers (`coupled/README.md`):
+  20 of 22 measures pass in both exchange modes. The miss is A12-011's outfall volume, 2.5 % short at two hours: the
+  last centimetre over a raised gully drains slowly, and no water is lost.
 
 
 **Agreement criterion (proposed):** FloodSim is no further from HEC-RAS than the other established codes are on the

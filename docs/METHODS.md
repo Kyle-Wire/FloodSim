@@ -905,7 +905,21 @@ These test the core solver, not the urban physics.
   codes, and on surface quantities within the HEC-RAS SWE-ELM/SWE-EM spread plus 5 cm in level or 10 % in flooded area.
   On Davis the surface measures meet it; total volume through the pipes does not.
 - **Still to do** (README): a case with observed pipe and street levels (the Bellinge dataset is proposed); RD-52 §4.3.3
-  (Cea 2008 urban layout with measured discharges); and the benchmark1d2d surcharge cases. **Gate C is not closed.**
+  (Cea 2008 urban layout with measured discharges); and the benchmark1d2d surcharge cases in HEC-RAS. **Gate C is not closed.**
+
+**Coupled cases with exact answers** (benchmark1d2d A12-010 to A12-012, `benchmarks/gatec/coupled/README.md`; 5 Nov
+2026). The GPU solver, SWMM with the app's options and the Coupler, both exchange modes. 20 of 22 measures pass:
+
+- A manhole surcharging onto a street passes the full 0.5 m³/s, and the street runs at normal depth (77.7 mm, exact
+  77.68 mm).
+- A storm that overflows a manhole all returns and leaves (180.0–180.4 m³ of 180).
+- A flooded yard settles 7 mm above its gully crest (tolerance 1 cm). Its outfall volume is 2.5 % short at two hours
+  (tolerance 2 %): the last centimetre over a crest drains about half as fast as a sharp weir, because FloodSim's inlet
+  reads the depth on a cell raised to the crest.
+- The combined books close within 0.5 % in every run. What remains is SWMM's own continuity error, and the surface
+  solver's books close to round-off.
+- With the manhole's 0.28 m² as SWMM's minimum node area, in place of the app's 1.2 m², SWMM's error on the yard
+  case was −1.0 to −1.4 %.
 
 ### 5.4 Mass balance with every exchange model on
 

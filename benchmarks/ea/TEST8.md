@@ -53,7 +53,7 @@ What the report says the packages agreed on (§4.9.3, §4.10.3), and so what a b
   volume as given.
 
 Until the data arrives, the coupled analytic cases A12-010, A12-011 and A12-012 of benchmark1d2d test the same
-exchange with answers known exactly: a manhole surcharging onto a street (the street's normal depth), a flood draining
+exchange with answers known exactly (run 5 Nov 2026: 20 of 22 measures pass, `benchmarks/gatec/coupled/README.md`): a manhole surcharging onto a street (the street's normal depth), a flood draining
 into a pipe (the crest level and the volume out), and a surcharge that returns down the manhole (all of it, 180 m³).
 
 ## Request to the Environment Agency (draft, not sent)
