@@ -1390,13 +1390,14 @@ function makeNetwork(c, F, { ignoreLayer = false } = {}) {
   const lay = ignoreLayer ? null : infra.inputs(), L = model.linked;
   const inlets = lay?.inlets.length ? lay.inlets : L?.inlets.length ? L.inlets : model.util?.inlets;
   const outfalls = lay?.outfalls.length ? lay.outfalls : L?.outfalls.length ? L.outfalls : model.util?.outfalls;
+  const combined = $('csoOn').checked; // combined sewer: interior pipe ends no outfall claims leave the model (src/network-real.js)
   const withQ = (net) => { if (net) for (const p of net.pipes) p.Qfull = 0.3117 / (p.n ?? net.opts.n) * p.D ** (8 / 3) * Math.sqrt(p.S); return net; };
   if (lay?.pipes.length) { // tier 1: pipes the user drew or imported
-    const net = realNetwork(model.fine, model.f, lay.pipes, { ...c, F }, { realInlets: inlets, outfalls: lay.outfalls });
+    const net = realNetwork(model.fine, model.f, lay.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined });
     if (net) { net.drawn = true; return withQ(net); }
   }
   if (L?.pipes.length) { // tier 1: the user's linked pipes
-    const net = realNetwork(model.fine, model.f, L.pipes, { ...c, F }, { realInlets: inlets });
+    const net = realNetwork(model.fine, model.f, L.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined });
     if (net) return withQ(net);
   }
   return withQ(synthNetwork(model.fine, model.f, model.osm, model.atlas14, { ...c, F }, { designARI: Number($('designAri').value), spacing: Number($('spacing').value),
@@ -1635,8 +1636,10 @@ function ensureSolver() {
   run.outlets = run.sw.outlets.length ? new OutletLinks(run.sw.outlets, c.z, { cellArea: F * F }) : null;
   // outfalls that discharge inside the model give their water back to the ground there (an endwall into a creek)
   run.netReturns = coupled ? outfallCells(run.net.nodes, model.fine.nx, { ...c, F }, new Set([...(run.outlets?.cells ?? []), ...run.net.inlets.map(g => g.cell)])) : [];
-  if (run.netReturns.length) { const st = run.net.stats, open = (st.interiorEnds ?? 0) - (st.placedOutfalls ?? 0);
-    log(`${run.netReturns.length} outfall${run.netReturns.length > 1 ? 's' : ''} inside the area put their water back on the ground`, 'ok', open > 0 ? `${open} other pipe ends inside the area are not in the outfall layer: their water leaves the model` : ''); }
+  if (run.netReturns.length) { const st = run.net.stats, open = (st.interiorEnds ?? 0) - (st.placedOutfalls ?? 0) - (st.openEnds ?? 0);
+    log(`${run.netReturns.length} outfall${run.netReturns.length > 1 ? 's' : ''} inside the area put their water back on the ground`, 'ok',
+      [st.placedOutfalls ? `${st.placedOutfalls} from the outfall layer` : '', st.openEnds ? `${st.openEnds} other pipe ends (separate storm sewer: water comes out where the pipe ends)` : '',
+        open > 0 ? `${open} other pipe ends are not in the outfall layer (combined sewer): their water leaves the model` : ''].filter(Boolean).join('; ')); }
   const base = [...(run.outlets?.cells ?? []), ...(coupled ? [...run.net.inlets.map(g => g.cell), ...run.netReturns.map(r => r.cell)] : []), ...(run.culverts?.cells ?? [])], used = new Set(base);
   let entries = run.inflowReady ?? [];
   const wr = run.window?.mode === 'rerun' ? run.window : null;

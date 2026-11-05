@@ -13,6 +13,9 @@
 //      manhole at the gutter low point
 //   6. outfalls the user placed (`opts.outfalls`, lon/lat) claim the nearest pipe end within 5 m: a boundary outfall
 //      continues off-site like a pipe leaving the area, any other is a free outfall that also seeds the flow direction
+//   7. an interior pipe end no outfall claims: in a separate storm sewer it discharges where it ends (`openEnd`: an
+//      endwall the layer missed, or a gap whose water surfaces nearby); in a combined sewer (`opts.combined`) it may be a
+//      gap on the way to the interceptor, so its water leaves the model
 import { toCells } from './ingest.js';
 import { DESIGN_DEFAULTS, addOutlets, exchangePoints } from './drainage.js';
 
@@ -214,7 +217,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     const sink = into[i].length > 0 && outOf[i].length === 0;
     const inv = Math.min(...[...into[i].map(k => raw[k].invDn), ...outOf[i].map(k => raw[k].invUp)]);
     return { name: (sink ? 'O' : 'J') + i, p: n.p, ground: n.ground, invert: inv, depth: Math.max(0.5, n.ground - inv), outfall: sink,
-      toStream: false, realOutfall: sink && !n.edge, placed: sink && userOut.has(i), inletFine: sink ? [] : n.inletFine, grateOpen: sink ? [] : n.grateOpen, gutter: n.gutter, fineCell: n.gutter, area: 0, CA: 0, edge: n.edge };
+      toStream: false, realOutfall: sink && !n.edge, placed: sink && userOut.has(i), openEnd: sink && !n.edge && !userOut.has(i) && !o.combined, inletFine: sink ? [] : n.inletFine, grateOpen: sink ? [] : n.grateOpen, gutter: n.gutter, fineCell: n.gutter, area: 0, CA: 0, edge: n.edge };
   });
   const outPipes = raw.map((q, k) => ({ name: 'C' + k, from: q.a, to: q.b, L: Math.max(1, q.L), D: q.D, W: q.shape === 'RECT_CLOSED' ? q.Wd : 0, shape: q.shape,
     barrels: q.barrels, n: q.r.n, Q: 0, S: Math.max(1e-4, (q.invUp - q.invDn) / q.L), inOffset: q.invUp - outNodes[q.a].invert, outOffset: q.invDn - outNodes[q.b].invert,
@@ -231,7 +234,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     stats: { junctions: outNodes.filter(n => !n.outfall).length, outfalls: outNodes.filter(n => n.outfall).length, pipes: outPipes.length,
       inlets: inlets.filter(g => g.grates > 0).length, grates: inlets.reduce((s, g) => s + g.grates, 0), lids: inlets.filter(g => !g.grates).length,
       realInlets, unconnectedGrates: unconnected, realOutfalls: 0, offsiteOutlets: outNodes.filter(n => n.offsite).length,
-      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, interiorEnds, placedOutfalls: outNodes.filter(n => n.placed).length,
+      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, interiorEnds, placedOutfalls: outNodes.filter(n => n.placed).length, openEnds: outNodes.filter(n => n.openEnd).length,
       pipeLength: outPipes.filter(q => !q.offsite).reduce((s, q) => s + q.L, 0), minD: Math.min(...outPipes.map(q => q.D)), maxD: Math.max(...outPipes.map(q => q.D)), served: 0 },
   };
 }

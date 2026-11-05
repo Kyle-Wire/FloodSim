@@ -2,7 +2,7 @@
 // layer → tier-1 builder gives the same network), placed outfalls, storage units in SWMM, shapefile / dbf / zip import.
 // Usage: node tests/run-infra-tests.mjs
 import { GridRef, fromUTM } from '../src/geo.js';
-import { synthNetwork, toINP } from '../src/drainage.js';
+import { synthNetwork, toINP, returnsHere } from '../src/drainage.js';
 import { realNetwork } from '../src/network-real.js';
 import { detectPipeFields } from '../src/linked.js';
 import { storageCapacity, ringArea, lineLength, layerInputs, networkToLayer, attachStorage, feature, parseShp, parseDbf, unzip, toLayer, summarize } from '../src/infra.js';
@@ -67,6 +67,14 @@ const fc = (features) => ({ type: 'FeatureCollection', features });
   check('placed outfall is the network end (free outfall, no continuation)', outs.length === 1 && net.stats.offsiteOutlets === 0 && /FREE/.test(text) && Math.abs(outs[0].invert - 7.0) < 1e-9,
     `${outs.length} outfall at ${outs[0]?.invert.toFixed(2)} m`);
   check('per-pipe Manning n reaches the .inp', /\b0\.011\b/.test(text) && net.stats.grates === 2);
+  { // the pipe end with no outfall feature: in a storm sewer its water comes out there; in a combined sewer it leaves
+    const LU = fc(L.features.filter(x => x.properties.type !== 'outfall')), iu = layerInputs(LU);
+    const sep = realNetwork(g, f, iu.pipes, sim, { realInlets: iu.inlets }), comb = realNetwork(g, f, iu.pipes, sim, { realInlets: iu.inlets, combined: true });
+    const end = (n) => n.nodes.find(x => x.outfall && !x.offsite);
+    check('outfall placed by the layer returns; an unplaced pipe end returns in a storm sewer and leaves in a combined one',
+      outs[0].placed && returnsHere(outs[0]) && !outs[0].openEnd && end(sep).openEnd && returnsHere(end(sep)) && sep.stats.openEnds === 1 && !end(comb).openEnd && !returnsHere(end(comb)) && comb.stats.openEnds === 0,
+      `placed ${outs[0].placed}, storm ${end(sep)?.openEnd}, combined ${end(comb)?.openEnd}`);
+  }
   { // debris: a half-blocked two-grate basin counts as one grate of opening; a fully blocked one exchanges nothing
     const LB = fc([...L.features.filter(x => x.properties.type !== 'inlet'), feature('inlet', { type: 'Point', coordinates: ll(70, 104) }, { grates: 2, blocked: 0.5 }),
       feature('inlet', { type: 'Point', coordinates: ll(130, 104) }, { grates: 1, blocked: 1 }), feature('culvert', { type: 'LineString', coordinates: [ll(50, 150), ll(60, 150)] }, { D: 1.0, blocked: 0.75 }),

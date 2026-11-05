@@ -309,8 +309,9 @@ export function exchangePoints(outNodes, W, sim, real) {
 /**
  * Outfalls that discharge inside the model: one the outfall layer placed (an endwall or flared end into a creek) or a
  * synthetic one into a mapped stream. Their water goes back on the ground there (src/coupler.js), not out of the model.
- * Outfalls on the edge or off the area, an interior pipe end the data does not call an outfall (a gap in a combined
- * sewer as often as a discharge), and a CSO interceptor (to the plant) still take their water away.
+ * In a separate storm sewer an interior pipe end the data does not call an outfall returns too (`openEnd`,
+ * src/network-real.js). Outfalls on the edge or off the area, such an end in a combined sewer (a gap on the way to the
+ * interceptor as often as a discharge), and a CSO interceptor (to the plant) still take their water away.
  * `taken`: solver cells already exchanging (inlets); a return moves to a free open neighbour, else is left out.
  * → [{ cell, at }] one per cell, `at` the outfall's position key (`${x},${y}` in fine cells) so the coupler finds the
  * node after CSO regulators replace it (the overflow outfall keeps its position).
@@ -330,7 +331,7 @@ export function outfallCells(nodes, W, sim, taken = new Set()) {
   return out;
 }
 /** An outfall whose water stays in the model (see outfallCells). */
-export const returnsHere = (n) => n.outfall && !n.interceptor && !n.offsite && !n.edge && !!(n.placed || n.toStream);
+export const returnsHere = (n) => n.outfall && !n.interceptor && !n.offsite && !n.edge && !!(n.placed || n.toStream || n.openEnd);
 export const posKey = (n) => `${Math.floor(n.p[0])},${Math.floor(n.p[1])}`;
 function freeNeighbour(sim, k, taken) {
   const i0 = k % sim.nx, j0 = (k / sim.nx) | 0; let best = -1;

@@ -16,7 +16,7 @@ const nodes = [
   node('J0', 4, 4),
   node('O1', 10, 10, { outfall: true, realOutfall: true, placed: true }),     // an endwall the outfall layer placed: returns
   node('O2', 30, 30, { outfall: true, toStream: true }),                       // synthetic, into a mapped stream: returns
-  node('O3', 20, 6, { outfall: true, realOutfall: true }),                     // an interior pipe end, not in the outfall layer: leaves
+  node('O3', 20, 6, { outfall: true, realOutfall: true }),                     // an interior pipe end, not in the outfall layer, combined sewer: leaves
   node('O4', 0, 20, { outfall: true, edge: true, placed: true }),              // on the model edge: leaves
   node('I5', 10, 10, { outfall: true, interceptor: true, placed: true }),      // a CSO interceptor (to the plant): leaves
 ];
