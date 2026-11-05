@@ -312,7 +312,7 @@ README "Local time stepping"; `src/solver-cpu.js` `_cycle` / `_record`:
   inertial damping, normal flow limited by slope or Froude) are set per run under **Drainage → Pipe solver settings**,
   with three presets (Balanced = the defaults; More accurate: 0.5 s, 0.5, 0.0005 m, 20 trials; Faster: 2 s, 0.005 m,
   4 trials). The routing step is capped at the 2 s exchange interval. Non-default values go into the forcing record
-  (`drainage.routing`). On a test line of manholes all three presets and EXTRAN keep SWMM continuity within 0.03 %
+  (`drainSettings.routing`). On a test line of manholes all three presets and EXTRAN keep SWMM continuity within 0.03 %
   (`tests/run-cso-tests.mjs`); on a real network the choice of preset has not yet been scored.
 - **Inlet hydraulics** (`inletFlow`): with the node head below the street, inflow is min(weir, orifice) with weir
   C_w·P·h^1.5·√(2g) and orifice C_o·A·√(2gh). With the node above the street it is a submerged orifice on the head
@@ -322,7 +322,7 @@ README "Local time stepping"; `src/solver-cpu.js` `_cycle` / `_record`:
   take the lowest crest. **Drainage → Inlet hydraulics** sets the grate area, weir length, C<sub>w</sub>, C<sub>o</sub>
   and an area-wide crest (default 0), directly or from a kind of inlet (typical grate; HEC-22 grate, C<sub>w</sub> 0.37,
   C<sub>o</sub> 0.67; small grate; double grate; curb opening, C<sub>w</sub> 0.28 from HEC-22's 1.25 SI). An inlet drawn in the Infrastructure layer can set its own crest. Non-default
-  values go into the run's forcing record (`drainage.inlets`). Inlets from utility GIS take the area-wide crest.
+  values go into the run's forcing record (`drainSettings.inlets`). Inlets from utility GIS take the area-wide crest.
 - **Two-way exchange (app default).** Inlet manholes are pressurised and water returns to the street through the inlet
   orifice on the head difference, as HEC-RAS does. The return is capped per manhole by what its pipes deliver (SWMM node
   inflow less any positive lateral inflow; SWMM books a negative lateral flow as outflow, so the return itself is not
@@ -1404,7 +1404,7 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-bank-tests.mjs` | Friction-angle failure, cohesion, confinement, rapid drawdown, probability vs Monte Carlo |
 | `run-design-tests.mjs` | Distance transform, grading (daylighting at 3:1 / 2:1, cut/fill vs analytic frustum within 0.3 %), FFE rules, no features → bit-identical inputs |
 | `run-stormwater-tests.mjs` | Outlet rating, stage–storage, modified Puls vs analytic drawdowns (3e-5 m), ponds, swales, GI, detention check |
-| `run-compare-tests.mjs` | Forcing fingerprint (stable, names differences, ignores design), `.f32` grids, Δ maps, off-site impact, tables |
+| `run-compare-tests.mjs` | Forcing fingerprint (stable, names differences, ignores design), settings tests (accepted only with the same design; old hashes kept), `.f32` grids, Δ maps, off-site impact, tables |
 | `run-report-tests.mjs` | Hydrograph stats, profiles, HGL path and flags, stage–storage–discharge, gutter spread, charts |
 | `run-damage-tests.mjs` | USACE curves, water against walls (rowhouses, sheet flow, enclosed yards), EAD, BCA, area stats |
 | `run-checks-tests.mjs` | Edge distance and flooding by side, points near the edge, run against run, sensitivity, statuses, difference map |
@@ -1760,7 +1760,9 @@ Every finished run in a project is saved as `runs/<date_time>/` (`app/projects.j
   hashes. The parts are: storm (depth, duration, pattern, or the historic event and its rain source, including a hash
   of MRMS frames); river inflow; tide and surge; start water levels (the gauge readings used); antecedent soil moisture
   and water table; grid size and speed mode; solver settings; run length; sediment, debris and bank options; drainage,
-  green infrastructure, infrastructure layer and calibration; model area; and **app commit** (from `/api/version`, with
+  green infrastructure, infrastructure layer and calibration; inlet and pipe solver settings (`drainSettings`: only the
+  values that differ from the defaults, and the part is left out when there are none, so runs made before it existed
+  keep their hashes); model area; and **app commit** (from `/api/version`, with
   `+dirty` when code that can change a result differs from that commit: `app`, `src`, `server`, `vendor`, `dist`,
   `tools` and the package files, untracked files included, Markdown not; `tools/codestate.mjs`). The changed files are
   listed in the record as `codeChanged`. Docs and the validation suite's own score files do not make a run dirty.
@@ -1769,7 +1771,9 @@ Every finished run in a project is saved as `runs/<date_time>/` (`app/projects.j
   collapse/swell classes, Green-Ampt parameters and building ids. It therefore captures the downloaded terrain, land
   cover and soils, not only the settings.
 - **Uses.**
-  - Compare refuses two runs whose fingerprints differ, and names the parts.
+  - Compare refuses two runs whose fingerprints differ, and names the parts. The exception is a **settings test**:
+    two runs with the same `designHash` whose fingerprints differ only in `drainSettings` compare and report as
+    one, labelled as such, with the changed settings listed (`comparable` → `kind: 'settings'`, `settingsChanges`).
   - Checkpoints refuse to resume under a different fingerprint.
   - EAD families require matching parts other than storm and run length, plus a matching `designHash`.
   - Emulator studies require every run to match on the parts the study does not vary.

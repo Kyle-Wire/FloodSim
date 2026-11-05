@@ -2009,7 +2009,8 @@ async function loop(gen) {
 
 // ------------------------------------------------------------------ run records (comparisons)
 const records = [], baselines = new Map(); // this session's finished runs; existing-conditions runs by forcing hash
-/** Everything that is not the design (src/compare.js fingerprint): two runs compare only when this matches. */
+/** Everything that is not the design (src/compare.js fingerprint): two runs compare when this matches, or as a settings
+ *  test when only drainSettings (the inlet and pipe solver settings) differs and the design is the same. */
 function forcingRecord(r) {
   const st = r.storm ?? currentStorm(), sample = (fn) => { const out = []; for (let t = 0; t <= tStop(); t += 60) out.push(+fn(t).toFixed(6)); return out; };
   const val = (...ids) => Object.fromEntries(ids.map(id => [id, $(id)?.type === 'checkbox' ? $(id).checked : $(id)?.value ?? null]));
@@ -2025,7 +2026,8 @@ function forcingRecord(r) {
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
-    drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), ...inletRecord(), ...routingRecord(), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
+    drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
+    drainSettings: drainSettings(),
     area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume), ...(model.bathy.surveyed ? { bathySurveyed: { source: 'NOAA BlueTopo', tiles: model.bathy.surveyed.tiles, volume: Math.round(model.bathy.surveyed.volume) } } : {}), ...(model.bathy.xs ? { bathyXS: { source: model.bathy.xs.source, volume: Math.round(model.bathy.xs.volume) } } : {}) } : {}) },
     commit: appCommit,
   };
@@ -2072,7 +2074,7 @@ async function finishRecord() {
   const books = reportBooks(r, maxD);
   const newBuildings = (model.f.designBuildings ?? []).map(b => ({ id: b.id, name: b.name, ffe: b.ffe, critical: b.foundation === 'basement' ? b.opening : b.ffe, foundation: b.foundation, cells: b.cells, ring: b.ring }));
   const when = new Date(), forcing = CMP.fingerprint(forcingRecord(r));
-  const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+  const rec = { id: ++recordSeq, scenario: r.scenario, drainSettings: drainSettings(), label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
     saved: when.toISOString(), forcing, commit: appCommit, ...(appChanged.length ? { codeChanged: appChanged } : {}), designHash: gridHash(), storm: stormLabel(r.storm), stormInfo: { ari: r.storm?.ari ?? null, durationMin: r.storm?.durationMin ?? null }, batch: r.batchInfo ?? null, geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
     grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0,
       // the rest of the combined books (line ~1842): rain piped from roofs straight to the sewers (not in `rain`, the rain on the surface), sanitary flow, water at the start, the pipes' storage
@@ -2135,7 +2137,7 @@ async function loadSaved(dir) {
   const lines = await json('lines.json', []), newBuildings = await json('buildings.json', []);
   const [network, hgl, inlets] = await Promise.all([json('network.json', null), json('hgl.json', null), json('inlets.json', null)]);
   const gb = await readBytesOptional(folder, path('grids/ground.f32')).catch(() => null), ground = gb ? CMP.decodeF32(gb) : null; // none: the base DEM (only emulator runs save it)
-  return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, commit: sm.commit, designHash: sm.designHash,
+  return { id: 'saved:' + dir, scenario: sm.scenario === 'Existing conditions' ? null : sm.scenario, label: `${sm.scenario} · ${dir}`, saved: sm.savedUTC, forcing: sm.forcing, drainSettings: sm.drainSettings ?? null, commit: sm.commit, designHash: sm.designHash,
     storm: sm.storm?.label, stormInfo: { ari: sm.storm?.ari ?? null, durationMin: sm.storm?.durationMin ?? null }, batch: sm.batch ?? null, dir, geo: head, grids: Object.fromEntries(Object.keys(CMP.GRIDS).map(k => [k, grids[k]])), hazard: grids.hazard_arr, lines, newBuildings, books: sm.books ?? null, design: sm.design ?? null,
     ponds: sm.ponds ?? null, cso: sm.cso ?? null, network, hgl, inlets, ground, validation: sm.validation ?? null, simulatedS: sm.results?.simulatedS ?? null, inflow: sm.inflow ?? null, tide: sm.tide ?? null };
 }
@@ -3685,6 +3687,9 @@ function swmmRouting() {
     minSurfArea: numField('swmmMinArea'), minSlope: numField('swmmMinSlope'), surcharge: $('swmmSurcharge').value, inertialDamping: $('swmmDamping').value,
     normalFlowLimited: $('swmmNormal').value, lengthen: $('swmmLengthen').checked };
 }
+/** A run's inlet and pipe solver settings where they differ from the defaults ({ inlets, routing }), else null: the
+ *  forcing record's drainSettings part, which a settings test may differ in (src/compare.js comparable). */
+const drainSettings = () => { const s = { ...inletRecord(), ...routingRecord() }; return Object.keys(s).length ? s : null; };
 /** The SWMM settings for a run's forcing record, only those changed from the defaults (older runs keep their fingerprint). */
 const routingRecord = () => {
   const ch = Object.entries(swmmRouting()).filter(([k, x]) => typeof x === 'number' ? Math.abs(x - ROUTING_DEFAULTS[k]) > 1e-12 : x !== ROUTING_DEFAULTS[k]);
@@ -3963,7 +3968,7 @@ async function runFiles() {
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
     batch: run.batchInfo ?? null, // the batch study job (src/batch.js) this run was, for the sensitivity and EAD sections
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
-    forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
+    forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
     books: run.record?.books ?? null, validation: run.record?.validation ?? null, inflow: run.record?.inflow ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],

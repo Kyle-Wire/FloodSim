@@ -1,5 +1,6 @@
 // Compare drawer (phase 2 of docs/specs/site-design-mode.md): pick two runs that share a forcing fingerprint and see
-// what the design changed. Δ maps (max depth, max water surface, time above 15 cm, first wetting, hazard class) with a
+// what the design changed, or two runs of the same design that differ only in the inlet and pipe solver settings (a
+// settings test) and see what the settings changed. Δ maps (max depth, max water surface, time above 15 cm, first wetting, hazard class) with a
 // no-change band, newly wet and newly dry cells, the off-site adverse impact (outside the site boundary), the buildings
 // near the site, and per control line the peak flow, volume and time to peak. Runs come from this session (kept in
 // memory, existing conditions cached per fingerprint) or from the project's runs folder. Export: Δ grids (.asc), CSV
@@ -35,7 +36,7 @@ export function initCompare(map, api) {
     // default: the latest existing-conditions run before, the latest scenario run with the same forcing after
     if (!$('cmpB').value) { const b = runs.find(r => r.scenario && r.scenario !== 'Existing conditions'); if (b) $('cmpB').value = b.key; }
     if (!$('cmpA').value) { const fb = runs.find(r => r.key === $('cmpB').value)?.forcing; const a = runs.find(r => (!r.scenario || r.scenario === 'Existing conditions') && (!fb || r.forcing === fb)); if (a) $('cmpA').value = a.key; }
-    $('cmpNote').textContent = runs.length ? '' : 'No runs yet. Run existing conditions and a scenario with the same storm and settings, or press Run both.';
+    $('cmpNote').textContent = runs.length ? '' : 'No runs yet. Run existing conditions and a scenario with the same storm and settings, or press Run both. To test a setting, run once, change only the inlet or pipe solver settings, run again, and pick the two runs.';
   }
   const getRun = (key) => (key.startsWith('m:') ? api.records().find(r => 'm:' + r.id === key) : api.loadSaved(key.slice(2)));
 
@@ -48,7 +49,7 @@ export function initCompare(map, api) {
       if (a.geo.nx !== ctx.geo.nx || a.geo.ny !== ctx.geo.ny || b.geo.nx !== ctx.geo.nx || a.geo.x0 !== b.geo.x0 || a.geo.y0 !== b.geo.y0) throw new Error('these runs are on a different model grid than the one built now');
       const ok = C.comparable(a, b);
       if (!ok.ok) { cmp = null; draw(); $('cmpOut').innerHTML = `<p class="iinfo warn"><b>Not comparable.</b> ${esc(ok.reason)}</p>`; return; }
-      cmp = analyse(a, b, ctx); draw(); render();
+      cmp = { ...analyse(a, b, ctx), kind: ok.kind, changes: ok.kind === 'settings' ? C.settingsChanges(a.drainSettings, b.drainSettings) : [] }; draw(); render();
     } catch (e) { console.error(e); $('cmpOut').innerHTML = `<p class="iinfo warn">${esc(e.message)}</p>`; }
     finally { busy = false; }
   }
@@ -113,6 +114,7 @@ export function initCompare(map, api) {
     $('cmpLegend').innerHTML = view === 'wetdry' ? '<span><i style="background:#d62728"></i>newly wet</span> <span><i style="background:#2ca02c"></i>newly dry</span> (deeper than 15 cm)'
       : `<span>lower</span><i class="ramp"></i><span>higher</span> <span class="muted">±${fmtNum(m.cap * m.scale, m.dp)} ${m.unit}; under ${m.band != null ? fmtNum(m.band * m.scale, m.dp) + ' ' + m.unit : (Number($('cmpBand').value) || 3) + ' mm'}: no change</span>`;
   }
+  const setVal = (r, v) => (v === true ? 'on' : v === false ? 'off' : `${v}${r.unit ? ' ' + r.unit : ''}`);
   const fmtNum = (v, dp) => (Number.isFinite(v) ? v.toLocaleString(undefined, { maximumFractionDigits: dp, minimumFractionDigits: dp }) : '–');
 
   // ---------------------------------------------------------------- panel
@@ -129,9 +131,11 @@ export function initCompare(map, api) {
     $('cmpOut').innerHTML =
       (wr ? `<p class="iinfo${wr.check.changed ? ' warn' : ''}"><b>Window rerun.</b> The proposed design ran on ${fmtNum(wr.insideFrac * 100, 0)} % of the area (outside it: existing conditions) in ${fmtNum(wr.wall, 0)} s${wr.baseWall ? ` against ${fmtNum(wr.baseWall, 0)} s for the full run` : ''}. Edge check: ${wr.check.changed ? `<b>${wr.check.changed} edge segment${wr.check.changed > 1 ? 's' : ''} changed by up to ${fmtNum(wr.check.maxRel * 100, 0)} %</b>: the design reaches the window's edge, widen it and rerun` : `outflow at the edge within ${fmtNum(wr.check.maxRel * 100, 1)} % of the existing run`}.</p>` : '') +
       (emulated.length ? `<p class="iinfo warn"><b>Emulated: screening only.</b> ${emulated.map(r => esc(r.label)).join(' and ')} ${emulated.length > 1 ? 'are' : 'is'} the emulator's estimate, not a solver run. Confirm with a solver run before using these numbers.</p>` : '') +
-      `<p class="iinfo">Same forcing <code>${esc(c.a.forcing.hash)}</code>: the runs differ only in the design. Under ${fmtNum(c.band * 1000, 0)} mm: no change.</p>` +
-      `<h3>Off-site impact${c.site ? '' : ' <i>no site boundary: everywhere counts</i>'}</h3><p class="iinfo">${imp.cells ? `<span class="warn"><b>${imp.cells.toLocaleString()} cells (${area(imp.area)}) higher</b>, by up to ${fmtNum(imp.maxRise * 1000, 0)} mm</span>` : '<span class="good"><b>No off-site rise</b> above the band</span>'}` +
-      `${imp.newlyWet ? `<br>${imp.newlyWet.toLocaleString()} cells newly wet off-site (${area(imp.newlyWetArea)})` : ''}<br>Existing buildings affected: ${imp.affected.length ? imp.affected.map(b => `${esc(b.id)} (+${fmtNum(b.rise * 1000, 0)} mm)`).join(', ') : 'none'}</p>` +
+      (c.kind === 'settings'
+        ? `<p class="iinfo"><b>Settings test.</b> Same storm, inputs and design; only these settings differ:</p><table class="dtab"><thead><tr><th>Setting</th><th>Before</th><th>After</th></tr></thead><tbody>${c.changes.map(r => `<tr><td>${esc(r.label)}</td><td>${esc(setVal(r, r.before))}</td><td>${esc(setVal(r, r.after))}</td></tr>`).join('') || '<tr><td colspan="3">(not recorded: a run saved before settings were kept)</td></tr>'}</tbody></table><p class="note">The maps show what the settings changed, not the effect of a design. Blue: lower after; orange: higher. Under ${fmtNum(c.band * 1000, 0)} mm: no change.</p>`
+        : `<p class="iinfo">Same forcing <code>${esc(c.a.forcing.hash)}</code>: the runs differ only in the design. Under ${fmtNum(c.band * 1000, 0)} mm: no change.</p>`) +
+      `<h3>${c.kind === 'settings' ? 'Where the water is higher' : 'Off-site impact'}${c.site ? '' : ' <i>no site boundary: everywhere counts</i>'}</h3><p class="iinfo">${imp.cells ? `<span class="warn"><b>${imp.cells.toLocaleString()} cells (${area(imp.area)}) higher</b>, by up to ${fmtNum(imp.maxRise * 1000, 0)} mm</span>` : '<span class="good"><b>No off-site rise</b> above the band</span>'}` +
+      `${imp.newlyWet ? `<br>${imp.newlyWet.toLocaleString()} cells newly wet${c.kind === 'settings' ? '' : ' off-site'} (${area(imp.newlyWetArea)})` : ''}<br>Existing buildings affected: ${imp.affected.length ? imp.affected.map(b => `${esc(b.id)} (+${fmtNum(b.rise * 1000, 0)} mm)`).join(', ') : 'none'}</p>` +
       `<h3>Changes</h3><table class="dtab"><thead><tr><th>Map</th><th>Up</th><th>max</th><th>Down</th><th>max</th><th></th></tr></thead><tbody>${rows}<tr><td>Newly wet / dry (15 cm)</td><td colspan="5">${c.wetDry.wet.toLocaleString()} / ${c.wetDry.dry.toLocaleString()} cells</td></tr></tbody></table>` +
       `<h3>Totals</h3><p class="iinfo">${Object.entries(c.totals).map(([k, v]) => `${esc(k)}: <b>${esc(v)}</b>`).join('<br>')}</p>` +
       `<h3>Buildings near the site <i>${c.buildings.length}</i></h3>${c.buildings.length ? `<table class="dtab"><thead><tr><th>Building</th><th>FFE</th><th>Water before</th><th>after</th><th>Flooded</th></tr></thead><tbody>${bRows}</tbody></table><p class="note">Existing FFE estimated as HAG + 6 in (est.).</p>` : '<p class="note">Draw a site boundary (Site design → Site) to list the buildings near it.</p>'}` +
@@ -152,14 +156,14 @@ export function initCompare(map, api) {
     const hyd = [], lines = [...new Set([...(c.a.lines ?? []), ...(c.b.lines ?? [])].map(l => l.id))];
     for (const id of lines) for (const [run, tag] of [[c.a, 'before'], [c.b, 'after']]) { const l = run.lines?.find(x => x.id === id); if (l) for (const [t, q] of C.hydrograph(l.series)) hyd.push({ line: id, name: l.name, run: tag, t, q }); }
     files.push({ name: 'control_line_hydrographs.csv', data: enc.encode(C.toCSV(hyd, [['line', 'line'], ['name', 'name'], ['run', 'run'], ['t', 'time_s', 0], ['q', 'flow_m3s', 5]])) });
-    const summary = { before: meta(c.a), after: meta(c.b), bandM: c.band, site: c.site, impact: { ...c.impact, kMaxRise: undefined }, changes: Object.fromEntries(c.maps.map(m => [m.key, m.stats])), newlyWet: c.wetDry.wet, newlyDry: c.wetDry.dry, totals: c.totals,
+    const summary = { kind: c.kind, ...(c.kind === 'settings' ? { settingsChanged: c.changes } : {}), before: meta(c.a), after: meta(c.b), bandM: c.band, site: c.site, impact: { ...c.impact, kMaxRise: undefined }, changes: Object.fromEntries(c.maps.map(m => [m.key, m.stats])), newlyWet: c.wetDry.wet, newlyDry: c.wetDry.dry, totals: c.totals,
       files: { 'delta_*.asc': 'after − before at 1 m; 0 = no change (under the band); NODATA where only one run has a value (newly wet or dry)', 'delta_t_*.asc': 'seconds', 'delta_hazard.asc': 'ARR class change', 'newly_wet_dry.asc': '+1 newly wet, −1 newly dry (15 cm)' } };
     files.push({ name: 'comparison.json', data: enc.encode(JSON.stringify(summary, null, 1)) });
     files.push({ name: 'summary.html', data: enc.encode(C.summaryHTML({ ...c, a: meta(c.a), b: meta(c.b) })) });
-    const name = `comparison_${(c.b.scenario ?? 'existing').replace(/[^\w-]+/g, '-')}_vs_${(c.a.scenario ?? 'existing').replace(/[^\w-]+/g, '-')}`;
+    const name = c.kind === 'settings' ? `settings-test_${(c.b.scenario ?? 'existing').replace(/[^\w-]+/g, '-')}` : `comparison_${(c.b.scenario ?? 'existing').replace(/[^\w-]+/g, '-')}_vs_${(c.a.scenario ?? 'existing').replace(/[^\w-]+/g, '-')}`;
     await api.exportFiles(files, name, zip(files));
   }
-  const meta = (r) => ({ label: r.label, scenario: r.scenario ?? 'Existing conditions', saved: r.saved, forcing: r.forcing, designHash: r.designHash, commit: r.commit, storm: r.storm });
+  const meta = (r) => ({ label: r.label, scenario: r.scenario ?? 'Existing conditions', saved: r.saved, forcing: r.forcing, drainSettings: r.drainSettings ?? null, designHash: r.designHash, commit: r.commit, storm: r.storm });
 
   // ---------------------------------------------------------------- return-period sweep and the detention check
   let sweepRes = [];

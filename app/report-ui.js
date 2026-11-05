@@ -1,4 +1,5 @@
-// Report drawer: the standard H&H outputs of a run, or of a before / after pair with the same forcing, as figures and
+// Report drawer: the standard H&H outputs of a run, or of a before / after pair with the same forcing (or a settings
+// test: the same design, only the inlet and pipe solver settings differ), as figures and
 // tables (src/report.js): hydrographs at control lines and storm-sewer outfalls, pond stage–storage–discharge and
 // stage in time, storm-sewer HGL profiles with surcharge and freeboard checks, water surface profiles along drawn
 // profile lines, gutter spread at the inlets against an allowable spread, and for a real storm the validation scorecard
@@ -25,7 +26,7 @@ const FT = 0.3048, CF = 0.028316846592;
 const fmtNum = (v, dp) => (Number.isFinite(v) ? v.toLocaleString(undefined, { maximumFractionDigits: dp, minimumFractionDigits: dp }) : '–');
 
 export function initReport(map, api) {
-  let A = null, B = null, busy = false, hglFrom = null, last = null;
+  let A = null, B = null, pairChanges = null, busy = false, hglFrom = null, last = null;
   const us = () => api.units() === 'us';
   // display units: length, elevation, flow, volume, spread
   const U = () => (us() ? { len: 'ft', L: (m) => m / FT, q: 'cfs', Q: (v) => v / CF, vol: 'ft³', V: (v) => v / CF, dpL: 2, dpQ: 2 } : { len: 'm', L: (m) => m, q: 'm³/s', Q: (v) => v, vol: 'm³', V: (v) => v, dpL: 2, dpQ: 3 });
@@ -55,7 +56,8 @@ export function initReport(map, api) {
     try {
       const [a, b] = await Promise.all([getRun($('repA').value), getRun($('repB').value)]);
       if (!b) { $('repOut').innerHTML = ''; return; }
-      if (a && a.forcing?.hash !== b.forcing?.hash) { const ok = C.comparable(a, b); if (!ok.ok) { $('repOut').innerHTML = `<p class="iinfo warn"><b>Not a before / after pair.</b> ${esc(ok.reason)} Pick “None” for a one-run report.</p>`; A = null; B = b; return; } }
+      pairChanges = null;
+      if (a && a.forcing?.hash !== b.forcing?.hash) { const ok = C.comparable(a, b); if (ok.ok && ok.kind === 'settings') pairChanges = C.settingsChanges(a.drainSettings, b.drainSettings); if (!ok.ok) { $('repOut').innerHTML = `<p class="iinfo warn"><b>Not a before / after pair.</b> ${esc(ok.reason)} Pick “None” for a one-run report.</p>`; A = null; B = b; return; } }
       // flooded areas and building damage per run, and the return-period family for EAD (app/map.js analyzeRecord, eadFamily)
       if (api.analyze) { $('repOut').innerHTML = '<p class="note">Flooded areas, streets, building damage, expected annual damage, model checks and sensitivity…</p>';
         for (const r of [a, b].filter(Boolean)) { await api.analyze(r, { threshold: settings().areaTh, wall: settings().wall }).catch(e => console.warn('analysis', e)); r.ead = await api.eadFamily?.(r, { wall: settings().wall }).catch(e => { console.warn('EAD', e); return null; }) ?? null;
@@ -304,7 +306,7 @@ export function initReport(map, api) {
   }
   function render() {
     const secs = sections('light', true); last = secs;
-    $('repOut').innerHTML = `<p class="iinfo">${A ? `Before: <b>${esc(A.label)}</b><br>After: <b>${esc(B.label)}</b>` : `Run: <b>${esc(B.label)}</b>`}</p>` + secs.map(sec => `<h3>${esc(sec.title)}</h3><p class="hint">${esc(sec.note)}</p>` +
+    $('repOut').innerHTML = `<p class="iinfo">${A ? `Before: <b>${esc(A.label)}</b><br>After: <b>${esc(B.label)}</b>${pairChanges ? `<br><b>Settings test.</b> Same storm, inputs and design; only these differ: ${esc(pairChanges.map(C.settingText).join('; ') || 'not recorded')}` : ''}` : `Run: <b>${esc(B.label)}</b>`}</p>` + secs.map(sec => `<h3>${esc(sec.title)}</h3><p class="hint">${esc(sec.note)}</p>` +
       (sec.pick ? `<label class="ifield"><span>From manhole <i>or click one on the map</i></span><select id="repHglFrom">${sec.pick.nodes.map(n => `<option value="${n.i}"${n.i === sec.pick.sel ? ' selected' : ''}>${esc(n.name)}</option>`).join('')}</select></label>` : '') +
       sec.figures.map(f => `<div class="rep-fig">${f.svg}</div>`).join('') + sec.tables.map(t => `<details${sec.id === 'summary' ? ' open' : ''}><summary>${esc(t.title)}</summary>${tableHTML(t)}</details>`).join('')).join('') +
       '<div class="row"><button class="btn" id="repExport" type="button">Export report (.zip)</button></div>';
@@ -365,7 +367,7 @@ export function initReport(map, api) {
     return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FloodSim H&amp;H report</title>
 <style>:root{--ink:#0b0b0b;--ink2:#52514e;--rule:#e1e0d9}body{font:13px/1.45 system-ui,Segoe UI,sans-serif;color:var(--ink);background:#fcfcfb;max-width:900px;margin:24px auto;padding:0 16px}h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:28px 0 4px;border-bottom:1px solid var(--rule);padding-bottom:3px;break-after:avoid}h4{font-size:12.5px;margin:14px 0 4px}p.note{color:var(--ink2);margin:4px 0 10px}table{border-collapse:collapse;width:100%;font-size:11.5px;font-variant-numeric:tabular-nums}th,td{border-bottom:1px solid var(--rule);padding:2px 6px;text-align:right}th:first-child,td:first-child{text-align:left}th{color:var(--ink2);font-weight:600}.fig{margin:10px 0;break-inside:avoid}.fig svg{max-width:100%;height:auto}.meta td{text-align:left}@media print{body{margin:0;max-width:none}h2{break-before:auto}}</style></head><body>
 <h1>H&amp;H results</h1><p class="note">FloodSim ${esc(api.project()?.name ?? '')} · exported ${esc(when)}</p>
-<table class="meta"><tbody>${A ? `<tr><td>Before</td><td>${esc(A.label)}</td></tr>` : ''}<tr><td>${A ? 'After' : 'Run'}</td><td>${esc(B.label)}</td></tr><tr><td>Storm</td><td>${esc(B.storm ?? '')}</td></tr><tr><td>Forcing fingerprint</td><td>${esc(B.forcing?.hash ?? '–')}${A ? ' (both runs)' : ''}</td></tr><tr><td>App commit</td><td>${esc(B.commit ?? '–')}</td></tr><tr><td>Units</td><td>${us() ? 'US customary (ft, cfs, ft³), elevations NAVD88' : 'SI (m, m³/s, m³), elevations NAVD88'}</td></tr></tbody></table>
+<table class="meta"><tbody>${A ? `<tr><td>Before</td><td>${esc(A.label)}</td></tr>` : ''}<tr><td>${A ? 'After' : 'Run'}</td><td>${esc(B.label)}</td></tr><tr><td>Storm</td><td>${esc(B.storm ?? '')}</td></tr>${A && pairChanges ? `<tr><td>Settings test</td><td>Same storm, inputs and design; only these differ: ${esc(pairChanges.map(C.settingText).join('; ') || 'not recorded')}</td></tr><tr><td>Forcing fingerprint</td><td>before ${esc(A.forcing?.hash ?? '–')}, after ${esc(B.forcing?.hash ?? '–')}</td></tr>` : `<tr><td>Forcing fingerprint</td><td>${esc(B.forcing?.hash ?? '–')}${A ? ' (both runs)' : ''}</td></tr>`}<tr><td>App commit</td><td>${esc(B.commit ?? '–')}</td></tr><tr><td>Units</td><td>${us() ? 'US customary (ft, cfs, ft³), elevations NAVD88' : 'SI (m, m³/s, m³), elevations NAVD88'}</td></tr></tbody></table>
 ${secs.map(sec => `<h2>${esc(sec.title)}</h2><p class="note">${esc(sec.note)}</p>${sec.figures.map(f => `<div class="fig">${f.svg}</div>`).join('')}${sec.tables.map(tbl).join('')}`).join('\n')}
 <p class="note" style="margin-top:28px">2D surface: FloodSim GPU shallow-water solver at the run's grid; storm sewer: EPA SWMM 5.2 coupled every 2 s. Results depend on the inputs listed in each run's summary.json.</p></body></html>`;
   }

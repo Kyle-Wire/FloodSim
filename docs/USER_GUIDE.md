@@ -516,7 +516,7 @@ conversions when you hover over it.
 | **Inlet sits above the street** | 0 cm | The crest, for inlets that do not set their own. Water below it does not drain. |
 
 Changing any of them resets the run. A run made with values other than the defaults records them in its forcing
-fingerprint (**drainage → inlets**), so two runs with different inlet settings are not taken as the same forcing.
+fingerprint (**drainSettings → inlets**), so two runs with different inlet settings are not taken as the same forcing.
 Debris on the grates is set per inlet in the Infrastructure drawer, or area-wide with **Inlet clogging** under
 Calibrate.
 
@@ -530,9 +530,9 @@ defaults suit most runs. The quickest way to try something is the **Speed or acc
 | **Faster, rougher** | 2 s | 0.75 | 5 mm | 4 |
 
 Changing a field by hand shows **Custom**. To judge a change, run and read **SWMM / combined balance**: within ±1 %
-SWMM kept track of all the water; if it is worse than with Balanced, the change cost accuracy. Compare and Report
-pair only runs with the same forcing, so they do not set two runs with different inlet or solver settings side by side;
-read each run's readouts and summary instead.
+SWMM kept track of all the water; if it is worse than with Balanced, the change cost accuracy. To see what a setting
+did to the flooding, run a **settings test** (section 7.2): run once, change only the inlet or pipe solver settings, run
+again, and pick the two runs in Compare or Report.
 
 | Field | SWMM option | Default | What it does |
 |---|---|---|---|
@@ -548,7 +548,7 @@ read each run's readouts and summary instead.
 | **Lengthen very short pipes** (Methods) | LENGTHENING_STEP | On | On sets it to the routing step; off, 0. |
 
 Changing any of them resets the run. Settings other than the defaults go into the forcing fingerprint
-(**drainage → routing**), and every run's `drainage/network.inp` holds the options it used.
+(**drainSettings → routing**), and every run's `drainage/network.inp` holds the options it used.
 
 ### 6.4 Combined sewer
 
@@ -642,8 +642,9 @@ M new buildings flooded above the FFE".
 
 ### 7.2 Compare drawer
 
-Map button **Compare**. Two runs compare only when their forcing fingerprints match: they may differ in the design and
-nothing else.
+Map button **Compare**. Two runs compare when their forcing fingerprints match: they may differ in the design and
+nothing else. Two runs of the same design that differ only in the inlet and pipe solver settings also compare, as a
+**settings test** (below).
 
 1. Draw control lines at the site outlets and a site boundary first (Site design).
 2. Click **Run both**. It runs existing conditions (unless a run with the same fingerprint is cached in this session),
@@ -658,6 +659,19 @@ nothing else.
 7. Click **Export comparison (.zip)**. With a project open, it is also saved under `comparisons/`.
 
 If the runs differ in more than the design, the drawer says **Not comparable** and names the parts that differ.
+
+**Settings test.** To see what an inlet or pipe solver setting does to the flooding:
+
+1. Run with the settings as they are (for example, existing conditions with the defaults).
+2. Change only the settings under Drainage → **Inlet hydraulics** or **Pipe solver settings**. Keep the storm, the area
+   and the design the same.
+3. Run again.
+4. In Compare, pick the first run as **Before** and the second as **After**.
+
+The drawer says **Settings test**, lists each setting that differs with its before and after value, and shows the same
+Δ maps and tables. The off-site impact heading reads **Where the water is higher**, since no design is being judged.
+The export is named `settings-test_…` and its `comparison.json` has `kind: "settings"` and the settings changed.
+Runs that differ in both the settings and the design, or in anything else, are refused: change one thing at a time.
 
 **Return-period sweep and detention check.** Enter **Design storms (yr)** (default `2, 10, 25, 100`) and click **Run
 sweep**. It runs existing conditions and the active scenario at each Atlas 14 return period. **Cancel** stops it.
@@ -774,7 +788,8 @@ infrastructure, culverts and channels, and the storm. Copy this into the report'
 Map button **Report**, or **Open the report** in the Run step.
 
 1. Pick **Run (after)**. For a before / after report, also pick **Before (optional)**. Both lists hold this session's
-   runs and the project's saved runs. **Refresh list** reloads them.
+   runs and the project's saved runs. **Refresh list** reloads them. The pair must share its forcing, or be a settings
+   test (section 7.2); a settings test's report lists the settings that differ at the top.
 2. Set the report inputs:
 
 | Field | Default |

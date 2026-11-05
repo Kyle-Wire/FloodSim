@@ -1,8 +1,11 @@
-// Paired-run comparison (phase 2 of docs/specs/site-design-mode.md): two solver runs that differ only in the design.
+// Paired-run comparison (phase 2 of docs/specs/site-design-mode.md): two solver runs that differ only in the design,
+// or (a settings test) two runs of the same design that differ only in the inlet and pipe solver settings.
 //
 //   fingerprint   a hash of everything that is not the design (storm, inflow, tide, start levels, antecedent soil,
-//                 grid and solver, run length, sediment / debris / bank options, drainage settings, area, app commit);
-//                 two runs compare only when their fingerprints match, and a refusal names the parts that differ
+//                 grid and solver, run length, sediment / debris / bank options, drainage settings, inlet and pipe
+//                 solver settings, area, app commit); two runs compare when their fingerprints match, or when they
+//                 differ only in the inlet and pipe solver settings and the design is the same; a refusal names the
+//                 parts that differ
 //   grids         the 1 m outputs every run keeps (max depth, max water surface, max speed, max depth × speed, first
 //                 wetting, time above 15 cm, final depth), as binary .f32 with an ESRI-style .hdr
 //   Δ maps        proposed − existing with a no-change band (3 mm default), newly wet and newly dry cells
@@ -12,6 +15,7 @@
 // All pure functions on typed arrays: row-major, row 0 = north, NaN = no value.
 import { fillRings } from './terrain.js';
 import { barrierFaces } from './barriers.js';
+import { DESIGN_DEFAULTS, ROUTING_DEFAULTS } from './drainage.js';
 
 // ------------------------------------------------------------------ hashing and the forcing fingerprint
 
@@ -44,13 +48,18 @@ export const FORCING_PARTS = {
   runLength: 'run length',
   options: 'sediment, debris and bank options',
   drainage: 'drainage, green infrastructure, infrastructure layer and calibration',
+  drainSettings: 'inlet and pipe solver settings',
   area: 'model area',
   commit: 'app commit',
 };
+/** Parts left out of the fingerprint while absent (null), so runs made before they existed keep their hashes. */
+const OPTIONAL_PARTS = new Set(['drainSettings']);
+/** The parts a settings test may differ in: two runs of the same design that differ only here compare as one. */
+export const SETTINGS_PARTS = ['drainSettings'];
 /** forcing: { storm, inflow, … } (any JSON-able values) → { hash, parts: { name: hash } } */
 export function fingerprint(forcing) {
   const parts = {};
-  for (const k of Object.keys(FORCING_PARTS)) parts[k] = hashOf(forcing?.[k] ?? null);
+  for (const k of Object.keys(FORCING_PARTS)) if (!(OPTIONAL_PARTS.has(k) && forcing?.[k] == null)) parts[k] = hashOf(forcing?.[k] ?? null);
   return { hash: hashOf(parts), parts };
 }
 /** The names of the forcing parts two fingerprints differ in ([] when they match). */
@@ -58,11 +67,38 @@ export function fingerprintDiff(a, b) {
   if (!a?.parts || !b?.parts) return ['fingerprint missing (a run saved before comparisons were recorded)'];
   return Object.keys(FORCING_PARTS).filter(k => a.parts[k] !== b.parts[k]).map(k => FORCING_PARTS[k]);
 }
-/** Whether two runs may be compared, and why not. a, b: { forcing: fingerprint, scenario } */
+/**
+ * Whether two runs may be compared, as what, and why not. a, b: { forcing: fingerprint, designHash }
+ * → { ok, kind: 'design' (same forcing) | 'settings' (same design, only the inlet and pipe solver settings differ), diff, reason }
+ */
 export function comparable(a, b) {
   const diff = fingerprintDiff(a.forcing, b.forcing);
-  return diff.length ? { ok: false, diff, reason: `The runs differ in more than the design: ${diff.join('; ')}. Rerun one of them with the other's settings.` } : { ok: true, diff: [] };
+  if (!diff.length) return { ok: true, kind: 'design', diff: [] };
+  const pa = a.forcing?.parts, pb = b.forcing?.parts;
+  const keys = pa && pb ? Object.keys(FORCING_PARTS).filter(k => pa[k] !== pb[k]) : null;
+  if (keys?.every(k => SETTINGS_PARTS.includes(k))) {
+    if (a.designHash && a.designHash === b.designHash) return { ok: true, kind: 'settings', diff };
+    return { ok: false, diff, reason: 'The runs differ in their inlet or pipe solver settings and in the design. Change one at a time: run the same design with each setting.' };
+  }
+  return { ok: false, diff, reason: `The runs differ in more than the design: ${diff.join('; ')}. Rerun one of them with the other's settings. (Runs of the same design that differ only in the inlet or pipe solver settings compare as a settings test.)` };
 }
+/** The inlet and pipe solver settings a run records (forcing drainSettings: { inlets, routing }, absent = the defaults): label, unit, display scale. */
+const SETTING_ROWS = [
+  ['inlets', 'inletArea', 'Open area of the grate', 'm²'], ['inlets', 'inletPerim', 'Edge water spills over', 'm'],
+  ['inlets', 'Cw', 'Shallow-water efficiency (Cw)', ''], ['inlets', 'Co', 'Deep-water efficiency (Co)', ''], ['inlets', 'crestM', 'Inlet sits above the street', 'cm', 100],
+  ['routing', 'routingStep', 'Longest time step', 's'], ['routing', 'variableStep', 'Step shortening', ''], ['routing', 'headTol', 'Levels must settle to', 'mm', 1000],
+  ['routing', 'maxTrials', 'Tries per step', ''], ['routing', 'minSurfArea', 'Smallest manhole water area', 'm²'], ['routing', 'surcharge', 'When a pipe runs full', ''],
+  ['routing', 'inertialDamping', 'Damping of fast-changing flow', ''], ['routing', 'normalFlowLimited', 'Limit flow to normal flow', ''],
+  ['routing', 'minSlope', 'Flattest pipe slope', '%'], ['routing', 'lengthen', 'Lengthen very short pipes', ''],
+];
+const SETTING_DEFAULTS = { inlets: { inletArea: DESIGN_DEFAULTS.inletArea, inletPerim: DESIGN_DEFAULTS.inletPerim, Cw: DESIGN_DEFAULTS.Cw, Co: DESIGN_DEFAULTS.Co, crestM: 0 }, routing: ROUTING_DEFAULTS };
+/** What a settings test changed: the two runs' drainSettings (null = the defaults) → [{ key, label, unit, before, after }], display units. */
+export function settingsChanges(sa, sb) {
+  const get = (s, g, k, scale) => { const v = s?.[g]?.[k] ?? SETTING_DEFAULTS[g][k]; return typeof v === 'number' && scale ? +(v * scale).toPrecision(6) : v; };
+  return SETTING_ROWS.map(([g, k, label, unit, scale]) => ({ key: k, label, unit, before: get(sa, g, k, scale), after: get(sb, g, k, scale) })).filter(r => r.before !== r.after);
+}
+/** A settings change as text: "Tries per step 8 → 20", "Lengthen very short pipes on → off". */
+export const settingText = (r) => { const v = (x) => (x === true ? 'on' : x === false ? 'off' : `${x}${r.unit ? ' ' + r.unit : ''}`); return `${r.label}: ${v(r.before)} → ${v(r.after)}`; };
 
 // ------------------------------------------------------------------ 1 m output grids (.f32 + .hdr)
 
@@ -307,7 +343,7 @@ export function summaryHTML(cmp) {
 <style>body{font:13px/1.45 system-ui,sans-serif;max-width:820px;margin:24px auto;color:#111}h1{font-size:18px}h2{font-size:14px;margin:18px 0 6px}table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #ddd;padding:3px 6px;text-align:left}td.n{text-align:right;font-variant-numeric:tabular-nums}.bad{color:#b00020}.ok{color:#0a6}</style>
 <h1>FloodSim comparison: ${esc(cmp.b.label)} vs ${esc(cmp.a.label)}</h1>
 ${cmp.a.emulated || cmp.b.emulated ? `<p class="bad"><b>EMULATED — screening only.</b> ${[cmp.a, cmp.b].filter(r => r.emulated).map(r => esc(r.label)).join(' and ')} ${cmp.a.emulated && cmp.b.emulated ? 'are' : 'is'} the per-project emulator's estimate, not a solver run (typical error ${esc(cmp.b.emulated?.error ?? cmp.a.emulated?.error ?? 'see its validation')}). Confirm with a solver run before using these numbers in a report.</p>` : ''}
-<p>Both runs share the forcing fingerprint <code>${esc(cmp.a.forcing.hash)}</code> (storm, inflow, tide, start levels, soil, grid, solver, options, drainage, area, app commit ${esc(cmp.a.commit ?? '?')}); they differ only in the design. Changes under ${(cmp.band * 1000).toFixed(0)} mm are reported as no change.</p>
+${cmp.kind === 'settings' ? `<p><b>Settings test.</b> Same storm, inputs and design; the runs differ only in these inlet and pipe solver settings: ${(cmp.changes ?? []).map(r => esc(settingText(r))).join('; ')}. The maps show what the settings changed, not the effect of a design.</p>` : ''}<p>${cmp.kind === 'settings' ? 'Apart from those settings, both' : 'Both'} runs share the forcing fingerprint <code>${esc(cmp.a.forcing.hash)}</code> (storm, inflow, tide, start levels, soil, grid, solver, options, drainage, area, app commit ${esc(cmp.a.commit ?? '?')})${cmp.kind === 'settings' ? '' : '; they differ only in the design'}. Changes under ${(cmp.band * 1000).toFixed(0)} mm are reported as no change.</p>
 <table>${row('Before', `${esc(cmp.a.label)} (${esc(cmp.a.saved ?? '')})`)}${row('After', `${esc(cmp.b.label)} (${esc(cmp.b.saved ?? '')}), design ${esc(cmp.b.designHash ?? '–')}`)}${row('Storm', esc(cmp.a.storm ?? ''))}</table>
 <h2>Off-site impact${cmp.site ? '' : ' (no site boundary drawn: the whole model counts as off-site)'}</h2>
 <table>${row('Cells with a higher max water surface', `<span class="${imp.cells ? 'bad' : 'ok'}">${imp.cells.toLocaleString()} (${f(imp.area, 0, ' m²')})</span>`)}${row('Largest rise', f(imp.maxRise * 1000, 0, ' mm'))}

@@ -1,4 +1,4 @@
-// Comparison tests (docs/specs/site-design-mode.md, phase 2): the forcing fingerprint (stable, names what differs,
+// Comparison tests (docs/specs/site-design-mode.md, phase 2): the forcing fingerprint (stable, names what differs, settings tests,
 // ignores the design), the .f32 grids, Δ maps with the no-change band, newly wet / dry, the off-site impact, the
 // building and outlet tables, control-line faces and their signs, and the CSV / summary writers.
 // Usage: node tests/run-compare-tests.mjs
@@ -21,6 +21,20 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   check('a design is not part of the forcing', C.fingerprint({ ...base, design: { features: [1] } }).hash === a.hash);
   check('NaN and null hash differently; typed arrays hash as arrays', C.hashOf(NaN) !== C.hashOf(null) && C.hashOf(new Float32Array([1, 2])) === C.hashOf([1, 2]));
   check('runs saved without a fingerprint are refused', !C.comparable({ forcing: null }, { forcing: a }).ok);
+  // settings tests: runs of the same design that differ only in the inlet and pipe solver settings
+  check('default settings (none recorded) keep the fingerprint runs had before', C.fingerprint({ ...base, drainSettings: null }).hash === a.hash && !('drainSettings' in a.parts));
+  const sB = { inlets: { inletArea: 0.2, inletPerim: 2, Cw: 0.37, Co: 0.67, crestM: 0.05 }, routing: { maxTrials: 20, headTol: 0.0005, lengthen: false } };
+  const s = C.fingerprint({ ...base, drainSettings: sB });
+  const pair = C.comparable({ forcing: a, designHash: 'd1' }, { forcing: s, designHash: 'd1' });
+  check('same design, only the settings differ: a settings test', pair.ok && pair.kind === 'settings' && /inlet and pipe solver/.test(pair.diff[0]));
+  check('same forcing: a design pair', C.comparable({ forcing: a, designHash: 'd1' }, { forcing: b, designHash: 'd2' }).kind === 'design');
+  const both = C.comparable({ forcing: a, designHash: 'd1' }, { forcing: s, designHash: 'd2' });
+  check('settings and design both changed: refused', !both.ok && /one at a time/.test(both.reason));
+  check('settings and the storm changed: refused', !C.comparable({ forcing: c, designHash: 'd1' }, { forcing: s, designHash: 'd1' }).ok);
+  check('settings with no design hash (emulated): refused', !C.comparable({ forcing: a, designHash: null }, { forcing: s, designHash: null }).ok);
+  const ch = C.settingsChanges(null, sB), txt = ch.map(C.settingText);
+  check('what a settings test changed, in display units', ch.length === 6 && txt.includes('Inlet sits above the street: 0 cm → 5 cm') && txt.includes('Levels must settle to: 1.5 mm → 0.5 mm') && txt.includes('Lengthen very short pipes: on → off') && !ch.some(r => r.key === 'inletArea'), txt.join(' | '));
+  check('no settings changed: no rows', C.settingsChanges(null, null).length === 0 && C.settingsChanges(sB, sB).length === 0);
 }
 
 // ---- .f32 grids
