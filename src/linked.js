@@ -57,8 +57,8 @@ export async function fetchFeatures(src, [w, s, e, n], fetcher) {
 // ------------------------------------------------------------------ field detection for pipe layers
 
 const FIELD_PATTERNS = {
-  size: /^(dia|diam|diameter|dia_?hgt|diameter_?in|pipe_?dia(meter)?|pipe_?size|size|height|hgt|rise)$|dia(meter)?|pipesize/i,
-  width: /^(width|wid|span|pipe_?width)$/i,
+  size: /^(dia|diam|diameter|dia_?hgt|diameter_?in|pipe_?dia(meter)?|pipe_?size|size|height|hgt|rise)$|dia(meter)?|pipesize|_(height|hgt|rise)$/i,
+  width: /^(width|wid|span|pipe_?width)$|_(width|span)$/i,
   shape: /shape|shpe|x_?sec|xsec|cross_?sec|sec_?shp|pipe_?type/i,
   upInvert: /(^|_)(us|up|upstr(eam)?|start|from|frm|beg(in)?)_?(inv(ert)?|ie|elev)|inv(ert)?_?(up|us|start|from)|^upinv|^usinv|^inv_?up/i,
   dnInvert: /(^|_)(ds|dn|down|downstr(eam)?|end|to)_?(inv(ert)?|ie|elev)|inv(ert)?_?(dn|ds|down|end|to)|^dninv|^dsinv|^inv_?dn/i,
@@ -66,6 +66,10 @@ const FIELD_PATTERNS = {
   system: /^(unit_?type|system|sys_?type|sewer_?type|swr_?type|flow_?type|sewer_?use|use_?type)$/i,
 };
 const DEAD = /^(y|yes|true|1|abandoned|removed|inactive|retired|proposed|out of service)$/i;
+// a field that says the pipe is in use (Charlotte: Active = 1): there it is the 'no' values that drop a pipe
+const LIVE_FIELD = /^(is_?)?active$|in_?service/i, NOT_LIVE = /^(n|no|false|0|inactive|abandoned|removed|retired|proposed)$/i;
+/** True when a pipe's status value says it is abandoned, removed or proposed. */
+export const isDead = (field, v) => (LIVE_FIELD.test(field) ? NOT_LIVE : DEAD).test(String(v ?? '').trim());
 // a combined-sewer pipe by its system field: 'Combined', 'COMB', or a combined unit code (Portland: CSML, a combined main)
 const COMBINED = /comb|^cs(ml|o)?$/i;
 
@@ -73,7 +77,9 @@ const COMBINED = /comb|^cs(ml|o)?$/i;
 export function detectPipeFields(fields, sample) {
   const pick = (re, avoid = []) => fields.find(f => re.test(f) && !avoid.includes(f)) ?? null;
   const m = {};
-  m.upInvert = pick(FIELD_PATTERNS.upInvert); m.dnInvert = pick(FIELD_PATTERNS.dnInvert, [m.upInvert]);
+  // an invert field by name (US_INVERT) wins over an elevation one (US_ELEV), which in a layer that has both is the rim
+  const inv = (re, avoid = []) => fields.find(f => re.test(f) && /inv|_ie$/i.test(f) && !avoid.includes(f)) ?? pick(re, avoid);
+  m.upInvert = inv(FIELD_PATTERNS.upInvert); m.dnInvert = inv(FIELD_PATTERNS.dnInvert, [m.upInvert]);
   m.size = pick(FIELD_PATTERNS.size, [m.upInvert, m.dnInvert]); m.width = pick(FIELD_PATTERNS.width, [m.size]);
   // shape: not ArcGIS's geometry fields (Shape, Shape_Length)
   m.shape = pick(FIELD_PATTERNS.shape, [m.size, ...fields.filter(f => /^shape([._]|$)/i.test(f))]); m.status = pick(FIELD_PATTERNS.status);
@@ -99,7 +105,7 @@ export function pipeRecords(features, m, { datum = 0 } = {}) {
   for (const f of features) {
     if (f.kind !== 'line' || f.coords.length < 2) continue;
     const p = f.props;
-    if (m.status && DEAD.test(String(p[m.status] ?? '').trim())) continue;
+    if (m.status && isDead(m.status, p[m.status])) continue;
     // sizes beyond 6 m tall / 12 m wide are placeholders (999, 9999 …) in real layers: treat them as unknown
     const hv = Number(p[m.size]) * u, wv = m.width ? Number(p[m.width]) * u : 0;
     const h = hv > 0 && hv <= 6 ? hv : null, w = wv > 0 && wv <= 12 ? wv : null;
