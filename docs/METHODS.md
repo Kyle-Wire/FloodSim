@@ -1284,6 +1284,20 @@ pipes actually drain to the gauge.
 from the outfalls and 65,700 m³ went past the gauge, against the 224,000 m³ USGS measured. The drainage now does what
 it should, so what remains is the water put in (the rain) and taken out (infiltration, 206,000 m³).
 
+**Radar-only rain** (project "Edwards Branch Charlotte 2025 radar-only", run 2026-11-05_083228; the new Rainfall choice
+"Radar only, MRMS not adjusted to gauges"). 92 mm over the area in place of 77 mm, 52 mm in the peak hour in place of
+45 mm: 20 % more water (395,000 m³). The gauge reads 1.10 m low (210.76 m), peaking 6 minutes early. 94,700 m³ went
+past it (USGS: 224,000 m³), 58 % soaked in, and the books close (−0.001 %; combined −0.29 %).
+
+**What a rain gauge in the watershed saw.** USGS and Charlotte-Mecklenburg run a dense network of tipping-bucket gauges
+(NWIS parameter 00045). CRN-47 at Winterfield Elementary, 0.4 km from the middle of the watershed, caught 111 mm, 71 mm
+of it in one hour: about the 20-year hour here (Atlas 14), against the 2.6-year (gauge-corrected) and 5-year
+(radar-only) hours the model was given. The storm was patchy. The 16 other gauges within 10 km caught 41–112 mm (peak
+hours 18–83 mm), so a gauge correction 5 km off the cell can as easily pull the radar down as up. At 111 mm on 2.5–2.7 km² the
+creek's 224,000 m³ is a runoff ratio of 75–80 %, plausible for a paved watershed in a cloudburst. So the rain is the
+largest part of the gap, and the next step is the radar fitted to the gauges inside the area, not more work on the
+drainage.
+
 ### 5.13 Earlier observation comparisons recorded in the README
 
 These are recorded in the README as development history. A reviewer should treat them as partial validation:
