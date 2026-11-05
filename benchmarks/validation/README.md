@@ -17,7 +17,7 @@ each case shows and what it does not.
 | Forest Hills, Queens — Ida 2021, street and basement flooding | 2026-11-04_182532 | 1adcf35a90c1+dirty | 0.61 / −0.20 (25) | – | – | USGS mapped inundation, Ida 2021, Forest Hills: hit 33 %, CSI 14 %; NYC DEP, Moderate: hit 31 %, CSI 5 %; NYC DEP, Extreme: hit 16 %, CSI 9 % | 0 / 1 / 9 | first run |
 | Forest Hills, Queens — Ida 2021, uncertainty band (4 m speed mode) | 2026-11-04_192258_Validation-Existing-conditions | c53d845c8aa9+dirty | 0.67 / −0.15 (25) | 1 of 25 inside, 0.16 m wide (5 runs) | – | USGS mapped inundation, Ida 2021, Forest Hills: hit 29 %, CSI 13 %; NYC DEP, Moderate: hit 28 %, CSI 5 %; NYC DEP, Extreme: hit 14 %, CSI 9 % | 0 / 2 / 8 | first run |
 | Forest Hills, Queens — against the NYC DEP Moderate Stormwater Flood Map | 2026-11-04_185733_Validation-Existing-conditions | 1adcf35a90c1+dirty | – | – | – | NYC DEP, Moderate: hit 15 %, CSI 3 % | 0 / 0 / 2 | first run |
-| Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers | not run yet | | | | | | | |
+| Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers | 2026-11-04_215715_Validation-Existing-conditions | f685bdddb324+dirty | – | – | 0214643820 −2.18 | – | 1 / 0 / 1 | first run |
 
 ## Manayunk, Philadelphia — Ida 2021, Schuylkill River flood
 
@@ -51,3 +51,11 @@ A 2.13 in/hr design storm (NYC DEP Moderate, current sea level) against DEP's ow
 | Run | Commit | Storm | Marks RMSE / bias (n) | Gauges | Maps | Note |
 |---|---|---|---|---|---|---|
 | 2026-11-04_185733_Validation-Existing-conditions | 1adcf35a90c1+dirty | custom constant 55 mm/hr for 1 h | – | – | NYC DEP, Moderate: hit 15 %, CSI 3 % | DEP Moderate design storm, 55 mm/hr for 1 h |
+
+## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers
+
+A 2.5 km² urban watershed above USGS 0214643820 (Edwards Branch at Sheffield Dr), which set its record on 12 June 2025: 9.90 ft, 2,560 cfs at 8:50 pm EDT. The City of Charlotte's own storm pipes (sizes, shapes and surveyed inverts), inlets and outfalls are linked, not synthesised: the first case with a real sewer. Scored on the gauge's peak level and its time. Pipe data: City of Charlotte, CC BY-NC-SA 4.0 (non-commercial). docs/METHODS.md §5.12.
+
+| Run | Commit | Storm | Marks RMSE / bias (n) | Gauges | Maps | Note |
+|---|---|---|---|---|---|---|
+| 2026-11-04_215715_Validation-Existing-conditions | f685bdddb324+dirty | historic: Storm of 2025-06-12, 77 mm over 22.63 h from 2025-06-12 19:22 UTC | – | 0214643820 −2.18 | – | City of Charlotte storm pipes linked; MRMS gauge-corrected; 2 m |

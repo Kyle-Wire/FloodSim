@@ -1242,7 +1242,17 @@ Sheffield Drive, which set its record on 12 June 2025: 9.90 ft on a datum of 685
 - **Scored on** the gauge's peak level and its time (§5.11's scorecard). No USGS high-water marks were filed for this
   storm.
 
-Results to come.
+**First run** (2026-11-04_215715, 1.07 h of compute for 25.6 h simulated). The model starts at the gauge's own level
+(209.07 m against 209.07 m) and peaks 14 minutes early, but it rises 0.61 m where the creek rose 2.79 m: the peak is
+2.18 m low. The books show why. Of 329,000 m³ of rain, 203,000 m³ soaked in (62 %), 134,000 m³ went into the pipes'
+outfalls (with 40,000 m³ of roof water piped in directly), and 24,700 m³ went down the creek past the gauge. Over the
+same hours USGS measured about 220,000 m³ past the gauge. Until then a pipe outfall took its water out of the model
+wherever it was: right on the edge, wrong here, where every endwall empties into Edwards Branch above the gauge. Outfalls
+the outfall layer places inside the area (and synthetic ones into a mapped stream) now put their water back on the
+ground at their cell (`src/coupler.js`, `src/drainage.js` `outfallCells`; `tests/run-coupler-tests.mjs`). The second
+suspect is the soil: 62 % infiltrated is a lot for an urban watershed whose gauge passed about two-thirds of the rain.
+
+Rerun with the outfalls returning: to come.
 
 ### 5.13 Earlier observation comparisons recorded in the README
 
