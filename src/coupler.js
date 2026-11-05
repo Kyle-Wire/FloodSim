@@ -16,7 +16,8 @@ import { inletFlow, returnsHere, posKey } from './drainage.js';
 export class Coupler {
   /**
    * @param solver GPUSolver created with `inlets` = net.inlets.map(i => i.cell) (same order)
-   * @param net    network from synthNetwork: nodes, pipes, inlets [{node, cell, grates}]
+   * @param net    network from synthNetwork: nodes, pipes, inlets [{node, cell, grates, crest?}] (crest: the opening above
+   *               its cell's bed, m; 0 when not given)
    * @param swmm   SWMM engine already opened with the network's .inp
    * @param zs     solver bed elevations (absolute, m) to read the surface level at each inlet cell
    */
@@ -30,6 +31,7 @@ export class Coupler {
     this.roofRain = null;     // per node, × the solver's rain rate: the rain on those roofs over the area mean (radar rain); null = 1
     this.inletNodes = net.inlets.map(g => g.node);
     this.grates = net.inlets.map(g => g.grates);
+    this.crest = net.inlets.map(g => g.crest ?? 0);
     this.swIdx = net.nodes.map(n => swmm.index('NODE', n.name));
     if (this.swIdx.some(i => i < 0)) throw new Error('SWMM node lookup failed');
     this.lkIdx = net.pipes.map(p => swmm.index('LINK', p.name)); // by name: regulator weirs and outlets follow the conduits in the .inp
@@ -106,8 +108,9 @@ export class Coupler {
     if (this.twoWay) { // orifice flow out of pressurised manholes, capped per node by its pipe inflow
       back = new Float64Array(M); const want = new Float64Array(net.nodes.length);
       for (let m = 0; m < M; m++) {
-        const i = this.inletNodes[m], eta = this.zs[m] + Math.max(0, h[m]), dH = this.state.head[i] - eta;
-        if (dH > 0 && this.state.head[i] > this.zs[m]) { back[m] = net.opts.Co * net.opts.inletArea * this.grates[m] * Math.sqrt(2 * 9.81 * dH); want[i] += back[m]; }
+        // water leaves over the crest, or against the street water above it
+        const i = this.inletNodes[m], eta = this.zs[m] + Math.max(this.crest[m], h[m]), dH = this.state.head[i] - eta;
+        if (dH > 0 && this.state.head[i] > this.zs[m] + this.crest[m]) { back[m] = net.opts.Co * net.opts.inletArea * this.grates[m] * Math.sqrt(2 * 9.81 * dH); want[i] += back[m]; }
       }
       for (let m = 0; m < M; m++) if (back[m] > 0) {
         // SWMM's node INFLOW holds a lateral flow only when it is positive (a negative one is booked as outflow,
@@ -120,7 +123,7 @@ export class Coupler {
     for (let m = 0; m < M; m++) {
       const i = this.inletNodes[m], n = net.nodes[i];
       const share = overflow[i] / this.perNode[i]; // a manhole's overflow leaves through all of its grates
-      this.q[m] = inletFlow(h[m], this.zs[m], this.state.head[i], this.grates[m], net.opts) - share - (back?.[m] ?? 0); this.ret[m] = share;
+      this.q[m] = inletFlow(h[m], this.zs[m], this.state.head[i], this.grates[m], net.opts, this.crest[m]) - share - (back?.[m] ?? 0); this.ret[m] = share;
       if (this.prescribe?.has(m)) { this.q[m] = 0; this.ret[m] = 0; } // replayed: no surface exchange (the cell is outside the window)
       if (back) this.totals.backflow += back[m] * interval;
       flooding += share;

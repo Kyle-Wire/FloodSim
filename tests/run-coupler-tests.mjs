@@ -3,7 +3,7 @@
 // interceptor, an interior pipe end the data does not call an outfall); the water an outfall takes in one interval
 // comes back on its cell over the next; the books count what came back, so it is not booked as gone.
 // Usage: node tests/run-coupler-tests.mjs
-import { outfallCells, returnsHere, DESIGN_DEFAULTS } from '../src/drainage.js';
+import { outfallCells, returnsHere, inletFlow, DESIGN_DEFAULTS } from '../src/drainage.js';
 import { Coupler } from '../src/coupler.js';
 
 let fails = 0;
@@ -52,6 +52,14 @@ const nodes = [
   q = cp.step(vol, new Float64Array(cp.count), 2, 4);
   check('the books count the water the ground received back', Math.abs(cp.totals.outfallReturned - 1) < 1e-9, String(cp.totals.outfallReturned));
   check('outfalls that leave keep their volume booked as gone (interior pipe end, interceptor)', Math.abs(cp.outVol[idx.get('O3')] - 0.8) < 1e-9 && Math.abs(cp.outVol[idx.get('I5')] - 0.4) < 1e-9);
+}
+
+{ // an inlet with a crest above its cell (a gully lip, a kerb inlet): water only above the crest, on the head over it
+  const o = DESIGN_DEFAULTS, c = 0.05;
+  check('a crest: no inflow while the water is below it, free or submerged', inletFlow(0.04, 0, -5, 1, o, c) === 0 && inletFlow(0.04, 0, 0.02, 1, o, c) === 0);
+  check('a crest: free inflow on the head over the crest', Math.abs(inletFlow(0.25, 0, -5, 1, o, c) - inletFlow(0.2, 0, -5, 1, o)) < 1e-12 && inletFlow(0.25, 0, -5, 1, o, c) > 0);
+  check('a crest: submerged inflow on the head difference above the crest', Math.abs(inletFlow(0.25, 0, 0.1, 1, o, c) - inletFlow(0.2, 0.05, 0.1, 1, o)) < 1e-12);
+  check('no crest: the same as before', inletFlow(0.1, 2, 1, 1, o) === inletFlow(0.1, 2, 1, 1, o, 0) && inletFlow(0, 2, 1, 1, o) === 0 && inletFlow(0.1, 2, 2.05, 1, o) > 0);
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall passed');

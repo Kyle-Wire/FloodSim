@@ -471,9 +471,12 @@ export function addTanks(net, volume) {
  * only as SWMM node overflow, which the coupler integrates per routing step and puts back on the street (both models
  * then book identical volumes; a reverse orifice withdrew water SWMM's near-zero manhole storage did not hold).
  * @param h  surface depth at the inlet cell (m)   @param zs surface (bed) elevation (m)   @param Hn node hydraulic head (m)
+ * @param crest the opening's height above the cell's bed (m): a gully or kerb inlet set above the ground around it
+ *   takes water only above its crest, on the head over the crest
  */
-export function inletFlow(h, zs, Hn, nInlets, o = DESIGN_DEFAULTS) {
+export function inletFlow(h, zs, Hn, nInlets, o = DESIGN_DEFAULTS, crest = 0) {
   if (!nInlets) return 0; // manhole lid: no opening (overflow is handled by the coupler)
+  h -= crest; zs += crest; if (h <= 0) return 0; // the head over the opening
   const open = 1 - Math.min(0.95, o.clog ?? 0); // debris on the grates (calibration) closes this share of the opening
   const A = o.inletArea * nInlets * open, P = o.inletPerim * nInlets * open, eta = zs + Math.max(0, h);
   if (Hn < zs) { // node below the street: free inflow
