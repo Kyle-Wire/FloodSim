@@ -773,7 +773,7 @@ Changes under about 1 cm are within its error, so an off-site impact must be con
 ## 5. Verification and validation
 
 **Verification** (does the code solve the equations correctly) is extensive. **Validation** against observed floods
-in the repository is limited (§5.6–5.12, §5.14).
+in the repository is limited (§5.6–5.13, §5.15).
 
 ### 5.1 Code verification (analytic and internal-consistency tests)
 
@@ -935,7 +935,7 @@ Run on 3 November 2026 at commit `08a4162` (+ the water-balance fix of `2535d75`
   the nearest, CoCoRaHS NJ-CN-24 at 8.2 km, **1.04**; Philadelphia International (ASOS, 10 km) 1.44; Wyndmoor
   (CoCoRaHS, 13 km, 130 mm) 0.53. Ida's totals ranged from 48 to 130 mm across 25 km, so no single gauge is decisive;
   the median sits in the scorecard's *fair* band (|ratio − 1| = 0.17). The gauge-adjusted product being 33 % under
-  radar-only matches the Fairmount run of §5.12 and is not yet explained.
+  radar-only matches the Fairmount run of §5.13 and is not yet explained.
 - **Books.** Surface −7e-6, surface + sewers +3e-4. The report's water balance closes to 187 ft³ of 596,380 ft³ in:
   rain on the ground 310,917; roof rain piped to the combined sewers 264,097; sanitary flow 21,048; to the pipe
   outfalls 518,101; infiltration 26,814; off the model edge 15,301; standing at the end 35,870. (This run found the
@@ -944,7 +944,7 @@ Run on 3 November 2026 at commit `08a4162` (+ the water-balance fix of `2535d75`
 - **Depths: not validated at this site.** USGS STN holds 262 Ida marks in Pennsylvania, 43 around Philadelphia, all on
   the Schuylkill (Fairmount to Manayunk); none falls in this block, and no street-flooding observations are published
   for it. Peak depth in the model: 0.76 m. The marks that exist are riverine; the Fairmount run of
-  §5.12 used five of them, and the Manayunk reach has 15 (§5.8).
+  §5.13 used five of them, and the Manayunk reach has 15 (§5.8).
 
 What this shows: the rain QA, water books and report work end to end on a real storm, and the rain the model used is
 consistent with the gauge network to within its spread. It does not show that the modelled depths are right.
@@ -1180,6 +1180,14 @@ nearest step to 54.1 mm/hr) with a 2 h tail, at 2 m, the drainage as in §5.9, a
 DEP drew it (`benchmarks/validation`, case *forest-hills-dep-moderate*). Two models of one design storm: agreement
 would not make either right, and disagreement says where they differ, not which is wrong.
 
+**Result** (run 2026-11-04_185733, 0.48 h of compute for 3 h simulated). FloodSim floods 3.7 times the area DEP maps,
+yet only 15 % of DEP's flooded cells (CSI 3 %; 96 % of the cells FloodSim floods, DEP does not). The two models put the
+water in different places, not just in different amounts. DEP keeps only patches of a quarter acre and over where its
+real sewer surcharges, so its map is the low points its pipes cannot drain. FloodSim's synthetic sewer drains the
+streets evenly, so 4 in collects in every dip on a 2 m grid. Against Ida (§5.9) FloodSim reads low at the marks, and
+here it floods widely: both point at the drainage, which is synthetic here, rather than at the surface model. A case
+with a real sewer is §5.12.
+
 ### 5.11 The validation suite and its uncertainty bands
 
 `node tools/validate.mjs` scores every case in `benchmarks/validation/cases.json` from the latest finished run filed
@@ -1189,8 +1197,8 @@ the change from the run before, and each case's history. `--run` runs every case
 (`tools/batch.mjs`, one job of the project's storm as set), so a release can be held to the one before it. A case's
 project is installed from `benchmarks/validation/<case>/project.json` when the projects folder lacks it.
 
-- **Cases.** Manayunk (§5.8), Forest Hills under Ida (§5.9) and Forest Hills against DEP's Moderate map (§5.10, a
-  comparison only).
+- **Cases.** Manayunk (§5.8), Forest Hills under Ida (§5.9) and its band (below), Forest Hills against DEP's
+  Moderate map (§5.10, a comparison only), and Edwards Branch in Charlotte with the city's own storm sewer (§5.12).
 - **History so far.** The two Manayunk runs: marks RMSE 1.36 → 0.85 m and the Manayunk gauge −1.51 → −0.80 m with the
   river outlet. Their marks were scored in the app after each run was filed, before scores added after a run went into
   its `summary.json` (they do now); the history says so.
@@ -1203,8 +1211,40 @@ project is installed from `benchmarks/validation/<case>/project.json` when the p
   model. With one input changed at a time and four or five runs, this is a sensitivity band, not a probability.
   `tests/run-uncertainty-tests.mjs` checks marks inside, above and below a band, the variant that moves the levels
   most, marks a member did not score, and the map-score ranges.
+- **The first band: Forest Hills under Ida** (case *forest-hills-ida-band*, 4 m speed mode, 5 runs, 1.9 h). Base run:
+  marks RMSE 0.67 m, bias −0.15 m (25 marks). Only 1 of 25 marks falls inside the band. The band is 0.16 m wide on
+  average (0.72 m at most), and no variant moves the levels much: one cell size coarser +0.04 m, infiltration × 0.5
+  +0.03 m, roughness ± 20 % under 0.01 m. The map scores hardly move either (CSI against the USGS map 12–13 %). So
+  plausible changes to roughness, soil and grid do not reach the marks. What is left is what the variants hold fixed:
+  the rain (0.8 of the nearby gauges, §5.9) and the drainage (a synthetic sewer sized for the 10-year storm that never
+  surcharged). Roughness hardly matters here because in a pluvial flood the water stands in low spots and its level is
+  set by volume, not by how fast it flows.
 
-### 5.12 Earlier observation comparisons recorded in the README
+### 5.12 Real storm sewers — Edwards Branch, Charlotte NC, 12 June 2025
+
+The first case where the drainage is the city's own network rather than one FloodSim builds (case *edwards-branch-clt*).
+Edwards Branch drains 2.5 km² of east Charlotte (USGS StreamStats; NWIS gives 1.03 mi²) to USGS 0214643820 at
+Sheffield Drive, which set its record on 12 June 2025: 9.90 ft on a datum of 685.18 ft NAVD88 (211.86 m) and
+2,560 cfs at 8:50 pm EDT. The stage rose 7.8 ft in 50 minutes.
+
+- **Area.** The watershed's box with 120 m beyond the gauge to the west, so the creek leaves across a free-outfall
+  edge below the gauge rather than at it. 2 m.
+- **Drainage.** The City of Charlotte's storm pipes, inlets and outfalls, linked live
+  (`gis.charlottenc.gov/arcgis/rest/services/STM`): 1,738 pipes with surveyed inverts (`US_INVERT` / `DS_INVERT`, feet
+  NAVD88, on over 90 % of pipes) and sizes (`PACP_Height`, inches; 1,447 circular, 9 box), 1,319 inlets (catch basins
+  and drop inlets: `STRUCT_TYPE` CB, DCB, DI, CI, slab and elongated-throat inlets) and 129 outfalls (endwalls and
+  flared end sections). The model keeps 1,161 inlets on 40.6 km of pipe. Reading this layer needed three fixes to the
+  field detection (`src/linked.js`): an invert field by name wins over a rim elevation (`US_ELEV`), a `*_Height` field
+  is a size, and a field named `Active` keeps the pipes whose value is 1. The data is CC BY-NC-SA 4.0: free for
+  validation, not for a commercial product.
+- **Rain.** NOAA MRMS radar, gauge-corrected hourly totals timed by the 2-minute rate: 77 mm over the area in 28 hours
+  of radar, 45 mm in the peak hour (about the 2.6-year hour at the site, Atlas 14). The radar alone gives 92 mm.
+- **Scored on** the gauge's peak level and its time (§5.11's scorecard). No USGS high-water marks were filed for this
+  storm.
+
+Results to come.
+
+### 5.13 Earlier observation comparisons recorded in the README
 
 These are recorded in the README as development history. A reviewer should treat them as partial validation:
 
@@ -1220,7 +1260,7 @@ These are recorded in the README as development history. A reviewer should treat
 - **Ellicott City, 30 July 2016, MRMS**: 164 mm over the area in about 4 h against NWS-reported about 6.6 in (168 mm).
   This is a rainfall check, not a flood-depth validation.
 
-### 5.13 Test suites
+### 5.14 Test suites
 
 `npm test` (`tests/run-all.mjs`) runs every CPU suite offline: `tests/run-tests.mjs` and each
 `tests/run-*-tests.mjs` except the GPU runners, 38 suites in all. The GPU suite (`npm run test:gpu`,
@@ -1268,7 +1308,7 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-window-tests.mjs` | Window, edge segments, inflow rates, edge check, merging |
 | `run-radar-tests.mjs`, `run-mrms-tests.mjs`, `run-nowcast-tests.mjs` | Radar overlay frames; MRMS PNG/GRIB2 decoding, gauge-corrected totals, timing; storm motion and advection |
 
-### 5.14 What has not been validated
+### 5.15 What has not been validated
 
 - **Street flooding from rain** has one observed case, Forest Hills under Ida (§5.9), and it is not passed: the
   model is 0.2 m low on average over 25 outdoor marks (0.5–0.7 m on the hill and at the low end), and it floods

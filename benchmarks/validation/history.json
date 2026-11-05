@@ -88,8 +88,8 @@
  },
  {
   "case": "forest-hills-ida",
-  "scored": "2026-11-04T23:27:07.636Z",
-  "commit": "1adcf35+dirty",
+  "scored": "2026-11-05T01:52:40.346Z",
+  "commit": "f685bdd+dirty",
   "runCommit": "1adcf35a90c1+dirty",
   "run": "2026-11-04_182532",
   "saved": "2026-11-04T23:25:29.157Z",
@@ -97,13 +97,13 @@
   "simulatedH": 20,
   "wallH": 2.4,
   "marks": {
-   "n": 27,
-   "rmse": 0.731,
-   "bias": -0.073,
-   "within15": 0.148,
-   "hits": 20,
+   "n": 25,
+   "rmse": 0.615,
+   "bias": -0.205,
+   "within15": 0.16,
+   "hits": 18,
    "misses": 7,
-   "calls": 27
+   "calls": 25
   },
   "gauges": [],
   "maps": [
@@ -140,11 +140,148 @@
   ],
   "mass": 0.000056887654197685335,
   "checks": {
-   "good": 1,
+   "good": 0,
    "fair": 1,
+   "poor": 9
+  },
+  "verdict": "poor",
+  "note": "indoor and basement marks not scored (src/calibrate.js INDOORS); rescored from the levels this run gave"
+ },
+ {
+  "case": "forest-hills-ida-band",
+  "scored": "2026-11-05T01:51:59.681Z",
+  "commit": "c53d845+dirty",
+  "runCommit": "c53d845c8aa9+dirty",
+  "run": "2026-11-04_192258_Validation-Existing-conditions",
+  "saved": "2026-11-05T00:22:55.333Z",
+  "storm": "historic: Ida",
+  "simulatedH": 20,
+  "wallH": 0.4,
+  "marks": {
+   "n": 25,
+   "rmse": 0.67,
+   "bias": -0.15,
+   "within15": 0.24,
+   "hits": 18,
+   "misses": 7,
+   "calls": 25
+  },
+  "gauges": [],
+  "maps": [
+   {
+    "name": "USGS mapped inundation, Ida 2021, Forest Hills (Capurso and others, 2023)",
+    "observed": true,
+    "hitRate": 0.28593655157016373,
+    "csi": 0.13053823171547424,
+    "falseAlarmRatio": 0.8063258477940343,
+    "areaRatio": 1.4763795184505577,
+    "depthBias": -0.40248530090287815,
+    "depthRMSE": 0.502066480233013
+   },
+   {
+    "name": "NYC DEP Stormwater Flood Map, Moderate (2.13 in/hr), current sea level",
+    "observed": false,
+    "hitRate": 0.2762713089282703,
+    "csi": 0.04900759129098952,
+    "falseAlarmRatio": 0.943774017503822,
+    "areaRatio": 4.913587929691578,
+    "depthBias": null,
+    "depthRMSE": null
+   },
+   {
+    "name": "NYC DEP Stormwater Flood Map, Extreme (3.66 in/hr), 2080 sea level",
+    "observed": false,
+    "hitRate": 0.140453866134168,
+    "csi": 0.08616828825933948,
+    "falseAlarmRatio": 0.8176986175559526,
+    "areaRatio": 0.7704487165766648,
+    "depthBias": null,
+    "depthRMSE": null
+   }
+  ],
+  "mass": 3.1579882779591037e-7,
+  "checks": {
+   "good": 0,
+   "fair": 2,
    "poor": 8
   },
-  "verdict": "poor"
+  "verdict": "poor",
+  "note": "4 m speed mode with variants",
+  "band": {
+   "members": [
+    "base",
+    "coarse",
+    "infil-50",
+    "n+20",
+    "n-20"
+   ],
+   "runs": [
+    "2026-11-04_205156_Validation-Existing-conditions",
+    "2026-11-04_203852_Validation-Existing-conditions",
+    "2026-11-04_201341_Validation-Existing-conditions",
+    "2026-11-04_194844_Validation-Existing-conditions"
+   ],
+   "marks": {
+    "n": 25,
+    "inside": 1,
+    "share": 0.04,
+    "meanWidth": 0.15696468353271484,
+    "maxWidth": 0.7206268310546875,
+    "drivers": [
+     {
+      "key": "coarse",
+      "meanShift": 0.038
+     },
+     {
+      "key": "infil-50",
+      "meanShift": 0.028
+     },
+     {
+      "key": "n-20",
+      "meanShift": 0.003
+     },
+     {
+      "key": "n+20",
+      "meanShift": -0.001
+     }
+    ]
+   },
+   "maps": [
+    {
+     "name": "USGS mapped inundation, Ida 2021, Forest Hills (Capurso and others, 2023)",
+     "csi": [
+      0.12196682274960684,
+      0.13253073121277403
+     ],
+     "hitRate": [
+      0.2803898722519518,
+      0.29442052899273696
+     ]
+    },
+    {
+     "name": "NYC DEP Stormwater Flood Map, Moderate (2.13 in/hr), current sea level",
+     "csi": [
+      0.04509071929142226,
+      0.04979557902905745
+     ],
+     "hitRate": [
+      0.25041955402812016,
+      0.28904662871275205
+     ]
+    },
+    {
+     "name": "NYC DEP Stormwater Flood Map, Extreme (3.66 in/hr), 2080 sea level",
+     "csi": [
+      0.0819875486834821,
+      0.08925063427224052
+     ],
+     "hitRate": [
+      0.13285480640056002,
+      0.14738058755317957
+     ]
+    }
+   ]
+  }
  },
  {
   "case": "forest-hills-dep-moderate",
