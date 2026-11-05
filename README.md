@@ -391,7 +391,7 @@ on, lower 48).
 
 **Radar & nowcast** (Storm → *Radar & nowcast*; `src/nowcast.js`). A storm source for rain that is coming in: a run
 that starts in the last 1, 3 or 6 hours and goes past now, with the radar rain observed over the area to the latest
-2-minute frame, then 0–90 minutes of nowcast. Same per-cell rain, books and outputs as a historic radar storm; click
+2-minute frame, then 0–90 minutes of nowcast (2 or 3 h with NOAA HRRR's forecast rain past 90). Same per-cell rain, books and outputs as a historic radar storm; click
 again to refresh. (It was under Historic storm; a project saved with those controls opens with them here.)
 - **Observed:** whole hours as above (gauge-corrected once the archive has them, about 1.5 h behind; radar-only p1h
   until then, about 30 min behind), then the current part hour straight from the 2-minute frames (about 6 min behind).
@@ -409,6 +409,10 @@ again to refresh. (It was under Historic storm; a project saved with those contr
 - **Rolling live:** while a run plays, newer frames replace the nowcast blocks it has not reached and the rest is
   nowcast again from the newest frame; *Wait for the radar* holds the run at the latest frame (observed rain only,
   about 6 min behind real time). Replays and batch jobs never roll.
+- **HRRR past 90 minutes** (`src/hrrr.js`): for a 2- or 3-hour lead the nowcast fades into NOAA HRRR's forecast rain
+  (the 3 km weather model, newest run on AWS; 15-minute rain fields read by byte range from the GRIB2 files) from 60 to
+  90 minutes, HRRR alone after. Lower skill still: marked in red on the hyetograph, named in the panel's limits, and
+  the HRRR cycle is in the run record. Every member shares the one HRRR run. `npm run test:hrrr`.
 - **Replay:** an *Issued at* time in the past rebuilds the nowcast as it was then from the archive and checks it
   against what fell. Ida over South Street, 1 Sep 2021 23:30 UTC: band 1.3–5.8 mm in the next hour, 5.7 mm fell.
 - **Screening only:** storms grow, decay and turn, and skill of this kind of nowcast falls off within the hour. It

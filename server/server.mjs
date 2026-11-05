@@ -1,6 +1,7 @@
 // FloodSim dev server: static files from the repo root, plus a cached proxy for the open-data services.
 //   node server/server.mjs [port]      → http://localhost:8766/app/map.html
-// POST /api/fetch {url, method?, body?, contentType?} → upstream response, cached on disk by request hash.
+// POST /api/fetch {url, method?, body?, contentType?, range?} → upstream response, cached on disk by request hash
+// (range [first, last] bytes, inclusive: one message of a large GRIB2 file).
 // Only allowlisted hosts are proxied; responses are cached in .cache/ so re-running an area is offline-fast.
 // /api/projects…: project folders on this computer (loopback only), under FLOODSIM_PROJECTS or Documents\FloodSim Projects.
 // GET /api/version → { commit, dirty }: the app commit, part of every run's forcing fingerprint.
@@ -45,6 +46,7 @@ const ALLOW = new Set([
   'streamstats.usgs.gov',           // USGS StreamStats: basins, characteristics and regression peaks (ungauged river inflow)
   'geodesy.noaa.gov',               // NOAA NCAT / VERTCON: NGVD29 → NAVD88 for gauge datums
   'noaa-ocs-nationalbathymetry-pds.s3.amazonaws.com', // NOAA National Bathymetric Source: BlueTopo tiles (surveyed river and harbour beds)
+  'noaa-hrrr-bdp-pds.s3.amazonaws.com', // NOAA HRRR forecast rain (GRIB2 by byte range) past the radar nowcast
 ]);
 const UA = 'FloodSim/0.1 (urban flood research prototype)';
 const MIME = {
@@ -68,7 +70,9 @@ async function proxy(req, res) {
   const linkedOK = q.linked === true && (q.method ?? 'GET') === 'GET' && !PRIVATE.test(host);
   if (u.protocol !== 'https:' || !(ALLOW.has(host) || linkedOK)) return send(res, 403, 'host not allowed: ' + u.hostname);
   const method = q.method || 'GET';
-  const key = createHash('sha1').update(method + ' ' + u.href + '\n' + (q.body || '')).digest('hex');
+  const range = Array.isArray(q.range) && q.range.length === 2 && Number.isInteger(q.range[0]) && q.range[0] >= 0 && (q.range[1] == null || (Number.isInteger(q.range[1]) && q.range[1] >= q.range[0]))
+    ? `bytes=${q.range[0]}-${q.range[1] ?? ''}` : null;
+  const key = createHash('sha1').update(method + ' ' + u.href + '\n' + (q.body || '') + (range ? '\n' + range : '')).digest('hex');
   const file = join(cacheDir, key);
   try {
     const [data, meta] = await Promise.all([readFile(file), readFile(file + '.json', 'utf8')]);
@@ -80,7 +84,7 @@ async function proxy(req, res) {
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt) await new Promise(ok => setTimeout(ok, 1500 * attempt));
     try {
-      r = await fetch(u, { method, body: q.body, headers: { 'user-agent': UA, ...(q.contentType ? { 'content-type': q.contentType } : {}) }, signal: AbortSignal.timeout(90e3) });
+      r = await fetch(u, { method, body: q.body, headers: { 'user-agent': UA, ...(q.contentType ? { 'content-type': q.contentType } : {}), ...(range ? { range } : {}) }, signal: AbortSignal.timeout(90e3) });
       data = Buffer.from(await r.arrayBuffer());
       if (r.status !== 429 && r.status < 500) break;
     } catch (e) { lastErr = e; r = null; }

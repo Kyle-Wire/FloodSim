@@ -276,6 +276,9 @@ details.gi > summary { cursor: pointer; padding: 6px 0; font: 600 12.5px var(--b
 .hyeto-plot .band { fill: color-mix(in srgb, var(--warn) 22%, transparent); stroke: none; }
 .hyeto-plot .band-mid { fill: none; stroke: var(--warn); stroke-width: 1.5; stroke-dasharray: 4 2; }
 .hyeto-plot .skill-end { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 2; }
+.hyeto-plot .qpf-start { stroke: var(--crit); stroke-width: 1; stroke-dasharray: 2 2; }
+.hyeto-plot .qpf-label { fill: var(--crit); }
+.hyeto-plot text.halo, .hyeto-plot .obs-end-label { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
 .hyeto { margin: 16px 0 0; position: relative; }
 .hyeto figcaption { font: 500 10px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
 .hyeto-plot svg { display: block; width: 100%; height: 132px; overflow: visible; }
@@ -286,6 +289,8 @@ details.gi > summary { cursor: pointer; padding: 6px 0; font: 600 12.5px var(--b
 .hyeto-plot .bar.hot { fill: var(--ink); }
 .hyeto-plot .bar.fcst { fill: color-mix(in srgb, var(--warn) 70%, var(--surface)); }
 .hyeto-plot .bar.fcst.future { fill: color-mix(in srgb, var(--warn) 35%, var(--surface)); }
+.hyeto-plot .bar.fcst.qpf { fill: color-mix(in srgb, var(--crit) 55%, var(--surface)); }
+.hyeto-plot .bar.fcst.qpf.future { fill: color-mix(in srgb, var(--crit) 25%, var(--surface)); }
 .hyeto-plot .obs-end { stroke: var(--warn); stroke-width: 1.5; }
 .hyeto-plot .obs-end-label { fill: var(--warn); }
 .hyeto-plot .now { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 2; }
@@ -578,9 +583,9 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
       </div>
       <!-- ---- radar and nowcast (src/nowcast.js): the storm coming in -->
       <div id="ncCtl" hidden>
-        <p class="note">NOAA MRMS radar rain over the area to the latest 2-minute frame (about 6 minutes old), then a nowcast: the last 10 minutes' rain carried along the storm's motion, with an ensemble of faster, slower, turning, growing and decaying versions of it.</p>
+        <p class="note">NOAA MRMS radar rain over the area to the latest 2-minute frame (about 6 minutes old), then a nowcast: the last 10 minutes' rain carried along the storm's motion, with an ensemble of faster, slower, turning, growing and decaying versions of it. For 2 or 3 hours ahead it fades into NOAA HRRR's forecast rain past 60 minutes (lower skill).</p>
         <div class="field"><label for="ncObs">Observed rain</label><select id="ncObs"><option value="1">last 1 h</option><option value="3" selected>last 3 h</option><option value="6">last 6 h</option></select></div>
-        <div class="field"><label for="ncLead" title="Skill falls off after 30–60 minutes: past an hour the nowcast is a rough guide only">Nowcast ahead</label><select id="ncLead"><option value="0">none (observed only)</option><option value="30">30 min</option><option value="60" selected>60 min</option><option value="90">90 min (low skill past 60)</option></select></div>
+        <div class="field"><label for="ncLead" title="Skill falls off after 30–60 minutes: past an hour the nowcast is a rough guide only. 2 and 3 hours: past 60 minutes the nowcast fades into NOAA HRRR's forecast rain (a 3 km weather model run every hour), HRRR alone from 90 minutes: lower skill still">Nowcast ahead</label><select id="ncLead"><option value="0">none (observed only)</option><option value="30">30 min</option><option value="60" selected>60 min</option><option value="90">90 min (low skill past 60)</option><option value="120">2 h (HRRR past 90, lower skill)</option><option value="180">3 h (HRRR past 90, lower skill)</option></select></div>
         <div class="field"><label for="ncEns" title="Each member moves the same rain with the speed × e^N(0, 0.2), the direction + N(0, 15°) and the intensity growing or decaying at N(0, 0.5) in ln per hour: typical nowcast errors, not fitted to this storm">Ensemble</label><select id="ncEns"><option value="0">none (persistence only)</option><option value="10">10 members</option><option value="20" selected>20 members</option><option value="40">40 members</option></select></div>
         <div class="field"><label for="ncIssue" title="Blank: now. A past time replays the nowcast as it would have been issued then, from the IEM archive, and checks it against the rain that fell">Issued at (local)</label><span class="nc-issue"><input type="datetime-local" id="ncIssue" step="120" aria-label="Issue time, blank for now"><button class="btn" id="ncNow" type="button" title="Clear the issue time: the radar now">Now</button></span></div>
         <label class="toggle" id="ncCoastRow" hidden><input type="checkbox" id="ncCoast" checked> <span id="ncCoastLabel">Observed water level, then the tide prediction, on open-water edges</span></label>

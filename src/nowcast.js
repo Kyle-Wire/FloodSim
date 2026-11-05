@@ -16,7 +16,12 @@
 // than one answer. The spreads are typical nowcast errors, not fitted to this storm: a sensitivity band, not a probability.
 // Rolling: while a run plays, newer frames replace the nowcast blocks the run has not reached, and the rest is
 // nowcast again from the newest frame (newFrames, rollForward).
+// Past 90 minutes (leads of 120 and 180 min): NOAA HRRR forecast rain (src/hrrr.js), a numerical model run every hour.
+// The nowcast to 60 min, a linear crossfade to HRRR from 60 to 90 (BLEND), HRRR alone after: a blend of the kind
+// operational systems such as STEPS and INCA use for the first hours, with fixed weights here rather
+// than skill-based ones. HRRR is lower skill still at the scale of a model area; every member shares its one run.
 import { GRID, pixelWindow, fileURL, radarRain, frameAt } from './mrms.js';
+import { hrrrRain, rainOn } from './hrrr.js';
 
 const MIN = 60e3, STEP = 2 * MIN, HOUR = 3600e3;
 
@@ -135,6 +140,27 @@ export function nowcastFrames(src, w, leadMin, member = CONTROL) {
   return out;
 }
 
+/** Leads (minutes after the latest frame) of the crossfade from the nowcast to HRRR: all nowcast before, all HRRR after. */
+export const BLEND = Object.freeze({ from: 60, to: 90 });
+/** HRRR's weight at lead L minutes: 0 to `from`, rising linearly to 1 at `to`. */
+export const hrrrWeight = (L, { from, to } = BLEND) => Math.min(1, Math.max(0, (L - from) / (to - from)));
+/**
+ * One forecast frame (the 2 minutes from latest + L, mm) blended with HRRR: (1 − w)·nowcast + w·HRRR, w = hrrrWeight
+ * at the frame's middle; where the HRRR pieces cover only part of the 2 minutes, their rate over that part. f is not
+ * changed. → { f, w } (w 0: the nowcast frame itself)
+ */
+export function blendFrame(f, qpf, win, latest, L, blend = BLEND) {
+  const wt = qpf ? hrrrWeight(L + 1, blend) : 0; if (!(wt > 0)) return { f, w: 0 };
+  const t0 = latest + L * MIN, h = rainOn(qpf, win, t0, t0 + STEP); if (!(h.cover > 0)) return { f, w: 0 };
+  const out = new Float32Array(f.length); for (let p = 0; p < f.length; p++) out[p] = (1 - wt) * f[p] + wt * h.f[p] / h.cover;
+  return { f: out, w: wt };
+}
+/** nowcastFrames, blended into HRRR past BLEND.from when there is a run (qpf: hrrrRain's result). → [Float32Array] */
+export function forecastFrames(src, w, leadMin, member = CONTROL, qpf = null, blend = BLEND) {
+  const nf = nowcastFrames(src, w, leadMin, member);
+  return qpf ? nf.map((f, k) => blendFrame(f, qpf, w, src.latest, 2 * k, blend).f) : nf;
+}
+
 /** A seeded uniform generator on [0, 1) (mulberry32). */
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 /** Standard normal quantile (Abramowitz & Stegun 26.2.23, |error| < 4.5e-4). */
@@ -204,8 +230,10 @@ export function ensembleSummary(members, from, blockMin, opts = {}) {
  * plus live: { observedUntil (ms UTC), leadMin, motion: { u, v (px/min), kmh, toward (° from north), score } | null }
  * and src (the motionSource, to make ensemble members and refresh the nowcast without fetching again). `now` may be
  * a past time: the nowcast as it would have been issued then, from what the archive holds.
+ * Leads past BLEND.to with qpf ({ getBytes(url, range?), replay, cycle? }): the nowcast blended into HRRR (forecastFrames),
+ * the run as qpf in the result and live.qpf: { cycle, kinds, pieces, bytes, blend } (or { error } and the nowcast alone).
  */
-export async function liveRain(now, bbox, getBytes, { obsHours = 3, leadMin = 60, onProgress = () => {}, isWet, gauge = true } = {}) {
+export async function liveRain(now, bbox, getBytes, { obsHours = 3, leadMin = 60, onProgress = () => {}, isWet, gauge = true, qpf = null } = {}) {
   const latest = await latestFrame(now, getBytes);
   if (latest == null) throw new Error('no MRMS radar frame in the last 30 minutes at IEM');
   // the last whole hour with a radar-only total (p1h lags the hour by ~30 min)
@@ -226,9 +254,17 @@ export async function liveRain(now, bbox, getBytes, { obsHours = 3, leadMin = 60
   stats.partFrames = part.length;
   onProgress(0, 1, 'storm motion');
   const src = await motionSource(latest, bbox, getBytes);
-  frames.push(...nowcastFrames(src, win, leadMin));
+  let run = null, info = null;
+  if (qpf && leadMin > BLEND.to) {
+    const [w, s, e, n] = bbox, pad = 0.8; // the loop shows 0.65° round the area
+    try {
+      run = await hrrrRain(now, latest + BLEND.from * MIN, latest + leadMin * MIN, [w - pad, s - pad, e + pad, n + pad], qpf.getBytes, { replay: qpf.replay, cycle: qpf.cycle ?? null, onProgress });
+      info = { cycle: run.cycle, kinds: run.kinds, pieces: run.pieces.length, bytes: run.bytes, blend: { ...BLEND } };
+    } catch (err) { info = { error: err.message }; }
+  }
+  frames.push(...forecastFrames(src, win, leadMin, CONTROL, run));
   stats.forecastFrames = leadMin / 2;
-  return { win, t0: rr.t0, blockMin: 2, frames, stats, hours: rr.hours, src, live: { observedUntil: latest, leadMin, motion: src.motion } };
+  return { win, t0: rr.t0, blockMin: 2, frames, stats, hours: rr.hours, src, qpf: run, live: { observedUntil: latest, leadMin, motion: src.motion, ...(info ? { qpf: info } : {}) } };
 }
 
 /**

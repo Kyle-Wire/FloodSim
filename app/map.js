@@ -99,7 +99,7 @@ const EXAMPLES = [
 const fmtTime = (t) => { const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = Math.floor(t % 60); return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`; };
 const fmtVol = (v) => v >= 1e6 ? `${(v / 1e6).toFixed(2)}M m³` : v >= 1e4 ? `${(v / 1e3).toFixed(1)}k m³` : `${v.toFixed(v < 10 ? 2 : 0)} m³`;
 const fmtArea = (a) => a >= 1e4 ? `${(a / 1e4).toFixed(2)} ha` : `${Math.round(a).toLocaleString()} m²`;
-const fetcher = (url, o = {}) => fetch('/api/fetch', { method: 'POST', headers: { 'x-floodsim': '1' }, body: JSON.stringify({ url, method: o.method, body: o.body, contentType: o.contentType, linked: o.linked }) });
+const fetcher = (url, o = {}) => fetch('/api/fetch', { method: 'POST', headers: { 'x-floodsim': '1' }, body: JSON.stringify({ url, method: o.method, body: o.body, contentType: o.contentType, linked: o.linked, range: o.range }) });
 /** Fetcher for links the user pasted: the proxy lets these reach any public https host (GET only). */
 const linkedFetcher = (url) => fetcher(url, { linked: true });
 
@@ -1093,6 +1093,9 @@ function radarArea() {
   return { bbox, samples, used, isWet: (g) => used.some(k => g[k] > 0) };
 }
 const radarBytes = async (u) => { const r = await fetcher(u); if (r.status === 404) return null; if (!r.ok) throw new Error(`IEM radar archive ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
+/** HRRR on AWS (src/hrrr.js): a file or one byte range [first, last] of it; null when the file is not there (S3 answers 403 or 404). */
+const hrrrBytes = async (u, range) => { const r = await fetcher(u, range ? { range } : {}); if (r.status === 404 || r.status === 403) return null; if (!r.ok) throw new Error(`HRRR on AWS ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
+const hrrrStamp = (c) => `${new Date(c).toISOString().slice(0, 13).replace('T', ' ')}z`;
 const radarProgress = (i, n, what) => { $('histNote').textContent = `Radar: ${what} ${i} / ${n}…`; };
 /**
  * A storm from radar frames (radarRain or liveRain): the area-mean hyetograph, and `radar` for the run to spread over
@@ -1117,7 +1120,8 @@ function stormFromRadar(rr, A, { name, hourly = null, live = null }) {
   const src = gauged ? `NOAA ${products}, hourly, timed by the 2-minute radar rain rate; 1 km, IEM archive` : 'NOAA MRMS radar-only (hourly RadarOnly_QPE_01H, timed by the 2-minute PrecipRate), 1 km, IEM archive';
   return { blockMin: rr.blockMin, depth, intensity, total: depth.reduce((x, y) => x + y, 0), peakIntensity: Math.max(...intensity), durationMin: depth.length * rr.blockMin,
     pattern: 'historic', name, t0: st0,
-    source: live ? `${src}; then a nowcast: the last 10 minutes' radar rain moved along the storm's motion` : src,
+    source: live ? `${src}; then a nowcast: the last 10 minutes' radar rain moved along the storm's motion` +
+      (live.qpf?.cycle != null ? `; from +${live.qpf.blend.from} min crossfaded to NOAA HRRR forecast rain (run ${hrrrStamp(live.qpf.cycle)}, 3 km, AWS), HRRR alone from +${live.qpf.blend.to} min` : '') : src,
     radar: { win: rr.win, frames, mean, hash: MR.framesHash(frames), stats: rr.stats, siteMM, radarMM, hoursMM, gauged, products, pixels: used.length,
       ...(live ? { live: { ...live, forecastFrom: Math.round((live.observedUntil - st0) / (rr.blockMin * 60e3)) } } : {}) } };
 }
@@ -1130,6 +1134,7 @@ function radarNoteText(R) {
   const lv = !L ? '' : ` Observed to ${new Date(L.observedUntil).toISOString().slice(11, 16)} UTC; ` + (L.leadMin ? `then ${L.leadMin} min of nowcast (${fc.toFixed(1)} mm over the area), ` +
     (M ? `storm motion ${M.kmh.toFixed(0)} km/h toward ${M.toward.toFixed(0)}° (match r = ${M.score.toFixed(2)}${M.score < 0.6 ? ', poor: treat the nowcast as rough' : ''}).` : 'no motion found (too little rain near the area): the latest rain held in place.') +
     (L.member && L.member.key !== 'ctl' ? ` This run takes the ${NC_PICK[L.member.key] ?? L.member.key} member: speed × ${L.member.speed.toFixed(2)}, turned ${L.member.dir >= 0 ? '+' : '−'}${Math.abs(L.member.dir).toFixed(0)}°, intensity × ${NC.growthFactor(L.member.growth, 60).toFixed(2)} an hour on.` : '') +
+    (L.qpf?.cycle != null ? ` Past ${L.qpf.blend.from} min it fades into NOAA HRRR's forecast rain (run ${hrrrStamp(L.qpf.cycle)}), HRRR alone from ${L.qpf.blend.to} min: lower skill still.` : L.qpf?.error ? ` HRRR unavailable (${L.qpf.error}): the nowcast alone to the end.` : '') +
     ' A nowcast is screening only: storms grow, decay and turn, and skill falls off within the hour.' : 'no nowcast.');
   return `Rain over ${R.pixels} pixels of 1 km.${lv} ${g}${R.siteMM != null ? ` Site gridded record over the same hours: ${R.siteMM.toFixed(0)} mm.` : ''}` +
     (fb ? ` ${fb} of ${s.wetPixelHours} wet pixel-hours timed by the area's shape or evenly (2-minute frames missing or overflowed).` : '') +
@@ -1143,7 +1148,7 @@ function radarNoteText(R) {
 // member (persistence, or the dry / middle / wet one; Batch lists all four). While a run of a live nowcast plays,
 // newer frames replace the nowcast blocks it has not reached (rollLive), or the run waits for them (ncHold).
 // An earlier issue time replays the nowcast as it was then, from the archive, and checks it against the rain that fell.
-const nc = { rr: null, A: null, src: null, members: [], runs: [], sum: null, storms: {}, replay: false, play: 0, k: 0, off: null };
+const nc = { rr: null, A: null, src: null, qpf: null, pinCycle: null, members: [], runs: [], sum: null, storms: {}, replay: false, play: 0, k: 0, off: null };
 const NC_PICK = { ctl: 'persistence', p10: 'dry case, P10', p50: 'middle case, P50', p90: 'wet case, P90' };
 const NC_SPREAD = { speedSd: 0.2, dirSd: 15, growthSd: 0.5 };
 const localInput = (ms) => new Date(ms - new Date(ms).getTimezoneOffset() * 60e3).toISOString().slice(0, 16); // for a datetime-local field
@@ -1151,11 +1156,13 @@ const compass = (deg) => ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S',
 const ncProgress = (i, n, what) => { $('ncNote').textContent = `Radar: ${what} ${i} / ${n}…`; };
 /** The motion source behind a storm's nowcast (the latest one after rolling), when the storm is this panel's. */
 const ncSrc = (st) => (nc.rr && st?.radar?.live && st.radar.win === nc.rr.win ? nc.src : null);
-/** A member's nowcast rain `lead` minutes after the source's latest frame, on window w, in mm/hr. */
+/** A member's nowcast rain `lead` minutes after the source's latest frame, on window w, in mm/hr; past 60 min blended into HRRR. → { f, w (HRRR's weight) } */
 function ncFrameOn(src, w, lead, m = NC.CONTROL) {
-  const [u, v] = NC.turn(src.u, src.v, src.lat, m.speed, m.dir), f = NC.advect(src.rate, src.big, w, u, v, lead + 1 + 5), g = NC.growthFactor(m.growth, lead + 1) * 30;
+  const [u, v] = NC.turn(src.u, src.v, src.lat, m.speed, m.dir), f = NC.advect(src.rate, src.big, w, u, v, lead + 1 + 5), g = NC.growthFactor(m.growth, lead + 1);
   for (let p = 0; p < f.length; p++) f[p] *= g;
-  return f;
+  const b = NC.blendFrame(f, nc.qpf, w, src.latest, lead);
+  for (let p = 0; p < b.f.length; p++) b.f[p] *= 30;
+  return b;
 }
 /** The control storm with its nowcast blocks from a member's frames. */
 function memberStorm(st, frames, m, pick) {
@@ -1167,7 +1174,11 @@ function memberStorm(st, frames, m, pick) {
 /** The run record's account of a nowcast (stormMeta). */
 function ncMeta(L) {
   const E = L.ensemble, m = L.member, fin = (o) => o && Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Number.isFinite(v) ? v : null])); // null: later than the lead
+  const Q = L.qpf;
   return { observedUntilUTC: new Date(L.observedUntil).toISOString(), nowcastMin: L.leadMin, motion: L.motion, replay: !!L.replay,
+    qpf: Q ? (Q.cycle != null ? { source: 'NOAA HRRR (noaa-hrrr-bdp-pds on AWS), APCP: 15-minute where the sub-hourly file has it, else hourly; bilinear from the 3 km Lambert grid to 0.01° pixels',
+      cycleUTC: new Date(Q.cycle).toISOString(), forecastHours: Q.kinds, fields: Q.pieces, bytes: Q.bytes, blendMin: Q.blend,
+      method: `nowcast to +${Q.blend.from} min, (1 − w)·nowcast + w·HRRR with w rising linearly to 1 at +${Q.blend.to} min, HRRR alone after; one HRRR run shared by every member`, skill: 'lower than the nowcast in its first hour' } : { error: Q.error }) : null,
     method: 'Lagrangian persistence: the last 10 min mean rate moved at the velocity matched between 10-min totals 20 min apart' +
       (m && m.id !== 'ctl' ? `; this member: speed × ${m.speed.toFixed(3)}, direction ${m.dir >= 0 ? '+' : ''}${m.dir.toFixed(1)}°, intensity growth ${m.growth.toFixed(3)} ln per hour` : ''),
     member: m ? { pick: m.key, member: m.id, speedFactor: m.speed, turnDeg: m.dir, growthPerHour: m.growth } : null,
@@ -1193,14 +1204,16 @@ async function ncLoad() {
     if (!Number.isFinite(issue) || issue > Date.now() + 60e3) throw new Error('the issue time is in the future: leave it blank for now');
     if (issue < MR.FROM + 7 * 3600e3) throw new Error('the MRMS archive at IEM starts in September 2013');
     const replay = !!typed && Date.now() - issue > 10 * 60e3, A = radarArea();
-    const rr = await NC.liveRain(issue, A.bbox, radarBytes, { obsHours: obs, leadMin: lead, isWet: A.isWet, onProgress: ncProgress });
+    const pin = nc.pinCycle; nc.pinCycle = null; // a reopened project: the HRRR run it used
+    const rr = await NC.liveRain(issue, A.bbox, radarBytes, { obsHours: obs, leadMin: lead, isWet: A.isWet, onProgress: ncProgress, qpf: { getBytes: hrrrBytes, replay, cycle: pin } });
     const stamp = new Date(rr.live.observedUntil).toISOString().slice(0, 16).replace('T', ' ');
-    const st = stormFromRadar(rr, A, { name: `${replay ? 'Nowcast replay' : 'Live radar'} to ${stamp} UTC${lead ? ` + ${lead} min nowcast` : ''}`, live: { ...rr.live, replay } });
+    const st = stormFromRadar(rr, A, { name: `${replay ? 'Nowcast replay' : 'Live radar'} to ${stamp} UTC${lead ? ` + ${lead} min ${rr.qpf ? 'nowcast & HRRR' : 'nowcast'}` : ''}`, live: { ...rr.live, replay } });
+    if (rr.live.qpf?.error) log('HRRR forecast rain unavailable: ' + rr.live.qpf.error, 'warn', `the nowcast alone runs to +${lead} min`);
     if (!st) throw new Error('no radar frames over the area');
-    Object.assign(nc, { rr, A, src: rr.src, replay, members: nEns ? NC.ensembleMembers(nEns) : [NC.CONTROL], storms: {}, k: 0 });
+    Object.assign(nc, { rr, A, src: rr.src, qpf: rr.qpf, replay, members: nEns ? NC.ensembleMembers(nEns) : [NC.CONTROL], storms: {}, k: 0 });
     // the members: the same observed blocks, each its own nowcast; their area means give the band
     ncProgress(0, 1, `${nc.members.length} nowcast members`);
-    const from = st.radar.live.forecastFrom, frames = nc.members.map((m, i) => (i === 0 ? st.radar.frames.slice(from) : NC.nowcastFrames(rr.src, rr.win, lead, m)));
+    const from = st.radar.live.forecastFrom, frames = nc.members.map((m, i) => (i === 0 ? st.radar.frames.slice(from) : NC.forecastFrames(rr.src, rr.win, lead, m, rr.qpf)));
     nc.runs = nc.members.map((m, i) => ({ key: m.key, mean: MR.areaMean([...st.radar.frames.slice(0, from), ...frames[i]], A.samples) }));
     nc.sum = lead ? NC.ensembleSummary(nc.runs, from, st.blockMin) : null;
     if (!(st.total > 0) && !(nc.sum?.depth.max > 0)) { nc.storms = {}; ncShow(); $('ncNote').textContent = `No rain over the area in the last ${obs} h${lead ? ` or the next ${lead} min in any member` : ''} (NOAA MRMS, observed to ${stamp} UTC).`; updateStorm(); return; }
@@ -1225,7 +1238,7 @@ async function ncLoad() {
 /** The panel: arrival, depth, peak and motion over the area (P50 with the members' P10–P90), the limits, the loop. */
 function ncShow() {
   const st = nc.storms.ctl; $('ncOut').hidden = !st; if (!st) { $('ncCards').innerHTML = ''; return; }
-  const L = st.radar.live, S = L.ensemble, M = L.motion, lead = L.leadMin, I0 = NC.incoming(nc.runs[0].mean, L.forecastFrom, st.blockMin);
+  const L = st.radar.live, S = L.ensemble, M = L.motion, Q = L.qpf, lead = L.leadMin, I0 = NC.incoming(nc.runs[0].mean, L.forecastFrom, st.blockMin);
   const clock = (min) => new Date(L.observedUntil + min * 60e3).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const card = (k, v, b, warn = false) => `<div class="nc-card${warn ? ' warn' : ''}"><div class="k">${k}</div><div class="v">${v}</div><div class="b">${b}</div></div>`;
   const eta = (m) => (Number.isFinite(m) ? `${Math.round(m)} min` : `> ${lead}`), mm = (v) => v.toFixed(v < 10 ? 1 : 0), band = (o, f) => (S ? `P10–P90 ${f(o.p10)}–${f(o.p90)}` : 'one member: no band');
@@ -1236,13 +1249,17 @@ function ncShow() {
       : card('Arrival', Number.isFinite(e50) ? `in ${Math.round(e50)} min` : `not in ${lead} min`, `${Number.isFinite(e50) ? `≈ ${clock(e50)} · ` : ''}${S ? `${band(S.etaMin, eta)} · ${Math.round(S.arriving * 100)} % of members` : 'one member'}`)) +
     card(`Next ${lead} min`, `${mm(S ? S.depthMM.p50 : I0.depthMM)} mm`, `${band(S?.depthMM, mm)} mm, over the area`) +
     card('Peak rate', `${Math.round(S ? S.peakMMHR.p50 : I0.peakMMHR)} mm/hr`, `${band(S?.peakMMHR, v => Math.round(v))} mm/hr, 2-min area mean`) +
-    card('Storm motion', M ? `${M.kmh.toFixed(0)} km/h ${compass(M.toward)}` : 'none found', M ? `toward ${M.toward.toFixed(0)}° · match r = ${M.score.toFixed(2)} (${skill})` : 'too little rain to track: held in place', skill === 'poor' || skill === 'none');
+    card('Storm motion', M ? `${M.kmh.toFixed(0)} km/h ${compass(M.toward)}` : 'none found', M ? `toward ${M.toward.toFixed(0)}° · match r = ${M.score.toFixed(2)} (${skill})` : 'too little rain to track: held in place', skill === 'poor' || skill === 'none') +
+    (Q?.cycle != null ? card(`HRRR, +${Q.blend.to}–${lead} min`, `${mm(nc.runs[0].mean.slice(L.forecastFrom + Q.blend.to / st.blockMin).reduce((a, b) => a + b, 0))} mm`, `NOAA HRRR run ${hrrrStamp(Q.cycle)} · lower skill · one run for every member`, true)
+      : Q?.error ? card('HRRR', 'unavailable', `the nowcast alone to +${lead} min: ${Q.error}`, true) : '');
   const V = L.verify, inBand = V && S && V.depthMM >= S.depthMM.p10 && V.depthMM <= S.depthMM.p90;
   $('ncNote').textContent = `${nc.replay ? 'Replay: the nowcast as issued from the latest frame then. ' : ''}Observed to ${clock(0)} (${new Date(L.observedUntil).toISOString().slice(11, 16)} UTC): ${mm(obsMM)} mm over the area in the observed window` +
     (lead ? `; then ${lead} min of nowcast${S ? `, persistence and ${S.n - 1} members (speed × e^N(0, ${NC_SPREAD.speedSd}), direction ± N(0, ${NC_SPREAD.dirSd}°), growth N(0, ${NC_SPREAD.growthSd}) ln/h)` : ''}.` : '; no nowcast.') +
     (V ? ` What fell (radar, ${V.frames - V.missing} of ${lead / st.blockMin} frames): ${mm(V.depthMM)} mm in the lead, ${V.etaMin == null ? 'no arrival' : V.etaMin ? `arriving at +${V.etaMin} min` : 'raining from the start'}${S ? ` — ${inBand ? 'inside the members’ P10–P90' : V.depthMM < S.depthMM.p10 ? 'drier than their P10' : 'wetter than their P90'}` : ''}. The blue line on the chart is what fell.` : '');
   $('ncLimits').textContent = 'Screening, not a forecast. A nowcast moves the rain on the radar now: it cannot start new storms, and the members’ growth and decay only stand in for what it cannot see. ' +
-    `Skill falls off after 30–60 minutes${lead > 60 ? ': read the last 30 minutes here as a rough guide' : ''}. ` + (M ? `Motion matched at r = ${M.score.toFixed(2)}${M.score < 0.6 ? ': poor, the storm is changing shape or there is little rain to track; treat the nowcast as rough' : ''}. ` : 'No motion could be matched, so the rain is held in place. ') +
+    `Skill falls off after 30–60 minutes${lead > 60 && Q?.cycle == null ? `: read the last ${lead - 60} minutes here as a rough guide` : ''}. ` +
+    (Q?.cycle != null ? `Past ${Q.blend.from} minutes the nowcast fades into NOAA HRRR’s forecast rain (run ${hrrrStamp(Q.cycle)}), and from ${Q.blend.to} minutes it is HRRR alone: a 3 km weather model that can start new storms but, for summer downpours, often places them tens of kilometres and an hour or more off, so its rain over an area this size is lower skill still. Every member shares that one run, so the band past ${Q.blend.to} minutes is narrower than the real uncertainty. ` : '') +
+    (M ? `Motion matched at r = ${M.score.toFixed(2)}${M.score < 0.6 ? ': poor, the storm is changing shape or there is little rain to track; treat the nowcast as rough' : ''}. ` : 'No motion could be matched, so the rain is held in place. ') +
     'For warnings, follow the National Weather Service.';
   $('ncT').max = Math.max(0, lead / st.blockMin - 1); $('ncT').value = nc.k = 0; $('ncPlay').disabled = $('ncT').disabled = !lead;
   ncRollText(); ncDraw(0);
@@ -1259,7 +1276,7 @@ function ncDraw(k) {
   const st = nc.storms[$('ncMember').value] ?? nc.storms.ctl, cv = $('ncCanvas'); if (!st || !nc.src) return;
   const L = st.radar.live, w = st.radar.win, src = nc.src, h = 65, cc = Math.round((w.c0 + w.c1) / 2), rc = Math.round((w.r0 + w.r1) / 2);
   const crop = { lon0: MR.GRID.lon0 + (cc - h) * MR.GRID.step, lat0: MR.GRID.lat0 - (rc - h) * MR.GRID.step, step: MR.GRID.step, nx: 2 * h, ny: 2 * h };
-  const lead = 2 * k, f = L.leadMin ? ncFrameOn(src, crop, lead, L.member) : new Float32Array(crop.nx * crop.ny);
+  const lead = 2 * k, fb = L.leadMin ? ncFrameOn(src, crop, lead, L.member) : { f: new Float32Array(crop.nx * crop.ny), w: 0 }, f = fb.f;
   const off = nc.off ??= document.createElement('canvas'); off.width = crop.nx; off.height = crop.ny;
   const img = new ImageData(crop.nx, crop.ny), D = img.data;
   for (let p = 0; p < f.length; p++) if (f[p] >= 0.25) { D.set(rainRGBA(f[p]), 4 * p); D[4 * p + 3] = 230; }
@@ -1282,7 +1299,7 @@ function ncDraw(k) {
   g.fillStyle = ink; g.fillRect(8, cv.height - 10, km10, 3); g.font = '10px ' + (getComputedStyle(document.body).getPropertyValue('--mono') || 'monospace'); g.fillText('10 km', 8, cv.height - 17);
   const t = src.latest + lead * 60e3, mean = st.intensity[L.forecastFrom + k] ?? 0;
   $('ncLoopCap').textContent = L.leadMin ? `+${lead} min · ${new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · ${mean.toFixed(1)} mm/hr over the area · ${NC_PICK[L.member?.key ?? 'ctl']}` +
-    (Math.hypot(u, v) > 1e-3 ? ' · dashed: 30 min of motion' : '') : 'No nowcast: pick a lead.';
+    (fb.w > 0 ? ` · ${fb.w >= 1 ? 'HRRR forecast' : `${Math.round(fb.w * 100)} % HRRR`} (lower skill)` : '') + (Math.hypot(u, v) > 1e-3 ? ' · dashed: 30 min of motion' : '') : 'No nowcast: pick a lead.';
 }
 function ncStop() { clearInterval(nc.play); nc.play = 0; $('ncPlay').textContent = '▶'; }
 $('ncLoad').onclick = ncLoad;
@@ -1311,7 +1328,7 @@ async function rollLive(r) {
   try {
     const nf = await NC.newFrames(L.observedUntil, Date.now(), st.radar.win, radarBytes); if (!nf || run !== r) return;
     const src = await NC.motionSource(nf.latest, nc.A.bbox, radarBytes); if (run !== r) return;
-    const kf = Math.round((nf.latest - st.t0) / (st.blockMin * 60e3)), fresh = NC.nowcastFrames(src, st.radar.win, Math.max(0, st.radar.frames.length - kf) * st.blockMin, L.member ?? NC.CONTROL);
+    const kf = Math.round((nf.latest - st.t0) / (st.blockMin * 60e3)), fresh = NC.forecastFrames(src, st.radar.win, Math.max(0, st.radar.frames.length - kf) * st.blockMin, L.member ?? NC.CONTROL, nc.qpf);
     const res = NC.rollForward(st, nf.frames, fresh, Math.floor(r.solver.t / (st.blockMin * 60) + 1e-9) + 1, (f) => MR.areaMean([f], nc.A.samples)[0]);
     nc.src = src; L.motion = src.motion; st.radar.hash = MR.framesHash(st.radar.frames);
     (L.rolls ??= []).push({ atUTC: new Date().toISOString(), observedUntilUTC: new Date(nf.latest).toISOString(), ...res });
@@ -1476,9 +1493,10 @@ function drawHyeto() {
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Hyetograph: ${stormLabel(st)}">`;
   for (let v = 0; v <= ymax + 1e-9; v += step) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 5}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
   const fc = st.radar?.live?.leadMin ? st.radar.live.forecastFrom : Infinity; // live radar: the nowcast's bars
+  const QZ = Number.isFinite(fc) && LV.qpf?.cycle != null ? LV.qpf : null, wq = (i) => (QZ ? NC.hrrrWeight((i - fc) * st.blockMin + st.blockMin / 2, QZ.blend) : 0); // HRRR's share of block i
   st.intensity.forEach((v, i) => {
     const x = L + i * slot + gap / 2, top = y(v), r = Math.min(4, bw / 2, B - top);
-    s += `<path class="bar${i >= fc ? ' fcst' : ''}" data-i="${i}" d="M${x},${B}V${top + r}Q${x},${top} ${x + r},${top}H${x + bw - r}Q${x + bw},${top} ${x + bw},${top + r}V${B}Z"/>`;
+    s += `<path class="bar${i >= fc ? (wq(i) >= 0.5 ? ' fcst qpf' : ' fcst') : ''}" data-i="${i}" d="M${x},${B}V${top + r}Q${x},${top} ${x + r},${top}H${x + bw - r}Q${x + bw},${top} ${x + bw},${top + r}V${B}Z"/>`;
   });
   const lab = (min) => min >= 120 ? `${+(min / 60).toFixed(1)} h` : `${min} min`;
   for (const f of [0, 0.5, 1]) s += `<text x="${L + f * (W - L - R)}" y="${B + 14}" text-anchor="${f === 0 ? 'start' : f === 1 ? 'end' : 'middle'}">${lab(Math.round(f * st.durationMin))}</text>`;
@@ -1488,7 +1506,12 @@ function drawHyeto() {
     s += `<path class="band" d="M${up.join('L')}L${dn.join('L')}Z"/><path class="band-mid" d="M${band.p50.map((v, i) => `${xs[i].toFixed(1)},${y(v).toFixed(1)}`).join('L')}"/>`;
   }
   if (Number.isFinite(fc) && seen?.length) s += `<path class="wl" d="M${seen.map((v, i) => `${(L + (fc + i + 0.5) * slot).toFixed(1)},${y((v ?? 0) * 60 / st.blockMin).toFixed(1)}`).join('L')}"/>`; // replay: the rain that fell
-  if (Number.isFinite(fc) && LV.leadMin > 60) { const x60 = L + (fc + 60 / st.blockMin) * slot; s += `<line class="skill-end" x1="${x60}" x2="${x60}" y1="${T}" y2="${B}"/><text x="${x60 + 3}" y="${T + 9}">low skill</text>`; }
+  if (Number.isFinite(fc) && QZ) { // HRRR: the crossfade, then HRRR alone, each marked
+    const xa = L + (fc + QZ.blend.from / st.blockMin) * slot, xb = L + (fc + QZ.blend.to / st.blockMin) * slot;
+    const qlab = `HRRR ${new Date(QZ.cycle).toISOString().slice(11, 13)}z, low skill`, fits = xb + 3 + 6.2 * qlab.length <= W - R; // 10 px mono ≈ 6.2 px a character
+    s += `<line class="skill-end" x1="${xa}" x2="${xa}" y1="${T}" y2="${B}"/><text class="halo" x="${xa + 3}" y="${T + 20}">→ HRRR</text>` +
+      `<line class="qpf-start" x1="${xb}" x2="${xb}" y1="${T}" y2="${B}"/><text class="qpf-label halo" x="${fits ? xb + 3 : W - R}" y="${T + 31}" text-anchor="${fits ? 'start' : 'end'}">${qlab}</text>`;
+  } else if (Number.isFinite(fc) && LV.leadMin > 60) { const x60 = L + (fc + 60 / st.blockMin) * slot; s += `<line class="skill-end" x1="${x60}" x2="${x60}" y1="${T}" y2="${B}"/><text x="${x60 + 3}" y="${T + 9}">low skill</text>`; }
   s += `<line class="now" id="hyNow" x1="0" x2="0" y1="${T}" y2="${B}" visibility="hidden"/><rect id="hyHit" x="${L}" y="${T}" width="${W - L - R}" height="${B - T}" fill="transparent"/></svg>`;
   box.innerHTML = s;
   hy = { st, bars: [...box.querySelectorAll('.bar')], L, slot, W, B, lastBlock: -2 };
@@ -1497,7 +1520,7 @@ function drawHyeto() {
     const r = box.querySelector('svg').getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width, i = Math.min(n - 1, Math.max(0, Math.floor((x - L) / slot)));
     hy.bars.forEach((b, k) => b.classList.toggle('hot', k === i));
     tip.hidden = false; tip.style.left = (e.clientX - r.left) + 'px'; tip.style.top = (r.height * y(st.intensity[i]) / H + 18) + 'px';
-    tip.textContent = `${i * st.blockMin}–${(i + 1) * st.blockMin} min · ${st.intensity[i].toFixed(0)} mm/hr · ${st.depth[i].toFixed(1)} mm${i >= fc ? ' · nowcast' : ''}`;
+    tip.textContent = `${i * st.blockMin}–${(i + 1) * st.blockMin} min · ${st.intensity[i].toFixed(0)} mm/hr · ${st.depth[i].toFixed(1)} mm${i >= fc ? (wq(i) >= 1 ? ' · HRRR' : wq(i) > 0 ? ` · nowcast, ${Math.round(wq(i) * 100)} % HRRR` : ' · nowcast') : ''}`;
   };
   hit.onmouseleave = () => { tip.hidden = true; hy.bars.forEach(b => b.classList.remove('hot')); };
 }
@@ -3084,7 +3107,7 @@ function rainLoad() {
 function rainContext(st, k) {
   if (rain.cache.has(k)) return rain.cache.get(k);
   const t = st.t0 + (k + 1) * st.blockMin * 60e3, live = st.radar.live, src = ncSrc(st);
-  const p = live && t > live.observedUntil ? Promise.resolve(src ? ncFrameOn(src, rain.ctx, (t - st.blockMin * 60e3 - src.latest) / 60e3, live.member) : null)
+  const p = live && t > live.observedUntil ? Promise.resolve(src ? ncFrameOn(src, rain.ctx, (t - st.blockMin * 60e3 - src.latest) / 60e3, live.member).f : null)
     : radarBytes(MR.fileURL('a2m', t)).then(b => (b ? MR.decodeWindow(b, rain.ctx) : null)).then(g => g && Float32Array.from(g, v => MR.a2mMM(v) * 30)).catch(() => null);
   rain.cache.set(k, p); if (rain.cache.size > 60) rain.cache.delete(rain.cache.keys().next().value);
   return p;
@@ -3935,7 +3958,8 @@ function captureProject() {
   }
   return { version: 1, area: S.area, poly: S.poly, place: $('findNote').textContent.split('. Now')[0] || '', stormSrc, drainSrc, inputs,
     hist: stormSrc === 'hist' ? { event: $('histEvent').value, label: $('histEvent').selectedOptions[0]?.textContent ?? '', date: $('histEvent').value === 'date' ? $('histDate').value : null } : null,
-    nc: stormSrc === 'radar' && nc.storms.ctl ? { observedUntilUTC: new Date(nc.rr.live.observedUntil).toISOString(), member: $('ncMember').value } : null, // replayed from the archive on open
+    nc: stormSrc === 'radar' && nc.storms.ctl ? { observedUntilUTC: new Date(nc.rr.live.observedUntil).toISOString(), member: $('ncMember').value,
+      ...(nc.rr.live.qpf?.cycle != null ? { hrrrCycleUTC: new Date(nc.rr.live.qpf.cycle).toISOString() } : {}) } : null, // replayed from the archive on open (the same HRRR run)
     view: { center: map.getCenter().toArray(), zoom: map.getZoom() }, infraUnits: $('infraUnits').value, obs: S.obs, maps: S.maps.map(m => (m.href ? { href: m.href } : m)),
     activeScenario: design.active?.name ?? null, designUnits: design.units };
 }
@@ -3992,7 +4016,7 @@ async function restoreProject(pj, layer, scenarios = [], analysis = null) {
   }
   if (pj.stormSrc === 'radar' && pj.nc?.observedUntilUTC) { // the nowcast as it was issued, from the archive
     const t0 = Date.now(); while ($('ncLoad').disabled && Date.now() - t0 < 90e3) await new Promise(r => setTimeout(r, 500));
-    $('ncIssue').value = localInput(Date.parse(pj.nc.observedUntilUTC)); await ncLoad(); $('ncMember').value = pj.nc.member ?? 'ctl'; updateStorm();
+    $('ncIssue').value = localInput(Date.parse(pj.nc.observedUntilUTC)); nc.pinCycle = pj.nc.hrrrCycleUTC ? Date.parse(pj.nc.hrrrCycleUTC) : null; await ncLoad(); $('ncMember').value = pj.nc.member ?? 'ctl'; updateStorm();
     log(`Radar & nowcast: replayed the saved nowcast issued ${pj.nc.observedUntilUTC.slice(0, 16).replace('T', ' ')} UTC. Clear “Issued at” and load again for the radar now`, 'ok');
   }
 }

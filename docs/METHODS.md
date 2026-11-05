@@ -62,7 +62,8 @@ FloodSim results should not be used, on their own, for any of the following:
 3. **Life-safety decisions** (evacuation, warning thresholds, road closures) based on the **emulator** (`src/emulator.js`)
    or the **radar nowcast** (`src/nowcast.js`) alone. Both are labelled screening-only in the code and README. The
    emulator is a statistical surrogate valid only inside its trained parameter box for one scenario and one model build.
-   The nowcast is Lagrangian persistence; its ensemble perturbs motion and intensity with assumed, not fitted, spreads.
+   The nowcast is Lagrangian persistence; its ensemble perturbs motion and intensity with assumed, not fitted, spreads;
+   past 90 min it is one HRRR run, shared by every member.
 4. **Regulatory sewer-system compliance** (CSO long-term control plans, consent decrees). Combined-sewer regulators,
    population and dry-weather flow are generic planning defaults, not the utility's structures or census data (§3.8),
    and the model is single-event (no continuous simulation).
@@ -505,8 +506,29 @@ all n together.
     at or before it) from the IEM archive, and sums the frames that followed over the lead as a check against the band.
     The observed part uses what the archive holds now, so hours a live run would have had radar-only may be
     gauge-corrected. A saved project with a radar storm reopens as a replay of the same issue time.
+  - *HRRR past 90 min* (`src/hrrr.js`; leads of 2 and 3 h). NOAA's High-Resolution Rapid Refresh, a 3 km numerical
+    weather model run every hour, from the NOAA Open Data bucket on AWS (`noaa-hrrr-bdp-pds`, July 2014 on). Each
+    forecast hour's rain is read from the sub-hourly file's four 15-minute APCP fields (HRRR v4, December 2020 on), or
+    else the hourly file's APCP for that hour; one field is one byte-range request (~0.3 MB) found through the file's
+    `.idx`. GRIB2 decoding: Lambert conformal grid (template 3.30: 1799 × 1059 points, true at 38.5° N, LoV 262.5°,
+    sphere of radius 6 371 229 m) and complex packing with second-order spatial differencing (template 5.3; 5.0 and 5.2
+    also read). Checked on a real run: the four 15-minute fields of Ida's 22z +2 h add up to the hourly field, packed on
+    its own, within 0.006 mm at all 1.9 million points. Only the points round the area are kept, and they are sampled
+    bilinearly at the 0.01° pixel centres (3 km to 1 km: no new detail); each field is spread evenly over its 15 minutes
+    (or hour). *The run:* the newest cycle at least 50 min old whose files for the lead are on AWS; a replay takes the
+    newest that would have been complete at the issue time (cycle + 80 min: the whole 18-h run is posted about 75 min
+    after its cycle), and a reopened project the run it used. *Blend* (`blendFrame`): the frame for lead L is
+    (1 − w)·nowcast + w·HRRR, w = 0 to 60 min, rising linearly to 1 at 90 min (at the frame's middle), HRRR alone after:
+    fixed weights in the manner of extrapolation–model blends such as STEPS or INCA, not weights fitted to skill. Each
+    member's own nowcast fades into the same HRRR run, so past 90 min the band holds only what is left of the nowcast
+    members: narrower than the real uncertainty. Rolling forward, the fresh nowcast from the newest frame fades into the
+    same run on the same schedule. With no run on AWS the nowcast alone runs to the end, and the panel and log say why.
+    The run record gives the cycle, the file used for each forecast hour, the weights and the bytes read
+    (`storm.radar.live.qpf`); the hyetograph marks the crossfade and draws the HRRR part in red.
   - *Limits:* a nowcast moves existing rain; it does not start new cells, and skill of this kind falls off after
-    30–60 min (the hyetograph marks 60 min on a 90-min lead). Example: Ida over South Street, Philadelphia, issued
+    30–60 min (the hyetograph marks 60 min on a 90-min lead). HRRR can start and end storms, but for convective rain it
+    often places them tens of kilometres and an hour or more off, so over an area of a few square kilometres it is
+    lower skill still; the 2- and 3-h leads are for "what if the forecast is right", not timing. Example: Ida over South Street, Philadelphia, issued
     1 September 2021 23:30 UTC with a 60-min lead: motion 58 km/h toward 41° (r = 0.85); members' P10–P90 1.3–5.8 mm
     over the area (persistence 2.8 mm); 5.7 mm fell.
 - **Rain QA** (`src/rainqa.js`). After a historic or live run, the rain used is compared with up to 12 independent
@@ -1301,6 +1323,7 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-emulator-tests.mjs` | Latin hypercube, GP, closed-form LOO vs refitting (2e-10), PCA, synthetic floods, Atlas 14 between columns |
 | `run-window-tests.mjs` | Window, edge segments, inflow rates, edge check, merging |
 | `run-radar-tests.mjs`, `run-mrms-tests.mjs`, `run-nowcast-tests.mjs` | Radar overlay frames; MRMS PNG/GRIB2 decoding, gauge-corrected totals, timing; storm motion and advection; the nowcast ensemble (members, band, arrival order) and rolling new frames in |
+| `run-hrrr-tests.mjs` | HRRR GRIB2 decoding (packing 5.0, 5.2 with missing values, 5.3 of order 1 and 2), the Lambert projection against NCEP's grid corners, `.idx` byte ranges, the run chosen live, for a replay and pinned, regridding, the 60–90 min crossfade in a live build and on rolling forward (`--live`: Ida's 15-minute fields against its hourly one) |
 
 ### 5.14 What has not been validated
 
@@ -1512,6 +1535,7 @@ known limits", "Known limits (solver)" and section caveats, and the code as cite
 | MRMS: radar-only before May 2015 or where gauge-corrected totals are missing; 8-bit rate overflow above about 150 mm/hr | Radar-only can be biased high or low. Overflow handling changes the within-hour timing at the cloudburst core. | Summary lists radar-only hours and filled frames; check rain QA. |
 | Gauge-corrected MRMS can disagree strongly with other sources (Ida at Fairmount: 53 mm vs radar-only 91 mm and gridded 86 mm; unexplained in the README) | Rain volume uncertainty of tens of percent for some events. | Compare sources; report the range. |
 | Nowcast is persistence advection; the ensemble's motion and growth spreads are assumed, not fitted to the storm | Skill falls within the hour; a new cell forming over the area is missed by every member; the P10–P90 is not a calibrated probability. | Screening only; the panel shows the motion correlation and flags past 60 min; replay past storms to see how the band does there. |
+| Past 90 min the rain is one HRRR run with fixed blend weights | Convective storms misplaced by tens of km or an hour; the band past 90 min leaves out HRRR's own error (every member shares the run). | Flagged in the panel, the hyetograph and the run record; a time-lagged HRRR ensemble (earlier cycles as members) would widen the band. |
 
 ### 7.5 Rivers, tides and compound flooding
 
