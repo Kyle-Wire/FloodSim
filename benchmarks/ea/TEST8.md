@@ -7,12 +7,11 @@ that surcharges through a manhole onto it. They are the gap in Gate B (README: 8
 ## Where the data stands (checked 5 Nov 2026)
 
 - The **specification is public**: Appendix A.8–A.9 of `source/SC120002_Report.pdf` (summarised below).
-- The **input files are not** in the public archive. `source/Benchmarking_Model_Data.zip` (GOV.UK, 52 MB) holds Tests
+- The **input files are not public**. `source/Benchmarking_Model_Data.zip` (GOV.UK, 52 MB) holds Tests
   1–7 and the Test 5/6 cross-sections only. The open benchmark project
   [benchmark1d2d](https://github.com/scott-jeffers/benchmark1d2d) re-hosts EA Tests 1, 2, 4, 5 and 6A, not 8.
-- Not yet checked: the GOV.UK publication page also lists a 7.6 MB ZIP, *LIT 8570*
-  (`assets.publishing.service.gov.uk/media/5a7c5d4d40f0b62aff6c1276/LIT_8570_a3d694.zip`). Its size would fit a
-  0.5 m DEM of 0.4 × 0.96 km plus the small tables, so it may be the Test 8 set. Download it before writing to the EA.
+- The other ZIP on the GOV.UK publication page, *LIT 8570* (7.6 MB, checked 5 Nov 2026), holds only the report and its
+  two-page summary (`SC120002 report.pdf`, `SC120002 summary.pdf`): no data. So the inputs have to come from the EA.
 - **Results are figures, with one table.** Water levels and velocities at the output points are plotted
   (Figures 4.42–4.44, 4.46–4.48), so bands will be read by eye as for Tests 1–7. The one numeric table is Table 4.11,
   the total volume through the 8B manhole: 4,954–5,840 m³ across nine packages.
