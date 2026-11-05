@@ -16,6 +16,7 @@ import { loadSWMM, SWMM } from '../src/swmm.js';
 import * as H from '../src/history.js';
 import * as R from '../src/radar.js';
 import * as MR from '../src/mrms.js';
+import * as RG from '../src/raingauge.js';
 import * as NC from '../src/nowcast.js';
 import { labelImage } from './labels.js';
 import { Coupler } from '../src/coupler.js';
@@ -938,7 +939,8 @@ function stormMeta(st) {
   if (st.pattern === 'historic') return { source: st.source, event: st.name, startUTC: new Date(st.t0).toISOString(), returnPeriods: st.rp, ...base,
     waterLevel: st.wl ? { station: st.wl.station, name: st.wl.name, datum: st.wl.datum, tUTC: st.wl.t.map(t => new Date(t).toISOString()), m: st.wl.v,
       ...(st.wl.observedUntil ? { observedUntilUTC: new Date(st.wl.observedUntil).toISOString(), after: st.wl.surge != null ? { method: 'NOAA CO-OPS tide prediction + surge (mean observed − predicted over the last hour, held)', surgeM: st.wl.surge } : { method: 'last reading held' } } : {}) } : null,
-    ...(st.radar ? { radar: { product: `NOAA MRMS ${st.radar.gauged ? st.radar.products + ' hourly' : 'RadarOnly_QPE_01H'}, timed by PrecipRate (2 min), IEM archive; per cell, bilinear from 0.01° pixels`, hash: st.radar.hash,
+    ...(st.radar ? { radar: { product: `NOAA MRMS ${st.radar.gauged ? st.radar.products + ' hourly' : 'RadarOnly_QPE_01H'}${st.radar.fit?.n ? `, fitted to ${st.radar.fit.n} USGS rain gauges (NWIS 00045, src/raingauge.js)` : ''}, timed by PrecipRate (2 min), IEM archive; per cell, bilinear from 0.01° pixels`, hash: st.radar.hash,
+      ...(st.radar.fit ? { gaugeFit: st.radar.fit } : {}),
       areaMM: { used: st.radar.hoursMM, radarOnly: st.radar.radarMM },
       ...(st.radar.live ? { live: { observedUntilUTC: new Date(st.radar.live.observedUntil).toISOString(), nowcastMin: st.radar.live.leadMin, motion: st.radar.live.motion,
         method: 'Lagrangian persistence: the last 10 min mean rate moved at the velocity matched between 10-min totals 20 min apart' } } : {}),
@@ -1008,7 +1010,7 @@ async function loadHistory() {
   if (!asos) $('histSrc').value = 'hourly';
   $('histSrc').querySelector('[value=hourly]').disabled = $('histSrc').querySelector('[value=blend]').disabled = !hist.gridded || $('histSrc').querySelector('[value=blend]').disabled;
   if (!hist.gridded) $('histSrc').value = 'gauge';
-  $('histSrc').querySelector('[value=radar]').disabled = $('histSrc').querySelector('[value=radarRaw]').disabled = !hist.gridded; // MRMS covers the lower 48 only, as the gridded record does
+  $('histSrc').querySelector('[value=radar]').disabled = $('histSrc').querySelector('[value=radarRaw]').disabled = $('histSrc').querySelector('[value=radarFit]').disabled = !hist.gridded; // MRMS covers the lower 48 only, as the gridded record does
   $('histSrc').querySelector('[value=gauge]').textContent = asos ? `Airport gauge ${asos.id}, ${asos.km.toFixed(1)} km (5 min)` : 'Airport gauge (none within 30 km)';
   $('coastRow').hidden = !gauge; cmpdLoad(gauge);
   if (gauge) $('coastLabel').textContent = `Observed water level at ${gauge.name} (${gauge.km.toFixed(0)} km) on open-water edges`;
@@ -1033,7 +1035,7 @@ $('histLoad').onclick = async () => {
       const g = await H.fetchASOS1min(hist.asos.id, hourly.t0, hourly.t0 + hourly.mm.length * 3600e3, fetcher);
       series = src === 'gauge' ? g : H.blendSeries(hourly, g); blockMin = 5;
     }
-    let st = src.startsWith('radar') ? await radarStorm(e, hourly, { gauge: src === 'radar' }) : H.seriesStorm(series, { blockMin, name: e.name ?? `Storm of ${e.peakDate}` });
+    let st = src.startsWith('radar') ? await radarStorm(e, hourly, { gauge: src === 'radar', fit: src === 'radarFit' }) : H.seriesStorm(series, { blockMin, name: e.name ?? `Storm of ${e.peakDate}` });
     if (!st) st = { blockMin: 60, depth: [0], intensity: [0], total: 0, peakIntensity: 0, durationMin: 60, pattern: 'historic', name: e.name, source: series.source, t0: Date.parse(e.peakDate + 'T00:00Z') };
     if ($('tCoast').checked && hist.gauge) {
       const wl = await H.fetchWaterLevel(hist.gauge.id, Date.parse(d0 + 'T00:00Z'), Date.parse(d1 + 'T23:59Z'), fetcher);
@@ -1085,15 +1087,29 @@ function histSummary(st) {
  * IEM archive. Window: the site record's wettest stretch of the event, 2 h either side. The storm's hyetograph is the
  * area mean; `radar` keeps the frames, and the run spreads each one over the solver cells (radarRainField).
  */
-/** `gauge`: false keeps the radar's own hourly totals (a check on the gauge correction, which leans on distant gauges). */
-async function radarStorm(e, hourly, { gauge = true } = {}) {
+/**
+ * `gauge`: false keeps the radar's own hourly totals (a check on the gauge correction, which leans on distant gauges).
+ * `fit`: the radar-only rain fitted to the USGS rain gauges in and near the area (src/raingauge.js); with none that
+ * reported, the gauge-corrected radar, and the note says so.
+ */
+async function radarStorm(e, hourly, { gauge = true, fit = false } = {}) {
   const site = H.seriesStorm(hourly, { blockMin: 60 });
   const t0 = (site?.t0 ?? Date.parse(e.peakDate + 'T00:00Z')) - 2 * 3600e3, t1 = site ? site.t0 + site.durationMin * 60e3 + 2 * 3600e3 : t0 + 28 * 3600e3;
-  const A = radarArea(), note = $('histNote').textContent;
+  const A = radarArea(fit ? RG.FIT.bufferKm : 0), note = $('histNote').textContent;
   try {
-    const rr = await MR.radarRain(t0, t1, A.bbox, radarBytes, { isWet: A.isWet, onProgress: radarProgress, gauge });
+    let gauges = [];
+    if (fit) { $('histNote').textContent = 'Radar: USGS rain gauges in and near the area…'; gauges = await RG.findRainGauges(A.bbox, t0, t1, fetcher).catch(() => []); }
+    const rr = await MR.radarRain(t0, t1, A.bbox, radarBytes, { isWet: A.isWet, onProgress: radarProgress, gauge: fit ? !gauges.length : gauge });
+    const F = gauges.length ? RG.fitRadar(rr.hours, rr.win, gauges, MR.sampleWeights) : null;
+    if (F?.factors) RG.applyFit(rr, F.factors);
     const st = stormFromRadar(rr, A, { name: e.name ?? `Storm of ${e.peakDate}`, hourly });
-    if (st && !gauge) st.radar.unadjusted = true;
+    if (st && !gauge && !fit) st.radar.unadjusted = true;
+    if (st && fit) { // the gauges nearest the area first, for the note and the record
+      const mid = model.site, d = (g) => Math.hypot((g.lon - mid[0]) * Math.cos(mid[1] * Math.PI / 180), g.lat - mid[1]) * 111.32, r1 = (v) => (Number.isFinite(v) ? +v.toFixed(1) : null);
+      st.radar.fit = { n: F?.n ?? 0, found: gauges.length, mode: F?.mode ?? null, d0Km: F?.d0Km ?? null, rmse: F?.rmse ?? null, candidates: F?.candidates ?? [], bufferKm: RG.FIT.bufferKm,
+        gauges: (F?.gauges ?? []).map(g => ({ ...g, km: +d(g).toFixed(1), gaugeMM: r1(g.gaugeMM), radarMM: r1(g.radarMM), looMM: r1(g.looMM),
+          peak: g.peak && { gaugeMM: r1(g.peak.gaugeMM), radarMM: r1(g.peak.radarMM), looMM: r1(g.peak.looMM) } })).sort((a, b) => a.km - b.km) };
+    }
     return st;
   } finally { $('histNote').textContent = note; }
 }
@@ -1107,8 +1123,9 @@ async function liveStorm(obsHours, leadMin) {
   } finally { $('histNote').textContent = note; }
 }
 /** The model area for radar rain: its lon/lat box, sample points inside the polygon (≤ ~2500) and their pixel weights. */
-function radarArea() {
-  const fine = model.fine, cs = fine.corners(), bbox = [Math.min(...cs.map(p => p[0])), Math.min(...cs.map(p => p[1])), Math.max(...cs.map(p => p[0])), Math.max(...cs.map(p => p[1]))];
+function radarArea(growKm = 0) {
+  const fine = model.fine, cs = fine.corners(), box = [Math.min(...cs.map(p => p[0])), Math.min(...cs.map(p => p[1])), Math.max(...cs.map(p => p[0])), Math.max(...cs.map(p => p[1]))];
+  const bbox = growKm ? RG.growBox(box, growKm) : box; // grown: the window covers the rain gauges around the area too
   const win = MR.pixelWindow(bbox), ring = model.poly, stride = Math.max(1, Math.round(Math.sqrt(fine.nx * fine.ny / 2500))), samples = [];
   for (let j = stride >> 1; j < fine.ny; j += stride) for (let i = stride >> 1; i < fine.nx; i += stride) {
     const [lon, lat] = fromUTM(fine.x0 + (i + 0.5) * fine.dx, fine.y1 - (j + 0.5) * fine.dx, fine.zone);
@@ -1149,7 +1166,7 @@ function radarNoteText(R) {
   const s = R.stats, fb = s.areaShape + s.uniform;
   const g = R.gauged ? `Hourly totals adjusted to rain gauges for ${s.gaugeHours} of ${s.hours} whole hours (${R.hoursMM.toFixed(0)} mm over the area in those hours; the radar alone gives ${R.radarMM.toFixed(0)} mm).` +
       (s.radarOnlyHours.length ? ` Radar-only, no gauge-corrected file: ${s.radarOnlyHours.join(', ')}.` : '') + (s.gaugeGaps ? ` ${s.gaugeGaps} wet pixel-hours in the radar window radar-only (no gauge-corrected value).` : '')
-    : R.unadjusted ? 'Radar-only, as chosen: not adjusted to rain gauges.' : `Radar-only (gauge-corrected totals are archived from May 2015): not adjusted to rain gauges.`;
+    : R.fit ? fitNoteText(R) : R.unadjusted ? 'Radar-only, as chosen: not adjusted to rain gauges.' : `Radar-only (gauge-corrected totals are archived from May 2015): not adjusted to rain gauges.`;
   const L = R.live, M = L?.motion, fc = L ? R.mean.slice(L.forecastFrom).reduce((x, y) => x + y, 0) : 0;
   const lv = !L ? '' : ` Observed to ${new Date(L.observedUntil).toISOString().slice(11, 16)} UTC; ` + (L.leadMin ? `then ${L.leadMin} min of nowcast (${fc.toFixed(1)} mm over the area), ` +
     (M ? `storm motion ${M.kmh.toFixed(0)} km/h toward ${M.toward.toFixed(0)}° (match r = ${M.score.toFixed(2)}${M.score < 0.6 ? ', poor: treat the nowcast as rough' : ''}).` : 'no motion found (too little rain near the area): the latest rain held in place.') +
@@ -1159,6 +1176,19 @@ function radarNoteText(R) {
     (s.missingHours.length ? ` Missing hours (no rain assumed): ${s.missingHours.join(', ')}.` : '') + (s.noCoverage ? ` ${s.noCoverage} pixel-hours without radar coverage.` : '');
 }
 
+/** The rain-gauge fit in words (radarStorm with `fit`). */
+function fitNoteText(R) {
+  const f = R.fit, used = f.gauges.filter(g => g.used);
+  if (!f.found) return `No USGS rain gauges reported within ${f.bufferKm} km of the area: the gauge-corrected radar is used instead.`;
+  if (!f.n) return `${f.found} USGS rain gauge${f.found > 1 ? 's' : ''} within ${f.bufferKm} km, none usable (${f.gauges.map(g => g.why).filter(Boolean)[0] ?? 'too little rain'}): the radar-only rain is used as it is.`;
+  const g0 = used[0], nm = (g) => g.name.replace(/ RAIN ?GAGE AT /i, ' at ').replace(/,.*$/, '').slice(0, 40);
+  const near = g0 ? ` Nearest, ${nm(g0)} (${g0.km} km): ${g0.gaugeMM.toFixed(0)} mm, wettest hour ${g0.peak.gaugeMM.toFixed(0)} mm, where the radar had ${g0.radarMM.toFixed(0)} and ${g0.peak.radarMM.toFixed(0)} mm` +
+    (f.mode ? ` and the fit made from the other gauges ${g0.looMM.toFixed(0)} and ${g0.peak.looMM.toFixed(0)} mm.` : '.') : '';
+  const out = f.found > f.n ? ` ${f.found - f.n} other gauge${f.found - f.n > 1 ? 's' : ''} not used (short record or dry).` : '';
+  if (!f.mode) return `${f.n} USGS rain gauges within ${f.bufferKm} km, but no fit predicts a left-out gauge better than the radar alone (${f.rmse.radar.toFixed(1)} mm RMS per gauge-hour): the radar-only rain is used as it is; the gauges are too far apart for this storm's cells.${near}${out}`;
+  return `Radar-only rain fitted to ${f.n} USGS rain gauges within ${f.bufferKm} km, ${f.mode === 'hourly' ? 'hour by hour' : 'on storm totals'} (d0 ${f.d0Km} km, chosen by leave-one-out): ` +
+    `${R.hoursMM.toFixed(0)} mm over the area against ${R.radarMM.toFixed(0)} mm from the radar alone. Each gauge predicted from the others: ${f.rmse.fitted.toFixed(1)} mm RMS per gauge-hour against ${f.rmse.radar.toFixed(1)} mm for the radar alone.${near}${out}`;
+}
 /** The rain multiplier a run starts with: roof routing (and its green-roof / cistern stages). */
 const rainBase0 = (r, c) => (r.roofStages ? r.roofStages[0].rainField : r.roofEarly ? r.roofEarly.rainField : c.rainField);
 /** A new roof-routing field mid-run (a roof store filled); with radar rain, the radar pattern goes over it. */
