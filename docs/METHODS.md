@@ -238,6 +238,10 @@ README "Local time stepping"; `src/solver-cpu.js` `_cycle` / `_record`:
 - Accuracy against global stepping is in the README table: e.g. GPU = CPU LTS to 3e-7 m on dam breaks; moving fronts
   arrive slightly differently timed, up to 9 mm on the spilling edge of the test floodplain (mean 1e-5 m). LTS pays only
   on large grids: 2.6× faster at 1024×768, but 0.6× (slower) at 256×192.
+- **On a real coupled storm** (Forest Hills, Queens, the DEP Moderate design storm, §5.10; each run alone on the GPU):
+  6.4× fewer global steps (20,122 against 128,994) and 1.6× faster overall (1,088 s against 1,733 s). The rest of the
+  time is SWMM, the 2-second exchange and the outputs, which LTS does not shorten. The results match: 376,395 wet cells
+  against 376,622 (CSI 0.999), depth differences RMS 0.9 mm and at most 8 cm.
 
 ### 2.11 Subgrid speed mode (opt-in; 1 m remains the default and the reference)
 
@@ -1252,7 +1256,33 @@ the outfall layer places inside the area (and synthetic ones into a mapped strea
 ground at their cell (`src/coupler.js`, `src/drainage.js` `outfallCells`; `tests/run-coupler-tests.mjs`). The second
 suspect is the soil: 62 % infiltrated is a lot for an urban watershed whose gauge passed about two-thirds of the rain.
 
-Rerun with the outfalls returning: to come.
+**Second run** (2026-11-04_230914): unchanged, 2.18 m low, and no water returned. The linked-pipes branch of the network
+build never handed the outfall layer to `realNetwork`, so no endwall was placed. Fixed (`app/map.js` `makeNetwork`):
+77 of the 112 endwalls and flared ends in the box lie within the 5 m snap of a pipe end. The other interior pipe ends
+(about 290) now return their water too, in a separate storm sewer like this one: an end the outfall layer missed is
+still a discharge, almost always into the creek. In a combined sewer such an end may be a gap on the way to the
+interceptor, so it still takes its water away (`openEnd`, `src/network-real.js`; `tests/run-infra-tests.mjs`).
+
+**Third run** (2026-11-05_000408, with the outfall layer): 1.49 m low (210.37 m against 211.86 m), and the peak now
+comes at the gauge's minute. The outfalls took 85,600 m³ and gave 64,700 m³ back to the ground. The water past the
+gauge went from 24,700 m³ to 61,700 m³. The surface books, though, came out 1.2 % short: 4,070 m³ of the returned
+water never arrived. Two exchange points shared cells. The endwalls sit at culvert ends, the returns avoided inlet cells
+but not culvert cells, and the exchange kernel runs one thread per point, so where two share a cell one write is lost
+and both are booked. Returns now keep off culvert cells, and the run log warns if any exchange points share a cell.
+
+**How much water there was to find.** The gauge's discharge record gives 224,000 m³ past Sheffield Drive in the model's
+25.6 hours, nearly all storm runoff (baseflow 0.06 cfs). That is 110–120 % of the radar rain on the watershed (77 mm on
+2.5–2.7 km² is 193,000–205,000 m³). So even with no infiltration the model could not match the gauge on this rain. Two
+things can explain it: the rain was heavier over the watershed than the gauge-corrected radar says (the radar alone
+gives 92 mm, and the correcting gauges are far from the storm), or the storm sewers bring in water from beyond the
+topographic divide, which is common in cities. Either way, the 63 % the model soaks in is too much, but it is not the
+whole gap. Next: the run on radar-only rain, Mecklenburg County's own rain gauges (a dense network), and the area the
+pipes actually drain to the gauge.
+
+**Fourth run** (2026-11-05_005525, returns off the culvert cells): the surface books close again (+0.005 %; combined
+−0.35 %), and the gauge reads 1.39 m low (210.47 m against 211.86 m), peaking 2 minutes early. 64,900 m³ came back
+from the outfalls and 65,700 m³ went past the gauge, against the 224,000 m³ USGS measured. The drainage now does what
+it should, so what remains is the water put in (the rain) and taken out (infiltration, 206,000 m³).
 
 ### 5.13 Earlier observation comparisons recorded in the README
 

@@ -344,5 +344,92 @@
   },
   "verdict": "poor",
   "note": "City of Charlotte storm pipes linked; MRMS gauge-corrected; 2 m"
+ },
+ {
+  "case": "edwards-branch-clt",
+  "scored": "2026-11-05T04:09:18.052Z",
+  "commit": "da4edcb",
+  "runCommit": "da4edcbcaf38",
+  "run": "2026-11-04_230914_Validation-Existing-conditions",
+  "saved": "2026-11-05T04:09:12.920Z",
+  "storm": "historic: Storm of 2025-06-12, 77 mm over 22.63 h from 2025-06-12 19:22 UTC",
+  "simulatedH": 25.63,
+  "wallH": 0.79,
+  "marks": null,
+  "gauges": [
+   {
+    "site": "0214643820",
+    "name": "EDWARDS BRANCH AT SHEFFIELD DR AT CHARLOTTE, NC",
+    "error": -2.182,
+    "lagMin": -14
+   }
+  ],
+  "maps": [],
+  "mass": -0.000013759585078256437,
+  "checks": {
+   "good": 1,
+   "fair": 0,
+   "poor": 1
+  },
+  "verdict": "poor",
+  "note": "outfalls inside the area return their water to the ground (coupler returns)"
+ },
+ {
+  "case": "edwards-branch-clt",
+  "scored": "2026-11-05T05:04:12.495Z",
+  "commit": "031e7ab+dirty",
+  "runCommit": "031e7abae16f+dirty",
+  "run": "2026-11-05_000408_Validation-Existing-conditions",
+  "saved": "2026-11-05T05:04:07.210Z",
+  "storm": "historic: Storm of 2025-06-12, 77 mm over 22.63 h from 2025-06-12 19:22 UTC",
+  "simulatedH": 25.63,
+  "wallH": 0.82,
+  "marks": null,
+  "gauges": [
+   {
+    "site": "0214643820",
+    "name": "EDWARDS BRANCH AT SHEFFIELD DR AT CHARLOTTE, NC",
+    "error": -1.487,
+    "lagMin": 0
+   }
+  ],
+  "maps": [],
+  "mass": -0.012369716132324172,
+  "checks": {
+   "good": 1,
+   "fair": 0,
+   "poor": 1
+  },
+  "verdict": "poor",
+  "note": "linked outfall layer reaches the network; storm-sewer pipe ends return their water"
+ },
+ {
+  "case": "edwards-branch-clt",
+  "scored": "2026-11-05T05:55:29.458Z",
+  "commit": "6b382f4+dirty",
+  "runCommit": "6b382f43a235+dirty",
+  "run": "2026-11-05_005525_Validation-Existing-conditions",
+  "saved": "2026-11-05T05:55:24.138Z",
+  "storm": "historic: Storm of 2025-06-12, 77 mm over 22.63 h from 2025-06-12 19:22 UTC",
+  "simulatedH": 25.63,
+  "wallH": 0.82,
+  "marks": null,
+  "gauges": [
+   {
+    "site": "0214643820",
+    "name": "EDWARDS BRANCH AT SHEFFIELD DR AT CHARLOTTE, NC",
+    "error": -1.387,
+    "lagMin": -2
+   }
+  ],
+  "maps": [],
+  "mass": 0.00005175361392664503,
+  "checks": {
+   "good": 1,
+   "fair": 0,
+   "poor": 1
+  },
+  "verdict": "poor",
+  "note": "returns keep off culvert cells (surface books)"
  }
 ]
