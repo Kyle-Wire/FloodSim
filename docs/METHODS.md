@@ -1322,7 +1322,14 @@ d0 = 1 km, the error falls to 3.8 mm, so that fit is kept. Over the model area t
 limit: from the other gauges alone, CRN-47's wettest hour is predicted at 41 mm. A cell as small as this one is found
 only by a gauge inside it.
 
-Run on the fitted rain (project "Edwards Branch Charlotte 2025 gauge-fit"): to come.
+**Run on the fitted rain** (project "Edwards Branch Charlotte 2025 gauge-fit", run 2026-11-05_094828, commit dd23fa4).
+The run's own fit record: 27 gauges, hourly, d0 = 1 km, leave-one-out 3.6 mm per gauge-hour against the radar's 4.8.
+94 mm over the model area (radar alone 92 mm), and the wettest hour 62 mm, about the 14-year hour. The gauge reads
+0.87 m low (210.99 m against 211.86 m), peaking 6 minutes early: 0.23 m closer than radar-only, and 1.31 m closer
+than the first run. 112,000 m³ left over the outlet edge (USGS: 224,000 m³ past the gauge), 53 % of the rain soaked in,
+and the combined books close to −0.31 %. Fitting the rain to the gauges closed a fifth of what radar-only left. The
+rest is still the cloudburst core no gauge but CRN-47 saw, the infiltration and the piped drainage area. The split-sample
+calibration study (§6.4) uses this rain.
 
 ### 5.13 Earlier observation comparisons recorded in the README
 
