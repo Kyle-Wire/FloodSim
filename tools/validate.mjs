@@ -16,32 +16,19 @@
 //   --url    a FloodSim server already running (for --run)
 //   --note   kept with this round's entries in the history
 // Exit code 0 when every case scored, 1 when any run or score failed.
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { codeState } from './codestate.mjs';
+import { root, here, projectsDir, loadCases, installCase, runStudy, latestRun, runSummary } from './suite.mjs';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
-import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { scorecard } from '../src/validate.js';
 import { expandJobs, VARIANTS } from '../src/batch.js';
 import { markBands, mapBands } from '../src/uncertainty.js';
 
-const root = fileURLToPath(new URL('..', import.meta.url)), here = join(root, 'benchmarks', 'validation');
 const argv = process.argv.slice(2), opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
-const projectsDir = process.env.FLOODSIM_PROJECTS || join(homedir(), 'Documents', 'FloodSim Projects');
-const cases = JSON.parse(readFileSync(join(here, 'cases.json'), 'utf8')), only = opt('case')?.split(',');
+const cases = loadCases(), only = opt('case')?.split(',');
 const histPath = join(here, 'history.json'), history = existsSync(histPath) ? JSON.parse(readFileSync(histPath, 'utf8')) : [];
 const code = codeState(root), commit = code.commit ? code.commit.slice(0, 7) + (code.dirty ? '+dirty' : '') : ''; // tools/codestate.mjs: code files only
 
-/** The latest finished run filed in a project (or the run `only`) → { dir, summary } or null. */
-function latestRun(folder, only = null, base = false) {
-  const runs = join(projectsDir, folder, 'runs'); if (!existsSync(runs)) return null;
-  for (const dir of readdirSync(runs).filter(d => !d.startsWith('_') && (!only || d === only)).sort().reverse()) {
-    const p = join(runs, dir, 'summary.json'); if (!existsSync(p)) continue;
-    const summary = JSON.parse(readFileSync(p, 'utf8')); if (summary.finished && (!base || !summary.batch || summary.batch.variant === 'base')) return { dir, summary };
-  }
-  return null;
-}
 /** The batch variants filed beside a base run (the same storm, scenario and design; the newest of each) → [{ dir, summary }].
  *  The base may be a run made by hand: a study of the variants alone then gives it its band. */
 function variantsOf(folder, base) {
@@ -49,9 +36,8 @@ function variantsOf(folder, base) {
   if (b.batch && b.batch.variant !== 'base') return out;
   const sameStorm = (sm) => (b.batch ? sm.batch.storm === b.batch.storm : sm.storm?.label === b.storm?.label);
   for (const dir of readdirSync(runs).filter(d => !d.startsWith('_') && d !== base.dir).sort().reverse()) {
-    const p = join(runs, dir, 'summary.json'); if (!existsSync(p)) continue;
-    const sm = JSON.parse(readFileSync(p, 'utf8')), k = sm.batch?.variant;
-    if (!sm.finished || !k || k === 'base' || seen.has(k) || !sameStorm(sm) || sm.scenario !== b.scenario || sm.designHash !== b.designHash) continue;
+    const sm = runSummary(folder, dir), k = sm?.batch?.variant;
+    if (!sm?.finished || !k || k === 'base' || seen.has(k) || !sameStorm(sm) || sm.scenario !== b.scenario || sm.designHash !== b.designHash) continue;
     seen.add(k); out.push({ dir, summary: sm });
   }
   return out;
@@ -80,20 +66,11 @@ function entryOf(c, dir, sm, prev) {
     mass: v.mass?.surface ?? null, checks: { good: n('good'), fair: n('fair'), poor: n('poor') }, verdict: sc.verdict.status, ...(opt('note') ? { note: opt('note') } : {}),
   };
 }
-/** Run a case again headless: install its project if missing, write a one-job study of its storm as set, run tools/batch.mjs. */
+/** Run a case again headless: install its project if missing, a one-job study of its storm as set (and the variants). */
 function rerun(c) {
-  const dest = join(projectsDir, c.project), src = join(here, c.id, 'project.json');
-  if (!existsSync(join(dest, 'project.json'))) {
-    if (!existsSync(src)) throw new Error(`no project "${c.project}" and no ${src} to install it from`);
-    mkdirSync(dest, { recursive: true }); copyFileSync(src, join(dest, 'project.json'));
-    console.log(`  installed ${c.project} from benchmarks/validation/${c.id}`);
-  }
-  const pj = JSON.parse(readFileSync(join(dest, 'project.json'), 'utf8'));
+  installCase(c);
   const ens = ['n-20', 'n+20', 'infil-50', 'coarse'].map(k => VARIANTS[k]), variants = argv.includes('--variants-only') ? ens : [VARIANTS.base, ...(argv.includes('--ensemble') ? ens : [])];
-  const study = { version: 1, created: new Date().toISOString(), base: pj.inputs ?? {}, jobs: expandJobs({ storms: [{ label: 'Validation', stormSrc: 'current', inputs: {} }], variants }) };
-  writeFileSync(join(dest, 'batch.json'), JSON.stringify(study, null, 1));
-  const r = spawnSync(process.execPath, [join(root, 'tools', 'batch.mjs'), c.project, ...(opt('url') ? ['--url', opt('url')] : [])], { stdio: 'inherit' });
-  if (r.status !== 0) throw new Error(`tools/batch.mjs exited ${r.status}`);
+  runStudy(c.project, expandJobs({ storms: [{ label: 'Validation', stormSrc: 'current', inputs: {} }], variants }), { url: opt('url') });
 }
 
 let failed = 0;
@@ -131,7 +108,8 @@ function summary(cases, hist) {
     'cell at 4 in and over, buildings left out (hit rate: the map\'s flooded cells the model floods; CSI: hits / (hits + misses +',
     'false alarms)). Band: the lowest to the highest level the base run and its batch variants give at each mark (roughness',
     '± 20 %, infiltration × 0.5, one cell size coarser), a sensitivity band, not a probability. See docs/METHODS.md §5 for what',
-    'each case shows and what it does not.', '',
+    'each case shows and what it does not. Calibration studies (tune on one storm, test on storms the tuning never saw) are in',
+    '[CALIBRATION.md](CALIBRATION.md).', '',
     '## Latest', '', '| Case | Run | Commit | Marks RMSE / bias (n) | Marks in the variants’ band | Gauges | Maps | Checks good / fair / poor | Change from the run before |', '|---|---|---|---|---|---|---|---|---|'];
   for (const c of cases) {
     const es = hist.filter(e => e.case === c.id); if (!es.length) { L.push(`| ${c.title} | not run yet | | | | | | | |`); continue; }

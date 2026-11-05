@@ -28,5 +28,17 @@
   "title": "Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers",
   "project": "Edwards Branch Charlotte 2025",
   "about": "A 2.5 km² urban watershed above USGS 0214643820 (Edwards Branch at Sheffield Dr), which set its record on 12 June 2025: 9.90 ft, 2,560 cfs at 8:50 pm EDT. The City of Charlotte's own storm pipes (sizes, shapes and surveyed inverts), inlets and outfalls are linked, not synthesised: the first case with a real sewer. Scored on the gauge's peak level and its time. Pipe data: City of Charlotte, CC BY-NC-SA 4.0 (non-commercial). docs/METHODS.md §5.12."
+ },
+ {
+  "id": "edwards-branch-clt-2024-01",
+  "title": "Edwards Branch, Charlotte NC — 9 January 2024, winter storm",
+  "project": "Edwards Branch Charlotte 2024-01",
+  "about": "The second-highest peak at USGS 0214643820 since the radar archive starts (Sept 2013): 8.26 ft, 881 cfs on 9 January 2024, a winter storm on wet ground. Same area, storm sewers and settings as the June 2025 case; a storm a calibration tuned on June 2025 never saw (tools/calibrate.mjs). Scored on the gauge peak. Pipe data: City of Charlotte, CC BY-NC-SA 4.0. docs/METHODS.md §6.4."
+ },
+ {
+  "id": "edwards-branch-clt-2023-08",
+  "title": "Edwards Branch, Charlotte NC — 10 August 2023, summer storm",
+  "project": "Edwards Branch Charlotte 2023-08",
+  "about": "A summer cloudburst at USGS 0214643820: 7.21 ft, 692 cfs on 10 August 2023. Same area, storm sewers and settings as the June 2025 case; a storm a calibration tuned on June 2025 never saw (tools/calibrate.mjs). Scored on the gauge peak. Pipe data: City of Charlotte, CC BY-NC-SA 4.0. docs/METHODS.md §6.4."
  }
 ]
