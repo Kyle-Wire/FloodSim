@@ -17,9 +17,10 @@
 //   --note   kept with this round's entries in the history
 // Exit code 0 when every case scored, 1 when any run or score failed.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs';
+import { codeState } from './codestate.mjs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { execSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { scorecard } from '../src/validate.js';
 import { expandJobs, VARIANTS } from '../src/batch.js';
@@ -30,8 +31,7 @@ const argv = process.argv.slice(2), opt = (k, d) => { const i = argv.indexOf('--
 const projectsDir = process.env.FLOODSIM_PROJECTS || join(homedir(), 'Documents', 'FloodSim Projects');
 const cases = JSON.parse(readFileSync(join(here, 'cases.json'), 'utf8')), only = opt('case')?.split(',');
 const histPath = join(here, 'history.json'), history = existsSync(histPath) ? JSON.parse(readFileSync(histPath, 'utf8')) : [];
-const git = (c) => { try { return execSync(`git ${c}`, { cwd: root, encoding: 'utf8' }).trim(); } catch { return ''; } };
-const commit = git('rev-parse --short HEAD') + (git('status --porcelain --untracked-files=no') ? '+dirty' : '');
+const code = codeState(root), commit = code.commit ? code.commit.slice(0, 7) + (code.dirty ? '+dirty' : '') : ''; // tools/codestate.mjs: code files only
 
 /** The latest finished run filed in a project (or the run `only`) → { dir, summary } or null. */
 function latestRun(folder, only = null, base = false) {

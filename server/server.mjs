@@ -3,11 +3,12 @@
 // POST /api/fetch {url, method?, body?, contentType?} → upstream response, cached on disk by request hash.
 // Only allowlisted hosts are proxied; responses are cached in .cache/ so re-running an area is offline-fast.
 // /api/projects…: project folders on this computer (loopback only), under FLOODSIM_PROJECTS or Documents\FloodSim Projects.
-// GET /api/version → { commit, dirty }: the app commit, part of every run's forcing fingerprint.
+// GET /api/version → { commit, dirty, changed }: the app commit (and any code files changed from it), part of every run's record.
 // GET /api/bluetopo?bbox=w,s,e,n → { scheme, tiles }: NOAA BlueTopo bathymetry tiles under a box (from its tile index).
 import { createServer } from 'node:http';
+import { codeState } from '../tools/codestate.mjs';
 import { readFile, writeFile, appendFile, rename, mkdir, stat, readdir } from 'node:fs/promises';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { extname, join, normalize } from 'node:path';
@@ -216,13 +217,11 @@ async function blueTopo(req, res) {
   } finally { db.close(); }
 }
 
-/** The commit the server's checkout is on, and whether it has uncommitted changes (null outside a git checkout). */
+/** The commit the server's checkout is on, and the code files that differ from it (tools/codestate.mjs; nulls outside a git checkout). */
 let version = null;
 function appVersion() {
   if (version) return version;
-  const git = (...a) => spawnSync('git', a, { cwd: root, encoding: 'utf8' });
-  const head = git('rev-parse', '--short=12', 'HEAD'), st = git('status', '--porcelain', '--untracked-files=no');
-  version = { commit: head.status === 0 ? head.stdout.trim() : null, dirty: st.status === 0 ? st.stdout.trim().length > 0 : null };
+  version = codeState(root);
   setTimeout(() => { version = null; }, 10000); // re-read now and then: commits made while it runs
   return version;
 }

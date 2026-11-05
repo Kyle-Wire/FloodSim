@@ -173,8 +173,8 @@ const map = new maplibregl.Map({
   },
 });
 const gpuReady = initGPU();
-let appCommit = 'unknown'; // the server's checkout: part of every run's forcing fingerprint
-fetch('/api/version', { cache: 'no-store' }).then(r => r.json()).then(v => { if (v.commit) appCommit = v.commit + (v.dirty ? '+dirty' : ''); }).catch(() => {}); // Build awaits it: a project opened at page load can finish building before the GPU is up
+let appCommit = 'unknown', appChanged = []; // the server's checkout: part of every run's forcing fingerprint; the code files changed from it
+fetch('/api/version', { cache: 'no-store' }).then(r => r.json()).then(v => { if (v.commit) appCommit = v.commit + (v.dirty ? '+dirty' : ''); appChanged = v.changed ?? []; }).catch(() => {}); // Build awaits it: a project opened at page load can finish building before the GPU is up
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 map.on('moveend', () => { try { localStorage.setItem('floodsim.view', JSON.stringify({ center: map.getCenter().toArray(), zoom: map.getZoom() })); } catch { /* storage off */ } });
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
@@ -2070,7 +2070,7 @@ async function finishRecord() {
   const newBuildings = (model.f.designBuildings ?? []).map(b => ({ id: b.id, name: b.name, ffe: b.ffe, critical: b.foundation === 'basement' ? b.opening : b.ffe, foundation: b.foundation, cells: b.cells, ring: b.ring }));
   const when = new Date(), forcing = CMP.fingerprint(forcingRecord(r));
   const rec = { id: ++recordSeq, scenario: r.scenario, label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-    saved: when.toISOString(), forcing, commit: appCommit, designHash: gridHash(), storm: stormLabel(r.storm), stormInfo: { ari: r.storm?.ari ?? null, durationMin: r.storm?.durationMin ?? null }, batch: r.batchInfo ?? null, geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
+    saved: when.toISOString(), forcing, commit: appCommit, ...(appChanged.length ? { codeChanged: appChanged } : {}), designHash: gridHash(), storm: stormLabel(r.storm), stormInfo: { ari: r.storm?.ari ?? null, durationMin: r.storm?.durationMin ?? null }, batch: r.batchInfo ?? null, geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
     grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0,
       // the rest of the combined books (line ~1842): rain piped from roofs straight to the sewers (not in `rain`, the rain on the surface), sanitary flow, water at the start, the pipes' storage
       roofs: r.coupler?.totals.roofToSewer ?? 0, sanitary: (r.netMass?.dryWeatherInflow ?? 0) * 1000, initial: s.vol?.initial ?? 0, pipesStart: (r.netMass?.initialStored ?? 0) * 1000, pipesEnd: (r.netMass?.finalStored ?? 0) * 1000 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
