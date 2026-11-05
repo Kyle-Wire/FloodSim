@@ -8,7 +8,7 @@ import { applyDesign, floodedBuildings, resolvedValues, hashFine, withValues, de
 import { downscaleDepth, volumeRatio } from '../src/downscale.js';
 import { zip, png16, exr, buildingsGLB } from '../src/export.js';
 import { fetchAtlas14, hyetograph, constantStorm, rainAt, rainDepthTo, ddf, fitGEV, annualMaxima24h, recordStorm, wettest24, gevQuantile, pdsToAms } from '../src/storm.js';
-import { synthNetwork, toINP, lumpedInfil, addTanks } from '../src/drainage.js';
+import { synthNetwork, toINP, lumpedInfil, addTanks, outfallCells } from '../src/drainage.js';
 import * as CSO from '../src/cso.js';
 import { giLayers, GI } from '../src/gi.js';
 import { drawnGI, OutletLinks, UnderdrainLinks, detentionTable } from '../src/stormwater.js';
@@ -1633,7 +1633,11 @@ function ensureSolver() {
     crest = [...(crest ?? []), ...wf.map(f => ({ i: f.i, j: f.j, axis: f.axis, z: 1e6, C: 1.7, ground: NaN }))];
   }
   run.outlets = run.sw.outlets.length ? new OutletLinks(run.sw.outlets, c.z, { cellArea: F * F }) : null;
-  const base = [...(run.outlets?.cells ?? []), ...(coupled ? run.net.inlets.map(g => g.cell) : []), ...(run.culverts?.cells ?? [])], used = new Set(base);
+  // outfalls that discharge inside the model give their water back to the ground there (an endwall into a creek)
+  run.netReturns = coupled ? outfallCells(run.net.nodes, model.fine.nx, { ...c, F }, new Set([...(run.outlets?.cells ?? []), ...run.net.inlets.map(g => g.cell)])) : [];
+  if (run.netReturns.length) { const st = run.net.stats, open = (st.interiorEnds ?? 0) - (st.placedOutfalls ?? 0);
+    log(`${run.netReturns.length} outfall${run.netReturns.length > 1 ? 's' : ''} inside the area put their water back on the ground`, 'ok', open > 0 ? `${open} other pipe ends inside the area are not in the outfall layer: their water leaves the model` : ''); }
+  const base = [...(run.outlets?.cells ?? []), ...(coupled ? [...run.net.inlets.map(g => g.cell), ...run.netReturns.map(r => r.cell)] : []), ...(run.culverts?.cells ?? [])], used = new Set(base);
   let entries = run.inflowReady ?? [];
   const wr = run.window?.mode === 'rerun' ? run.window : null;
   if (wr) { // rivers entering inside the window as before; each edge segment gives back what crossed it inward in the existing run
@@ -1677,7 +1681,7 @@ function ensureSolver() {
     if (run.cso) csoBeforeRun(run);
     run.inp = toINP(run.net, model.fine, { durationS: Math.ceil(tStop() / 60) * 60 + 3600, title: 'FloodSim synthetic network (data tier 2)', pressurise: run.twoWay });
     run.swmm.open(run.inp);
-    run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofStages ? run.roofStages[0].roofArea ?? run.roof?.roofArea : run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay });
+    run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofStages ? run.roofStages[0].roofArea ?? run.roof?.roofArea : run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay, returns: run.netReturns });
     $('netReadouts').hidden = false;
   }
   if (run.coupler && run.window?.mode === 'record') run.coupler.recordInlets = true;
@@ -1941,7 +1945,8 @@ async function loop(gen) {
         run.swmmReport = run.swmm.finish(); run.swmmClosed = true; run.netMass = SWMM.continuity(run.swmmReport);
         // combined books: rain − infiltration − edge outflow − pipe outfalls − (surface + network storage), over rain
         // SWMM's external outflow is the outfalls plus any water sent back up through inlets (negative lateral flow)
-        const c = run.netMass, m = run.mass, outfalls = c.externalOutflow * 1000 - run.coupler.totals.latOut;
+        // what left through outfalls: SWMM's outflow less what came back up through inlets and what outfalls inside the model put back on the ground
+        const c = run.netMass, m = run.mass, outfalls = c.externalOutflow * 1000 - run.coupler.totals.latOut - run.coupler.totals.outfallReturned;
         const rain = m.rain + run.coupler.totals.roofToSewer; // rain on the surface + rain piped straight from roofs
         // + river inflow and the water on the ground at the start; underdrains: GI water the books count as infiltrated that
         // went into the pipes; outlets off the model. Over all the water that came in (as the surface books)
@@ -2017,7 +2022,7 @@ async function finishRecord() {
   if (L) r.lines.samples.forEach((sm, l) => { if (sm.at(-1)[0] < s.t - 1e-6) sm.push([s.t, L.net[l], L.plus[l], L.minus[l]]); });
   const allLines = r.lines.defs.map((d, l) => ({ id: d.id, name: d.name, side: d.side, faces: d.faces, volume: L ? L.net[l] : NaN, plus: L ? L.plus[l] : NaN, minus: L ? L.minus[l] : NaN, series: r.lines.samples[l] }));
   const isWin = (l) => String(l.id).startsWith('win:'), lines = allLines.filter(l => !isWin(l)), winLines = allLines.filter(isWin);
-  const m = r.mass ?? {}, outfalls = r.swmm && r.netMass ? r.netMass.externalOutflow * 1000 - (r.coupler?.totals.latOut ?? 0) : null;
+  const m = r.mass ?? {}, outfalls = r.swmm && r.netMass ? r.netMass.externalOutflow * 1000 - (r.coupler?.totals.latOut ?? 0) - (r.coupler?.totals.outfallReturned ?? 0) : null;
   const ponds = r.outlets?.results() ?? [];
   if (ponds.length) design.setPondResults(ponds);
   const outletLog = new Map((model.design?.log.features ?? []).filter(l => l.type === 'outlet').map(l => [l.id, l.resolved]));

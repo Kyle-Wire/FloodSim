@@ -306,6 +306,42 @@ export function exchangePoints(outNodes, W, sim, real) {
   return inlets;
 }
 
+/**
+ * Outfalls that discharge inside the model: one the outfall layer placed (an endwall or flared end into a creek) or a
+ * synthetic one into a mapped stream. Their water goes back on the ground there (src/coupler.js), not out of the model.
+ * Outfalls on the edge or off the area, an interior pipe end the data does not call an outfall (a gap in a combined
+ * sewer as often as a discharge), and a CSO interceptor (to the plant) still take their water away.
+ * `taken`: solver cells already exchanging (inlets); a return moves to a free open neighbour, else is left out.
+ * → [{ cell, at }] one per cell, `at` the outfall's position key (`${x},${y}` in fine cells) so the coupler finds the
+ * node after CSO regulators replace it (the overflow outfall keeps its position).
+ */
+export function outfallCells(nodes, W, sim, taken = new Set()) {
+  const out = [], byCell = new Map();
+  for (const n of nodes) {
+    if (!returnsHere(n)) continue;
+    const fk = Math.floor(n.p[1]) * W + Math.floor(n.p[0]);
+    let sc = (((fk / W) | 0) / sim.F | 0) * sim.nx + ((fk % W) / sim.F | 0);
+    if (!sim.mask[sc] || taken.has(sc)) sc = freeNeighbour(sim, sc, taken);
+    if (sc < 0) continue;
+    const at = posKey(n);
+    if (byCell.has(sc)) { byCell.get(sc).at.push(at); continue; }
+    const r = { cell: sc, at: [at] }; byCell.set(sc, r); out.push(r);
+  }
+  return out;
+}
+/** An outfall whose water stays in the model (see outfallCells). */
+export const returnsHere = (n) => n.outfall && !n.interceptor && !n.offsite && !n.edge && !!(n.placed || n.toStream);
+export const posKey = (n) => `${Math.floor(n.p[0])},${Math.floor(n.p[1])}`;
+function freeNeighbour(sim, k, taken) {
+  const i0 = k % sim.nx, j0 = (k / sim.nx) | 0; let best = -1;
+  for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+    const i = i0 + di, j = j0 + dj, kk = j * sim.nx + i;
+    if (i < 0 || j < 0 || i >= sim.nx || j >= sim.ny || !sim.mask[kk] || taken.has(kk)) continue;
+    if (best < 0 || (sim.z && sim.z[kk] < sim.z[best])) best = kk;
+  }
+  return best;
+}
+
 /** Lowest open solver cell among the 8 neighbours of `k` (any open one when the grid has no elevations), else −1. */
 function openNeighbour(sim, k) {
   const i0 = k % sim.nx, j0 = (k / sim.nx) | 0; let best = -1;

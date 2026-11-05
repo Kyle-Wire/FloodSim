@@ -214,7 +214,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     const sink = into[i].length > 0 && outOf[i].length === 0;
     const inv = Math.min(...[...into[i].map(k => raw[k].invDn), ...outOf[i].map(k => raw[k].invUp)]);
     return { name: (sink ? 'O' : 'J') + i, p: n.p, ground: n.ground, invert: inv, depth: Math.max(0.5, n.ground - inv), outfall: sink,
-      toStream: false, realOutfall: sink && !n.edge, inletFine: sink ? [] : n.inletFine, grateOpen: sink ? [] : n.grateOpen, gutter: n.gutter, fineCell: n.gutter, area: 0, CA: 0, edge: n.edge };
+      toStream: false, realOutfall: sink && !n.edge, placed: sink && userOut.has(i), inletFine: sink ? [] : n.inletFine, grateOpen: sink ? [] : n.grateOpen, gutter: n.gutter, fineCell: n.gutter, area: 0, CA: 0, edge: n.edge };
   });
   const outPipes = raw.map((q, k) => ({ name: 'C' + k, from: q.a, to: q.b, L: Math.max(1, q.L), D: q.D, W: q.shape === 'RECT_CLOSED' ? q.Wd : 0, shape: q.shape,
     barrels: q.barrels, n: q.r.n, Q: 0, S: Math.max(1e-4, (q.invUp - q.invDn) / q.L), inOffset: q.invUp - outNodes[q.a].invert, outOffset: q.invDn - outNodes[q.b].invert,
@@ -231,7 +231,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     stats: { junctions: outNodes.filter(n => !n.outfall).length, outfalls: outNodes.filter(n => n.outfall).length, pipes: outPipes.length,
       inlets: inlets.filter(g => g.grates > 0).length, grates: inlets.reduce((s, g) => s + g.grates, 0), lids: inlets.filter(g => !g.grates).length,
       realInlets, unconnectedGrates: unconnected, realOutfalls: 0, offsiteOutlets: outNodes.filter(n => n.offsite).length,
-      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, interiorEnds,
+      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, interiorEnds, placedOutfalls: outNodes.filter(n => n.placed).length,
       pipeLength: outPipes.filter(q => !q.offsite).reduce((s, q) => s + q.L, 0), minD: Math.min(...outPipes.map(q => q.D)), maxD: Math.max(...outPipes.map(q => q.D)), served: 0 },
   };
 }

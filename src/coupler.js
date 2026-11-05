@@ -6,9 +6,12 @@
 //   3. SWMM receives exactly that volume as lateral inflow (negative = returned to the street) and strides Δ
 //   4. new rates for [t+Δ, t+2Δ] from weir / orifice hydraulics on (surface depth, node head), minus any node overflow,
 //      which SWMM would otherwise discard, so it goes back onto the street
+//   5. outfalls that discharge inside the model (`returns`, src/drainage.js outfallCells: an endwall into a creek)
+//      put what flowed into them over the interval back on the ground at their cell over the next one
 // Water moved between the models is identical on both sides, so the combined balance is
-//   surface stored + network stored = rain − infiltration − surface outflow − pipe outfalls (± SWMM continuity error).
-import { inletFlow } from './drainage.js';
+//   surface stored + network stored = rain − infiltration − surface outflow − pipe outfalls leaving the model
+//   (± SWMM continuity error).
+import { inletFlow, returnsHere, posKey } from './drainage.js';
 
 export class Coupler {
   /**
@@ -17,7 +20,7 @@ export class Coupler {
    * @param swmm   SWMM engine already opened with the network's .inp
    * @param zs     solver bed elevations (absolute, m) to read the surface level at each inlet cell
    */
-  constructor(solver, net, swmm, zs, { interval = 2, roofArea = null, twoWay = false } = {}) {
+  constructor(solver, net, swmm, zs, { interval = 2, roofArea = null, twoWay = false, returns = [] } = {}) {
     Object.assign(this, { solver, net, swmm, interval });
     // twoWay: inlet manholes pressurise (give them a large surcharge depth in the .inp) and water returns through the
     // inlet on the head difference, as HEC-RAS does, instead of spilling at the rim. Return flow per manhole is capped by
@@ -34,19 +37,22 @@ export class Coupler {
     this.outVol = new Float64Array(net.nodes.length); // m³ into each outfall, integrated per routing step
     this.zs = net.inlets.map(g => zs[g.cell]);
     this.perNode = net.nodes.map(() => 0); for (const i of this.inletNodes) this.perNode[i]++; // exchange points per manhole
-    this.q = new Float32Array(this.inletNodes.length);
+    // exchange points after the inlets: each outfall-return cell and the outfall nodes (by position) that discharge there
+    this.returns = returns.map(r => ({ cell: r.cell, nodes: net.nodes.map((n, i) => (returnsHere(n) && r.at.includes(posKey(n)) ? i : -1)).filter(i => i >= 0) }));
+    this.retQ = new Float64Array(this.returns.length); // m³/s each return puts back over the coming interval
+    this.q = new Float32Array(this.inletNodes.length + this.returns.length);
     this.ret = new Float64Array(this.inletNodes.length); // overflow (m³/s) netted out of each inlet's rate this interval
     this.tNext = interval;
     this.stage = null; // observed water level (m) applied to outfalls that discharge to a stream
     this.streamOutfalls = net.nodes.map((n, i) => (n.toStream ? i : -1)).filter(i => i >= 0);
-    this.totals = { toNetwork: 0, toSurface: 0, overflowReturned: 0, overflowLost: 0, roofToSewer: 0, backflow: 0, latOut: 0, extra: 0 };
+    this.totals = { toNetwork: 0, toSurface: 0, overflowReturned: 0, overflowLost: 0, roofToSewer: 0, backflow: 0, latOut: 0, extra: 0, outfallReturned: 0 };
     // lateral inflow (m³/s) other link models add at nodes for the coming interval (pond outlets, underdrains); they
     // step before the coupler in the hub, and it is cleared once given to SWMM
     this.extra = new Float64Array(net.nodes.length);
     this.state = { head: new Float64Array(net.nodes.length), flow: new Float64Array(net.pipes.length), depth: new Float64Array(net.pipes.length), surcharged: 0, flooding: 0 };
   }
 
-  get count() { return this.inletNodes.length; }
+  get count() { return this.inletNodes.length + this.returns.length; }
 
   /** Call when the surface solver has reached `this.tNext` (standalone; with other link models use a LinkHub). */
   async exchange() {
@@ -62,6 +68,7 @@ export class Coupler {
     // Overflow that SWMM discarded last interval was handed to the street by netting it out of this rate; it is credited
     // back so SWMM is not charged twice (it already booked it as flooding).
     const lat = new Float64Array(net.nodes.length);
+    for (let r = 0; r < this.returns.length; r++) this.totals.outfallReturned += Math.max(0, -vol[M + r]); // what the ground received
     // a window rerun: inlets outside the window replay what the existing run exchanged (prescribe: Map inlet → (t0, t1) ⇒ m³)
     if (this.prescribe) for (const [m, f] of this.prescribe) vol[m] = f(tNext - interval, tNext);
     for (let m = 0; m < M; m++) {
@@ -82,10 +89,12 @@ export class Coupler {
     if (this.stage != null) for (const i of this.streamOutfalls) swmm.setOutfallStage(this.swIdx[i], Math.max(this.stage, net.nodes[i].invert));
     // advance SWMM step by step, integrating each node's overflow (flooding) volume exactly as SWMM books it
     const flood = new Float64Array(net.nodes.length), junc = this.junctions ??= net.nodes.map((n, i) => (n.outfall ? -1 : i)).filter(i => i >= 0);
+    const into = new Float64Array(net.nodes.length); // m³ into each outfall this interval
     swmm.stepTo(tNext, (dt) => {
       for (const i of junc) { const q = swmm.node('OVERFLOW', this.swIdx[i]); if (q > 0) flood[i] += q * dt; }
-      for (const i of this.outNodes) this.outVol[i] += swmm.node('INFLOW', this.swIdx[i]) * dt;
+      for (const i of this.outNodes) { const v = swmm.node('INFLOW', this.swIdx[i]) * dt; this.outVol[i] += v; into[i] += v; }
     });
+    this.returns.forEach((r, k) => { let v = 0; for (const i of r.nodes) v += Math.max(0, into[i]); this.retQ[k] = v / interval; });
     // network state → next interval's exchange: flooded volume goes back on the street over the next interval
     let surcharged = 0, flooding = 0;
     const overflow = flood.map(v => v / interval);
@@ -116,6 +125,7 @@ export class Coupler {
       if (back) this.totals.backflow += back[m] * interval;
       flooding += share;
     }
+    for (let k = 0; k < this.returns.length; k++) this.q[M + k] = -this.retQ[k]; // negative: onto the ground
     net.nodes.forEach((n, i) => { if (!this.perNode[i] && overflow[i] > 0) this.totals.overflowLost += overflow[i] * interval; });
     this.state.surcharged = surcharged; this.state.flooding = flooding;
     net.pipes.forEach((p, k) => { this.state.flow[k] = swmm.link('FLOW', this.lkIdx[k]); this.state.depth[k] = swmm.link('DEPTH', this.lkIdx[k]); });
