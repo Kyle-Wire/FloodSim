@@ -5,8 +5,8 @@
 // made or lost on the way. Geometry and scoring thresholds are the catalog's (inputs/coupling.json, manifest.json).
 //
 // Translation to FloodSim: 1 m cells, as the catalog's surface grids. The manhole is an inlet on the cell holding its
-// point (the cell north-east of a point on a cell corner), and that cell's bed is set to the catalog's rim or crest:
-// FloodSim's inlet opens at its cell's bed, so the crest of A12-011's gully (5 cm above the yard) is a cell raised 5 cm.
+// point (the cell north-east of a point on a cell corner). The catalog's rim or crest above that cell's bed is the
+// inlet's crest (A12-011's gully lip, 5 cm above the yard); a rim below the bed (A12-012's cone apex) lowers the cell.
 // Weir and orifice as the catalog gives them: Q = Cw·P·h^1.5·√(2g) and Co·A·√(2gh), P 1.885 m, A 0.283 m².
 
 const MH = { perimeter: 1.884956, area: 0.282743, cw: 0.5, co: 0.6 };

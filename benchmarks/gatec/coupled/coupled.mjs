@@ -17,11 +17,12 @@ export async function runCase(device, id, twoWay) {
   const c = CASES[id], N = c.nx * c.ny, z = new Float64Array(N);
   for (let j = 0; j < c.ny; j++) for (let i = 0; i < c.nx; i++) z[j * c.nx + i] = c.bed((i + 0.5) * c.dx, (j + 0.5) * c.dx);
   const mh = Math.min(c.ny - 1, Math.floor(c.manhole.y / c.dx)) * c.nx + Math.min(c.nx - 1, Math.floor(c.manhole.x / c.dx));
-  z[mh] = c.manhole.crest; // the inlet opens at its cell's bed: the cell is the rim (crest)
+  // the rim (crest) above the cell's bed is the inlet's crest; a rim below the bed (the cone's apex) lowers the cell to it
+  const crest = Math.max(0, c.manhole.crest - z[mh]); z[mh] = Math.min(z[mh], c.manhole.crest);
   const net = {
     nodes: c.nodes.map(n => ({ name: n.name, invert: n.invert, depth: n.depth ?? 0, ground: n.outfall ? n.invert : n.invert + n.depth, outfall: !!n.outfall })),
     pipes: c.pipes.map(p => ({ name: p.name, D: p.D })),
-    inlets: [{ node: c.nodes.findIndex(n => n.manhole), cell: mh, grates: 1 }],
+    inlets: [{ node: c.nodes.findIndex(n => n.manhole), cell: mh, grates: 1, crest }],
     opts: { inletArea: c.manhole.area, inletPerim: c.manhole.perimeter, Cw: c.manhole.cw, Co: c.manhole.co },
   };
   const solver = new GPUSolver(device, {
@@ -48,7 +49,7 @@ export async function runCase(device, id, twoWay) {
   const balance = (s.mass.volume + networkEnd) - (initial + inflow - s.mass.outflow - outfallVolume);
   const r = {
     case: id, title: c.title, exchange: twoWay ? 'two-way (manhole pressurises)' : 'spill at the rim (SWMM overflow to the street)',
-    grid: { nx: c.nx, ny: c.ny, dx: c.dx }, manholeCell: mh, wallSeconds: (performance.now() - wall0) / 1000, steps: solver.steps,
+    grid: { nx: c.nx, ny: c.ny, dx: c.dx }, manholeCell: mh, crest, wallSeconds: (performance.now() - wall0) / 1000, steps: solver.steps,
     exchangeLast5: (last.ontoSurface - five.ontoSurface) / (last.t - five.t), outfallVolume, surfaceEnd: s.mass.volume, edgeOutflow: s.mass.outflow, networkEnd, probes,
     books: { initial, inflow, surfaceRel: s.mass.rel, swmmErrorPct: cont.errorPct, combined: balance, combinedRel: balance / Math.max(1e-9, initial + inflow) },
     coupler: cp.totals, series: series.map(p => ({ t: Math.round(p.t), surface: +p.surface.toFixed(3), ontoSurface: +p.ontoSurface.toFixed(3), edge: +p.edge.toFixed(3) })),

@@ -161,8 +161,8 @@ PowerShell `Start-Process` from the project folder, the only way it would comput
 discharges) built and run headless in HEC-RAS, and the benchmark1d2d surcharge cases (A12-010/011/012) in HEC-RAS,
 whose pipe inputs are published.
 - Done 5 Nov 2026: FloodSim on the benchmark1d2d surcharge cases against their exact answers (`coupled/README.md`):
-  20 of 22 measures pass in both exchange modes. The miss is A12-011's outfall volume, 2.5 % short at two hours: the
-  last centimetre over a raised gully drains slowly, and no water is lost.
+  22 of 22 measures pass in both exchange modes, since inlets take a crest (the first run, with the gully as a raised
+  cell, drained its last centimetre slowly and was 2.5 % short on outfall volume).
 
 
 **Agreement criterion (proposed):** FloodSim is no further from HEC-RAS than the other established codes are on the

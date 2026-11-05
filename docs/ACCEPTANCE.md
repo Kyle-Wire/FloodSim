@@ -42,7 +42,7 @@ here as the working target because nothing newer sets a number.
 | Item | Evidence | Status |
 |---|---|---|
 | Verification of the solver | EA 2D benchmarks Tests 1–7: 88 of 94 measures inside the spread of the participating packages, probe series inside seven codes' envelope (METHODS §5.2, `benchmarks/ea`); analytic tests (§5.1); 41 test suites (§5.14) | Strong |
-| EA Tests 8A/8B (urban rain, surcharging sewer) | Specification read; data not public (`benchmarks/ea/TEST8.md`, with a request to the EA drafted) | Open, waiting on data. Stand-in: three coupled cases with exact answers, 20 of 22 measures pass (`benchmarks/gatec/coupled`) |
+| EA Tests 8A/8B (urban rain, surcharging sewer) | Specification read; data not public (`benchmarks/ea/TEST8.md`, with a request to the EA drafted) | Open, waiting on data. Stand-in: three coupled cases with exact answers, 22 of 22 measures pass (`benchmarks/gatec/coupled`) |
 | Agreement with an accepted model (HEC-RAS 2D) | EA Tests 1, 2, 4, 5 within 0.1–0.8 cm of four HEC-RAS runs; the HEC-RAS Davis storm-sewer example (METHODS §5.3) | Surface agrees; pipe volumes do not yet (−16 % pumped). **Gate C not closed** |
 | Mass balance | Combined books within 0.26 % with every exchange model on (METHODS §5.4) | Met |
 | Roughness validated by calibration (§3.4) | `tools/calibrate.mjs`: tune on one storm, freeze, score storms it never saw (METHODS §6.4) | Tool built; first study (Charlotte, infiltration) running |
@@ -63,7 +63,7 @@ want the field accuracy shown, not only the solver. In order:
    (`histSrc = radarFit`) raises the area's peak hour from 48 to 60 mm, still short of the 71 mm at the gauge inside
    the watershed.
 2. **Gate C closed**: pipe volumes and node levels against HEC-RAS on Davis. The coupled surcharge cases (benchmark1d2d
-   A12-010 to A12-012, exact answers) are run: 20 of 22 pass, the miss a slow last centimetre over a raised gully.
+   A12-010 to A12-012, exact answers) pass, 22 of 22.
 3. **EA Tests 8A/8B** run and scored, once the EA sends the data.
 4. **The user's manual checked** against the release the agency will test, with that release's commit recorded.
 5. **The intended-use statement narrowed** to what the agency accepts. METHODS §1.3 lists uses that need a
