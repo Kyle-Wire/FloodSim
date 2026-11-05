@@ -88,7 +88,7 @@
  },
  {
   "case": "forest-hills-ida",
-  "scored": "2026-11-04T23:33:01.728Z",
+  "scored": "2026-11-04T23:27:07.636Z",
   "commit": "1adcf35+dirty",
   "runCommit": "1adcf35a90c1+dirty",
   "run": "2026-11-04_182532",
@@ -97,13 +97,13 @@
   "simulatedH": 20,
   "wallH": 2.4,
   "marks": {
-   "n": 25,
-   "rmse": 0.615,
-   "bias": -0.205,
-   "within15": 0.16,
-   "hits": 18,
+   "n": 27,
+   "rmse": 0.731,
+   "bias": -0.073,
+   "within15": 0.148,
+   "hits": 20,
    "misses": 7,
-   "calls": 25
+   "calls": 27
   },
   "gauges": [],
   "maps": [
@@ -140,11 +140,43 @@
   ],
   "mass": 0.000056887654197685335,
   "checks": {
-   "good": 0,
+   "good": 1,
    "fair": 1,
-   "poor": 9
+   "poor": 8
   },
-  "verdict": "poor",
-  "note": "indoor and basement marks not scored (USGS descriptions), rescored from the filed levels"
+  "verdict": "poor"
+ },
+ {
+  "case": "forest-hills-dep-moderate",
+  "scored": "2026-11-04T23:57:39.040Z",
+  "commit": "1adcf35+dirty",
+  "runCommit": "1adcf35a90c1+dirty",
+  "run": "2026-11-04_185733_Validation-Existing-conditions",
+  "saved": "2026-11-04T23:57:30.393Z",
+  "storm": "custom constant 55 mm/hr for 1 h",
+  "simulatedH": 3,
+  "wallH": 0.48,
+  "marks": null,
+  "gauges": [],
+  "maps": [
+   {
+    "name": "NYC DEP Stormwater Flood Map, Moderate (2.13 in/hr), current sea level",
+    "observed": false,
+    "hitRate": 0.15099930141243165,
+    "csi": 0.033122672782163604,
+    "falseAlarmRatio": 0.959297065406077,
+    "areaRatio": 3.709789058673326,
+    "depthBias": null,
+    "depthRMSE": null
+   }
+  ],
+  "mass": -0.000004085852797611449,
+  "checks": {
+   "good": 0,
+   "fair": 0,
+   "poor": 2
+  },
+  "verdict": "info",
+  "note": "DEP Moderate design storm, 55 mm/hr for 1 h"
  }
 ]

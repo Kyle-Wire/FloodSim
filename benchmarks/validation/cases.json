@@ -22,5 +22,11 @@
   "title": "Forest Hills, Queens — against the NYC DEP Moderate Stormwater Flood Map",
   "project": "Forest Hills DEP Moderate",
   "about": "A 2.13 in/hr design storm (NYC DEP Moderate, current sea level) against DEP's own InfoWorks ICM map of it: another model, not an observation, so it does not count in a verdict. docs/METHODS.md §5.10."
+ },
+ {
+  "id": "edwards-branch-clt",
+  "title": "Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers",
+  "project": "Edwards Branch Charlotte 2025",
+  "about": "A 2.5 km² urban watershed above USGS 0214643820 (Edwards Branch at Sheffield Dr), which set its record on 12 June 2025: 9.90 ft, 2,560 cfs at 8:50 pm EDT. The City of Charlotte's own storm pipes (sizes, shapes and surveyed inverts), inlets and outfalls are linked, not synthesised: the first case with a real sewer. Scored on the gauge's peak level and its time. Pipe data: City of Charlotte, CC BY-NC-SA 4.0 (non-commercial). docs/METHODS.md §5.12."
  }
 ]

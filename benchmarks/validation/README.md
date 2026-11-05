@@ -14,9 +14,9 @@ each case shows and what it does not.
 | Case | Run | Commit | Marks RMSE / bias (n) | Marks in the variants’ band | Gauges | Maps | Checks good / fair / poor | Change from the run before |
 |---|---|---|---|---|---|---|---|---|
 | Manayunk, Philadelphia — Ida 2021, Schuylkill River flood | 2026-11-04_134609 | f5e2632c5db6+dirty | 0.85 / −0.66 (11) | – | 01473800 −0.80; 01474000 +0.93 | – | 3 / 0 / 4 | marks RMSE −0.51 m, 01473800 0.71 m closer, 01474000 0.45 m closer |
-| Forest Hills, Queens — Ida 2021, street and basement flooding | 2026-11-04_182532 | 1adcf35a90c1+dirty | 0.61 / −0.20 (25) | – | – | USGS mapped inundation, Ida 2021, Forest Hills: hit 33 %, CSI 14 %; NYC DEP, Moderate: hit 31 %, CSI 5 %; NYC DEP, Extreme: hit 16 %, CSI 9 % | 0 / 1 / 9 | first run |
+| Forest Hills, Queens — Ida 2021, street and basement flooding | 2026-11-04_182532 | 1adcf35a90c1+dirty | 0.73 / −0.07 (27) | – | – | USGS mapped inundation, Ida 2021, Forest Hills: hit 33 %, CSI 14 %; NYC DEP, Moderate: hit 31 %, CSI 5 %; NYC DEP, Extreme: hit 16 %, CSI 9 % | 1 / 1 / 8 | first run |
 | Forest Hills, Queens — Ida 2021, uncertainty band (4 m speed mode) | not run yet | | | | | | | |
-| Forest Hills, Queens — against the NYC DEP Moderate Stormwater Flood Map | not run yet | | | | | | | |
+| Forest Hills, Queens — against the NYC DEP Moderate Stormwater Flood Map | 2026-11-04_185733_Validation-Existing-conditions | 1adcf35a90c1+dirty | – | – | – | NYC DEP, Moderate: hit 15 %, CSI 3 % | 0 / 0 / 2 | first run |
 
 ## Manayunk, Philadelphia — Ida 2021, Schuylkill River flood
 
@@ -33,4 +33,12 @@ The Schuylkill through Manayunk crested 13.0 m at the Manayunk gauge on 2 Sept 2
 
 | Run | Commit | Storm | Marks RMSE / bias (n) | Gauges | Maps | Note |
 |---|---|---|---|---|---|---|
-| 2026-11-04_182532 | 1adcf35a90c1+dirty | historic: Ida | 0.61 / −0.20 (25) | – | USGS mapped inundation, Ida 2021, Forest Hills: hit 33 %, CSI 14 %; NYC DEP, Moderate: hit 31 %, CSI 5 %; NYC DEP, Extreme: hit 16 %, CSI 9 % | indoor and basement marks not scored (USGS descriptions), rescored from the filed levels |
+| 2026-11-04_182532 | 1adcf35a90c1+dirty | historic: Ida | 0.73 / −0.07 (27) | – | USGS mapped inundation, Ida 2021, Forest Hills: hit 33 %, CSI 14 %; NYC DEP, Moderate: hit 31 %, CSI 5 %; NYC DEP, Extreme: hit 16 %, CSI 9 % |  |
+
+## Forest Hills, Queens — against the NYC DEP Moderate Stormwater Flood Map
+
+A 2.13 in/hr design storm (NYC DEP Moderate, current sea level) against DEP's own InfoWorks ICM map of it: another model, not an observation, so it does not count in a verdict. docs/METHODS.md §5.10.
+
+| Run | Commit | Storm | Marks RMSE / bias (n) | Gauges | Maps | Note |
+|---|---|---|---|---|---|---|
+| 2026-11-04_185733_Validation-Existing-conditions | 1adcf35a90c1+dirty | custom constant 55 mm/hr for 1 h | – | – | NYC DEP, Moderate: hit 15 %, CSI 3 % | DEP Moderate design storm, 55 mm/hr for 1 h |
