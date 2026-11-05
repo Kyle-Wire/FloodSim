@@ -179,6 +179,14 @@ details.adv > summary::before { content: "+"; display: inline-flex; align-items:
 details.adv[open] > summary::before { content: "–"; }
 details.adv > summary small { margin-left: auto; font: 500 9.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 details.adv > summary:hover { color: var(--ink); }
+.phys-fig { display: block; width: 100%; max-width: 320px; margin: 6px 0 4px; }
+.phys-fig { max-width: 340px; }
+.phys-fig .pf-t { font: 500 9px var(--mono); fill: var(--muted); }
+.phys-fig .pf-ink { fill: var(--ink-2); }
+.eq { font: 11px var(--mono); color: var(--ink-2); background: var(--sunken); border: 1px solid var(--hair); border-radius: 5px; padding: 8px 10px; line-height: 1.7; overflow-x: auto; white-space: nowrap; margin: 6px 0; }
+.eq-n { font: 10.5px var(--body); color: var(--muted); }
+.phys-list { padding-left: 16px; margin: 6px 0; }
+.phys-list li { margin: 4px 0; }
 .subhead { margin: 16px 0 2px; font: 500 10px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
@@ -728,7 +736,42 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
         <button data-v="max" title="Maximum depth">Depth</button><button data-v="peakHaz" title="Worst hazard class reached (depth and velocity at the same moment)">Hazard</button>
         <button data-v="force" title="Peak force per metre of width, ρ(h·v² + ½g·h²)">Force</button><button data-v="duration" title="Time deeper than 15 cm">Duration</button><button data-v="arrival" title="When it first got 15 cm deep">Arrival</button><button data-v="scour" title="Peak bed shear against what the ground resists (scour potential)">Scour</button><button data-v="bed" title="Bed change from sediment transport: erosion red, deposition blue">Bed</button><button data-v="collapse" title="Collapsible soils (survey screening) the flood wetted">Collapse</button><button data-v="banks" title="Highest probability of bank collapse over the run, at each bank top">Banks</button><button data-v="grain" title="Bed grain size against the soil's: coarser (scoured, armoured) brown, finer (silted) blue">Grain</button>
       </div>
+      <p class="vlabel">Physics now</p>
+      <div class="seg vseg" id="viewSeg3">
+        <button data-v="froude" title="Froude number |u| / √(gh): below 1 the flow is subcritical (waves travel upstream), above 1 supercritical (they cannot); a jump back to subcritical is a hydraulic jump">Froude</button><button data-v="step" title="The time step each cell allows, CFL · Δx / (|u| + |v| + 2√(gh)), against the step the whole grid takes now: the darkest cells set it">Time step</button><button data-v="flow" title="Flow per metre of width, q = h · |u| (m²/s): where the water is actually going">Flow</button>
+      </div>
       <div class="legend"><div class="ramp" id="ramp"></div><div class="ticks" id="ticks"></div></div>
+      <div class="note" id="physNote" hidden></div>
+      <details class="adv" id="engineHow">
+        <summary>How the engine works <small>Physics</small></summary>
+        <svg class="phys-fig" viewBox="0 0 320 190" role="img" aria-labelledby="physFigT">
+          <title id="physFigT">Three cells of the grid: the water depth and ground in each, the flux across a face, rain, infiltration and an inlet to the sewer</title>
+          <defs><marker id="pfA" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--purple)"/></marker>
+            <marker id="pfB" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--muted)"/></marker></defs>
+          <!-- water over one ground level per cell (the steps the solver sees) -->
+          <rect x="20" y="70" width="80" height="42" fill="#9cc8e6"/><rect x="100" y="80" width="80" height="38" fill="#9cc8e6"/><rect x="180" y="92" width="80" height="32" fill="#9cc8e6"/>
+          <path d="M20,112 H100 V118 H180 V124 H260 V156 H20 z" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1"/>
+          <line x1="100" y1="56" x2="100" y2="156" stroke="var(--line)" stroke-dasharray="3 3"/><line x1="180" y1="56" x2="180" y2="156" stroke="var(--line)" stroke-dasharray="3 3"/>
+          <text x="60" y="90" text-anchor="middle" class="pf-t pf-ink">h, hu, hv</text>
+          <path d="M80,104 H120" stroke="var(--purple)" stroke-width="2" marker-end="url(#pfA)"/><text x="100" y="50" text-anchor="middle" class="pf-t">face flux F</text>
+          <path d="M128,16 V40 M144,16 V40 M160,16 V40" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#pfB)"/><text x="170" y="31" class="pf-t">rain R</text>
+          <path d="M40,114 V134" stroke="var(--amber-ink)" stroke-width="1.5" marker-end="url(#pfB)"/><text x="50" y="146" class="pf-t">infiltration I</text>
+          <rect x="212" y="120" width="16" height="7" fill="var(--surface)" stroke="var(--ink-2)"/><path d="M220,127 V172 H300" stroke="var(--ink-2)" stroke-width="4" fill="none"/><text x="300" y="186" text-anchor="end" class="pf-t">inlet → sewer (SWMM)</text>
+          <text x="314" y="128" text-anchor="end" class="pf-t">ground z</text>
+        </svg>
+        <p class="note">Each cell holds a depth h and the momentum hu, hv. Every step the depth changes by what crosses its four faces, the rain on it, what soaks in and what an inlet takes (the 2D shallow-water equations, in finite volumes):</p>
+        <p class="eq">∂h/∂t + ∂(hu)/∂x + ∂(hv)/∂y<br>&emsp;= R − I − q<sub>inlet</sub><br>∂(hu)/∂t + ∂(hu² + ½gh²)/∂x<br>&emsp;+ ∂(huv)/∂y<br>&emsp;= −gh ∂z/∂x − g n² u|u| / h<sup>⅓</sup><br><span class="eq-n">and the same for hv along y</span></p>
+        <ul class="note phys-list">
+          <li><b>Faces.</b> An HLLC Riemann solver gives the flux from the water on each side, reconstructed to second order with limited slopes. The ground at a face is the higher of its two cells (hydrostatic reconstruction), so still water over a bumpy bed stays still. A wall or curb crest higher than both cells passes water by the weir equation.</li>
+          <li><b>Time.</b> Two-stage Runge–Kutta (Heun). The step is the CFL limit, 0.48 · Δx / (|u| + |v| + 2√(gh)), over the fastest cell: no wave may cross half a cell in a step. <i>Time step</i> above shows where that limit binds.</li>
+          <li><b>Never negative.</b> A cell that would send out more than it holds has its outgoing fluxes scaled down to what it has; depths carry a compensated residual, so the books close to round-off.</li>
+          <li><b>Friction</b> is Manning's, applied implicitly, so a thin film on a steep street slows instead of blowing up.</li>
+          <li><b>Rain and soil.</b> Rain lands every step (roofs can pipe theirs to the sewer); Green-Ampt takes what the pervious share of each cell can absorb.</li>
+          <li><b>Sewers.</b> EPA SWMM 5 runs the pipes. Every 2 s the street and the network trade water at each inlet: weir flow while it is shallow, orifice flow when deep, and back out where the pipes surcharge.</li>
+          <li><b>Local time stepping</b> lets each 8 × 8 tile step at its own power of two of a base step, up to 8×, with the flux between levels booked so no water is lost.</li>
+        </ul>
+        <p class="note">The detail and every test are in docs/METHODS.md §2.</p>
+      </details>
       <div class="field"><label for="hazStd">Hazard classes</label>
         <select id="hazStd"><option value="arr">ARR 2019 / AIDR H1–H6 (depth, velocity, d·v limits)</option><option value="defra">UK FD2320, HR = d(v + 0.5)</option><option value="defraUrban">UK FD2320 with urban debris factor</option></select></div>
       <div class="field"><label for="opacity">Water opacity</label><output id="opacityOut"></output><input type="range" id="opacity" min="10" max="100" value="85"></div>

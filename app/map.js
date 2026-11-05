@@ -2622,6 +2622,11 @@ const RAMPS = {
   duration: { stops: [[0, [225, 240, 250]], [15, [150, 200, 235]], [45, [70, 130, 200]], [90, [40, 60, 150]], [180, [30, 15, 80]]], max: 180, unit: 'min', ticks: [0, 60, 120, 180] },
   arrival: { stops: [[0, [120, 20, 60]], [15, [215, 60, 45]], [30, [245, 160, 60]], [60, [250, 225, 130]], [120, [240, 245, 225]]], max: 120, unit: 'min', ticks: [0, 30, 60, 90, 120] },
 };
+// physics now: Froude number, the step a cell allows over the grid's (log2: 0 = this cell sets it), flow per metre width
+RAMPS.froude = { stops: [[0, [215, 235, 250]], [0.5, [120, 180, 225]], [0.99, [40, 90, 170]], [1, [245, 170, 60]], [1.5, [220, 80, 40]], [2, [130, 20, 50]]], max: 2, unit: '', ticks: [0, 0.5, 1, 1.5, 2] };
+RAMPS.step = { stops: [[0, [120, 15, 60]], [1, [225, 90, 50]], [2, [240, 200, 90]], [3, [95, 175, 120]]], max: 3, unit: '', ticks: ['1×', '2×', '4×', '8×'] };
+RAMPS.flow = { stops: [[0, [240, 240, 225]], [0.1, [190, 215, 170]], [0.5, [90, 170, 140]], [1, [30, 110, 120]], [3, [20, 40, 90]]], max: 3, unit: 'm²/s', ticks: [0, 1, 2, 3] };
+const PHYS = new Set(['froude', 'step', 'flow']);
 RAMPS.max = RAMPS.depth;
 const PEAK = new Set(['peakHaz', 'force', 'duration', 'arrival', 'scour', 'bed', 'collapse', 'banks', 'grain']);
 const hazStd = () => STANDARDS[$('hazStd').value];
@@ -2642,7 +2647,7 @@ function drawLegend() {
   } else {
     const lo = r.min ?? 0; $('ramp').style.background = `linear-gradient(90deg, ${r.stops.map(([v, c]) => `rgb(${c}) ${((v - lo) / (r.max - lo) * 100).toFixed(0)}%`).join(',')})`;
     $('ticks').innerHTML = r.ticks.map((t, i) => `<span>${t}${i === r.ticks.length - 1 ? '+ ' + r.unit : ''}</span>`).join('');
-    $('ticks').title = '';
+    $('ticks').title = S.view === 'step' ? 'How many times the grid’s step this cell could take on its own: the darkest cells set the step for every cell (local time stepping lets the rest take up to 8×)' : '';
   }
 }
 
@@ -2674,6 +2679,7 @@ function drawDepth() {
   const fine = model.fine, W = fine.nx, H = fine.ny, ctx = canvases.depth.getContext('2d');
   const img = ctx.createImageData(W, H), px = img.data, view = S.view;
   const peak = PEAK.has(view), depth = fineField(view === 'max' || peak ? 'max' : 'depth'), hmin = S.hmin;
+  const phys = PHYS.has(view) ? physicsNow() : null;
   const r = RAMPS[view], st = hazStd(), hz = run.haz, std = $('hazStd').value;
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const k = j * W + i, d = depth[k];
@@ -2691,6 +2697,10 @@ function drawDepth() {
       else if (view === 'collapse') { const n = collapseAt(k, i, j); if (n <= 0) continue; col = r.classes ? [[225, 225, 210], [245, 210, 120], [230, 130, 60], [150, 40, 90]][n] : col; }
       else if (view === 'scour') { const n = run.scour ? scourClass(hz.shear[c], run.scour.tauC[c]) : -1; if (n < 0) continue; col = SCOUR_CLASSES[n].color; }
       else { const a = hz.arrival[c]; if (Number.isNaN(a)) continue; col = rampColor(r, a / 60); }
+    } else if (PHYS.has(view)) { // per solver cell, from the frame's depth and speed
+      const c = ck(i, j), h = run.out[2 * c], v = run.out[2 * c + 1];
+      if (!(h > 0.005)) continue;
+      col = rampColor(r, view === 'froude' ? v / Math.sqrt(G * h) : view === 'flow' ? h * v : Math.min(3, Math.log2(phys.dtOf(h, v) / phys.dtMin)));
     } else {
       const v = speedAt(i, j);
       if (view === 'speed') col = rampColor(r, v);
@@ -2700,10 +2710,48 @@ function drawDepth() {
     px[4 * k] = col[0]; px[4 * k + 1] = col[1]; px[4 * k + 2] = col[2]; px[4 * k + 3] = a;
   }
   ctx.putImageData(img, 0, 0);
+  if (phys) physNote(phys);
   run.lastDraw = { depth };
   refreshCanvas('depth');
 }
 
+const G = 9.81;
+/**
+ * The engine's state this frame, from the solver grid's depth and speed: the step each wet cell allows, CFL · Δx /
+ * (|u| + |v| + 2√(gh)) as the solver takes it (dtReduce; the frame has the speed |V| and not its direction, so |V| stands
+ * for |u| + |v|: exact along a grid axis, the velocity part up to √2 low on a diagonal), the one that sets the grid's
+ * step, how much of the flow is supercritical, and what local time stepping
+ * could save (cells stepping at 2^m of the smallest step, m ≤ 3; the solver also keeps a tile's neighbours within one
+ * level, so this is an upper bound).
+ */
+function physicsNow() {
+  const out = run.out, n = run.c.nx * run.c.ny, dx = run.F * model.fine.dx, cfl = run.solver.cfl ?? 0.48;
+  const dtOf = (h, v) => cfl * dx / (v + 2 * Math.sqrt(G * h));
+  let wet = 0, dtMin = Infinity, kMin = -1, sup = 0;
+  for (let k = 0; k < n; k++) {
+    const h = out[2 * k]; if (!(h > 0.005) || (run.c.inside && !run.c.inside[k])) continue;
+    const v = out[2 * k + 1], dt = dtOf(h, v); wet++;
+    if (dt < dtMin) { dtMin = dt; kMin = k; }
+    if (v > Math.sqrt(G * h)) sup++;
+  }
+  let work = 0; const levels = [0, 0, 0, 0];
+  for (let k = 0; k < n && wet; k++) {
+    const h = out[2 * k]; if (!(h > 0.005) || (run.c.inside && !run.c.inside[k])) continue;
+    const m = Math.min(3, Math.floor(Math.log2(dtOf(h, out[2 * k + 1]) / dtMin))); levels[m]++; work += 2 ** -m;
+  }
+  return { dtOf, dtMin, kMin, wet, sup, levels, gain: work ? wet / work : 1, dx, cfl };
+}
+function physNote(p) {
+  const el = $('physNote'); el.hidden = false;
+  if (!p.wet) { el.textContent = 'No water on the grid yet.'; return; }
+  const c = p.kMin, h = run.out[2 * c], v = run.out[2 * c + 1], i = c % run.c.nx, j = (c / run.c.nx) | 0;
+  const pct = (x) => `${Math.round(100 * x / p.wet)} %`, s = run.solver;
+  el.innerHTML = `<b>Step now ${(s.lastDt ?? p.dtMin).toFixed(3)} s</b> (${s.steps.toLocaleString()} so far${s.dtAvg ? `, mean ${s.dtAvg.toFixed(3)} s` : ''}), set by the fastest water: a cell ${h.toFixed(2)} m deep at ${v.toFixed(2)} m/s. Its waves, |u| + |v| + 2√(gh) ≈ ${(v + 2 * Math.sqrt(G * h)).toFixed(1)} m/s across ${p.dx} m cells, allow about ${p.dtMin.toFixed(3)} s at CFL ${p.cfl}. ` +
+    `<button class="btn" type="button" id="physGo">Show it</button><br>` +
+    `${p.wet.toLocaleString()} wet cells: ${pct(p.sup)} supercritical (Froude over 1). The step they each allow: ${p.levels.map((x, m) => `${2 ** m}×${m === 3 ? '+' : ''} ${pct(x)}`).join(', ')}. ` +
+    (s.lts ? 'Local time stepping is on.' : `Local time stepping would do up to ${p.gain.toFixed(1)}× less work per unit of time${p.gain > 2 && p.wet > 1e6 ? ': worth turning on (Area and model → Terrain and channels)' : ''}.`);
+  $('physGo').onclick = () => map.flyTo({ center: cellLonLat([(i + 0.5) * run.F, (j + 0.5) * run.F]), zoom: 19 });
+}
 function probe(e) {
   const p = $('probe');
   if (!model) { p.style.display = 'none'; return; }
@@ -2737,10 +2785,10 @@ function probe(e) {
 }
 
 // ------------------------------------------------------------------ view controls
-for (const seg of ['viewSeg', 'viewSeg2']) $(seg).onclick = async (e) => {
+for (const seg of ['viewSeg', 'viewSeg2', 'viewSeg3']) $(seg).onclick = async (e) => {
   const b = e.target.closest('button'); if (!b) return;
-  S.view = b.dataset.v; for (const x of [...$('viewSeg').children, ...$('viewSeg2').children]) x.setAttribute('aria-pressed', x === b);
-  drawLegend();
+  S.view = b.dataset.v; for (const x of [...$('viewSeg').children, ...$('viewSeg2').children, ...$('viewSeg3').children]) x.setAttribute('aria-pressed', x === b);
+  drawLegend(); $('physNote').hidden = !PHYS.has(S.view); if (!run?.out) $('physNote').textContent = 'Shown while a run is on the map.';
   if (PEAK.has(S.view) && run?.solver) { const r = run; r.haz.load(await r.solver.readHazard(), r.solver.t); await readGround(); if (run !== r) return; } // latest every-step totals
   if (run?.out) { if (run.view) run.view.lastMax = 0; drawDepth(); }
 };

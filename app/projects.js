@@ -64,8 +64,15 @@ export function initProjects({ capture, layer, restore, runFiles, scenarios = ()
     }
     current = target; show(); status('Saved', 'ok'); return true;
   }
+  /** True when the open project's saved area is the one on screen: a run of somewhere else never files into it. */
+  async function sameArea() {
+    let saved = null; try { saved = JSON.parse(await readFile(current.folder, 'project.json')).area; } catch { return true; } // never saved: nothing to clash with
+    const now = capture().area;
+    return !saved || !now || (saved.length === now.length && saved.every((v, i) => Math.abs(v - now[i]) < 1e-6));
+  }
   async function saveRun(label = '') {
     if (!current) return null;
+    if (!(await sameArea())) { status(`This run's area is not “${current.name}”'s: save it as a project first (not filed)`, 'warn'); return null; }
     const files = await runFiles(); if (!files) { status('No finished run to save', 'warn'); return null; }
     const dir = 'runs/' + stamp() + (label ? '_' + folderName(label).replace(/ /g, '-').slice(0, 30) : '');
     for (const f of files) await writeFile(current.folder, dir + '/' + f.path, f.data);
