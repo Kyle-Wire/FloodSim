@@ -5,7 +5,9 @@
 //   culvert  (line)    → a surface-to-surface culvert link (inlet/barrel control), like a mapped OSM culvert
 //   manhole  (point)   → structure: its invert fills in missing pipe inverts at that end
 //   inlet    (point)   → catch basin: joins the nearest pipe within 30 m (or a synthetic manhole when no pipes are drawn);
-//                        `blocked` (0–1) is the share of its grates covered by debris (1 = sealed: no inflow)
+//                        `blocked` (0–1) is the share of its grates covered by debris (1 = sealed: no inflow);
+//                        `crest` (m) the opening above the street around it (a gully lip, a kerb inlet; null = the
+//                        area's setting in Drainage → Inlet hydraulics)
 //   outfall  (point)   → where the network discharges; `boundary` = the pipe carries on off-site (normal-depth outlet)
 //   storage  (polygon) → underground storage: plan area × depth × void ratio = capacity; a SWMM storage unit joined
 //                         to the nearest manhole by a connection pipe, so it fills and drains with the network
@@ -33,7 +35,7 @@ export const DEFAULTS = {
   pipe: { D: 0.4572, shape: 'CIRCULAR', n: 0.013 },
   culvert: { D: 0.9144, n: 0.015, blocked: 0 },
   manhole: {},
-  inlet: { grates: 1, blocked: 0 },
+  inlet: { grates: 1, blocked: 0, crest: null },
   outfall: { boundary: false },
   storage: { system: 'chambers', voids: 0.55, depth: 1.524, connD: 0.3048 },
   // 3 ft wall, 4 ft berm with a 10 ft top and 3:1 sides, 2 ft deployable barrier up from the start
@@ -107,7 +109,7 @@ export function layerInputs(fc) {
   return {
     pipes,
     // one point per grate; `open` is the share of the grate not blocked by debris (it scales the inlet's opening)
-    inlets: byType('inlet').flatMap(f => Array.from({ length: Math.max(1, f.properties.grates | 0) }, () => ({ ...pt(f), open: 1 - Math.min(1, Math.max(0, Number(f.properties.blocked) || 0)) }))),
+    inlets: byType('inlet').flatMap(f => Array.from({ length: Math.max(1, f.properties.grates | 0) }, () => ({ ...pt(f), open: 1 - Math.min(1, Math.max(0, Number(f.properties.blocked) || 0)), crest: num(f.properties.crest) == null ? null : Math.max(0, f.properties.crest) }))),
     outfalls: byType('outfall').map(f => ({ ...pt(f), boundary: !!f.properties.boundary, invert: num(f.properties.invert) })),
     culverts: byType('culvert').map(f => {
       const p = f.properties, inv = [num(p.upInv), num(p.dnInv)].filter(v => v != null);

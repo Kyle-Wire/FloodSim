@@ -311,9 +311,11 @@ README "Local time stepping"; `src/solver-cpu.js` `_cycle` / `_record`:
 - **Inlet hydraulics** (`inletFlow`): with the node head below the street, inflow is min(weir, orifice) with weir
   C_w·P·h^1.5·√(2g) and orifice C_o·A·√(2gh). With the node above the street it is a submerged orifice on the head
   difference. Defaults (`DESIGN_DEFAULTS`): grate opening 0.2 m², weir length 2.0 m, C_w 0.5, C_o 0.6, and an optional
-  clogging share (at most 95 %). An inlet can have a crest above its cell's bed (a gully lip, a kerb inlet; `crest` on the
-  network's inlet, 0 when not given): it takes water only above the crest, on the head over it, and in two-way
-  exchange water leaves over the crest. Without one the inlet opens at the cell's bed.
+  clogging share (at most 95 %). An inlet can have a crest above its cell's bed (a gully lip, a kerb inlet): it takes water only
+  above the crest, on the head over it, and in two-way exchange water leaves over the crest. Grates merged on one cell
+  take the lowest crest. **Drainage → Inlet hydraulics** sets the grate area, weir length, C<sub>w</sub>, C<sub>o</sub>
+  and an area-wide crest (default 0). An inlet drawn in the Infrastructure layer can set its own crest. Non-default
+  values go into the run's forcing record (`drainage.inlets`). Inlets from utility GIS take the area-wide crest.
 - **Two-way exchange (app default).** Inlet manholes are pressurised and water returns to the street through the inlet
   orifice on the head difference, as HEC-RAS does. The return is capped per manhole by what its pipes deliver (SWMM node
   inflow less any positive lateral inflow; SWMM books a negative lateral flow as outflow, so the return itself is not

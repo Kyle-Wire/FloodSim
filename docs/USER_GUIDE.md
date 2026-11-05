@@ -489,6 +489,24 @@ With tier 2 or 2+ pipes, HGL and surcharge results are indicative only (docs/MET
 During a run the readouts show **Into pipes**, **Back onto streets**, **Surcharged manholes** and **SWMM / combined
 balance**.
 
+**Inlet hydraulics** (Advanced, under the network settings) sets how every grate takes water. A grate works as a weir
+while the water over it is shallow, C<sub>w</sub>·P·h<sup>1.5</sup>·√(2g), and as an orifice once it is deep,
+C<sub>o</sub>·A·√(2gh), whichever is smaller. h is the depth over the crest. When the pipes back up it is a submerged
+orifice on the head difference. Each field shows its source and conversions when you hover over it.
+
+| Field | Default | Notes |
+|---|---|---|
+| **Grate opening, clear area** | 0.2 m² per grate | A 0.6 × 0.35 m grate. HEC-22 grates are about 0.1–0.3 m² clear. |
+| **Weir length** | 2.0 m per grate | The edge water spills over: the perimeter, less any side against the curb. |
+| **Weir coefficient C<sub>w</sub>** | 0.5 | In Q = C<sub>w</sub>·P·h<sup>1.5</sup>·√(2g). That is C ≈ 2.2 (SI) or 4.0 (US) in Q = C·P·h<sup>1.5</sup>. HEC-22's grate value, 1.66 SI (3.0 US), is C<sub>w</sub> ≈ 0.37. |
+| **Orifice coefficient C<sub>o</sub>** | 0.6 | HEC-22 uses 0.67 for grates. |
+| **Crest above the street** | 0 cm | For inlets that do not set their own. Water below the crest does not drain. |
+
+Changing any of them resets the run. A run made with values other than the defaults records them in its forcing
+fingerprint (**drainage → inlets**), so two runs with different inlet settings are not taken as the same forcing.
+Debris on the grates is set per inlet in the Infrastructure drawer, or area-wide with **Inlet clogging** under
+Calibrate.
+
 ### 6.4 Combined sewer
 
 Open **Combined sewer** (Sanitary, regulators, gates).
@@ -538,6 +556,9 @@ to downstream; double-click or Enter finishes; Esc cancels; Backspace removes a 
 
 **Build precedence:** pipes in this layer replace linked and synthetic pipes. Catch basins and outfalls in it replace
 utility ones. Catch basins and culverts take a **Blocked by debris** setting (clear, 25 / 50 / 75 %, fully blocked).
+A catch basin also takes a **Crest above the street**: a gully lip or a raised kerb inlet that water must rise over.
+Leave it blank for the area's setting under Drainage → Inlet hydraulics. The crest is measured from the model cell's
+ground, which on a 2–4 m grid is the cell's mean, not the gutter's lowest point.
 Barriers take a crest as a height above ground or a fixed elevation; deployable barriers go up from the start, at a set
 time, or not at all.
 

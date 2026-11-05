@@ -85,6 +85,14 @@ const fc = (features) => ({ type: 'FeatureCollection', features });
     check('a blocked culvert flows as a smaller barrel; a fully blocked one is left out', ib.culverts.length === 1 && near(ib.culverts[0].D, 0.5, 1e-9), `D ${ib.culverts[0]?.D}`);
     void sealed;
   }
+  { // crest: a drawn inlet's crest reaches its exchange point; one left blank waits for the area's setting (null)
+    const LC = fc([...L.features.filter(x => x.properties.type !== 'inlet'), feature('inlet', { type: 'Point', coordinates: ll(70, 104) }, { grates: 1, crest: 0.05 }),
+      feature('inlet', { type: 'Point', coordinates: ll(130, 104) }, { grates: 1 }), feature('inlet', { type: 'Point', coordinates: ll(100, 104) }, { grates: 1, crest: -0.2 })]);
+    const ic = layerInputs(LC), nc = realNetwork(g, f, ic.pipes, sim, { realInlets: ic.inlets, outfalls: ic.outfalls });
+    const crests = nc.inlets.filter(x => x.grates > 0).map(x => x.crest ?? null).sort();
+    check('a drawn inlet carries its crest to the coupler; blank stays unset; a negative one is level with the street',
+      ic.inlets.map(x => x.crest).join() === '0.05,,0' && crests.includes(0.05) && crests.includes(0) && crests.includes(null), JSON.stringify(crests));
+  }
 
   // ---- storage: capacity from the footprint, joined to the nearest manhole, a SWMM storage unit that fills and drains
   const box = [ll(95, 110), ll(115, 110), ll(115, 130), ll(95, 130), ll(95, 110)];

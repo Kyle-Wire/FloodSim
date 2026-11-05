@@ -1382,7 +1382,7 @@ function setDrainSource(d) {
   if (model) resetRun();
 }
 $('drainSrc').onclick = (e) => { const b = e.target.closest('button'); if (b && !(run?.solver)) setDrainSource(b.dataset.d); };
-for (const id of ['designAri', 'spacing', 'lumpRate', 'downspout', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates']) $(id).addEventListener('change', () => { if (model && !(run?.solver)) resetRun(); });
+for (const id of ['designAri', 'spacing', 'lumpRate', 'downspout', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'inletArea', 'inletPerim', 'inletCw', 'inletCo', 'inletCrest', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates']) $(id).addEventListener('change', () => { if (model && !(run?.solver)) resetRun(); });
 for (const [id, fmt] of [['giPave', v => v + ' %'], ['giGarden', v => v + ' %'], ['giRoof', v => v + ' %'], ['giTank', v => (v > 0 ? Number(v).toLocaleString() + ' m³' : 'none')]]) {
   const show = () => { $(id + 'Out').textContent = fmt($(id).value); }; $(id).addEventListener('input', show); show();
 }
@@ -1552,7 +1552,10 @@ function resetRun() {
     $('bankNote').textContent = banks.count ? `${banks.count.toLocaleString()} bank-top cells within 20 m of open water, evaluated every step` + (banks.rock ? ` (${banks.rock.toLocaleString()} more left out: over twice as high as the soil is deep, so rock-controlled).` : '.') : 'No banks of 0.5 m or more within 20 m of open water in this area.';
   } else if ($('bankOn').checked && c.sg) $('bankNote').textContent = 'Bank stability needs the standard solver: pick a 1–4 m grid without the subgrid speed mode.';
   const net = drainSrc === 'network' ? makeNetwork(c, F) : null;
-  if (net) net.opts = { ...net.opts, clog: cal().clog };
+  if (net) { // Drainage → Inlet hydraulics: every grate's opening and coefficients; the crest where an inlet sets none
+    const ih = inletHydraulics(); net.opts = { ...net.opts, clog: cal().clog, ...ih.opts };
+    for (const g of net.inlets) if (g.crest == null) g.crest = ih.crest;
+  }
   const down = Number($('downspout').value) / 100; // downspouts straight into the nearest manhole (needs the SWMM engine)
   const drains = c.roofs && [...c.roofs.values()].some(r => r.roof === 'network'); // new buildings with roof drains (site design)
   const roof = net && swmmEngine && (down > 0 || drains) ? roofConnections(c, net, down, Number($('roof').value) / 100, 80, { toCell: llCell }) : null;
@@ -2022,7 +2025,7 @@ function forcingRecord(r) {
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
-    drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
+    drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), ...inletRecord(), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
     area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume), ...(model.bathy.surveyed ? { bathySurveyed: { source: 'NOAA BlueTopo', tiles: model.bathy.surveyed.tiles, volume: Math.round(model.bathy.surveyed.volume) } } : {}), ...(model.bathy.xs ? { bathyXS: { source: model.bathy.xs.source, volume: Math.round(model.bathy.xs.volume) } } : {}) } : {}) },
     commit: appCommit,
   };
@@ -3632,6 +3635,16 @@ $('hwmBtn').onclick = async () => {
 
 // ------------------------------------------------------------------ calibration
 const cal = () => ({ manning: Number($('calManning').value), infil: Number($('calInfil').value), clog: Number($('calClog').value) });
+/** Drainage → Inlet hydraulics, each value clamped to its field's range (a blank or bad entry takes the field's default). */
+function inletHydraulics() {
+  const v = (id) => { const el = $(id), x = Number(el.value); return el.value !== '' && Number.isFinite(x) ? Math.min(Number(el.max), Math.max(Number(el.min), x)) : Number(el.defaultValue); };
+  return { opts: { inletArea: v('inletArea'), inletPerim: v('inletPerim'), Cw: v('inletCw'), Co: v('inletCo') }, crest: v('inletCrest') / 100 };
+}
+/** The inlet hydraulics for a run's forcing record, only when changed from the defaults: runs made before the fields existed keep their fingerprint. */
+const inletRecord = () => {
+  const ih = inletHydraulics(), changed = ['inletArea', 'inletPerim', 'inletCw', 'inletCo', 'inletCrest'].some(id => Number($(id).value) !== Number($(id).defaultValue));
+  return changed ? { inlets: { ...ih.opts, crestM: ih.crest } } : {};
+};
 for (const [id, f] of [['calManning', v => `${Number(v).toFixed(2)}×`], ['calInfil', v => `${Number(v).toFixed(2)}×`], ['calClog', v => `${Math.round(v * 100)} %`]]) {
   const upd = () => { $(id + 'Out').textContent = f($(id).value); }; $(id).addEventListener('input', upd); upd();
   $(id).addEventListener('change', () => { if (model && (!run || !run.solver)) resetRun(); });

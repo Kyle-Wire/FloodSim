@@ -189,7 +189,8 @@ export function initInfra(map, { onChange, estimate, groundAt, fetcher, ready })
     culvert: [['D', 'Diameter', 'size'], ['upInv', 'Upstream invert', 'elev'], ['dnInv', 'Downstream invert', 'elev'], ['n', 'Manning’s n', 'num'],
       ['blocked', 'Blocked by debris', 'select', [[0, 'Clear'], [0.25, '25 % blocked'], [0.5, '50 % blocked'], [0.75, '75 % blocked'], [1, 'Fully blocked']]]],
     manhole: [['invert', 'Invert', 'elev'], ['rim', 'Rim', 'elev']],
-    inlet: [['grates', 'Grates', 'int'], ['blocked', 'Blocked by debris', 'select', [[0, 'Clear'], [0.25, '25 % blocked'], [0.5, '50 % blocked'], [0.75, '75 % blocked'], [1, 'Fully blocked']]]],
+    inlet: [['grates', 'Grates', 'int'], ['blocked', 'Blocked by debris', 'select', [[0, 'Clear'], [0.25, '25 % blocked'], [0.5, '50 % blocked'], [0.75, '75 % blocked'], [1, 'Fully blocked']]],
+      ['crest', 'Crest above the street (water below it does not drain)', 'size']],
     outfall: [['invert', 'Invert', 'elev'], ['boundary', 'Pipe continues off-site (normal-depth outlet)', 'bool']],
     storage: [['system', 'System', 'select', Object.entries(STORAGE_SYSTEMS).map(([k, s]) => [k, `${s.name} (${Math.round(s.voids * 100)}% voids)`])],
       ['voids', 'Void ratio', 'num'], ['depth', 'Storage depth', 'elev'], ['bottom', 'Floor elevation', 'elev'], ['connD', 'Connection pipe', 'size']],
@@ -212,7 +213,7 @@ export function initInfra(map, { onChange, estimate, groundAt, fetcher, ready })
       if (kind === 'text') return `<label class="ifield"><span>${label}</span><input id="${id}" data-k="${k}" data-kind="text" value="${(p[k] ?? '').replace(/"/g, '&quot;')}" placeholder="optional"></label>`;
       if (kind === 'bool') return `<label class="ifield check"><input type="checkbox" id="${id}" data-k="${k}" data-kind="bool"${p[k] ? ' checked' : ''}><span>${label}</span></label>`;
       const v = CONVERT.has(kind) ? fmtIn(kind, p[k]) : p[k] ?? '';
-      const ph = kind === 'elev' && (k === 'upInv' || k === 'dnInv' || k === 'invert' || k === 'bottom') ? 'from lidar' : kind === 'size' && k === 'D' && type === 'pipe' ? 'from neighbours' : '';
+      const ph = kind === 'elev' && (k === 'upInv' || k === 'dnInv' || k === 'invert' || k === 'bottom') ? 'from lidar' : kind === 'size' && k === 'D' && type === 'pipe' ? 'from neighbours' : k === 'crest' && type === 'inlet' ? 'area setting' : '';
       return `<label class="ifield"><span>${label}${CONVERT.has(kind) ? ` <i>${unit(kind)}</i>` : ''}</span><input id="${id}" data-k="${k}" data-kind="${kind}" inputmode="decimal" value="${v}" placeholder="${ph}"></label>`;
     });
     const info = [];
