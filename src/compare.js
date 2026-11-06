@@ -95,7 +95,12 @@ const SETTING_DEFAULTS = { inlets: { inletArea: DESIGN_DEFAULTS.inletArea, inlet
 /** What a settings test changed: the two runs' drainSettings (null = the defaults) → [{ key, label, unit, before, after }], display units. */
 export function settingsChanges(sa, sb) {
   const get = (s, g, k, scale) => { const v = s?.[g]?.[k] ?? SETTING_DEFAULTS[g][k]; return typeof v === 'number' && scale ? +(v * scale).toPrecision(6) : v; };
-  return SETTING_ROWS.map(([g, k, label, unit, scale]) => ({ key: k, label, unit, before: get(sa, g, k, scale), after: get(sb, g, k, scale) })).filter(r => r.before !== r.after);
+  const rows = SETTING_ROWS.map(([g, k, label, unit, scale]) => ({ key: k, label, unit, before: get(sa, g, k, scale), after: get(sb, g, k, scale) })).filter(r => r.before !== r.after);
+  // kinds of inlet by type (inletTypes { type: kind }): one row per type whose kind differs
+  const ta = sa?.inletTypes ?? {}, tb = sb?.inletTypes ?? {};
+  for (const t of [...new Set([...Object.keys(ta), ...Object.keys(tb)])].sort())
+    if (ta[t] !== tb[t]) rows.push({ key: 'inletTypes.' + t, label: `Kind of inlet for type ${t}`, unit: '', before: ta[t] ?? 'values above', after: tb[t] ?? 'values above' });
+  return rows;
 }
 /** A settings change as text: "Tries per step 8 → 20", "Lengthen very short pipes on → off". */
 export const settingText = (r) => { const v = (x) => (x === true ? 'on' : x === false ? 'off' : `${x}${r.unit ? ' ' + r.unit : ''}`); return `${r.label}: ${v(r.before)} → ${v(r.after)}`; };

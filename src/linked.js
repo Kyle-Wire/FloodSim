@@ -119,4 +119,9 @@ export function pipeRecords(features, m, { datum = 0 } = {}) {
 }
 
 /** Point features as {lon, lat} (inlets, outfalls). */
-export const pointRecords = (features) => features.filter(f => f.kind === 'point').map(f => ({ lon: f.coords[0], lat: f.coords[1] }));
+/** Point records {lon, lat}, with `type` from `typeField` (an inlet's kind of structure, src/inlettypes.js) when given. */
+export const pointRecords = (features, typeField = null) => features.filter(f => f.kind === 'point').map(f => {
+  const r = { lon: f.coords[0], lat: f.coords[1] }, t = typeField ? f.props?.[typeField] : null;
+  if (t != null && String(t).trim() !== '') r.type = String(t).trim();
+  return r;
+});

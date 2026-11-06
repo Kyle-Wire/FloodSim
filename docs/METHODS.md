@@ -324,6 +324,21 @@ README "Local time stepping"; `src/solver-cpu.js` `_cycle` / `_record`:
   and an area-wide crest (default 0), directly or from a kind of inlet (typical grate; HEC-22 grate, C<sub>w</sub> 0.37,
   C<sub>o</sub> 0.67; small grate; double grate; curb opening, C<sub>w</sub> 0.28 from HEC-22's 1.25 SI). An inlet drawn in the Infrastructure layer can set its own crest. Non-default
   values go into the run's forcing record (`drainSettings.inlets`). Inlets from utility GIS take the area-wide crest.
+- **Kinds of inlet by type** (`src/inlettypes.js`). A linked or utility inlet layer's type field (detected by name:
+  `STRUCT_TYPE`, `STRUCTURE_TYPE`, `INLET_TYPE`, …, then `TYPE`) is kept on each inlet record. `classifyInlet` maps a
+  type code to a class (catch basin, double, drop inlet, curb opening, elongated throat, slab-top with 1–4 open sides).
+  A standard gives each class a kind: NCDOT (picked by default when the area's centre is inside a rough outline of
+  North Carolina) or generic HEC-22 kinds; the user can pick a kind per type. Each grate then carries its own
+  {A, P, C_w, C_o} through the network builders to its exchange point. Grates merged on one solver cell become one
+  equivalent grate (`inletOptions`): A and P averaged over the grates by open share, C_w weighted by P and C_o by A, so
+  the weir and orifice terms are the sums of the grates' own. The NCDOT open areas are the clear openings in the
+  Drainage Box Depths table (840.03 catch basin 3.1 ft²; 840.16 drop inlet 3.7 ft² and 8.6 ft weir; open-throat
+  catch basins 1.8–2.5 ft² for a 6" throat, 2.3–3.3 ft² for 8"); weir lengths not in the table, and every slab-top
+  value, are estimates and say so in the app. Without any kind (no types, no standard, no picks) the network and
+  results are exactly as before, and the forcing record has no `inletTypes` part. With kinds, `drainSettings.inletTypes`
+  records the kind of each type, and a settings test lists the types whose kind changed. Before this change the
+  synthetic (street-following) network dropped each real grate's open share and crest on the way to the exchange
+  points; it now keeps them.
 - **Two-way exchange (app default).** Inlet manholes are pressurised and water returns to the street through the inlet
   orifice on the head difference, as HEC-RAS does. The return is capped per manhole by what its pipes deliver (SWMM node
   inflow less any positive lateral inflow; SWMM books a negative lateral flow as outflow, so the return itself is not
@@ -1443,6 +1458,7 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-phase1-tests.mjs` | Geodesy, terrain, roof routing, downscaling, exports, outflow BC, Atlas 14 storms, historic storms |
 | `run-phase2-tests.mjs` | Weir and culvert hydraulics, conservative culvert links, channel breaching, bank stations, SWMM river |
 | `run-swmm-tests.mjs` | SWMM WebAssembly engine on the Eastwick network: lateral inflow, stride, heads, overflow, continuity |
+| `run-inlettypes-tests.mjs` | Kinds of inlet by type: Charlotte type codes, the North Carolina outline, NCDOT values, picks, type field detection, grates of different kinds merged on one cell (weir and orifice sums), the kinds carried through both network builders and the coupler, no change without kinds |
 | `run-infra-tests.mjs` | Infrastructure layer: capacity, estimate round trip, storage in SWMM, shapefile/zip import |
 | `run-barrier-tests.mjs` | Flood barriers: watertight faces, at-rest balance, weir overflow, deployment, books |
 | `run-hazard-tests.mjs` | Hazard classes (ARR 2019, FD2320), force per width, same-moment classification, duration, arrival |

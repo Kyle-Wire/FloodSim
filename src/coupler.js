@@ -11,7 +11,7 @@
 // Water moved between the models is identical on both sides, so the combined balance is
 //   surface stored + network stored = rain − infiltration − surface outflow − pipe outfalls leaving the model
 //   (± SWMM continuity error).
-import { inletFlow, returnsHere, posKey } from './drainage.js';
+import { inletFlow, inletOptions, returnsHere, posKey } from './drainage.js';
 
 export class Coupler {
   /**
@@ -32,6 +32,8 @@ export class Coupler {
     this.inletNodes = net.inlets.map(g => g.node);
     this.grates = net.inlets.map(g => g.grates);
     this.crest = net.inlets.map(g => g.crest ?? 0);
+    // each point's grate hydraulics: the area's setting, or the equivalent of its grates' own kinds (drainage.js inletOptions)
+    this.opt = net.inlets.map(g => inletOptions(g.parts, net.opts));
     this.swIdx = net.nodes.map(n => swmm.index('NODE', n.name));
     if (this.swIdx.some(i => i < 0)) throw new Error('SWMM node lookup failed');
     this.lkIdx = net.pipes.map(p => swmm.index('LINK', p.name)); // by name: regulator weirs and outlets follow the conduits in the .inp
@@ -110,7 +112,7 @@ export class Coupler {
       for (let m = 0; m < M; m++) {
         // water leaves over the crest, or against the street water above it
         const i = this.inletNodes[m], eta = this.zs[m] + Math.max(this.crest[m], h[m]), dH = this.state.head[i] - eta;
-        if (dH > 0 && this.state.head[i] > this.zs[m] + this.crest[m]) { back[m] = net.opts.Co * net.opts.inletArea * this.grates[m] * Math.sqrt(2 * 9.81 * dH); want[i] += back[m]; }
+        if (dH > 0 && this.state.head[i] > this.zs[m] + this.crest[m]) { back[m] = this.opt[m].Co * this.opt[m].inletArea * this.grates[m] * Math.sqrt(2 * 9.81 * dH); want[i] += back[m]; }
       }
       for (let m = 0; m < M; m++) if (back[m] > 0) {
         // SWMM's node INFLOW holds a lateral flow only when it is positive (a negative one is booked as outflow,
@@ -123,7 +125,7 @@ export class Coupler {
     for (let m = 0; m < M; m++) {
       const i = this.inletNodes[m], n = net.nodes[i];
       const share = overflow[i] / this.perNode[i]; // a manhole's overflow leaves through all of its grates
-      this.q[m] = inletFlow(h[m], this.zs[m], this.state.head[i], this.grates[m], net.opts, this.crest[m]) - share - (back?.[m] ?? 0); this.ret[m] = share;
+      this.q[m] = inletFlow(h[m], this.zs[m], this.state.head[i], this.grates[m], this.opt[m], this.crest[m]) - share - (back?.[m] ?? 0); this.ret[m] = share;
       if (this.prescribe?.has(m)) { this.q[m] = 0; this.ret[m] = 0; } // replayed: no surface exchange (the cell is outside the window)
       if (back) this.totals.backflow += back[m] * interval;
       flooding += share;
