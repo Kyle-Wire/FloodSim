@@ -31,6 +31,7 @@ import { initDesign } from './design-ui.js';
 import { initCompare } from './compare-ui.js';
 import { initEmulator } from './emulator-ui.js';
 import * as CMP from '../src/compare.js';
+import { INLET_KINDS, GENERIC_KINDS, INLET_STANDARDS, defaultStandard, inletTypeCounts, typeKinds, applyInletKinds, detectTypeField } from '../src/inlettypes.js';
 import * as REP from '../src/report.js';
 import { initReport } from './report-ui.js';
 import { initProjects, readBytes, readBytesOptional, readOptional, readFile as readProjectFile, writeFile as writeProjectFile, stamp } from './projects.js';
@@ -438,7 +439,9 @@ async function loadLinked(links, bounds) {
       out.notes.push(`${src.name}: size ${map.size ?? 'none'} (${map.sizeUnits})${map.width ? ', width ' + map.width : ''}${map.shape ? ', shape ' + map.shape : ''}${map.system ? `, system ${map.system} (${recs.filter(r => r.combined).length} of ${recs.length} combined)` : ''}${map.upInvert ? `, inverts ${map.upInvert}/${map.dnInvert}${datum ? ` ${datum > 0 ? '+' : '−'}${Math.abs(datum)} to NAVD88` : ''}` : ', no inverts'}${map.status ? ', drops ' + map.status : ''}`);
     } else {
       if (src.kind !== 'point') throw new Error(`${src.name} has ${src.kind} features, ${kind} must be points`);
-      out[kind].push(...pointRecords(feats));
+      const tf = kind === 'inlets' ? detectTypeField(src.fields) : null; // what each structure is (Inlet hydraulics → Inlet types)
+      out[kind].push(...pointRecords(feats, tf));
+      if (tf) out.notes.push(`${src.name}: inlet type from ${tf}`);
     }
   }
   out.combined = out.pipes.length > 0 && out.combinedPipes > out.pipes.length / 2; // most of the linked pipes are combined sewers
@@ -622,6 +625,7 @@ $('buildBtn').onclick = async () => {
       + ` · ${osm.culverts.length} mapped culverts linked · ${f.channels.breaches} road embankments breached on mapped streams`);
     const nfhl = await femaP;
     model = { fine, f, base: f, dem, osm, nlcd, soils, curb, atlas14, util, linked, site: [clon, clat], poly: S.poly };
+    renderInletTypes(); // the types in this area's inlet data, and the standard for where it is
     if (nfhl) { model.fema = { data: nfhl, grids: FEMA.nfhlGrids(nfhl, fine, f.z, { step: 4 }) }; lFema.set(...femaSummary(model.fema, fine)); }
     groundCache.clear(); emulatorUI.reset();
     if (rasXS.geom) loadXS().catch(xsFail); // HEC-RAS cross-sections loaded before this build: placed on the new grid
@@ -1581,7 +1585,7 @@ function setDrainSource(d) {
   if (model) resetRun();
 }
 $('drainSrc').onclick = (e) => { const b = e.target.closest('button'); if (b && !(run?.solver)) setDrainSource(b.dataset.d); };
-for (const id of ['designAri', 'spacing', 'lumpRate', 'downspout', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'inletType', 'inletArea', 'inletPerim', 'inletCw', 'inletCo', 'inletCrest', 'swmmPreset', 'swmmStep', 'swmmVarStep', 'swmmHeadTol', 'swmmTrials', 'swmmMinArea', 'swmmSurcharge', 'swmmDamping', 'swmmNormal', 'swmmMinSlope', 'swmmLengthen', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates']) $(id).addEventListener('change', () => { if (model && !(run?.solver)) resetRun(); });
+for (const id of ['designAri', 'spacing', 'lumpRate', 'downspout', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'inletType', 'inletArea', 'inletPerim', 'inletCw', 'inletCo', 'inletCrest', 'inletStd', 'inletTypePicks', 'swmmPreset', 'swmmStep', 'swmmVarStep', 'swmmHeadTol', 'swmmTrials', 'swmmMinArea', 'swmmSurcharge', 'swmmDamping', 'swmmNormal', 'swmmMinSlope', 'swmmLengthen', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates']) $(id).addEventListener('change', () => { if (model && !(run?.solver)) resetRun(); });
 for (const [id, fmt] of [['giPave', v => v + ' %'], ['giGarden', v => v + ' %'], ['giRoof', v => v + ' %'], ['giTank', v => (v > 0 ? Number(v).toLocaleString() + ' m³' : 'none')]]) {
   const show = () => { $(id + 'Out').textContent = fmt($(id).value); }; $(id).addEventListener('input', show); show();
 }
@@ -1620,7 +1624,8 @@ function makeNetwork(c, F, { ignoreLayer = false } = {}) {
   // precedence: pipes in the infrastructure layer, then linked pipes, then the street-following estimate; catch basins
   // and outfalls in the layer replace the linked / utility ones
   const lay = ignoreLayer ? null : infra.inputs(), L = model.linked;
-  const inlets = lay?.inlets.length ? lay.inlets : L?.inlets.length ? L.inlets : model.util?.inlets;
+  const inlets0 = lay?.inlets.length ? lay.inlets : L?.inlets.length ? L.inlets : model.util?.inlets;
+  const inlets = applyInletKinds(inlets0, inletKinds(inlets0)); // each grate its own hydraulics where its type has a kind of inlet
   const outfalls = lay?.outfalls.length ? lay.outfalls : L?.outfalls.length ? L.outfalls : model.util?.outfalls;
   const combined = $('csoOn').checked; // combined sewer: interior pipe ends no outfall claims leave the model (src/network-real.js)
   const withQ = (net) => { if (net) for (const p of net.pipes) p.Qfull = 0.3117 / (p.n ?? net.opts.n) * p.D ** (8 / 3) * Math.sqrt(p.S); return net; };
@@ -3854,13 +3859,7 @@ const inletRecord = () => {
 // Kind of inlet: each fills the four grate fields (area, weir length, Cw, Co); the crest stays as set. Editing a field
 // shows the kind it now matches, or Custom.
 const INLET_FIELDS = ['inletArea', 'inletPerim', 'inletCw', 'inletCo'];
-const INLET_TYPES = {
-  typical: { v: [0.2, 2, 0.5, 0.6], hint: 'A 0.6 × 0.35 m street grate. The model’s default.' },
-  hec22: { v: [0.2, 2, 0.37, 0.67], hint: 'The same grate with the FHWA HEC-22 grate coefficients (weir 1.66 SI, orifice 0.67). Takes a little less while the water is shallow.' },
-  small: { v: [0.1, 1.4, 0.5, 0.6], hint: 'About 0.4 × 0.3 m, as in yards, alleys and parking lots.' },
-  large: { v: [0.4, 3, 0.5, 0.6], hint: 'Two street grates side by side.' },
-  curb: { v: [0.2, 1.5, 0.28, 0.67], hint: 'A 1.5 m opening about 13 cm high in the face of the curb, with the HEC-22 curb-opening weir coefficient (1.25 SI).' },
-};
+const INLET_TYPES = Object.fromEntries(GENERIC_KINDS.map(k => [k, { v: INLET_KINDS[k].v, hint: INLET_KINDS[k].basis }])); // src/inlettypes.js
 function syncInletType(keep) {
   const cur = INLET_FIELDS.map(id => Number($(id).value));
   const k = keep ?? Object.keys(INLET_TYPES).find(t => INLET_TYPES[t].v.every((x, i) => x === cur[i])) ?? 'custom';
@@ -3874,6 +3873,51 @@ $('inletType').addEventListener('change', () => {
 });
 for (const id of INLET_FIELDS) $(id).addEventListener('input', () => syncInletType());
 syncInletType();
+// Drainage → Inlet hydraulics → Inlet types in the data (src/inlettypes.js): each type in the area's inlet layer takes a
+// kind of inlet from the standard (by default NCDOT in North Carolina, none elsewhere) or the kind picked for it, and its
+// grates use that kind's opening, weir length and coefficients. Types without one use the values above.
+const escHTML = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const inletPicks = () => { try { const p = JSON.parse($('inletTypePicks').value || '{}'); return p && typeof p === 'object' && !Array.isArray(p) ? p : {}; } catch { return {}; } };
+/** The standard in use: the one picked, or for Automatic the one whose region holds the area ('none' outside them all). */
+function inletStandard() { const v = $('inletStd').value; return v === 'auto' ? (model ? defaultStandard(...model.site) : 'none') : v; }
+/** The inlet records the network will use (as makeNetwork picks them). */
+function typedInlets() { if (!model) return []; const lay = infra.inputs(), L = model.linked; return lay?.inlets.length ? lay.inlets : L?.inlets.length ? L.inlets : model.util?.inlets ?? []; }
+const inletKinds = (inlets) => typeKinds(inletTypeCounts(inlets), inletStandard(), inletPicks());
+/** The kinds by type for a run's forcing record ({ type: kind }), only when some type has one: other runs keep their fingerprint. */
+const inletTypesRecord = () => {
+  const k = inletKinds(typedInlets());
+  return Object.keys(k).length ? { inletTypes: Object.fromEntries(Object.entries(k).sort(([a], [b]) => (a < b ? -1 : 1)).map(([t, v]) => [t, v.kind + (INLET_KINDS[v.kind].perSide ? ' x' + v.sides : '')])) } : {};
+};
+function renderInletTypes() {
+  const tab = $('inletTypeTable'), notes = $('inletKindNotes'), v = $('inletStd').value, std = inletStandard(), S0 = INLET_STANDARDS[std];
+  $('inletStdHint').textContent = v === 'auto'
+    ? (!model ? 'Picked when the area loads: NCDOT in North Carolina, none elsewhere.' : S0 ? `${S0.label}, as the area is in North Carolina.` : 'No standard for where this area is: each type uses the values above unless you pick a kind for it.')
+    : v === 'none' ? 'Each type uses the values above unless you pick a kind for it.' : `Each type takes the ${S0.label.split(' (')[0]} kind for it, unless you pick another.`;
+  const types = inletTypeCounts(typedInlets()), named = types.filter(t => t.type != null), untyped = types.find(t => t.type == null);
+  if (!named.length) { tab.hidden = true; tab.innerHTML = ''; notes.textContent = model ? 'The inlets here have no type in their data, so every one uses the values above.' : 'Load an area: the types in its inlet data are listed here.'; return; }
+  const picks = inletPicks(), kinds = typeKinds(types, std, picks), label = (k, sides) => INLET_KINDS[k].label + (INLET_KINDS[k].perSide ? ` × ${sides}` : '');
+  tab.hidden = false;
+  tab.innerHTML = '<thead><tr><th>Type</th><th>Inlets</th><th>Kind of inlet</th></tr></thead><tbody>' + named.map(t => {
+    const stdKind = t.cls ? S0?.kinds[t.cls] : null, p = picks[t.type] ?? 'auto';
+    const auto = stdKind ? 'Standard: ' + label(stdKind, t.sides) : 'Values above';
+    const cur = p === 'auto' ? auto : p === 'area' ? 'Values above' : INLET_KINDS[p] ? label(p, t.sides) : auto;
+    return `<tr><td>${escHTML(t.type)}</td><td>${t.count.toLocaleString()}</td><td><select data-type="${escHTML(t.type)}" title="${escHTML(cur)}" aria-label="Kind of inlet for type ${escHTML(t.type)}">` +
+      `<option value="auto"${p === 'auto' ? ' selected' : ''}>${escHTML(auto)}</option><option value="area"${p === 'area' ? ' selected' : ''}>Values above</option>` +
+      Object.keys(INLET_KINDS).map(k => `<option value="${k}"${p === k ? ' selected' : ''}>${escHTML(label(k, t.sides))}</option>`).join('') + '</select></td></tr>';
+  }).join('') + (untyped ? `<tr><td><i>no type</i></td><td>${untyped.count.toLocaleString()}</td><td>Values above</td></tr>` : '') + '</tbody>';
+  const n = named.filter(t => kinds[t.type]).reduce((s, t) => s + t.count, 0), all = types.reduce((s, t) => s + t.count, 0);
+  const used = [...new Set(Object.values(kinds).map(k => k.kind))];
+  notes.innerHTML = (n === all ? `All ${all.toLocaleString()} inlets take their own grate from their type.` : `${n.toLocaleString()} of ${all.toLocaleString()} inlets take their own grate from their type; the others use the values above.`) + ` The crest and the debris (Calibration) apply to every inlet.` +
+    used.map(k => `<br><b>${escHTML(INLET_KINDS[k].label)}.</b> ${escHTML(INLET_KINDS[k].basis)}${INLET_KINDS[k].est ? ` <i>Estimated: ${escHTML(INLET_KINDS[k].est)}.</i>` : ''}`).join('');
+}
+$('inletTypeTable').addEventListener('change', (e) => {
+  const t = e.target.dataset?.type; if (t == null) return;
+  const p = inletPicks(); if (e.target.value === 'auto') delete p[t]; else p[t] = e.target.value;
+  $('inletTypePicks').value = JSON.stringify(p); $('inletTypePicks').dispatchEvent(new Event('change')); // resets the run
+  renderInletTypes();
+});
+for (const ev of ['input', 'change']) { $('inletStd').addEventListener(ev, renderInletTypes); $('inletTypePicks').addEventListener(ev, renderInletTypes); }
+renderInletTypes();
 // Drainage → Pipe solver settings: SWMM's dynamic-wave options (src/drainage.js ROUTING_DEFAULTS), with presets that fill
 // every field. The head tolerance is entered in mm.
 const SWMM_FIELDS = ['swmmStep', 'swmmVarStep', 'swmmHeadTol', 'swmmTrials', 'swmmMinArea', 'swmmSurcharge', 'swmmDamping', 'swmmNormal', 'swmmMinSlope', 'swmmLengthen'];
@@ -3891,7 +3935,7 @@ function swmmRouting() {
 }
 /** A run's inlet and pipe solver settings where they differ from the defaults ({ inlets, routing }), else null: the
  *  forcing record's drainSettings part, which a settings test may differ in (src/compare.js comparable). */
-const drainSettings = () => { const s = { ...inletRecord(), ...routingRecord() }; return Object.keys(s).length ? s : null; };
+const drainSettings = () => { const s = { ...inletRecord(), ...inletTypesRecord(), ...routingRecord() }; return Object.keys(s).length ? s : null; };
 /** The SWMM settings for a run's forcing record, only those changed from the defaults (older runs keep their fingerprint). */
 const routingRecord = () => {
   const ch = Object.entries(swmmRouting()).filter(([k, x]) => typeof x === 'number' ? Math.abs(x - ROUTING_DEFAULTS[k]) > 1e-12 : x !== ROUTING_DEFAULTS[k]);

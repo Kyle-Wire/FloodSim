@@ -520,6 +520,38 @@ fingerprint (**drainSettings → inlets**), so two runs with different inlet set
 Debris on the grates is set per inlet in the Infrastructure drawer, or area-wide with **Inlet clogging** under
 Calibrate.
 
+**Inlet types in the data.** A city's inlet layer often says what each structure is: Charlotte's lists catch basins
+(CB), drop inlets (DI), double catch basins (DCB), curb inlets (CI), slab-top drop inlets with one to four open sides
+(SlabDI 1–4) and elongated-throat inlets. FloodSim reads the type from the layer (a field such as `STRUCT_TYPE`,
+`STRUCTURE_TYPE` or `INLET_TYPE`) and lists the types with how many inlets each has. **Kinds of inlet by type** says
+which grate each type gets:
+
+| Choice | What it does |
+|---|---|
+| **Automatic** (default) | NCDOT standard drawings when the area is in North Carolina; elsewhere, none. |
+| **NCDOT standard drawings** | Each recognised type gets the NCDOT grate of its kind (table below). |
+| **Generic kinds (FHWA HEC-22)** | Catch basins and drop inlets get the HEC-22 street grate, doubles the double grate, curb and elongated-throat inlets the curb opening, slab-top inlets the small grate. |
+| **None** | Every inlet uses the values above, except the types you pick a kind for. |
+
+In the table you can pick another kind for any type, or **Values above** to keep it on the area-wide numbers. A type
+the model does not recognise, and an inlet with no type, uses the values above. The crest and the debris share apply
+to every inlet. Under the table each kind in use is listed with where its numbers come from; the ones not read off a
+standard drawing say **Estimated**.
+
+| NCDOT kind | Open area | Edge | C<sub>w</sub> | C<sub>o</sub> | Source |
+|---|---|---|---|---|---|
+| **Catch basin, Type E grate** (840.03) | 0.29 m² | 2.1 m | 0.37 | 0.67 | 3.1 ft² clear opening. Edge estimated: three sides of the grate. |
+| **Double catch basin** | 0.58 m² | 3.0 m | 0.37 | 0.67 | Two 840.03 grates. Edge estimated. |
+| **Drop inlet grate** (840.16) | 0.34 m² | 2.62 m | 0.37 | 0.67 | 3.7 ft² and 8.6 ft, open on all sides. |
+| **Open-throat curb inlet, 6" throat** (840.04/.05) | 0.20 m² | 1.4 m | 0.28 | 0.67 | 1.8–2.5 ft² opening; the 1.4 m length is estimated. |
+| **Elongated throat curb inlet, 8" throat** | 0.31 m² | 1.5 m | 0.28 | 0.67 | Top of the 2.3–3.3 ft² range; the length is estimated. |
+| **Slab-top drop inlet**, per open side | 0.15 m² | 1.0 m | 0.28 | 0.67 | All four estimated, × the number of open sides. |
+
+The open areas are the clear openings in the NCDOT Drainage Box Depths table. NCDOT's own capacities in that table
+assume half the grate is blocked; FloodSim uses the clear opening and leaves blockage to **Inlet clogging**. A run whose
+types get kinds records them in its forcing fingerprint (**drainSettings → inletTypes**). To see what the kinds do,
+run with **None**, then with **Automatic**, and compare the two as a settings test (section 7.2).
+
 **Pipe solver settings** (Advanced, under Inlet hydraulics) controls how SWMM, the pipe model, works out the flow. The
 defaults suit most runs. The quickest way to try something is the **Speed or accuracy** list:
 

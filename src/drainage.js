@@ -95,6 +95,7 @@ export function synthNetwork(fine, f, osm, pf, sim, opts = {}) {
       const p = toCells(fine, [[g.lon, g.lat]])[0]; if (!inside(p)) continue;
       p.open = g.open ?? 1; // share of the grate not blocked by debris
       p.crest = g.crest ?? null; // its opening above the street (null: the area's setting)
+      p.hyd = g.hyd ?? null; // its own opening, weir length and coefficients (its kind of inlet; null: the area's setting)
       let best = null; const bi = Math.floor(p[0] / BK), bj = Math.floor(p[1] / BK);
       for (let j = bj - 1; j <= bj + 1; j++) for (let i = bi - 1; i <= bi + 1; i++) for (const ei of buckets.get(bkey(i, j)) || []) {
         const [u, v] = edges[ei], a = V[u].p, b = V[v].p, ex = b[0] - a[0], ey = b[1] - a[1], L2 = ex * ex + ey * ey || 1e-12;
@@ -176,6 +177,7 @@ export function synthNetwork(fine, f, osm, pf, sim, opts = {}) {
     n.inletFine = real ? n.grates.map(g => lowest(g, Math.max(1, Math.round(1 / dx)))) : [gutter];
     n.grateOpen = real ? n.grates.map(g => g.open ?? 1) : [1];
     n.grateCrest = real ? n.grates.map(g => g.crest ?? null) : [null];
+    n.grateHyd = real ? n.grates.map(g => g.hyd ?? null) : [null];
     n.fineCell = n.inletFine[0] ?? gutter; n.gutter = gutter;
     n.ground = n.inletFine.length ? Math.min(...n.inletFine.map(k => f.z[k])) : f.z[gutter];
   }
@@ -234,7 +236,8 @@ export function synthNetwork(fine, f, osm, pf, sim, opts = {}) {
   const outNodes = keep.map((i) => {
     const n = nodes[i], isOut = parent[i] < 0;
     return { name: (isOut ? 'O' : 'J') + i, p: n.p, ground: n.ground, invert: n.invert, depth: Math.max(0.5, n.ground - n.invert), outfall: isOut, toStream: isOut && n.stream,
-      realOutfall: isOut && n.realOutfall, inletFine: isOut ? [] : n.inletFine, gutter: n.gutter, fineCell: n.fineCell, area: area[i], CA: CA[i] };
+      realOutfall: isOut && n.realOutfall, inletFine: isOut ? [] : n.inletFine, grateOpen: isOut ? [] : n.grateOpen, grateCrest: isOut ? [] : n.grateCrest,
+      grateHyd: isOut ? [] : n.grateHyd, gutter: n.gutter, fineCell: n.fineCell, area: area[i], CA: CA[i] };
   });
   const outPipes = pipes.map((q, k) => ({ name: 'C' + k, from: remap.get(q.from), to: remap.get(q.to), L: Math.max(1, q.L), D: q.D, Q: q.Q, S: q.S,
     inOffset: q.invUp - nodes[q.from].invert, outOffset: q.invDown - nodes[q.to].invert, area: q.area }));
@@ -287,6 +290,8 @@ export function addOutlets(outNodes, outPipes, o, dx) {
 /**
  * GPU exchange points: one per grate, each on its own solver cell (grates sharing a coarse cell merge into one).
  * A manhole without a grate still gets a lid point (0 grates): it takes nothing in, but returns overflow to the street.
+ * A grate with its own hydraulics (n.grateHyd: its kind of inlet) puts them in `parts` [[grates, hyd]], one per grate on
+ * the cell; inletOptions() combines them with the area's setting. Without any, the point has no `parts` and uses that.
  */
 export function exchangePoints(outNodes, W, sim, real) {
   const inlets = [], usedCell = new Map();
@@ -294,16 +299,17 @@ export function exchangePoints(outNodes, W, sim, real) {
     if (n.outfall) return;
     n.inletCount = 0;
     // each grate counts by its open share (debris); a fully blocked grate exchanges nothing, like a lid
-    const pts = n.inletFine.length ? n.inletFine.map((fk, q) => [fk, n.grateOpen?.[q] ?? 1, n.grateCrest?.[q] ?? null]) : [[n.gutter, 0, null]];
-    for (const [fk, g, crest] of pts) {
+    const pts = n.inletFine.length ? n.inletFine.map((fk, q) => [fk, n.grateOpen?.[q] ?? 1, n.grateCrest?.[q] ?? null, n.grateHyd?.[q] ?? null]) : [[n.gutter, 0, null, null]];
+    const own = pts.some(p => p[3]); // any grate of this manhole with its own hydraulics: every point keeps its parts
+    for (const [fk, g, crest, hyd] of pts) {
       let sc = (((fk / W) | 0) / sim.F | 0) * sim.nx + ((fk % W) / sim.F | 0);
       if (!sim.mask[sc]) sc = openNeighbour(sim, sc); // a grate on a wall cell (coarse grid, footprint overlap) moves to the lowest open neighbour
       if (sc < 0) continue;
       const m = usedCell.get(sc);
       // grates merged on one cell: water goes in at the lowest opening
-      if (m !== undefined && inlets[m].node === i) { inlets[m].grates += g; if (crest != null) inlets[m].crest = Math.min(inlets[m].crest ?? crest, crest); continue; }
+      if (m !== undefined && inlets[m].node === i) { inlets[m].grates += g; inlets[m].parts?.push([g, hyd]); if (crest != null) inlets[m].crest = Math.min(inlets[m].crest ?? crest, crest); continue; }
       if (m !== undefined) continue; // another manhole already exchanges here
-      usedCell.set(sc, inlets.length); inlets.push({ node: i, cell: sc, fineCell: fk, grates: g, real: real && g > 0, ...(crest != null ? { crest } : {}) }); n.inletCount++;
+      usedCell.set(sc, inlets.length); inlets.push({ node: i, cell: sc, fineCell: fk, grates: g, real: real && g > 0, ...(crest != null ? { crest } : {}), ...(own ? { parts: [[g, hyd]] } : {}) }); n.inletCount++;
     }
   });
   return inlets;
@@ -488,6 +494,22 @@ export function addTanks(net, volume) {
  * @param crest the opening's height above the cell's bed (m): a gully or kerb inlet set above the ground around it
  *   takes water only above its crest, on the head over the crest
  */
+/**
+ * The hydraulics of one exchange point: the area's setting `base` ({inletArea, inletPerim, Cw, Co, clog}), or, where its
+ * grates have their own (`parts` from exchangePoints), one equivalent grate: open area and weir length averaged over the
+ * grates (each counted by its open share), Cw weighted by weir length and Co by area, so inletFlow with `grates` of them
+ * gives the summed weir (Cw·P) and orifice (Co·A) terms. A grate without its own uses `base`.
+ */
+export function inletOptions(parts, base) {
+  if (!parts?.some(p => p[1])) return base;
+  let n = 0, A = 0, P = 0, CwP = 0, CoA = 0;
+  for (const [g, hyd] of parts) {
+    const o = hyd ? { ...base, ...hyd } : base;
+    n += g; A += o.inletArea * g; P += o.inletPerim * g; CwP += o.Cw * o.inletPerim * g; CoA += o.Co * o.inletArea * g;
+  }
+  return n > 0 ? { ...base, inletArea: A / n, inletPerim: P / n, Cw: P > 0 ? CwP / P : base.Cw, Co: A > 0 ? CoA / A : base.Co } : base;
+}
+
 export function inletFlow(h, zs, Hn, nInlets, o = DESIGN_DEFAULTS, crest = 0) {
   if (!nInlets) return 0; // manhole lid: no opening (overflow is handled by the coupler)
   h -= crest; zs += crest; if (h <= 0) return 0; // the head over the opening
