@@ -45,7 +45,7 @@ here as the working target because nothing newer sets a number.
 | EA Tests 8A/8B (urban rain, surcharging sewer) | Specification read; data not public (`benchmarks/ea/TEST8.md`, with a request to the EA drafted) | Open, waiting on data. Stand-in: three coupled cases with exact answers, 22 of 22 measures pass (`benchmarks/gatec/coupled`) |
 | Agreement with an accepted model (HEC-RAS 2D) | EA Tests 1, 2, 4, 5 within 0.1–0.8 cm of four HEC-RAS runs; the HEC-RAS Davis storm-sewer example (METHODS §5.3) | Surface agrees; pipe volumes do not yet (−16 % pumped). **Gate C not closed** |
 | Mass balance | Combined books within 0.26 % with every exchange model on (METHODS §5.4) | Met |
-| Roughness validated by calibration (§3.4) | `tools/calibrate.mjs`: tune on one storm, freeze, score storms it never saw (METHODS §6.4) | Tool built; first study (Charlotte, infiltration) running |
+| Roughness validated by calibration (§3.4) | `tools/calibrate.mjs`: tune on one storm, freeze, score storms it never saw (METHODS §6.4) | First study done (Charlotte, infiltration only, METHODS §6.4): tuned on June 2025, it carried over to both storms it never saw (January 2024 −1.36 → −0.99 m, August 2023 −0.60 → −0.17 m). Not yet to the bar: one gauge, one knob |
 | Calibration and validation against observed events (§4) | Five field cases (METHODS §5.6–5.12, `benchmarks/validation`): RMSE 0.61–0.85 m on marks, −1.10 to −1.39 m at the Charlotte gauge | **Not met**: four to nine times the 0.15 m bar |
 | Settings and tolerances recorded for reproducibility | Run records: commit, inputs, forcing fingerprint, design hash, solver settings (METHODS §8) | Met |
 | Georeferenced grid | GeoTIFF exports of the ground as run, depths and levels, NAD83/UTM + NAVD88 (METHODS §4.8) | Met |
@@ -59,7 +59,8 @@ A reviewer certifying that the program was "reviewed, tested, and accepted" for 
 want the field accuracy shown, not only the solver. In order:
 
 1. **One case calibrated and validated to the bar.** The Charlotte study tunes on June 2025 and is scored on
-   January 2024 and August 2023. Rain is the largest error found so far (METHODS §5.12): the gauge-fitted radar
+   January 2024 and August 2023. The first study (infiltration only) brought August 2023 to 0.17 m, just outside the
+   bar, but left January 2024 0.99 m low and the tuning storm itself 0.68 m low (METHODS §6.4). Rain is the largest error found so far (METHODS §5.12): the gauge-fitted radar
    (`histSrc = radarFit`) raises the area's peak hour from 48 to 60 mm, still short of the 71 mm at the gauge inside
    the watershed.
 2. **Gate C closed**: pipe volumes and node levels against HEC-RAS on Davis. The coupled surcharge cases (benchmark1d2d

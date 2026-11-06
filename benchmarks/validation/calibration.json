@@ -1,0 +1,141 @@
+[
+ {
+  "created": "2026-11-06T15:26:33.164Z",
+  "commit": "7fa115d",
+  "case": "edwards-branch-clt",
+  "title": "Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers",
+  "set": {
+   "histSrc": "radarFit"
+  },
+  "vary": {
+   "calInfil": [
+    "0.25",
+    "0.5",
+    "1"
+   ]
+  },
+  "target": 0.15,
+  "points": [
+   {
+    "inputs": {
+     "calInfil": "0.25"
+    },
+    "run": "2026-11-05_110430_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.6773840000000177,
+    "bias": -0.6773840000000177,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.677
+     }
+    ]
+   },
+   {
+    "inputs": {
+     "calInfil": "0.5"
+    },
+    "run": "2026-11-05_124040_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.7343840000000057,
+    "bias": -0.7343840000000057,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.734
+     }
+    ]
+   },
+   {
+    "inputs": {
+     "calInfil": "1"
+    },
+    "run": "2026-11-05_133453_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.8653840000000059,
+    "bias": -0.8653840000000059,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.865
+     }
+    ]
+   }
+  ],
+  "kept": {
+   "calInfil": "0.25"
+  },
+  "calibration": {
+   "n": 1,
+   "rms": 0.6773840000000177,
+   "bias": -0.6773840000000177,
+   "run": "2026-11-05_110430_Calibration-Existing-condition"
+  },
+  "validation": [
+   {
+    "case": "edwards-branch-clt-2024-01",
+    "title": "Edwards Branch, Charlotte NC — 9 January 2024, winter storm",
+    "asSet": {
+     "run": "2026-11-06_093142_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 1.3575120000000425,
+     "bias": -1.3575120000000425,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -1.358
+      }
+     ]
+    },
+    "calibrated": {
+     "run": "2026-11-06_100330_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.9935120000000381,
+     "bias": -0.9935120000000381,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.994
+      }
+     ]
+    }
+   },
+   {
+    "case": "edwards-branch-clt-2023-08",
+    "title": "Edwards Branch, Charlotte NC — 10 August 2023, summer storm",
+    "asSet": {
+     "run": "2026-11-06_101455_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.604471999999987,
+     "bias": -0.604471999999987,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.604
+      }
+     ]
+    },
+    "calibrated": {
+     "run": "2026-11-06_102628_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.16747200000000362,
+     "bias": -0.16747200000000362,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.167
+      }
+     ]
+    }
+   }
+  ],
+  "note": "first split-sample study: infiltration only, gauge-fitted radar"
+ }
+]
