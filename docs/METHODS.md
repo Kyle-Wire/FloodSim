@@ -1425,7 +1425,8 @@ The run's own fit record: 27 gauges, hourly, d0 = 1 km, leave-one-out 3.6 mm per
 than the first run. 112,000 m³ left over the outlet edge (USGS: 224,000 m³ past the gauge), 53 % of the rain soaked in,
 and the combined books close to −0.31 %. Fitting the rain to the gauges closed a fifth of what radar-only left. The
 rest is still the cloudburst core no gauge but CRN-47 saw, the infiltration and the piped drainage area. The split-sample
-calibration study (§6.4) uses this rain.
+calibration study (§6.4) uses this rain. With infiltration × 0.25, the value it kept, the gauge reads 0.68 m low here,
+0.99 m low in January 2024 and 0.17 m low in August 2023.
 
 ### 5.13 Earlier observation comparisons recorded in the README
 
@@ -1658,6 +1659,33 @@ The knobs are physical and the same everywhere (all n, all infiltration). The fo
 to get right (§3.6), not a parameter to fit. A tuned value that does not carry over to the other storms, for example
 infiltration tuned in summer and tested on a winter storm on wet ground, is a finding about the model's soil
 physics, not a calibration.
+
+**First study: Charlotte, infiltration only** (2026-11-06, commit 7fa115d, gauge-fitted radar `histSrc = radarFit`
+on every run; `benchmarks/validation/CALIBRATION.md`). Tuned on 12 June 2025 (§5.12), scored on 9 January 2024 and
+10 August 2023 at the same USGS gauge (0214643820). Each storm has one level error, the gauge's peak, so its RMS is
+the size of that error.
+
+| Storm | Infiltration × 1 (as set) | × 0.5 | × 0.25 (kept) |
+|---|---|---|---|
+| 12 June 2025 (tuning) | −0.87 m | −0.73 m | **−0.68 m** |
+| 9 January 2024 (never seen) | −1.36 m | | **−0.99 m** |
+| 10 August 2023 (never seen) | −0.60 m | | **−0.17 m** |
+
+What it shows:
+
+- **The tuning carried over.** Both storms the sweep never saw moved toward the gauge by 0.37 and 0.44 m, more than
+  the tuning storm itself (0.19 m). August 2023 ends 0.02 m outside the 0.15 m bar. January 2024 stays 6.6 times
+  outside it.
+- **Every run is low, on every storm.** The kept value is the lowest one tried, so the best infiltration may be lower
+  still. But less infiltration alone cannot close the gap: × 0.25 already soaks in a quarter of what the soils say, and
+  the June and January peaks are still 0.7–1.0 m short. What remains points at the rest of the open list in §5.12:
+  the cloudburst core the gauges miss, the area the pipes drain to the gauge, and the channel's roughness.
+- **One gauge per storm.** One level error per storm is a thin score, and the sweep tuned one knob. The next study
+  fits roughness and infiltration together and scores the gauge's whole hydrograph (peak, volume, timing), not only
+  its peak.
+
+The Charlotte case is not yet calibrated to the bar. These runs used the area-wide inlet setting. Charlotte's inlets
+by type (NCDOT kinds, §2.14) came after them.
 
 ### 6.5 A reviewer's checklist
 
