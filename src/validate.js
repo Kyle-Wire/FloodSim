@@ -1,7 +1,9 @@
 // Validation scorecard: one checklist a reviewer can read, for a run of a real storm. It gathers what the app can check
 // against the world and against itself:
 //   observations   USGS high-water marks or the user's own (src/calibrate.js scoreRun): level RMSE and bias, and
-//                  flooded marks the model left dry; USGS gauges inside the area: the peak water level and its time;
+//                  flooded marks the model left dry; USGS gauges inside the area: the peak water level and its time,
+//                  and where a control line is drawn at the gauge, its flow against the gauge's discharge over the
+//                  whole storm (volume, peak, Nash–Sutcliffe, KGE);
 //                  mapped flooding (src/floodmaps.js: USGS post-event depth maps), cell by cell: hit rate and CSI
 //   comparison     another model's flood map (NYC DEP Stormwater Flood Maps): the same scores, not counted in the verdict
 //   rain           where the rain came from (gauge-corrected or radar-only), how far the sources disagree, and the rain
@@ -18,6 +20,9 @@ export const TARGETS = {
   mapCSI: [0.5, 0.3],         // critical success index against a flood map, hits / (hits + misses + false alarms) (at least)
   gaugePeak: [0.15, 0.30],    // m: a gauge's peak water level
   gaugeTime: [30, 60],        // min: the time of that peak
+  flowNSE: [0.65, 0.5],       // Nash–Sutcliffe efficiency of the flow at a gauge over the storm (at least): Moriasi et al. 2007/2015 "good" and "satisfactory"
+  flowVolume: [0.15, 0.25],   // the storm's flow volume at a gauge, |model / observed − 1| (Moriasi's PBIAS bands for streamflow)
+  flowPeak: [0.15, 0.30],     // the peak flow at a gauge, |model / observed − 1|
   mass: [1e-4, 1e-3],         // surface mass balance, |error| / all the water in (start, rain, rivers, tide)
   combined: [0.01, 0.05],     // with the pipes (SWMM continuity included)
   clipped: [1e-6, 1e-4],      // water added by the wet / dry clip, / rain
@@ -42,6 +47,42 @@ export function gaugeScore(obs, model) {
   const po = peakOf(obs, t0, t1), pm = peakOf(model);
   if (!po || !pm) return null;
   return { obs: po, model: pm, error: pm.v - po.v, lag: (pm.t - po.t) / 60e3, obsAtEnd: po.atEnd, modelAtEnd: pm.atEnd };
+}
+
+/** A [t, v] series (t ascending) at time t, linearly between samples; null outside it or across a gap in it. */
+export function valueAt(series, t) {
+  let lo = 0, hi = series.length - 1;
+  if (hi < 0 || t < series[0][0] || t > series[hi][0]) return null;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (series[m][0] <= t) lo = m; else hi = m; }
+  const [ta, a] = series[lo], [tb, b] = series[hi];
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  return tb > ta ? a + (b - a) * (t - ta) / (tb - ta) : a;
+}
+
+/**
+ * The whole hydrograph at a gauge: the model against the observed series over the hours both cover, sampled at the
+ * observed times. obs, model: [[t (ms), v]] (flow, m³/s; or a level, m). → { n, hours, nse (Nash–Sutcliffe: 1 is a
+ * perfect fit, 0 no better than the observed mean), kge (Kling–Gupta, 1 perfect) with r (correlation), alpha (spread
+ * ratio) and beta (mean ratio), rmse, volumeRatio (∫ model / ∫ observed over the same hours), peakObs, peakModel,
+ * peakRatio, lag (min, model peak − observed peak) } or null when they share fewer than 4 samples. For a level the
+ * volume and the ratios mean little (an elevation, not a quantity): read nse and rmse.
+ */
+export function hydrographScore(obs, model) {
+  const ok = model.filter(([, v]) => Number.isFinite(v));
+  if (ok.length < 2) return null;
+  const t0 = ok[0][0], t1 = ok.at(-1)[0], pairs = [];
+  for (const [t, o] of obs) { if (t < t0 || t > t1 || !Number.isFinite(o)) continue; const m = valueAt(ok, t); if (m != null) pairs.push([t, o, m]); }
+  const n = pairs.length; if (n < 4) return null;
+  const mean = (k) => pairs.reduce((s, p) => s + p[k], 0) / n, mo = mean(1), mm = mean(2);
+  let so = 0, sm = 0, som = 0, se = 0;
+  for (const [, o, m] of pairs) { so += (o - mo) ** 2; sm += (m - mm) ** 2; som += (o - mo) * (m - mm); se += (m - o) ** 2; }
+  const r = so > 0 && sm > 0 ? som / Math.sqrt(so * sm) : null, alpha = so > 0 ? Math.sqrt(sm / so) : null, beta = mo !== 0 ? mm / mo : null;
+  let vo = 0, vm = 0; // trapezoids over the observed times
+  for (let k = 1; k < n; k++) { const dt = (pairs[k][0] - pairs[k - 1][0]) / 1000; vo += dt * (pairs[k][1] + pairs[k - 1][1]) / 2; vm += dt * (pairs[k][2] + pairs[k - 1][2]) / 2; }
+  const po = pairs.reduce((a, p) => (p[1] > a[1] ? p : a)), pm = ok.filter(([t]) => t >= pairs[0][0] && t <= pairs[n - 1][0]).reduce((a, p) => (p[1] > a[1] ? p : a), [pairs[0][0], -Infinity]);
+  return { n, hours: (pairs[n - 1][0] - pairs[0][0]) / 3600e3, nse: so > 0 ? 1 - se / so : null,
+    kge: r != null && alpha != null && beta != null ? 1 - Math.sqrt((r - 1) ** 2 + (alpha - 1) ** 2 + (beta - 1) ** 2) : null, r, alpha, beta,
+    rmse: Math.sqrt(se / n), volumeRatio: vo > 0 ? vm / vo : null, peakObs: po[1], peakModel: pm[1], peakRatio: po[1] > 0 ? pm[1] / po[1] : null, lag: (pm[0] - po[0]) / 60e3 };
 }
 
 /**
@@ -84,6 +125,15 @@ export function scorecard(input, T = TARGETS) {
     const s = g.score, end = s.obsAtEnd ? 'the gauge was still rising when the run ended' : s.modelAtEnd ? 'the model was still rising when the run ended' : '';
     add('observations', `Gauge ${g.site} ${g.name}: ${s.obsAtEnd || s.modelAtEnd ? 'highest level in the run' : 'peak level'} (model − observed)`, [s.error, 'm'], T.gaugePeak, level(Math.abs(s.error), T.gaugePeak), end);
     add('observations', `Gauge ${g.site} ${g.name}: peak time (model − observed)`, [s.lag, 'min'], T.gaugeTime, s.obsAtEnd || s.modelAtEnd ? 'info' : level(Math.abs(s.lag), T.gaugeTime), end);
+    if (g.levelShape?.nse != null) add('observations', `Gauge ${g.site}: level over the storm, Nash–Sutcliffe (${g.levelShape.hours.toFixed(0)} h)`, [g.levelShape.nse, 'ratio'], null, 'info', `RMSE ${g.levelShape.rmse.toFixed(2)} m over the whole record, not only the peak`);
+    const q = g.flow?.score;
+    if (q) {
+      const at = `flow across ${g.flow.line ?? 'the control line'} against the gauge's discharge`;
+      if (q.volumeRatio != null) add('observations', `Gauge ${g.site}: storm flow volume (model / observed)`, [q.volumeRatio, 'ratio'], T.flowVolume, level(Math.abs(q.volumeRatio - 1), T.flowVolume), at);
+      if (q.peakRatio != null) add('observations', `Gauge ${g.site}: peak flow (model / observed)`, [q.peakRatio, 'ratio'], T.flowPeak, level(Math.abs(q.peakRatio - 1), T.flowPeak), `${q.peakModel.toFixed(1)} against ${q.peakObs.toFixed(1)} m³/s`);
+      if (q.nse != null) add('observations', `Gauge ${g.site}: flow over the storm, Nash–Sutcliffe (${q.hours.toFixed(0)} h)`, [q.nse, 'ratio'], T.flowNSE, level(q.nse, T.flowNSE, true), 'how well the modelled flow follows the gauge hour by hour: 1 is a perfect fit, 0 no better than the storm’s mean flow');
+      if (q.kge != null) add('observations', `Gauge ${g.site}: flow, Kling–Gupta efficiency`, [q.kge, 'ratio'], null, 'info', `correlation ${q.r.toFixed(2)}, spread ${q.alpha.toFixed(2)}, mean ${q.beta.toFixed(2)} (each 1 when perfect)`);
+    }
   }
   // flood maps, cell by cell at 4 in and over
   for (const m of floodMaps) {

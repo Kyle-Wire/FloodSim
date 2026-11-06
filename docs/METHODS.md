@@ -1478,11 +1478,11 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-bank-tests.mjs` | Friction-angle failure, cohesion, confinement, rapid drawdown, probability vs Monte Carlo |
 | `run-design-tests.mjs` | Distance transform, grading (daylighting at 3:1 / 2:1, cut/fill vs analytic frustum within 0.3 %), FFE rules, no features → bit-identical inputs |
 | `run-stormwater-tests.mjs` | Outlet rating, stage–storage, modified Puls vs analytic drawdowns (3e-5 m), ponds, swales, GI, detention check |
-| `run-compare-tests.mjs` | Forcing fingerprint (stable, names differences, ignores design), settings tests (accepted only with the same design; old hashes kept), `.f32` grids, Δ maps, off-site impact, tables |
+| `run-compare-tests.mjs` | Forcing fingerprint (stable, names differences, ignores design), settings tests (accepted only with the same design; old hashes kept), republished utility data refused and named, `.f32` grids, Δ maps, off-site impact, tables |
 | `run-report-tests.mjs` | Hydrograph stats, profiles, HGL path and flags, stage–storage–discharge, gutter spread, charts |
 | `run-damage-tests.mjs` | USACE curves, water against walls (rowhouses, sheet flow, enclosed yards), EAD, BCA, area stats |
 | `run-checks-tests.mjs` | Edge distance and flooding by side, points near the edge, run against run, sensitivity, statuses, difference map |
-| `run-validate-tests.mjs` | Gauge peaks and timing, STN event matching, statuses and verdict, gauge levels in NAVD88, flood-map lines (another model's map not in the verdict) |
+| `run-validate-tests.mjs` | Gauge peaks and timing, the whole hydrograph (NSE, KGE, volume, peak, lag; only the hours both cover), flow lines in the scorecard, STN event matching, statuses and verdict, gauge levels in NAVD88, flood-map lines (another model's map not in the verdict) |
 | `run-floodmap-tests.mjs` | Flood maps: polygons onto cells (holes, clipping), the 0.25-acre floor, hits / misses / false alarms, CSI, depth bands and error, masks, buildings left out, DEP classes, empty polygons skipped |
 | `run-uncertainty-tests.mjs` | Marks against the variants' band (inside, above, below), the variant that moves them most, unscored marks left out, flood-map score ranges |
 | `run-rainqa-tests.mjs` | Gauge reading hours across DST, ASOS hours and CoCoRaHS reports in the storm window, scoring rules, Ida at PHL |
@@ -1645,11 +1645,21 @@ calibrates by split sample:
 
 1. **Tune.** The calibration case's project is copied to "<project> (calibration)" with any study-wide inputs
    (`--set`, e.g. the rain source), so the sweep never mixes with the suite's own runs. Every combination of the
-   `--vary` values runs headless. The knobs are the app's Calibration inputs: `calManning` (all n ×), `calInfil`
-   (infiltration capacity ×) and `calClog` (inlet clogging).
+   `--vary` values runs headless (`--headed` shows the app's window while it runs). The knobs are the app's
+   Calibration inputs: `calManning` (all n ×), `calInfil` (infiltration capacity ×, 0.1–2) and `calClog` (inlet
+   clogging).
 2. **Score.** Each run is scored by every level error its summary holds: each high-water mark scored (marks under
    decks or indoors are skipped, §6.2) and each gauge's peak level, model − observed (`tools/suite.mjs`
-   `levelErrors`). The combination with the smallest RMS is kept.
+   `levelErrors`). Where the case draws a control line at a gauge (a line whose `gauge` property is the USGS site, in
+   the case's `analysis.geojson`), the run also records the flow across it, and the scorecard sets it against the
+   gauge's discharge record (NWIS 00060) over the whole storm (`src/validate.js` `hydrographScore`): the volume and the
+   peak flow (model / observed), Nash–Sutcliffe efficiency, Kling–Gupta efficiency (correlation, spread and mean
+   ratio), the peak's lag, and the Nash–Sutcliffe of the level record. The scorecard rates NSE ≥ 0.65 good and ≥ 0.5
+   fair, and volume within 15 % good and 25 % fair (Moriasi et al. 2007 and 2015, for streamflow). The objective picks
+   the values kept: the smallest level RMS (`--objective level`, the default) or the highest flow KGE
+   (`--objective flow`). KGE scores the timing, the shape and the volume of the whole hydrograph, so it can tell
+   apart two changes that raise the peak level by the same amount: more water (less infiltration) and slower water
+   (more roughness).
 3. **Freeze and test.** Each validation case (storms the tuning never saw, at the same site) runs twice, as set and
    with the kept values, and both are scored the same way.
 4. **Record.** The study goes in `benchmarks/validation/calibration.json`, and `benchmarks/validation/CALIBRATION.md`
@@ -1712,8 +1722,9 @@ change: Charlotte republished its storm pipe and structure layers between 5 and 
 ID; a few inlets added, removed or retyped, 1,160 linked inlets became 1,163). The study above ran on the copy the
 fetch cache held from 5 November. Rerun on that copy with inlet kinds off, the new code gives the study's August 2023
 run to the last digit (gauge −0.171 m, the same steps, pipe exchange and peak depth). A linked layer is fetched live,
-and the run's forcing record holds its address, not what came back. Runs on two versions of the city's data therefore
-look like the same drainage to Compare (§7).
+and the run's forcing record then held its address, not what came back, so runs on two versions of the city's data
+looked like the same drainage to Compare. It now also holds a count and hash of what each layer returned
+(`utilityData`, §7.11), and Compare refuses such a pair and names the reason.
 
 ### 6.5 A reviewer's checklist
 
@@ -1857,7 +1868,7 @@ known limits", "Known limits (solver)" and section caveats, and the code as cite
 | Limitation | Effect | Mitigation |
 |---|---|---|
 | Open-data services change (3DEP, NLCD, OSM edits, NWIS revisions); Overpass is unreliable under load | A rebuild on another machine or date may differ. | The model layers are hashed (`designHash`, §8.2); the local cache (`.cache/`) makes a rebuild repeatable on one machine. Archive the project folder and cache with submitted results. |
-| Linked utility layers (a city's pipes and inlets) are fetched live; the forcing record hashes their addresses, not the data that came back | A city that republishes its layers changes the network while the drainage fingerprint stays the same, so Compare and settings tests cannot tell two data versions apart (Charlotte, 5 → 6 November 2026: 1,160 → 1,163 linked inlets, 0.01–0.02 m at the gauge, §6.4). | The per-checkout cache keeps one machine on one version; the summary's linked-inlet count shows a change. Archive the cache with the project. |
+| Linked utility layers (a city's pipes and inlets) are fetched live, and cities republish them (Charlotte, 5 → 6 November 2026: 1,160 → 1,163 linked inlets, 0.01–0.02 m at the gauge, §6.4) | A rebuild on another date may differ. | The forcing record holds a count and hash of what each layer returned (`utilityData`: linked pipes, inlets and outfalls, and a built-in utility's inlets and outfalls), so Compare and settings tests refuse two runs on different versions and name the reason. The per-checkout cache keeps one machine on one version; archive it with the project. |
 | GPU requirements: WebGPU with 9 storage buffers per stage for tiling (10 for sediment) | Untiled fallback is slower; results identical (tiling is bit-identical). | — |
 | Results depend on the app commit | Recorded in every fingerprint; `+dirty` flags uncommitted code. | Require a clean commit. |
 | The CPU reference is not practical for full-size models | GPU results are verified against it on test cases only. | — |

@@ -28,6 +28,14 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   const pair = C.comparable({ forcing: a, designHash: 'd1' }, { forcing: s, designHash: 'd1' });
   check('same design, only the settings differ: a settings test', pair.ok && pair.kind === 'settings' && /inlet and pipe solver/.test(pair.diff[0]));
   check('same forcing: a design pair', C.comparable({ forcing: a, designHash: 'd1' }, { forcing: b, designHash: 'd2' }).kind === 'design');
+  // the utility data the layers returned (a city republishing its pipes or inlets: same links, different data)
+  check('no utility data recorded keeps the fingerprint runs had before', C.fingerprint({ ...base, utilityData: null }).hash === a.hash && !('utilityData' in a.parts));
+  const u5 = C.fingerprint({ ...base, utilityData: { pipes: { n: 1738, hash: 'aa' }, inlets: { n: 1319, hash: 'bb' } } });
+  const u6 = C.fingerprint({ ...base, utilityData: { pipes: { n: 1738, hash: 'cc' }, inlets: { n: 1319, hash: 'dd' } } });
+  const rep = C.comparable({ forcing: u5, designHash: 'd1' }, { forcing: u6, designHash: 'd2' });
+  check('republished utility data: refused, and named', u5.hash !== u6.hash && !rep.ok && /republishing/.test(rep.reason));
+  const repS = C.comparable({ forcing: u5, designHash: 'd1' }, { forcing: C.fingerprint({ ...base, utilityData: { pipes: { n: 1738, hash: 'cc' }, inlets: { n: 1319, hash: 'dd' } }, drainSettings: sB }), designHash: 'd1' });
+  check('republished utility data is not a settings test', !repS.ok);
   const both = C.comparable({ forcing: a, designHash: 'd1' }, { forcing: s, designHash: 'd2' });
   check('settings and design both changed: refused', !both.ok && /one at a time/.test(both.reason));
   check('settings and the storm changed: refused', !C.comparable({ forcing: c, designHash: 'd1' }, { forcing: s, designHash: 'd1' }).ok);

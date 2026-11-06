@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","features":[{"type":"Feature","id":9001,"geometry":{"type":"LineString","coordinates":[[-80.7729538,35.2032527],[-80.7723181,35.2027285]]},"properties":{"type":"cline","name":"Edwards Branch below Sheffield Dr (USGS 0214643820)","gauge":"0214643820"}}]}

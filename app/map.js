@@ -45,7 +45,7 @@ import { scourCells, scourClass, SCOUR_CLASSES, NOT_ERODIBLE } from '../src/scou
 import { parseObservations, scoreRun, sweepPlan, PARAMS, fromSTN } from '../src/calibrate.js';
 import { fromGeoJSONMap, scoreFloodMap, DEP_CLASSES } from '../src/floodmaps.js';
 import { markBands, mapBands } from '../src/uncertainty.js';
-import { gaugeScore, matchEvent } from '../src/validate.js';
+import { gaugeScore, hydrographScore, matchEvent } from '../src/validate.js';
 import { findGauges, gaugeFlows, annualPeaks, lp3, designHydrograph, recordedHydrograph, riverEntries, entryCells, entryEdge, InflowLinks, CFS, basinAreaKm2, areaRatioScale } from '../src/inflow.js';
 import { STANDARDS, HazardTracker, WET, VCUT } from '../src/hazard.js';
 import { findLevelGauges, readLevels, gaugeSurface, lidarSurfaceNear, waterCells, startDepths, cellAt, waterNear, ngvdToNavd, levelSeries, nearestCells, surfaceAtGauge, gaugeWater, tidalEdgeCells, levelGauge } from '../src/waterlevels.js';
@@ -421,6 +421,18 @@ for (const id of [...linkFields, 'linkUnits', 'linkDatum']) $(id).addEventListen
 const splitLinks = (s) => s.split(/[\s,]+/).map(x => x.trim()).filter(Boolean);
 /** The linked layers and their datum for the run's fingerprint: present only when set, so runs without them keep their hashes. */
 function linkedPart() { const l = linkedLinks(), d = Number($('linkDatum').value) || 0; return { ...(l.pipes.length || l.inlets.length || l.outfalls.length ? { linked: CMP.hashOf(l) } : {}), ...(d ? { linkDatum: d } : {}) }; }
+/**
+ * What the utility layers returned, as counts and hashes: the linked pipes, inlets and outfalls, and the built-in
+ * utility's inlets and outfalls. The links alone (linkedPart) do not change when a city republishes its data; this does,
+ * so two runs on different versions of it never compare as the same drainage. Null without any (older hashes kept).
+ */
+function utilityData() {
+  if (!model) return null;
+  if (model.utilityData !== undefined) return model.utilityData;
+  const L = model.linked, u = model.util, part = (a) => (a?.length ? { n: a.length, hash: CMP.hashOf(a) } : null), o = {};
+  for (const [k, a] of [['pipes', L?.pipes], ['inlets', L?.inlets], ['outfalls', L?.outfalls], ['utilityInlets', u?.inlets], ['utilityOutfalls', u?.outfalls]]) { const p = part(a); if (p) o[k] = p; }
+  return (model.utilityData = Object.keys(o).length ? o : null);
+}
 function linkedLinks() { return { pipes: splitLinks($('linkPipes').value), inlets: splitLinks($('linkInlets').value), outfalls: splitLinks($('linkOutfalls').value) }; }
 /** Fetch every linked layer inside the box; pipes get their fields detected per layer (units overridable). */
 async function loadLinked(links, bounds) {
@@ -1782,7 +1794,7 @@ function resetRun() {
   const roofStages = roofHoldStages(c, net, roof, green);
   const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
   const sw = stormwaterLinks(c, F, net, new Set([...(net ? net.inlets.map(g => g.cell) : []), ...culv.flatMap(x => [x.a, x.b])]), gi);
-  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: [...clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, faces: lf.perLine[l] })), ...winSegs.map((s, q) => ({ id: 'win:' + q, name: null, side: s.side, faces: lf.perLine[clines.length + q] }))], faces: lf.faces, samples: allLines.map(() => [[0, 0, 0, 0]]) },
+  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: [...clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, gauge: f.properties.gauge ?? null, faces: lf.perLine[l] })), ...winSegs.map((s, q) => ({ id: 'win:' + q, name: null, side: s.side, faces: lf.perLine[clines.length + q] }))], faces: lf.faces, samples: allLines.map(() => [[0, 0, 0, 0]]) },
     window: win ? { ...win, segs: winSegs } : null, culv, roof, net, cso, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
   run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
   $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('rasBtn').disabled = false; $('hud').hidden = false;
@@ -2032,8 +2044,25 @@ async function fillGauges(r, v) {
       }
       out.obs = o.series; out.how = o.how; out.score = gaugeScore(o.series, gw.series.filter(([, z]) => Number.isFinite(z)));
       out.why = out.score ? '' : 'the model channel stayed dry there';
+      out.levelShape = hydrographScore(o.series, gw.series); // the level over the whole storm, not only its peak
+      await gaugeFlow(r, w, gw, out, t1);
     } catch (e) { out.why = 'gauge readings unavailable: ' + e.message; }
   }));
+}
+/**
+ * The flow at a gauge over the whole storm: a control line drawn at the gauge (its `gauge` property: the USGS site)
+ * against the gauge's discharge record (NWIS 00060). Fills out.flow = { line, obs, model: [[t (ms), m³/s]], score:
+ * src/validate.js hydrographScore, why }. The line's own direction does not matter: the flow is counted downstream,
+ * the way most of the storm's water crossed it.
+ */
+async function gaugeFlow(r, w, gw, out, t1) {
+  const li = r.lines?.defs.findIndex(d => d.gauge != null && String(d.gauge) === String(gw.g.site)) ?? -1;
+  if (li < 0) return;
+  const sm = r.lines.samples[li], sign = Math.sign(sm.at(-1)?.[1] ?? 0) || 1;
+  const model = CMP.hydrograph(sm).map(([t, q]) => [w.t0 + t * 1000, +(sign * q).toFixed(4)]);
+  const obs = (await gaugeFlows(gw.g.site, w.t0 - 3600e3, t1 + 3600e3, fetcher).catch(() => [])).map(f => [f.t, +f.q.toFixed(4)]);
+  const score = obs.length ? hydrographScore(obs, model) : null;
+  out.flow = { line: r.lines.defs[li].name ?? 'the control line', obs, model, score, why: !obs.length ? 'the gauge has no discharge record over the storm' : score ? '' : 'the line and the record share too few hours' };
 }
 // ---- rain QA (src/rainqa.js): the storm's rain against the ASOS and CoCoRaHS gauges within 25 km of the site, over the
 // storm's own hours, filled into rec.validation.rain.stations (so summary.json keeps it, and saved runs report it)
@@ -2233,6 +2262,7 @@ function forcingRecord(r) {
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
     drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
     drainSettings: drainSettings(),
+    utilityData: utilityData(),
     area: { box: S.area, poly: S.poly, curb: model.curb, curbSel: $('curbSel').value, ...(model.bathy ? { bathy: model.bathy.curve, bathyVol: Math.round(model.bathy.volume), ...(model.bathy.surveyed ? { bathySurveyed: { source: 'NOAA BlueTopo', tiles: model.bathy.surveyed.tiles, volume: Math.round(model.bathy.surveyed.volume) } } : {}), ...(model.bathy.xs ? { bathyXS: { source: model.bathy.xs.source, volume: Math.round(model.bathy.xs.volume) } } : {}) } : {}) },
     commit: appCommit,
   };
@@ -2269,7 +2299,7 @@ async function finishRecord() {
   };
   const hazard = new Float32Array(Nf); for (let k = 0; k < Nf; k++) hazard[k] = wall(k) ? NaN : maxD[k] > 0.005 ? hz.cls.arr[cellOf(k)] : 0;
   if (L) r.lines.samples.forEach((sm, l) => { if (sm.at(-1)[0] < s.t - 1e-6) sm.push([s.t, L.net[l], L.plus[l], L.minus[l]]); });
-  const allLines = r.lines.defs.map((d, l) => ({ id: d.id, name: d.name, side: d.side, faces: d.faces, volume: L ? L.net[l] : NaN, plus: L ? L.plus[l] : NaN, minus: L ? L.minus[l] : NaN, series: r.lines.samples[l] }));
+  const allLines = r.lines.defs.map((d, l) => ({ id: d.id, name: d.name, side: d.side, ...(d.gauge ? { gauge: d.gauge } : {}), faces: d.faces, volume: L ? L.net[l] : NaN, plus: L ? L.plus[l] : NaN, minus: L ? L.minus[l] : NaN, series: r.lines.samples[l] }));
   const isWin = (l) => String(l.id).startsWith('win:'), lines = allLines.filter(l => !isWin(l)), winLines = allLines.filter(isWin);
   const m = r.mass ?? {}, outfalls = r.swmm && r.netMass ? r.netMass.externalOutflow * 1000 - (r.coupler?.totals.latOut ?? 0) - (r.coupler?.totals.outfallReturned ?? 0) : null;
   const ponds = r.outlets?.results() ?? [];
@@ -4223,7 +4253,7 @@ async function runFiles() {
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
     batch: run.batchInfo ?? null, // the batch study job (src/batch.js) this run was, for the sensitivity and EAD sections
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
-    forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
+    forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), utilityData: utilityData(), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
     books: run.record?.books ?? null, validation: run.record?.validation ?? null, inflow: run.record?.inflow ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],

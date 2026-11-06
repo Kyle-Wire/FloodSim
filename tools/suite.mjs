@@ -11,7 +11,11 @@ export const projectsDir = process.env.FLOODSIM_PROJECTS || join(homedir(), 'Doc
 export const loadCases = () => JSON.parse(readFileSync(join(here, 'cases.json'), 'utf8'));
 export const readProject = (folder) => JSON.parse(readFileSync(join(projectsDir, folder, 'project.json'), 'utf8'));
 
-/** The case's project, installed from benchmarks/validation/<id>/project.json when the projects folder lacks it. */
+/**
+ * The case's project, installed from benchmarks/validation/<id>/project.json when the projects folder lacks it. The
+ * case's control lines (analysis.geojson: a line at a gauge records its flow, scored against the gauge's discharge)
+ * are copied whenever the case has them, so a project installed before them gains them.
+ */
 export function installCase(c) {
   const dest = join(projectsDir, c.project), src = join(here, c.id, 'project.json');
   if (!existsSync(join(dest, 'project.json'))) {
@@ -19,8 +23,11 @@ export function installCase(c) {
     mkdirSync(dest, { recursive: true }); copyFileSync(src, join(dest, 'project.json'));
     console.log(`  installed ${c.project} from benchmarks/validation/${c.id}`);
   }
+  copyAnalysis(c, dest);
   return readProject(c.project);
 }
+/** The case's control lines and site boundary (benchmarks/validation/<id>/analysis.geojson), into a project folder. */
+function copyAnalysis(c, dest) { const a = join(here, c.id, 'analysis.geojson'); if (existsSync(a)) copyFileSync(a, join(dest, 'analysis.geojson')); }
 
 /**
  * A copy of a case's project with some inputs changed (`set`: { id: value }), as its own project `folder`: a study of it
@@ -30,7 +37,7 @@ export function installCase(c) {
 export function deriveProject(c, folder, set = {}) {
   const pj = installCase(c), dest = join(projectsDir, folder);
   const out = { ...pj, name: folder, inputs: { ...(pj.inputs ?? {}), ...set } };
-  mkdirSync(dest, { recursive: true }); writeFileSync(join(dest, 'project.json'), JSON.stringify(out, null, 1));
+  mkdirSync(dest, { recursive: true }); writeFileSync(join(dest, 'project.json'), JSON.stringify(out, null, 1)); copyAnalysis(c, dest);
   return out;
 }
 
@@ -38,12 +45,12 @@ export function deriveProject(c, folder, set = {}) {
  * Run a project's study headless. `jobs` from src/batch.js expandJobs; a batch.json already there with the same jobs
  * (same ids in the same order) is kept, so a study cut short carries on where it stopped. → the study as batch.mjs left it
  */
-export function runStudy(folder, jobs, { url = null } = {}) {
+export function runStudy(folder, jobs, { url = null, headed = false } = {}) {
   const pj = readProject(folder), path = join(projectsDir, folder, 'batch.json');
   const old = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : null, key = (js) => js.map(j => j.label + '|' + j.variant.key).join(';');
   if (!old || key(old.jobs) !== key(jobs)) writeFileSync(path, JSON.stringify({ version: 1, created: new Date().toISOString(), base: pj.inputs ?? {}, jobs }, null, 1));
   else console.log(`  carrying on the study in ${folder}/batch.json (${old.jobs.filter(j => j.status === 'done').length} of ${jobs.length} jobs done)`);
-  const r = spawnSync(process.execPath, [join(root, 'tools', 'batch.mjs'), folder, ...(url ? ['--url', url] : [])], { stdio: 'inherit' });
+  const r = spawnSync(process.execPath, [join(root, 'tools', 'batch.mjs'), folder, ...(url ? ['--url', url] : []), ...(headed ? ['--headed'] : [])], { stdio: 'inherit' });
   if (r.status !== 0) throw new Error(`tools/batch.mjs exited ${r.status}`);
   return JSON.parse(readFileSync(path, 'utf8'));
 }
@@ -59,6 +66,18 @@ export function latestRun(folder, only = null, base = false) {
   const runs = join(projectsDir, folder, 'runs'); if (!existsSync(runs)) return null;
   for (const dir of readdirSync(runs).filter(d => !d.startsWith('_') && (!only || d === only)).sort().reverse()) {
     const summary = runSummary(folder, dir); if (summary?.finished && (!base || !summary.batch || summary.batch.variant === 'base')) return { dir, summary };
+  }
+  return null;
+}
+
+/**
+ * The flow at each gauge a control line is drawn at, over the whole storm (src/validate.js hydrographScore), and the
+ * gauge's level over the storm. → { site, nse, kge, volumeRatio, peakRatio, lag, levelNSE } for the first such gauge, or null.
+ */
+export function flowScores(sm) {
+  for (const g of sm?.validation?.gauges ?? []) {
+    const q = g.flow?.score; if (!q) continue;
+    return { site: g.site, nse: q.nse, kge: q.kge, volumeRatio: q.volumeRatio, peakRatio: q.peakRatio, lag: q.lag, levelNSE: g.levelShape?.nse ?? null };
   }
   return null;
 }

@@ -889,6 +889,21 @@ Two max-speed products exist: `grids/max_speed.f32` is tracked every solver step
 When a historic or live run finishes, the app fetches the USGS gauge readings and nearby rain gauges for the scorecard
 (at most 20 s). Wait for that before you read the Validation scorecard.
 
+**Scoring the flow at a gauge, not only its peak level.** Draw a **Control line** across the creek just below a USGS
+gauge, wide enough to reach dry ground on both banks, and give it a `gauge` property with the site number (the
+Charlotte validation cases ship one in their `analysis.geojson`). After the run the scorecard sets the flow across
+the line against the gauge's measured discharge for the whole storm:
+
+| Line | What it tells you | Good / fair |
+|---|---|---|
+| Storm flow volume (model / observed) | whether the model put the right amount of water down the creek | within 15 % / 25 % |
+| Peak flow (model / observed) | the biggest flow | within 15 % / 30 % |
+| Flow over the storm, Nash–Sutcliffe | how well the flow follows the gauge hour by hour (1 is perfect, 0 no better than the average flow) | 0.65 / 0.5 |
+| Flow, Kling–Gupta efficiency | timing, spread and volume in one number (1 is perfect) | shown only |
+| Level over the storm, Nash–Sutcliffe | the level record's shape, not only its peak | shown only |
+
+The flow is counted downstream whichever way you drew the line.
+
 ### 9.6 Export step: 3D and HEC-RAS packages
 
 | Control | Gives |
@@ -969,7 +984,7 @@ features with `mask: true` limit scoring to where the map was made. **Clear maps
 
 Every finished run is then scored, and points on the map turn green, red or amber.
 
-**Parameters:** **Roughness (Manning n) ×** (0.6–1.6), **Infiltration ×** (0.25–2), **Inlet clogging** (0–70 %).
+**Parameters:** **Roughness (Manning n) ×** (0.6–1.6), **Infiltration ×** (0.1–2), **Inlet clogging** (0–70 %).
 
 **Sweep:**
 

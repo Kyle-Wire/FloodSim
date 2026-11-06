@@ -1,6 +1,6 @@
 // Validation scorecard tests: peaks and their timing, gauge scores, matching a storm to its STN event, the scorecard's
 // statuses and verdict, and a gauge's level series in NAVD88 from NWIS (a fake fetcher). Usage: node tests/run-validate-tests.mjs
-import { TARGETS, peakOf, gaugeScore, matchEvent, scorecard } from '../src/validate.js';
+import { TARGETS, peakOf, gaugeScore, hydrographScore, valueAt, matchEvent, scorecard } from '../src/validate.js';
 import { levelSeries } from '../src/waterlevels.js';
 
 let fails = 0;
@@ -28,6 +28,29 @@ const MIN = 60e3, T0 = Date.parse('2021-09-01T18:00Z');
   const short = model.filter(([t]) => t <= T0 + 2 * 3600e3), gs = gaugeScore(obs, short);
   check('gauge: a run that ends on the rise says so (observed peak looked for in the run only)', gs.modelAtEnd && gs.obsAtEnd);
   check('gauge: no readings → null', gaugeScore([], model) === null);
+}
+
+// ---- the whole hydrograph: flow at a gauge over the storm
+{
+  const hump = (t, tp, v, w = 90) => v * Math.exp(-(((t - tp) / (w * MIN)) ** 2));
+  const obs = [], same = [], half = [], late = [];
+  for (let t = T0; t <= T0 + 12 * 3600e3; t += 5 * MIN) obs.push([t, 1 + hump(t, T0 + 4 * 3600e3, 60)]);
+  for (let t = T0; t <= T0 + 12 * 3600e3; t += MIN) { same.push([t, 1 + hump(t, T0 + 4 * 3600e3, 60)]); half.push([t, 0.5 * (1 + hump(t, T0 + 4 * 3600e3, 60))]); late.push([t, 1 + hump(t, T0 + 4 * 3600e3 + 60 * MIN, 60)]); }
+  check('interpolation between samples, null outside', valueAt([[0, 0], [10, 1]], 5) === 0.5 && valueAt([[0, 0], [10, 1]], 11) === null && valueAt([[0, 0], [10, NaN]], 5) === null);
+  const a = hydrographScore(obs, same);
+  check('hydrograph: a perfect model scores 1', near(a.nse, 1, 1e-9) && near(a.kge, 1, 1e-9) && near(a.volumeRatio, 1, 1e-9) && near(a.peakRatio, 1, 1e-9) && a.lag === 0 && near(a.hours, 12, 1e-9));
+  const b = hydrographScore(obs, half);
+  check('hydrograph: half the flow → half the volume and peak, KGE mean ratio 0.5', near(b.volumeRatio, 0.5, 1e-9) && near(b.peakRatio, 0.5, 1e-9) && near(b.beta, 0.5, 1e-9) && near(b.r, 1, 1e-9) && b.nse < 0.65, `NSE ${b.nse.toFixed(2)}`);
+  const c = hydrographScore(obs, late);
+  check('hydrograph: an hour late → the right volume, a 60 min lag, a lower NSE', near(c.volumeRatio, 1, 0.01) && near(c.lag, 60, 1e-9) && c.nse < 0.6, `NSE ${c.nse.toFixed(2)}`);
+  const d = hydrographScore(obs, same.filter(([t]) => t <= T0 + 6 * 3600e3));
+  check('hydrograph: scored only over the hours both cover', near(d.hours, 6, 1e-9) && near(d.volumeRatio, 1, 1e-9));
+  check('hydrograph: too little overlap → null', hydrographScore(obs, same.slice(0, 10)) === null && hydrographScore([], same) === null);
+  const card = scorecard({ observed: true, gauges: [{ site: 'x', name: 'Creek', score: gaugeScore(obs, half), flow: { line: 'Line 1', score: b }, levelShape: b }], mass: { surface: 0, combined: null, clipped: 0, rain: 1 } });
+  const it = (re) => card.items.find(i => re.test(i.label));
+  check('scorecard: flow volume, peak and NSE rated, KGE and the level shape shown', it(/flow volume/).status === 'poor' && it(/peak flow/).status === 'poor' && it(/flow over the storm/).status === 'fair' && it(/Kling/).status === 'info' && it(/level over the storm/).status === 'info');
+  const good = scorecard({ observed: true, gauges: [{ site: 'x', name: 'Creek', score: gaugeScore(obs, same), flow: { line: 'Line 1', score: a } }], mass: { surface: 0, combined: null, clipped: 0, rain: 1 } });
+  check('scorecard: a perfect flow is good', ['flow volume', 'peak flow', 'flow over the storm'].every(k => good.items.find(i => i.label.includes(k)).status === 'good'));
 }
 
 // ---- the STN event for a storm
