@@ -1,10 +1,12 @@
 // Nowcast tests: storm motion by correlation (whole and part pixels, too little rain), carrying a field along it, and a
-// live build on synthetic archive files: a cell moving east that reaches the model only in the forecast, plus the
+// live build on synthetic archive files: a cell moving east that reaches the model only in the forecast; the ensemble on it
+// (members, the band, faster members first) and rolling it forward as newer frames arrive; plus the
 // 2-minute fill from the raw PrecipRate where a2m overflowed. Usage: node tests/run-nowcast-tests.mjs [--live]
 // (--live: the live build for Philadelphia from IEM now; it passes with or without rain there)
 import { deflateSync, gzipSync } from 'node:zlib';
-import { GRID, fileURL, rateURL, pixelWindow, frameAt } from '../src/mrms.js';
-import { motion, advect, liveRain, latestFrame } from '../src/nowcast.js';
+import { GRID, fileURL, rateURL, pixelWindow, frameAt, sampleWeights, areaMean } from '../src/mrms.js';
+import { motion, advect, liveRain, latestFrame, nowcastFrames, ensembleMembers, ensembleSummary, incoming, quantile, probit, turn, velocityInfo, growthFactor,
+  CONTROL, newFrames, motionSource, rollForward } from '../src/nowcast.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -72,6 +74,53 @@ function encodeGRIB(png) {
   const win = lr.win, k = 43 + 25, [cx] = centroid(lr.frames[k], win.nx, win.ny); // forecast frame for 15:16–15:18 UTC: the cell at column xAt(15:17)
   check('live: the forecast cell is where it would be', near(cx + win.c0, xAt(latest + 51 * MIN), 0.8), `column ${(cx + win.c0).toFixed(2)} vs ${xAt(latest + 51 * MIN).toFixed(2)}`);
   check('live: no rain at the model until the cell arrives', lr.frames.slice(0, 43).every(f => !f || f.every(v => v < 1e-3)) && lr.frames[k].some(v => v > 0.5));
+
+  // ---- the ensemble on the same storm: members from lr.src, the area mean over the model box
+  const samples = []; for (let y = bbox[1] + 0.005; y < bbox[3]; y += 0.01) for (let x = bbox[0] + 0.005; x < bbox[2]; x += 0.01) samples.push(sampleWeights(win, x, y));
+  const obsFrames = lr.frames.slice(0, 43), from = 43;
+  check('ensemble: the control member is the nowcast liveRain made', nowcastFrames(lr.src, win, 60).every((f, i) => f.every((v, p) => v === lr.frames[from + i][p])));
+  const grow = nowcastFrames(lr.src, win, 60, { speed: 1, dir: 0, growth: Math.log(2) }), ctl = lr.frames.slice(from);
+  check('ensemble: growth scales the rain by e^(g·t) (2× an hour)', [0, 10, 29].every(i => grow[i].every((v, p) => near(v, ctl[i][p] * 2 ** ((2 * i + 1) / 60), 1e-5))));
+  const ms = ensembleMembers(20, { seed: 7 }), runs = ms.map(m => ({ key: m.key, mean: Array.from(areaMean([...obsFrames, ...nowcastFrames(lr.src, win, 60, m)], samples)) }));
+  const S = ensembleSummary(runs, from, 2), east = (m) => turn(lr.src.u, lr.src.v, lr.src.lat, m.speed, m.dir)[0];
+  const fast = ms.reduce((a, b) => (east(b) > east(a) ? b : a)), slow = ms.reduce((a, b) => (east(b) < east(a) ? b : a)), eta = (k) => S.by.find(b => b.key === k).etaMin ?? Infinity;
+  check('ensemble: the cell arrives within the hour, faster members first', eta('ctl') > 5 && eta('ctl') < 40 && eta(fast.key) <= eta('ctl') && eta('ctl') <= eta(slow.key), `ETA fast ${eta(fast.key)}, control ${eta('ctl')}, slow ${eta(slow.key)} min`);
+  const ordered = (o) => o.p10 <= o.p50 && o.p50 <= o.p90;
+  check('ensemble: a band, P10 ≤ P50 ≤ P90, in depth, arrival and every block', ordered(S.depth) && ordered(S.eta) && ordered(S.peak) && S.band.p10.every((v, i) => v <= S.band.p50[i] + 1e-9 && S.band.p50[i] <= S.band.p90[i] + 1e-9) && S.band.p50.length === 30 && S.depth.p90 > S.depth.p10,
+    `depth ${S.depth.p10.toFixed(1)}–${S.depth.p90.toFixed(1)} mm, ETA ${S.eta.p10}–${S.eta.p90} min, ${(S.arriving * 100).toFixed(0)} % arriving`);
+  const dOf = (k) => S.by.find(b => b.key === k).depthMM;
+  check('ensemble: the picked dry / middle / wet members are in depth order', dOf(S.pick.p10) <= dOf(S.pick.p50) && dOf(S.pick.p50) <= dOf(S.pick.p90));
+
+  // ---- rolling forward: frames to 14:40 arrive while the run is in the block 14:30–14:32
+  const files2 = new Map(files), more = Date.parse('2026-11-02T14:40Z');
+  for (let t = latest + 2 * MIN; t <= more; t += 2 * MIN) files2.set(fileURL('a2m', t), a2m(t));
+  const get2 = async (u) => files2.get(u) ?? null, mean0 = areaMean(lr.frames, samples);
+  const st = { t0: lr.t0, blockMin: 2, depth: Array.from(mean0), intensity: Array.from(mean0, d => d * 30), total: 0, peakIntensity: 0,
+    radar: { frames: [...lr.frames], mean: Float64Array.from(mean0), live: { observedUntil: latest, forecastFrom: from } } };
+  check('roll: no newer frame yet → nothing', (await newFrames(latest, Date.parse('2026-11-02T14:33Z'), win, getBytes)) === null);
+  const nf = await newFrames(latest, Date.parse('2026-11-02T14:41Z'), win, get2), src2 = await motionSource(nf.latest, bbox, get2);
+  const res = rollForward(st, nf.frames, nowcastFrames(src2, win, 60), 45, (f) => areaMean([f], samples)[0]);
+  check('roll: 7 new frames; 2 already run, 5 replace the nowcast, the 23 after are nowcast again', nf.latest === more && nf.frames.length === 7 && res.late === 2 && res.replaced === 5 && res.refreshed === 23 && st.radar.live.forecastFrom === 50 && st.radar.live.observedUntil === more, JSON.stringify(res));
+  check('roll: blocks before the run are untouched, observed ones are the frames', st.radar.frames[44] === lr.frames[44] && st.radar.frames[47].every((v, p) => v === nf.frames[4].f[p]) && near(st.total, st.depth.reduce((a, b) => a + b, 0), 1e-9));
+  const [cx2] = centroid(st.radar.frames[68], win.nx, win.ny);
+  check('roll: the new nowcast follows the cell from the newer frame', near(cx2 + win.c0, xAt(st.t0 + 69 * 2 * MIN - MIN), 0.8), `column ${(cx2 + win.c0).toFixed(2)} vs ${xAt(st.t0 + 69 * 2 * MIN - MIN).toFixed(2)}`);
+}
+
+// ---- ensemble pieces
+{
+  check('probit: 0.5 → 0, 0.975 → 1.96, symmetric', near(probit(0.5), 0, 1e-6) && near(probit(0.975), 1.96, 1e-3) && near(probit(0.1), -probit(0.9), 1e-9));
+  const a = ensembleMembers(20), b = ensembleMembers(20), c = ensembleMembers(20, { seed: 2 });
+  const ln = a.slice(1).map(m => Math.log(m.speed)), mean = (xs) => xs.reduce((s, x) => s + x, 0) / xs.length, sd = (xs) => Math.sqrt(mean(xs.map(x => (x - mean(xs)) ** 2)));
+  check('members: the control first, then 20; the same seed the same members', a.length === 21 && a[0] === CONTROL && JSON.stringify(a) === JSON.stringify(b) && JSON.stringify(a) !== JSON.stringify(c));
+  check('members: the spreads are centred and about as asked', near(mean(ln), 0, 1e-9) && near(sd(ln), 0.2, 0.02) && near(mean(a.slice(1).map(m => m.dir)), 0, 1e-9) && near(sd(a.slice(1).map(m => m.dir)), 15, 1.5) && near(sd(a.slice(1).map(m => m.growth)), 0.5, 0.05),
+    `ln speed σ ${sd(ln).toFixed(3)}, dir σ ${sd(a.slice(1).map(m => m.dir)).toFixed(1)}°`);
+  check('members: the growth factor is held within ¼–4×', growthFactor(5, 60) === 4 && growthFactor(-5, 60) === 0.25 && near(growthFactor(Math.log(2), 30), Math.SQRT2, 1e-12));
+  const [u, v] = turn(1, 0, 40, 1.5, 90), V = velocityInfo(u, v, 40);
+  check('turn: east × 1.5 turned 90° clockwise → south, 1.5× as fast', near(V.toward, 180, 1e-6) && near(V.kmh, 1.5 * velocityInfo(1, 0, 40).kmh, 1e-6), `${V.toward.toFixed(1)}°, ${V.kmh.toFixed(1)} km/h`);
+  check('quantile: linear, and infinite past the members that arrive', quantile([4, 1, 3, 2], 0.5) === 2.5 && quantile([1, 2, Infinity], 0.5) === 2 && quantile([1, Infinity, Infinity], 0.5) === Infinity);
+  const m = [0, 0, 0.01, 0, 0, 0.05, 0.2, 0.3, 0];
+  const I = incoming(m, 4, 2), W = incoming([0, 0, 0.1, 0.2, 0, 0], 4, 2);
+  check('incoming: the first block at 1 mm/hr after now, the depth and peak over the lead', I.etaMin === 2 && !I.rainingNow && near(I.depthMM, 0.55, 1e-12) && near(I.peakMMHR, 9, 1e-9) && I.peakAtMin === 6 && W.rainingNow && W.etaMin === 0 && incoming([0, 0, 0], 1, 2).etaMin === null);
 }
 
 // ---- an overflowed 2-minute frame filled from the raw PrecipRate
