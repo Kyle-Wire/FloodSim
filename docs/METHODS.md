@@ -338,7 +338,8 @@ README "Local time stepping"; `src/solver-cpu.js` `_cycle` / `_record`:
   results are exactly as before, and the forcing record has no `inletTypes` part. With kinds, `drainSettings.inletTypes`
   records the kind of each type, and a settings test lists the types whose kind changed. Before this change the
   synthetic (street-following) network dropped each real grate's open share and crest on the way to the exchange
-  points; it now keeps them.
+  points; it now keeps them. On Charlotte's three storms the NCDOT kinds move the gauge under 1 cm and take up to 3 %
+  more street water into the pipes (settings test, §6.4).
 - **Two-way exchange (app default).** Inlet manholes are pressurised and water returns to the street through the inlet
   orifice on the head difference, as HEC-RAS does. The return is capped per manhole by what its pipes deliver (SWMM node
   inflow less any positive lateral inflow; SWMM books a negative lateral flow as outflow, so the return itself is not
@@ -1687,6 +1688,33 @@ What it shows:
 The Charlotte case is not yet calibrated to the bar. These runs used the area-wide inlet setting. Charlotte's inlets
 by type (NCDOT kinds, §2.14) came after them.
 
+**Settings test: Charlotte's inlets by type** (2026-11-06, commit 9728fd0, the kept calibration on every run). Each
+storm ran twice, identical but for the inlets: the area-wide setting, then NCDOT kinds by `STRUCT_TYPE`.
+
+| Storm | Gauge, area-wide inlets | Gauge, NCDOT kinds | Street water into pipes | Street area over 15 cm deep |
+|---|---|---|---|---|
+| 12 June 2025 | −0.668 m | −0.662 m | +3.0 % | −2.3 % (−3,900 m²) |
+| 9 January 2024 | −0.971 m | −0.972 m | −0.2 % | 0.0 % |
+| 10 August 2023 | −0.151 m | −0.144 m | +1.5 % | −1.0 % (−1,350 m²) |
+
+- **The gauge cannot judge the inlets.** Charlotte's catch basins and drop inlets have larger NCDOT openings than the
+  area-wide setting, so they take a little more street water into the pipes. That water reaches the creek either way,
+  and the gauge moves under 1 cm on every storm.
+- **The effect is on the streets.** On 12 June 2025, 12,500 m² of street ends at least 5 cm shallower (up to 0.33 m
+  at one place), 160 m² ends deeper, and water pushed back up through the grates doubles (2,800 to 5,400 m³) as the
+  pipes fill sooner. No street observations exist for these storms, so this shows what the setting does, not that it
+  is more accurate.
+- **The kinds stay on by default in North Carolina.** They follow the state's own standard drawings and leave the
+  validation where it was.
+
+These runs read 0.01–0.02 m higher than the same settings in the study above. That gap is the city's data, not the
+change: Charlotte republished its storm pipe and structure layers between 5 and 6 November 2026 (every record a new
+ID; a few inlets added, removed or retyped, 1,160 linked inlets became 1,163). The study above ran on the copy the
+fetch cache held from 5 November. Rerun on that copy with inlet kinds off, the new code gives the study's August 2023
+run to the last digit (gauge −0.171 m, the same steps, pipe exchange and peak depth). A linked layer is fetched live,
+and the run's forcing record holds its address, not what came back. Runs on two versions of the city's data therefore
+look like the same drainage to Compare (§7).
+
 ### 6.5 A reviewer's checklist
 
 1. Commit and fingerprint recorded in `summary.json`; commit not `+dirty` for a submitted result.
@@ -1829,6 +1857,7 @@ known limits", "Known limits (solver)" and section caveats, and the code as cite
 | Limitation | Effect | Mitigation |
 |---|---|---|
 | Open-data services change (3DEP, NLCD, OSM edits, NWIS revisions); Overpass is unreliable under load | A rebuild on another machine or date may differ. | The model layers are hashed (`designHash`, §8.2); the local cache (`.cache/`) makes a rebuild repeatable on one machine. Archive the project folder and cache with submitted results. |
+| Linked utility layers (a city's pipes and inlets) are fetched live; the forcing record hashes their addresses, not the data that came back | A city that republishes its layers changes the network while the drainage fingerprint stays the same, so Compare and settings tests cannot tell two data versions apart (Charlotte, 5 → 6 November 2026: 1,160 → 1,163 linked inlets, 0.01–0.02 m at the gauge, §6.4). | The per-checkout cache keeps one machine on one version; the summary's linked-inlet count shows a change. Archive the cache with the project. |
 | GPU requirements: WebGPU with 9 storage buffers per stage for tiling (10 for sediment) | Untiled fallback is slower; results identical (tiling is bit-identical). | — |
 | Results depend on the app commit | Recorded in every fingerprint; `+dirty` flags uncommitted code. | Require a clean commit. |
 | The CPU reference is not practical for full-size models | GPU results are verified against it on test cases only. | — |
