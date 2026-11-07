@@ -65,15 +65,21 @@ export function breachChannels(fine, f, lines, { maxLength = 30, maxHeight = 4, 
  * @param F        solver cell size (m)
  * @param culverts [{ line, kind, D }]
  * @param taken    Set of solver cells already used for other exchange (inlet grates); culvert ends move off them
+ * @param reach    m around each mapped end searched for the lowest ground (only cells nearer that end than the other)
  */
-export function culvertLinks(fine, c, F, culverts, taken = new Set()) {
+export function culvertLinks(fine, c, F, culverts, taken = new Set(), { reach = 5 } = {}) {
   const out = [], used = new Set(taken);
   const cellOf = ([x, y]) => { const i = Math.floor(x / F), j = Math.floor(y / F); return i < 0 || j < 0 || i >= c.nx || j >= c.ny ? -1 : j * c.nx + i; };
-  const free = (k) => { // the cell itself, or the lowest open neighbour not already an exchange cell
-    if (k >= 0 && c.mask[k] && !used.has(k)) return k;
-    let best = -1; const i = k % c.nx, j = (k / c.nx) | 0;
-    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+  // Each end takes the lowest open cell within `reach` m of its mapped point, not already an exchange cell: a mapped
+  // culvert usually ends at the road's edge or on the embankment, and the barrel's invert is set from these cells.
+  // (Ends on the embankment put the Sheffield Dr culvert by the Charlotte gauge 1.9 m above the creek bed and US-74's
+  // outlet 9 m up on the highway, so the creek ponded behind them until it overtopped.)
+  const R = Math.max(1, Math.ceil(reach / F));
+  const free = (k, other) => {
+    let best = -1; const i = k % c.nx, j = (k / c.nx) | 0, oi = other % c.nx, oj = (other / c.nx) | 0;
+    for (let dj = -R; dj <= R; dj++) for (let di = -R; di <= R; di++) {
       const ii = i + di, jj = j + dj, kk = jj * c.nx + ii;
+      if (di * di + dj * dj > R * R || (ii - oi) ** 2 + (jj - oj) ** 2 < di * di + dj * dj) continue; // its own side only
       if (ii < 0 || jj < 0 || ii >= c.nx || jj >= c.ny || !c.mask[kk] || used.has(kk)) continue;
       if (best < 0 || c.z[kk] < c.z[best]) best = kk;
     }
@@ -83,8 +89,8 @@ export function culvertLinks(fine, c, F, culverts, taken = new Set()) {
     const pts = toCells(fine, cv.line).map(([x, y]) => [x * fine.dx, y * fine.dx]);
     let len = 0; for (let s = 1; s < pts.length; s++) len += Math.hypot(pts[s][0] - pts[s - 1][0], pts[s][1] - pts[s - 1][1]);
     const k0 = cellOf(pts[0]), k1 = cellOf(pts[pts.length - 1]); if (k0 < 0 || k1 < 0) continue;
-    const a = free(k0); if (a < 0) continue; used.add(a);
-    const b = free(k1); if (b < 0 || b === a) { used.delete(a); continue; }
+    const a = free(k0, k1); if (a < 0) continue; used.add(a);
+    const b = free(k1, k0); if (b < 0 || b === a) { used.delete(a); continue; }
     used.add(b);
     // a drawn culvert may carry its own inverts (the higher governs inlet control) and roughness
     out.push({ a, b, D: cv.D, len: Math.max(len, F), inv: Number.isFinite(cv.inv) ? cv.inv : Math.max(c.z[a], c.z[b]), n: cv.n ?? 0.015, kind: cv.kind });

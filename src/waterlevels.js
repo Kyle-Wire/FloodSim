@@ -161,7 +161,8 @@ export function components(water, nx, ny) {
  * Starting depth per solver cell. sources: [{ cells: [k…] (water cells it applies from), rise (m) | level (m) }] —
  * `rise` lifts the water surface parallel to the lidar surface, `level` sets it flat. Each source claims the water
  * component(s) its cells are in; within a component the nearest source wins. The water then spreads, nearest water
- * first, onto connected land below its level. → { depth (Float32Array), level (Float64Array, NaN = none) }
+ * first, onto connected land below its level; land above the level of the water nearest it stays dry and stops water
+ * from further away. → { depth (Float32Array), level (Float64Array, NaN = none; dry land keeps the level it was offered) }
  */
 export function startDepths(c, water, sources, { maxSpread = 300, surfR = 30, surfTol = 1 } = {}) {
   const { nx, ny, z, mask } = c, N = nx * ny, level = new Float64Array(N).fill(NaN), depth = new Float32Array(N);
@@ -173,11 +174,14 @@ export function startDepths(c, water, sources, { maxSpread = 300, surfR = 30, su
   while (q.length) { const nq = []; for (const k of q) step(k, (p, w) => { if (id[p] >= 0 && id[p] === id[k] && dist[k] + w < dist[p]) { dist[p] = dist[k] + w; owner[p] = owner[k]; nq.push(p); } }); q = nq; }
   const zs = c.zSurf ?? z, base = waterBase(water, zs, nx, ny, surfR, surfTol); // a rise is above the lidar water surface (not a carved channel bed)
   for (let k = 0; k < N; k++) if (owner[k] >= 0) { const s = sources[owner[k]]; level[k] = s.level ?? base[k] + Math.max(0, s.rise); }
-  // spread onto land below the level, from the nearest water outward (each land cell takes its first-reached level)
+  // spread onto land below the level, from the nearest water outward. Each land cell takes the level of the water that
+  // reaches it first, and stays dry when it stands above that level: it then holds back water from further away. (A cell
+  // flagged as water up on a bank, 1.4 m above the creek beside it, used to flood the Edwards Branch valley below the
+  // Charlotte gauge to its height, because the creek could not claim the floodplain above its own level.)
   let front = []; for (let k = 0; k < N; k++) if (!Number.isNaN(level[k])) front.push(k);
   for (let r = 0; r < maxSpread && front.length; r++) {
     const nf = [];
-    for (const k of front) step(k, (p) => { if (mask[p] && Number.isNaN(level[p]) && z[p] < level[k]) { level[p] = level[k]; nf.push(p); } });
+    for (const k of front) step(k, (p) => { if (mask[p] && Number.isNaN(level[p])) { level[p] = level[k]; if (z[p] < level[k]) nf.push(p); } });
     front = nf;
   }
   for (let k = 0; k < N; k++) if (mask[k] && level[k] > z[k]) depth[k] = level[k] - z[k];

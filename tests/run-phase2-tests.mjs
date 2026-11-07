@@ -2,7 +2,7 @@
 // Usage: node tests/run-phase2-tests.mjs
 import { weirFlow, culvertFlow, bankStations, riverINP } from '../src/river.js';
 import { CulvertLinks } from '../src/links.js';
-import { breachChannels, culvertDiameter } from '../src/channels.js';
+import { breachChannels, culvertDiameter, culvertLinks } from '../src/channels.js';
 import { GridRef } from '../src/geo.js';
 import { loadSWMM, SWMM } from '../src/swmm.js';
 
@@ -60,6 +60,25 @@ const near = (a, b, tol) => Math.abs(a - b) <= tol;
   const z2 = new Float32Array(nx * ny); for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z2[j * nx + i] = 10 - 0.01 * i + (i >= 40 && i < 46 ? 2.5 : 0);
   const r2 = breachChannels(fine, { nx, ny, z: z2, bld: new Uint8Array(nx * ny), road: new Uint8Array(nx * ny) }, [{ line, kind: 'stream' }]);
   check('a hump with no road is left alone', r2.breaches === 0 && z2[9 * nx + 42] > 12, 'banks the mapped line wanders onto are real terrain');
+}
+// ---- culvert ends: a mapped culvert ending on the embankment shoulders takes the creek bed on each side, not the road
+{
+  const { fromUTM } = await import('../src/geo.js');
+  const fine = new GridRef({ zone: 18, x0: 0, y0: 0, x1: 60, y1: 20, dx: 1 }), nx = 30, ny = 10, F = 2; // 2 m solver cells
+  const z = new Float32Array(nx * ny), mask = new Uint8Array(nx * ny).fill(1);
+  // a creek along row 5 falling east (bed 10 - 0.02 x), 1.5 m banks either side, and a road embankment 4 m high
+  // over columns 12-17 (24-36 m) that slopes down to the bed over two cells each side
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const bed = 10 - 0.02 * i * F, emb = i >= 12 && i <= 17 ? 4 : i === 11 || i === 18 ? 2.6 : i === 10 || i === 19 ? 1.2 : 0;
+    z[j * nx + i] = bed + Math.max(emb, j === 5 ? 0 : 1.5);
+  }
+  const line = [[21, 11], [37, 11]].map(([x, y]) => fromUTM(x, fine.y1 - y, 18)); // ends 1-3 m up the embankment slopes
+  const [lk] = culvertLinks(fine, { nx, ny, z, mask }, F, [{ line, kind: 'stream', D: 1.2 }]);
+  const bedA = z[5 * nx + 9], bedB = z[5 * nx + 20];
+  check('culvert ends on the creek bed, not the embankment', lk && lk.a % nx <= 10 && lk.b % nx >= 19 && Math.abs(lk.inv - Math.max(z[lk.a], z[lk.b])) < 1e-6 && lk.inv < bedA + 0.05,
+    lk ? `invert ${lk.inv.toFixed(2)} m (bed ${bedA.toFixed(2)} / ${bedB.toFixed(2)} m; embankment ends ${z[5 * nx + 10].toFixed(2)} / ${z[5 * nx + 18].toFixed(2)} m)` : 'no link');
+  const [near] = culvertLinks(fine, { nx, ny, z, mask }, F, [{ line, kind: 'stream', D: 1.2 }], new Set(), { reach: 0 });
+  check('…which a one-cell search misses', near && near.inv > bedA + 0.5, near ? `invert ${near.inv.toFixed(2)} m searching one cell` : 'no link');
 }
 check('culvert size from tags', culvertDiameter({ diameter: '600' }) === 0.6 && culvertDiameter({ diameter: '1.5' }) === 1.5 && culvertDiameter({}, 'ditch') === 0.6);
 

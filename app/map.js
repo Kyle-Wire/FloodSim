@@ -1927,6 +1927,7 @@ function ensureSolver() {
   if (run.solver.ltsOff) log(`Local time stepping is off with ${run.solver.ltsOff}; stepping globally`, 'warn');
   // --- /local time stepping ---
   const start = startWater(c, F, stageCells); // rivers, lakes and tidal water from the gauges (or dry: the lidar surface)
+  run.startDepth = start?.depth ?? null; run.startNote = start ? $('startNote').textContent : null; // filed with the run (start_depth.asc)
   const pool = new Map(); for (const pd of run.sw.pools) for (const K of pd.cells) pool.set(K, Math.max(pool.get(K) ?? 0, pd.pool - c.z[K])); // wet ponds start at their permanent pool
   const at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
   const w = run.warm; // the baseflow warm-up's end state (depths and velocities), else the start levels
@@ -2481,7 +2482,7 @@ function cancelSweep() { sweep.cancel = true; if (run && !run.record) { const r 
 const CK_DIR = 'runs/_checkpoint';
 // not copied: the grid and inputs (rebuilt from the same settings), the solver and SWMM (copied separately), the
 // export frames (too large: the animation restarts at the resume), and this page's clocks and handles
-const RUN_SKIP = new Set(['solver', 'c', 'net', 'sw', 'storm', 'inflowReady', 'inflowRaw', 'levelsReady', 'levelSrc', 'view', 'frames', 'done', 'finish', 'record', 'gen', 'playing',
+const RUN_SKIP = new Set(['solver', 'c', 'startDepth', 'net', 'sw', 'storm', 'inflowReady', 'inflowRaw', 'levelsReady', 'levelSrc', 'view', 'frames', 'done', 'finish', 'record', 'gen', 'playing',
   'lastWall', 'wall0', 'paceT', 'lastOut', 'lastRead', 'lastDraw', 'lastHz', 'lastCkpt', 'massWarned', 'pauseReq', 'swmm', 'window', 'batchJob', 'batchInfo', 'emu']);
 const ckEveryMs = () => Number($('ckEvery')?.value ?? 10) * 60e3;
 const fmtClock = (t) => `${Math.floor(t / 3600)}:${String(Math.floor(t % 3600 / 60)).padStart(2, '0')}`;
@@ -4263,7 +4264,7 @@ async function runFiles() {
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
     batch: run.batchInfo ?? null, // the batch study job (src/batch.js) this run was, for the sensitivity and EAD sections
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
-    forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), utilityData: utilityData(), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
+    startWater: run.startNote ?? null, forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), utilityData: utilityData(), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
     books: run.record?.books ?? null, validation: run.record?.validation ?? null, inflow: run.record?.inflow ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...(l.endDepth ? { endDepthM: l.endDepth } : {}), ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
@@ -4277,7 +4278,7 @@ async function runFiles() {
       'barriers.csv': 'per flood barrier: crest, freeboard, overtopping volume and rates, peak hydrostatic load',
       'hazard_arr.asc': 'worst ARR 2019 / AIDR hazard class reached, 1–6 = H1–H6 (0 = never 1 cm deep)', 'hazard_fd2320.asc': 'worst UK FD2320 class, 1–4 = Low…Extreme (debris factor 0)',
       'hazard_fd2320_urban.asc': 'the same with the FD2320 urban debris factor', 'max_dv.asc': 'peak depth × velocity at the same moment (m²/s)',
-      'max_force.asc': 'peak force per metre of width ρ(h·v² + ½g·h²) (kN/m)', 'max_bed_shear.asc': 'peak bed shear ρg·n²·v²/h^⅓ (Pa)', 'bed_change_cm.asc': 'sediment transport: bed change (cm, − scour, + deposit)', 'suspended_solids_mm.asc': 'solids still in suspension at the end (mm per area)', 'collapse_wetted.asc': 'collapsible-soil susceptibility (1 low, 2 moderate, 3 high) where the flood wetted the ground, 1 m', 'scour_class.asc': 'scour potential 0 none, 1 low, 2 moderate, 3 high (NODATA = paved)', 'scour_potential_cm.asc': 'indicative scour depth, excess-shear law (cm)', 'flood_duration_min.asc': 'minutes deeper than 15 cm', 'arrival_min.asc': 'minutes from the start until 15 cm deep (NODATA = never)',
+      'max_force.asc': 'peak force per metre of width ρ(h·v² + ½g·h²) (kN/m)', 'max_bed_shear.asc': 'peak bed shear ρg·n²·v²/h^⅓ (Pa)', 'bed_change_cm.asc': 'sediment transport: bed change (cm, − scour, + deposit)', 'suspended_solids_mm.asc': 'solids still in suspension at the end (mm per area)', 'collapse_wetted.asc': 'collapsible-soil susceptibility (1 low, 2 moderate, 3 high) where the flood wetted the ground, 1 m', 'scour_class.asc': 'scour potential 0 none, 1 low, 2 moderate, 3 high (NODATA = paved)', 'scour_potential_cm.asc': 'indicative scour depth, excess-shear law (cm)', 'flood_duration_min.asc': 'minutes deeper than 15 cm', 'arrival_min.asc': 'minutes from the start until 15 cm deep (NODATA = never)', 'start_depth.asc': 'water depth (m) the run started with, from the USGS gauge levels (Starting water: gauges; NODATA = dry)',
       notes: 'Max depth, hazard, force, d·v, duration, arrival and barrier levels, loads and volumes are tracked every solver step; velocity counts in hazard and force only where water is at least 5 cm deep.' },
   };
   const st = run.storm, csv = ['start_min,end_min,mm_per_hr', ...st.intensity.map((v, i) => `${i * st.blockMin},${(i + 1) * st.blockMin},${v}`)].join('\n');
@@ -4305,6 +4306,7 @@ async function runFiles() {
   }
   if (model.f.collapse) { const W = model.fine.nx; run.lastMaxFine = null; files.push({ path: 'collapse_wetted.asc', data: ascFine(Float32Array.from(model.f.collapse, (v, k) => collapseAt(k, k % W, (k / W) | 0))) }, { path: 'collapse_wetted.prj', data: prj }); }
   if (run.scour) { grid('max_bed_shear', hz.shear); grid('scour_class', Float32Array.from(hz.shear, (v, k) => scourClass(v, run.scour.tauC[k]) < 0 ? NaN : scourClass(v, run.scour.tauC[k]))); grid('scour_potential_cm', hz.erosion.map(v => v * 100)); } grid('flood_duration_min', hz.duration.map(s => s / 60)); grid('arrival_min', hz.arrival.map(s => s / 60));
+  if (run.startDepth) grid('start_depth', run.startDepth.map(v => (v > 0 ? v : NaN))); // the water the run started with (gauge levels)
   if (run.inp) files.push({ path: 'network.inp', data: run.inp });
   if (run.watch) files.push({ path: 'barriers.csv', data: barrierCSV(run.watch.results()) });
   if (calSc) files.push({ path: 'calibration.csv', data: calCSV(calSc) });

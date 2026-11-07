@@ -427,9 +427,20 @@ All requests go through the local proxy (`server/server.mjs`), which caches resp
   curb burn lowers street pixels by 15 cm. It is applied automatically only where the DEM source is coarser than 1 m,
   because 1 m lidar already resolves curbs.
 - **Culverts and embankments** (`src/channels.js`). OSM waterways tagged `tunnel=culvert` become culvert links between
-  their ends. Size comes from the `diameter`/`width` tags, else 1.2 m for a stream and 0.6 m for a ditch. Where a mapped
-  stream crosses a road with no mapped culvert, the embankment (≤ 30 m long, ≤ 4 m high) is breached to a straight
-  grade. Humps without a road are left alone.
+  their ends. Each end takes the lowest ground within 5 m of the mapped point on its own side, and the invert is the
+  higher of the two: mapped culverts usually end at a road's edge or on the embankment slope. Before November 2026 the
+  end cell itself set the invert, which put the Sheffield Dr culvert at the Charlotte gauge 1.9 m above the creek bed.
+  A culvert mapped far from where it runs is beyond this: OSM ends the US-74 culvert below that gauge on the highway,
+  300 m from its outlet in the city's pipe layer, so its invert is still 212 m over a 206.5 m bed and it passes
+  nothing; draw such culverts with their real ends and inverts (drawn culverts keep theirs). Size comes from the
+  `diameter`/`width` tags, else 1.2 m for a stream and 0.6 m for a ditch. Where a mapped stream crosses a road with no
+  mapped culvert, the embankment (≤ 30 m long, ≤ 4 m high) is breached to a straight grade. Humps without a road are
+  left alone, and breaching follows the mapped line's own cells, so a hump in the channel beside a line drawn on the
+  bank is not seen. Edwards Branch 250 m below the Charlotte gauge has one: a 1.2 m rise across the whole valley floor
+  with no road (a crossing or a lidar artefact; the gauge falls below its crest after storms, so the creek passes it),
+  beside an NHD line that runs on the bank. It holds the modelled creek 1 m above the gauge's reading after the storm.
+  A rule that breached such humps along the mapped line was tried and dropped (November 2026): with the line on the
+  bank it cut five trenches along the bank and missed the hump. Snapping mapped lines to the 1 m thalweg first is open work.
 - **Channel bathymetry** (off by default; `src/bathymetry.js`). The flattened water surface is grown from mapped river
   lines over cells flat to the millimetre. Drainage area comes from USGS NLDI or D8 accumulation. The bankfull width and
   depth come from Bieger et al. (2015) regional curves (nationwide or by physiographic division), carved as a parabolic
@@ -442,6 +453,11 @@ All requests go through the local proxy (`server/server.mjs`), which caches resp
   the gauge's level minus the lidar water surface at the gauge: the median of the 9 nearest water cells on the water
   body its reading is on, the highest flat surface at or below it (a gauge above a dam reads the pool, §5.8). Lakes fill flat
   to the reading, tidal water starts at the tide level, and water then spreads onto connected ground below its level.
+  Each patch of ground takes the level of the water nearest it, and ground above that level stays dry and holds back
+  water from further away. Before November 2026 ground above the nearest water could still take a higher level from
+  further off: a mapped stream line up on a bank 1.4 m above Edwards Branch flooded 600 m of the valley below the
+  Charlotte gauge to 210.5 m at the start (42,000 m³ that ran back past the gauge and held it 0.5 m high all storm).
+  Each run files its starting water as `start_depth.asc` and the note in `summary.json` (`startWater`).
   Rules guard against bridge decks and 30 m land-cover pixels mapped as water. Ungauged water stays at the lidar
   surface.
 

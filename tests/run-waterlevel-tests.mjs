@@ -20,6 +20,12 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   check('no gauge: no water', none.depth.every(d => d === 0));
   const neg = startDepths(c, water, [{ cells: [9 * nx + 1], rise: -0.3 }]);
   check('a gauge below the lidar surface adds nothing', neg.depth.every(d => d === 0));
+  // a mapped line that climbs the north bank at column 20 (rows 11-13, up to 0.75 m): its level must not flood the
+  // banks along the valley that sit above the river beside them (Edwards Branch below the Charlotte gauge, Nov 2026)
+  const w2 = water.slice(); for (const j of [11, 12, 13]) w2[j * nx + 20] = 1;
+  const s2 = startDepths(c, w2, [{ cells: [9 * nx + 1], rise: 0 }], { surfR: 0 });
+  let far = 0; for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) if (Math.abs(i - 20) > 3) far += s2.depth[j * nx + i];
+  check('a bank cell flagged as water does not flood the valley to its height', far === 0, `${far.toFixed(2)} m of depth summed away from it`);
 }
 { // two lakes (west, east) separated by a ridge, a low hollow beyond a ridge, and a gauge in each lake
   const nx = 30, ny = 10, z = new Float64Array(nx * ny).fill(5), water = new Uint8Array(nx * ny), mask = new Uint8Array(nx * ny).fill(1);
