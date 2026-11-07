@@ -636,7 +636,8 @@ $('buildBtn').onclick = async () => {
     const f = buildFine(fine, dem, osm, nlcd, soils, { curb });
     f.channels = breachChannels(fine, f, osm.waterways.filter(w => /river|stream|brook|canal|ditch|drain/.test(w.kind))); // embankments over unmapped crossings
     lCond.set('Terrain conditioned', 'ok', `${fmtArea(f.stats.buildingArea)} buildings as walls · ${fmtArea(f.stats.roadArea)} streets` + (curb ? ` burned ${curb * 100} cm` : ' (lidar curbs kept as surveyed)')
-      + ` · ${osm.culverts.length} mapped culverts linked · ${f.channels.breaches} road embankments breached on mapped streams`);
+      + ` · ${osm.culverts.length} mapped culverts linked · ${f.channels.snapped} mapped streams moved onto the 1 m thalweg (mean ${f.channels.offset.toFixed(1)} m off the line)`
+      + ` · ${f.channels.breaches} road embankments and ${f.channels.fills} channel humps breached`);
     const nfhl = await femaP;
     model = { fine, f, base: f, dem, osm, nlcd, soils, curb, atlas14, util, linked, site: [clon, clat], poly: S.poly };
     renderInletTypes(); // the types in this area's inlet data, and the standard for where it is
@@ -723,7 +724,7 @@ function setTiers() {
     ['Boundaries', 'all edges free outfall: water leaves, nothing enters (no upstream inflow yet)'],
     ['Rivers', 'hydro-flattened lidar, no bathymetry'],
     ['Green infrastructure', giLabel()],
-    ['Culverts & channels', `${osm.culverts.length} OSM culverts as links (barrel from diameter/width tags, else ${'stream 1.2 m, ditch 0.6 m'}); ${model.f.channels.breaches} road embankments (≤ 30 m long, ≤ 4 m high) breached where mapped streams cross roads with no mapped culvert`],
+    ['Culverts & channels', `${osm.culverts.length} OSM culverts as links (barrel from diameter/width tags, else ${'stream 1.2 m, ditch 0.6 m'}); mapped streams snapped to the 1 m thalweg (least-cost path within 15 m, ${model.f.channels.snapped} lines, mean ${model.f.channels.offset.toFixed(1)} m off the mapped line); along it, ${model.f.channels.breaches} road embankments (≤ 30 m long, ≤ 4 m high) where streams cross roads with no mapped culvert and ${model.f.channels.fills} channel humps with no road (0.5–2 m crest across the whole valley floor, ≤ 40 m long) breached to grade, 3 m wide`],
     ['Storm', stormLabel(currentStorm())],
     ['Extent', `${fine.nx} × ${fine.ny} m, EPSG:${fine.epsg}`],
   ];
