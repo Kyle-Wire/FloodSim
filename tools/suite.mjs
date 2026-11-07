@@ -12,7 +12,8 @@ export const loadCases = () => JSON.parse(readFileSync(join(here, 'cases.json'),
 export const readProject = (folder) => JSON.parse(readFileSync(join(projectsDir, folder, 'project.json'), 'utf8'));
 
 /**
- * The case's project, installed from benchmarks/validation/<id>/project.json when the projects folder lacks it. The
+ * The case's project, installed from benchmarks/validation/<id>/project.json when the projects folder lacks it or holds
+ * a copy whose inputs differ from it. The
  * case's control lines (analysis.geojson: a line at a gauge records its flow, scored against the gauge's discharge)
  * are copied whenever the case has them, so a project installed before them gains them.
  */
@@ -22,10 +23,21 @@ export function installCase(c) {
     if (!existsSync(src)) throw new Error(`no project "${c.project}" and no ${src} to install it from`);
     mkdirSync(dest, { recursive: true }); copyFileSync(src, join(dest, 'project.json'));
     console.log(`  installed ${c.project} from benchmarks/validation/${c.id}`);
+  } else if (existsSync(src)) {
+    // the case file is the record: an installed copy whose inputs differ from it (a case fixed in the repo after it was
+    // installed, or an edit made in the app) is replaced, the old copy kept beside it
+    const changed = staleInputs(JSON.parse(readFileSync(src, 'utf8')), readProject(c.project));
+    if (changed.length) {
+      const bak = `project.before-${new Date().toISOString().slice(0, 10)}.json`;
+      copyFileSync(join(dest, 'project.json'), join(dest, bak)); copyFileSync(src, join(dest, 'project.json'));
+      console.log(`  updated ${c.project} from benchmarks/validation/${c.id} (${changed.slice(0, 6).join(', ')}${changed.length > 6 ? ` and ${changed.length - 6} more` : ''} differed; the old copy is ${bak})`);
+    }
   }
   copyAnalysis(c, dest);
   return readProject(c.project);
 }
+/** Input ids whose value in the installed project differs from the case file's. */
+export const staleInputs = (cas, inst) => Object.keys(cas.inputs ?? {}).filter(k => JSON.stringify(cas.inputs[k]) !== JSON.stringify(inst.inputs?.[k]));
 /** The case's control lines and site boundary (benchmarks/validation/<id>/analysis.geojson), into a project folder. */
 function copyAnalysis(c, dest) { const a = join(here, c.id, 'analysis.geojson'); if (existsSync(a)) copyFileSync(a, join(dest, 'analysis.geojson')); }
 

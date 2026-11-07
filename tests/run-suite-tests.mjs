@@ -1,7 +1,7 @@
 // The validation and calibration tools' shared scoring (tools/suite.mjs): the level errors a run's summary holds, marks
 // skipped under decks or indoors left out, gauges' peaks in; and the calibration page with and without validation storms.
 // Usage: node tests/run-suite-tests.mjs
-import { levelErrors } from '../tools/suite.mjs';
+import { levelErrors, staleInputs } from '../tools/suite.mjs';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readFileSync, cpSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -33,6 +33,13 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   const md = r.status === 0 ? readFileSync(join(dir, 'benchmarks', 'validation', 'CALIBRATION.md'), 'utf8') : '';
   check('the page: values kept marked, a study with no other storm called a fit', r.status === 0 && /infiltration × 0\.5 \*\*\(kept\)\*\*/.test(md) && /a fit, not a calibration/.test(md), r.stderr.trim().slice(0, 200));
   check('a storm it never saw: within the target, and the tuning carried over', /\| Storm V \| 0\.60 \/ −0\.60 \(1\) \| 0\.10 \/ −0\.10 \(1\) \| meets; the tuning carried over \|/.test(md));
+}
+
+// ---- an installed case whose inputs differ from the case file is stale (the Charlotte cases' sewer setting, Nov 2026)
+{
+  const cas = { inputs: { csoOn: false, downspout: '0', calInfil: '1' } };
+  check('installed copy with an old setting is stale', JSON.stringify(staleInputs(cas, { inputs: { csoOn: true, downspout: '100', calInfil: '1', extra: 5 } })) === '["csoOn","downspout"]');
+  check('…and one that matches is not', staleInputs(cas, { inputs: { ...cas.inputs, extra: 5 } }).length === 0);
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall suite tests passed');
