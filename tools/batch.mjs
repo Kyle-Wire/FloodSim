@@ -6,7 +6,7 @@
 // Usage: node tools/batch.mjs "<project folder>" [--url http://localhost:8766] [--retries 3] [--hours 0] [--headed]
 //   <project folder>  the folder's name under the projects directory (Documents/FloodSim Projects, or FLOODSIM_PROJECTS)
 //   --url      reuse a running FloodSim server (default: start server/server.mjs on a free port)
-//   --retries  relaunches after a browser or GPU crash (default 3)
+//   --retries  relaunches after a browser or GPU crash, or after a build a data service failed (10 min later; default 3)
 //   --hours    give up after this many hours (default 0: no limit)
 //   --headed   show the browser window
 // Exit code 0 when every job is done, 1 when any failed or the study could not finish.
@@ -50,6 +50,9 @@ for (let attempt = 0; attempt <= retries; attempt++) {
   const why = page.crashed();
   await page.close(); page = null;
   if (done) {
+    if (!done.ok && /^Build failed/.test(done.error) && attempt < retries) { // a data service was down: wait, then open the project again
+      console.log(`${stamp()}  ${done.error}: waiting 10 min, then opening the project again`); await sleep(600e3); continue;
+    }
     if (!done.ok) await finish(1, `FAILED: ${done.error}`);
     if (!done.study) await finish(1, `No study in "${folder}": plan one in the app's Batch drawer and Start it (or save it), then run this again.`);
     const jobs = done.study.jobs, n = (s) => jobs.filter(j => j.status === s).length, h = ((Date.now() - t0) / 3600e3).toFixed(2);

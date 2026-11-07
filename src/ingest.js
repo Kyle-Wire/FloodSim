@@ -23,8 +23,10 @@ const SDA = 'https://sdmdataaccess.sc.egov.usda.gov/Tabular/post.rest';
  * Bare-earth DEM from the 3DEP dynamic mosaic, in the grid's UTM CRS, at grid.dx.
  * Also reports the finest native source under the box: 1 m means real lidar; 10/30 m means the
  * service is interpolating, and nothing finer than the source can be trusted.
+ * 3DEP often answers 502/503/504 for a minute or two when it is busy: each tile is asked again after `waits`
+ * (ms; about 4 minutes in all) before the build gives up. The caching proxy's own quick retries come first.
  */
-export async function fetchDEM(grid, fetcher, onProgress = () => {}) {
+export async function fetchDEM(grid, fetcher, onProgress = () => {}, { waits = [15e3, 30e3, 60e3, 120e3], sleep = (ms) => new Promise(ok => setTimeout(ok, ms)) } = {}) {
   const { nx, ny, x0, y1, dx, epsg } = grid;
   const tile = 2000, z = new Float32Array(nx * ny);
   const jobs = [];
@@ -34,8 +36,9 @@ export async function fetchDEM(grid, fetcher, onProgress = () => {}) {
     const bx0 = x0 + c0 * dx, by1 = y1 - r0 * dx, bbox = [bx0, by1 - h * dx, bx0 + w * dx, by1].join(',');
     const url = `${DEP}/exportImage?bbox=${bbox}&bboxSR=${epsg}&imageSR=${epsg}&size=${w},${h}&format=bsq&pixelType=F32` +
       `&noData=-9999&interpolation=RSP_BilinearInterpolation&f=image`;
-    const r = await fetcher(url);
-    if (!r.ok) throw new Error(`3DEP DEM request failed (${r.status})`);
+    let r = await fetcher(url);
+    for (const ms of waits) { if (r.ok || !(r.status === 429 || r.status >= 500)) break; await sleep(ms); r = await fetcher(url); }
+    if (!r.ok) throw new Error(`3DEP DEM request failed (${r.status}${r.status >= 500 ? `, still after ${waits.length} more tries over ${Math.round(waits.reduce((a, b) => a + b, 0) / 60e3)} min: the service is down, try again later` : ''})`);
     const buf = await r.arrayBuffer();
     if (buf.byteLength < w * h * 4) throw new Error('3DEP DEM response too short');
     const f = new Float32Array(buf, 0, w * h); // bsq: band data, then a 1-bit validity mask we ignore

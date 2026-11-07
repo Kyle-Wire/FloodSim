@@ -301,6 +301,20 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   check('DEM void fill', z.every(v => v > 0 && v < 10));
 }
 
+// 3DEP busy: a tile answered 504 is asked again (waits stubbed); one that stays down fails with the reason
+{
+  const g = { nx: 3, ny: 2, x0: 0, y1: 2, dx: 1, x1: 3, y0: 0, epsg: 32618 };
+  const ok = () => ({ ok: true, status: 200, arrayBuffer: async () => new Float32Array([1, 2, 3, 4, 5, 6]).buffer, json: async () => ({ features: [] }) });
+  let n = 0, slept = [];
+  const flaky = async (url) => (/exportImage/.test(url) && n++ < 2 ? { ok: false, status: 504 } : ok());
+  const d = await fetchDEM(g, flaky, () => {}, { waits: [5, 10, 20], sleep: async (ms) => { slept.push(ms); } });
+  check('3DEP 504 retried', d.z[5] === 6 && n === 3 && slept.join() === '5,10', `${n} tries, waits ${slept.join(', ')} ms`);
+  let err = ''; try { await fetchDEM(g, async () => ({ ok: false, status: 504 }), () => {}, { waits: [1, 1], sleep: async () => {} }); } catch (e) { err = e.message; }
+  check('3DEP down: fails with the reason', /504, still after 2 more tries/.test(err), err);
+  let m = 0; try { await fetchDEM(g, async () => { m++; return { ok: false, status: 400 }; }, () => {}, { sleep: async () => {} }); } catch { /* expected */ }
+  check('3DEP 400 not retried', m === 1, `${m} tries`);
+}
+
 // ---- live services (opt-in)
 // polygon areas: cells inside a drawn ring (centre test), any UTM zone
 {

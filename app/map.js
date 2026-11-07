@@ -591,7 +591,9 @@ async function decodeImage(buf) {
   x.drawImage(bmp, 0, 0); return x.getImageData(0, 0, bmp.width, bmp.height);
 }
 
+let buildError = null; // the last build's failure, so a batch run stops waiting for a model that will not come
 $('buildBtn').onclick = async () => {
+  buildError = null;
   if (!S.area) return;
   stopRun(); model = null; logEl.textContent = '';
   for (const id of ['buildBtn', 'runBtn', 'resetBtn', 'exportBtn', 'rasBtn']) $(id).disabled = true;
@@ -659,7 +661,7 @@ $('buildBtn').onclick = async () => {
     if (!ws.last) checkWatershed({ quiet: true }); // does anything drain in from outside? (background, after the build)
     obsNote(); $('hwmBtn').disabled = false; groundwaterNote(); setupInflow().catch((e) => { $('inflowNote').textContent = 'River inflow unavailable: ' + e.message; }).finally(built);
   } catch (e) {
-    built();
+    built(); buildError = e.message;
     console.error(e); log('Build failed: ' + e.message, 'err');
   } finally { $('buildBtn').disabled = false; }
 };
@@ -4329,7 +4331,10 @@ const projects = initProjects({ capture: captureProject, layer: () => infra.laye
 
 { // ?project=<folder>[&batch=run]: open a project at load, and with batch=run carry on with its study (tools/batch.mjs)
   const qp = new URLSearchParams(location.search), pf = qp.get('project');
-  const built = async () => { for (let i = 0; i < 3600 && !(model && device && !$('runBtn').disabled); i++) await new Promise(r => setTimeout(r, 1000)); }; // the build's last steps (the watershed) finish after open
+  const built = async () => { // the build's last steps (the watershed) finish after open
+    for (let i = 0; i < 3600 && !buildError && !(model && device && !$('runBtn').disabled); i++) await new Promise(r => setTimeout(r, 1000));
+    if (buildError && !model) throw new Error('Build failed: ' + buildError); // tools/batch.mjs waits, then opens the project again
+  };
   if (pf) projects.open(pf).then(built).then(() => batchUI.opened({ auto: qp.get('batch') === 'run' })).then(st => { window.__batchDone = { ok: true, study: st }; })
     .catch(e => { log('Opening the project failed: ' + e.message, 'err'); window.__batchDone = { ok: false, error: e.message }; });
 }
