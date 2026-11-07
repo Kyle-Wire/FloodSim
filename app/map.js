@@ -1611,6 +1611,9 @@ const csoStartHour = (st) => (st?.t0 != null ? (((st.t0 / 3.6e6 + model.site[0] 
 /** In a combined-sewer area: people per manhole, sanitary flow and the regulators, on the run's network. → books setup | null */
 function csoSetup(net) {
   if (!$('csoOn').checked) return null;
+  // a saved project can carry the setting into an area whose data says separate storm sewers (the Charlotte cases did,
+  // 4–7 Nov 2026: pipe ends the outfall layer missed lost their water, and the gauge saw under half the flow)
+  if (!(model.util?.combined || model.linked?.combined)) log('Combined-sewer treatment is on, but this area’s drainage data shows separate storm sewers: sanitary flow is added, flow is sent to an interceptor, and pipe ends not in the outfall layer take their water out of the model. Untick “Combined sewer area” unless the pipes really are combined.', 'warn');
   const pop = CSO.populationPerNode(model.fine, model.f, net, { uniform: $('csoDensity').value === '' ? null : Number($('csoDensity').value) });
   const dwfTotal = CSO.setDWF(net, pop, { perCapita: Number($('csoPerCap').value) || CSO.CSO_DEFAULTS.perCapita });
   const regs = CSO.addRegulators(net, { capacity: Number($('csoCap').value) || CSO.CSO_DEFAULTS.capacity, gates: false });
