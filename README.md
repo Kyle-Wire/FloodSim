@@ -1059,9 +1059,11 @@ identical water. Verified on EA Test 7 (Severn at Upton, 72 h).
 embankments that streams pass under. OpenStreetMap waterways tagged `tunnel=culvert` become culvert links between
 their ends (size from `diameter`/`width` tags, else stream 1.2 m, ditch 0.6 m): inlet control part full, barrel
 losses when submerged, reverse flow when the tailwater is higher. A culvert delivers downstream exactly what it took
-upstream, one 2 s interval later. Where a mapped stream crosses a road with no mapped culvert, the embankment (≤ 30 m
-long, ≤ 4 m high) is breached to a straight grade; humps without a road are left alone, because mapped lines wander
-onto real banks.
+upstream, one 2 s interval later. Mapped streams are first moved onto the 1 m thalweg: the least-cost path within 15 m of
+the line, since NHD lines often run along a bank. Along it, two kinds of hump are breached to a straight grade 3 m
+wide. One is a road embankment (≤ 30 m long, ≤ 4 m high) where a stream crosses a road with no mapped culvert. The
+other is a hump with no road that spans the whole valley floor (crest 0.5–2 m, ≤ 40 m long): a bridge deck the lidar
+kept, a culverted driveway or an artefact. Riffles, real ridges and humps the water can get round are left alone.
 
 **Green infrastructure** (`src/gi.js`, Drainage → Green infrastructure and storage). Per solver cell, an extra
 infiltration path into a store of fixed capacity that drains to the native soil (SSURGO soil-group rate). Permeable
@@ -1610,7 +1612,7 @@ src/network-real.js   tier 1 network from real pipe layers
 src/swmm.js           EPA SWMM WebAssembly wrapper
 src/river.js          1D river in SWMM from cross-sections; weir / culvert hydraulics; river ↔ surface coupler
 src/links.js          culvert links between surface cells; LinkHub for several exchange models
-src/channels.js       OSM culverts → links; breaching road embankments on mapped streams
+src/channels.js       OSM culverts → links; mapped streams snapped to the thalweg; breaching embankments and humps
 src/barriers.js       flood walls, levees, deployable barriers → crest faces; overtopping and load watch
 src/hazard.js         hazard classes (ARR 2019 H1–H6, FD2320), force, d·v, duration, arrival per cell
 src/subgrid.js        subgrid speed mode: 1 m storage / conveyance tables per cell and face, 1 m depth output

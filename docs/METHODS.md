@@ -433,14 +433,38 @@ All requests go through the local proxy (`server/server.mjs`), which caches resp
   A culvert mapped far from where it runs is beyond this: OSM ends the US-74 culvert below that gauge on the highway,
   300 m from its outlet in the city's pipe layer, so its invert is still 212 m over a 206.5 m bed and it passes
   nothing; draw such culverts with their real ends and inverts (drawn culverts keep theirs). Size comes from the
-  `diameter`/`width` tags, else 1.2 m for a stream and 0.6 m for a ditch. Where a mapped stream crosses a road with no
-  mapped culvert, the embankment (≤ 30 m long, ≤ 4 m high) is breached to a straight grade. Humps without a road are
-  left alone, and breaching follows the mapped line's own cells, so a hump in the channel beside a line drawn on the
-  bank is not seen. Edwards Branch 250 m below the Charlotte gauge has one: a 1.2 m rise across the whole valley floor
-  with no road (a crossing or a lidar artefact; the gauge falls below its crest after storms, so the creek passes it),
-  beside an NHD line that runs on the bank. It holds the modelled creek 1 m above the gauge's reading after the storm.
-  A rule that breached such humps along the mapped line was tried and dropped (November 2026): with the line on the
-  bank it cut five trenches along the bank and missed the hump. Snapping mapped lines to the 1 m thalweg first is open work.
+  `diameter`/`width` tags, else 1.2 m for a stream and 0.6 m for a ditch.
+  Open mapped streams are first moved onto the 1 m thalweg (`snapThalweg`), because NHD-sourced lines often run along
+  a bank 1–2 m above the bed. The snapped line is the least-cost 8-connected path through the open cells within 15 m of
+  the mapped line, from the cross-section at its first cell to the one at its last. Each step costs its length ×
+  (e^(h/0.25 m) + 0.1·d/15 m), where h is the height above the lowest ground in the corridor around the nearest mapped
+  cell and d is the distance from that cell. A cell 1 m up the bank costs 55 times a bed cell, and the weak pull keeps
+  the path by the mapped line where the bed is flat across. The breaching below then walks the snapped path. From each
+  low point it finds the next point at or below it, and grades the hump between to a straight line, 3 m wide (a 1 m
+  trench would be half lost when the 1 m ground is averaged to 2 m solver cells). Two kinds of hump are cut:
+  - a road embankment (some cell is road, ≤ 30 m long, ≤ 4 m high) where a stream crosses a road with no mapped
+    culvert;
+  - a fill: no road, ≤ 40 m long, with a crest 0.5–2 m above its upstream foot. The crest is the lowest level at which
+    water gets past within 15 m, so the hump spans the whole valley floor. It must also not be the top of a ridge the
+    walk has climbed onto: no ground more than 0.5 m below the foot in the 40 m upstream. These are bridge decks the
+    lidar kept, culverted driveways and lidar artefacts. Riffles (under 0.5 m), real ridges (higher or longer), and
+    humps the water can get round lower down are left alone.
+  
+  Edwards Branch 250 m below the Charlotte gauge (way 47617228) is the case this was built for. A rise with no road
+  spans the whole valley floor, and its NHD line runs beside it on the bank at about 210 m. Snapped, the line is a
+  mean 2.1 m off the mapped one. The hump on it is a 210.19 m crest over a 208.66 m foot, 35 m long, so the 1.5 m and
+  30 m limits first proposed would have missed it. The gauge falls below that crest after storms, so the creek passes
+  it. Seven smaller bed humps on the same line are also cut (0.5–1.1 m, 8–22 m long). Three are between the gauge and
+  the big hump, with crests of 209.24–209.41 m. The gauge reading of 209.19 m after the storm is below those crests too,
+  so they are not what holds the creek up. Over the whole box (August 2023 storm, 2 m solver cells), 36 lines are
+  snapped, a mean 5.0 m off their mapped lines. The run cuts 41 humps (median 0.85 m high, 13 m long; 1,624 m³), one of
+  them a road embankment. The creek now drains after the peak. At the gauge 4 h in, the model reads 209.47 m (before:
+  210.24 m; observed: 209.18 m), and it levels off at 209.42 m against 209.14 m. The peak is +0.05 m (before +0.11 m).
+  The 0.2–0.3 m still left after the storm is not traced; one candidate is the 3 m cut being narrower than the bed.
+  Before November 2026 breaching walked the mapped line's own cells and cut road embankments only, so this hump was
+  never seen and held the modelled creek about 1 m above the gauge after the storm. A rule that breached humps with no
+  road along the mapped line was tried and dropped. With the line on the bank, it cut five trenches along the bank and
+  missed the hump.
 - **Channel bathymetry** (off by default; `src/bathymetry.js`). The flattened water surface is grown from mapped river
   lines over cells flat to the millimetre. Drainage area comes from USGS NLDI or D8 accumulation. The bankfull width and
   depth come from Bieger et al. (2015) regional curves (nationwide or by physiographic division), carved as a parabolic
@@ -1474,7 +1498,7 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 |---|---|
 | `run-tests.mjs` | CPU solver: dam breaks, lake at rest, Thacker, rain mass balance; fails on regression in accuracy, convergence or mass |
 | `run-phase1-tests.mjs` | Geodesy, terrain, roof routing, downscaling, exports, outflow BC, Atlas 14 storms, historic storms |
-| `run-phase2-tests.mjs` | Weir and culvert hydraulics, conservative culvert links, channel breaching, bank stations, SWMM river |
+| `run-phase2-tests.mjs` | Weir and culvert hydraulics, conservative culvert links, thalweg snapping, channel breaching (road embankments, full-width humps), bank stations, SWMM river |
 | `run-swmm-tests.mjs` | SWMM WebAssembly engine on the Eastwick network: lateral inflow, stride, heads, overflow, continuity |
 | `run-inlettypes-tests.mjs` | Kinds of inlet by type: Charlotte type codes, the North Carolina outline, NCDOT values, picks, type field detection, grates of different kinds merged on one cell (weir and orifice sums), the kinds carried through both network builders and the coupler, no change without kinds |
 | `run-infra-tests.mjs` | Infrastructure layer: capacity, estimate round trip, storage in SWMM, shapefile/zip import |
@@ -1786,7 +1810,7 @@ known limits", "Known limits (solver)" and section caveats, and the code as cite
 | Coarse grids (2–4 m): a cell is a wall if > 50 % building; the bed is the open-ground mean | Narrow alleys and gaps can close or open. South Street grid test: fit 0.41 at 4 m vs 2 m. | Use 1 m (default). Run the grid test. |
 | Downscaling cannot create flow paths the solver grid missed | At 2–4 m, 1 m depth detail is interpolated, not solved. | Use 1 m. |
 | Bridges and decks: the lidar bare earth may include or exclude decks; no bridge hydraulics | Local blockage or false conveyance at crossings. | Inspect crossings; check marks under decks (excluded from scoring). |
-| Culverts only where OSM tags them; size from tags or defaults (1.2 m stream, 0.6 m ditch); unmapped crossings breached to grade (embankments ≤ 30 m long, ≤ 4 m high) | Breaching can **overstate** conveyance where the real culvert is small or blocked; untagged larger culverts are under-sized. | Draw or import culverts with real sizes and inverts; use the blockage setting. |
+| Culverts only where OSM tags them; size from tags or defaults (1.2 m stream, 0.6 m ditch); mapped streams snapped to the 1 m thalweg; unmapped crossings breached to grade (embankments ≤ 30 m long, ≤ 4 m high) and full-width channel humps with no road (crest 0.5–2 m, ≤ 40 m long) cut | Breaching can **overstate** conveyance where the real culvert is small or blocked, or where a cut hump is a real weir or sewer crossing that holds the creek up at low flow; untagged larger culverts are under-sized. | Draw or import culverts with real sizes and inverts; use the blockage setting. |
 | Curb burn is automatic only on DEMs coarser than 1 m | Depends on lidar resolving curbs at 1 m. | Check the street cross-sections in the profile tool. |
 | Ground is static in the standard run (no morphology unless the sediment module is on) | — | — |
 

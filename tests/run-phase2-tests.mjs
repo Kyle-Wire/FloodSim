@@ -2,7 +2,7 @@
 // Usage: node tests/run-phase2-tests.mjs
 import { weirFlow, culvertFlow, bankStations, riverINP } from '../src/river.js';
 import { CulvertLinks } from '../src/links.js';
-import { breachChannels, culvertDiameter, culvertLinks } from '../src/channels.js';
+import { breachChannels, culvertDiameter, culvertLinks, mappedCells, snapThalweg } from '../src/channels.js';
 import { GridRef } from '../src/geo.js';
 import { loadSWMM, SWMM } from '../src/swmm.js';
 
@@ -59,7 +59,52 @@ const near = (a, b, tol) => Math.abs(a - b) <= tol;
   check('rows off the stream untouched', z[2 * nx + 42] > 12, `${z[2 * nx + 42].toFixed(2)} m`);
   const z2 = new Float32Array(nx * ny); for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z2[j * nx + i] = 10 - 0.01 * i + (i >= 40 && i < 46 ? 2.5 : 0);
   const r2 = breachChannels(fine, { nx, ny, z: z2, bld: new Uint8Array(nx * ny), road: new Uint8Array(nx * ny) }, [{ line, kind: 'stream' }]);
-  check('a hump with no road is left alone', r2.breaches === 0 && z2[9 * nx + 42] > 12, 'banks the mapped line wanders onto are real terrain');
+  check('a 2.5 m hump with no road is left alone', r2.breaches === 0 && r2.fills === 0 && z2[9 * nx + 42] > 12, 'too high for a fill: real terrain');
+}
+// ---- thalweg: an NHD-style line on the bank snaps into the channel; a full-width hump on the channel is cut, one the
+// channel goes round is not
+{
+  const { fromUTM } = await import('../src/geo.js');
+  const nx = 120, ny = 40, fine = new GridRef({ zone: 18, x0: 0, y0: 0, x1: nx, y1: ny, dx: 1 });
+  // a valley falling east 0.5 %: a 4 m wide bed (rows 18-21) 1.5 m below a floodplain bank, rising 0.3 m per row beyond
+  const valley = () => {
+    const z = new Float32Array(nx * ny);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const off = Math.max(0, Math.abs(j - 19.5) - 2); z[j * nx + i] = 210 - 0.005 * i + (off ? 1.5 + 0.3 * off : 0); }
+    return z;
+  };
+  const model = (z) => ({ nx, ny, z, bld: new Uint8Array(nx * ny), road: new Uint8Array(nx * ny) });
+  const line = [[0.5, 11.5], [119.5, 11.5]].map(([x, y]) => fromUTM(x, fine.y1 - y, 18)); // drawn on the bank, 8 m off
+  const f0 = model(valley()), mp = mappedCells(fine, f0, line), s = snapThalweg(fine, f0, mp);
+  const rows = s.path.map(k => (k / nx) | 0), inBed = rows.filter(j => j >= 18 && j <= 21).length / rows.length;
+  check('a line on the bank snaps into the channel', mp.every(k => ((k / nx) | 0) === 11) && inBed > 0.9 && s.path[0] % nx === 0 && s.path[s.path.length - 1] % nx === nx - 1,
+    `${(inBed * 100).toFixed(0)} % of the snapped path in the bed, mean ${s.offset.toFixed(1)} m off the mapped line`);
+  // a bridge-deck hump across the whole valley floor (bed and the floodplain beside it, 1.2 m above the bed, 12 m long,
+  // no road) at columns 60-71: water cannot get round it in the 15 m corridor
+  const humped = () => { const z = valley(); for (let j = 0; j < ny; j++) for (let i = 60; i < 72; i++) z[j * nx + i] = Math.max(z[j * nx + i], 210 - 0.005 * i + 1.2); return z; };
+  const z1 = humped();
+  const f1 = model(z1), r1 = breachChannels(fine, f1, [{ line, kind: 'stream' }]);
+  const bed = Array.from({ length: nx }, (_, i) => Math.min(...[18, 19, 20, 21].map(j => z1[j * nx + i]))); // lowest across the bed
+  check('a full-width hump on the snapped path is cut', r1.fills === 1 && r1.breaches === 0 && bed.every((v, i) => !i || v <= bed[i - 1] + 1e-4),
+    `${r1.cells} cells, ${r1.volume.toFixed(1)} m³; crest ${r1.cuts[0]?.crest.toFixed(2)} m over a ${r1.cuts[0]?.foot.toFixed(2)} m foot`);
+  check('…3 m wide, and the bank under the mapped line untouched', [-1, 0, 1].every(d => z1[(rows[65] + d) * nx + 65] < 210) && z1[11 * nx + 65] > 211, `bank ${z1[11 * nx + 65].toFixed(2)} m`);
+  const r0 = breachChannels(fine, model(humped()), [{ line, kind: 'stream' }], { snap: false });
+  check('…which the mapped line alone never sees', r0.fills === 0 && r0.breaches === 0, 'on the bank the hump is level ground');
+  // the same hump over the bed only, with a side channel round its north end (rows 14-15, bed level): the channel goes
+  // round it, so the snapped path does too and the hump stays
+  const z2 = valley();
+  for (let i = 60; i < 72; i++) { for (let j = 16; j < 24; j++) z2[j * nx + i] = 210 - 0.005 * i + 1.2; for (let j = 14; j <= 17; j++) z2[j * nx + i] = 210 - 0.005 * i; }
+  for (let i = 56; i < 76; i++) for (let j = 14; j <= 17; j++) z2[j * nx + i] = Math.min(z2[j * nx + i], 210 - 0.005 * i); // the side channel
+  const keep = z2.slice(), f2 = model(z2), r2 = breachChannels(fine, f2, [{ line, kind: 'stream' }]);
+  check('a hump the channel goes round is not cut', r2.fills === 0 && r2.breaches === 0 && [18, 19, 20, 21].every(j => z2[j * nx + 65] === keep[j * nx + 65]),
+    `path round it on rows ${[...new Set(r2.paths[0].filter(k => k % nx >= 60 && k % nx < 72).map(k => (k / nx) | 0))].join(', ')}`);
+  const bedLine = [[0.5, 19.5], [119.5, 19.5]].map(([x, y]) => fromUTM(x, fine.y1 - y, 18)), z5 = keep.slice();
+  const r5 = breachChannels(fine, model(z5), [{ line: bedLine, kind: 'stream' }], { snap: false }); // a path forced over it
+  check('…even by a path that crosses it', r5.fills === 0 && z5[19 * nx + 65] === keep[19 * nx + 65], 'water gets round it at bed level');
+  // a riffle 0.3 m high across the bed, and a 3 m high ridge: terrain, both kept
+  const z3 = valley(); for (let j = 0; j < ny; j++) for (let i = 60; i < 66; i++) z3[j * nx + i] += 0.3;
+  const z4 = valley(); for (let j = 0; j < ny; j++) for (let i = 50; i < 70; i++) z4[j * nx + i] = Math.max(z4[j * nx + i], 213);
+  const r3 = breachChannels(fine, model(z3), [{ line, kind: 'stream' }]), r4 = breachChannels(fine, model(z4), [{ line, kind: 'stream' }]);
+  check('riffles and ridges are kept', r3.fills === 0 && r4.fills === 0 && r3.cells === 0 && r4.cells === 0);
 }
 // ---- culvert ends: a mapped culvert ending on the embankment shoulders takes the creek bed on each side, not the road
 {
