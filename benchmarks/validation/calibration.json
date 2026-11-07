@@ -137,5 +137,383 @@
    }
   ],
   "note": "first split-sample study: infiltration only, gauge-fitted radar"
+ },
+ {
+  "created": "2026-11-07T06:44:11.559Z",
+  "commit": "a8c1283",
+  "case": "edwards-branch-clt",
+  "title": "Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers",
+  "set": {
+   "histSrc": "radarFit"
+  },
+  "vary": {
+   "calManning": [
+    "0.6",
+    "0.8",
+    "1"
+   ],
+   "calInfil": [
+    "0.1",
+    "0.25",
+    "0.5"
+   ]
+  },
+  "target": 0.15,
+  "objective": "flow",
+  "points": [
+   {
+    "inputs": {
+     "calManning": "0.6",
+     "calInfil": "0.1"
+    },
+    "run": "2026-11-06_154340_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.7173840000000098,
+    "bias": -0.7173840000000098,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.717
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": -0.072,
+     "nse": 0.328,
+     "volumeRatio": 0.22,
+     "peakRatio": 0.289,
+     "lag": -11.5,
+     "levelNSE": 0.516
+    }
+   },
+   {
+    "inputs": {
+     "calManning": "0.6",
+     "calInfil": "0.25"
+    },
+    "run": "2026-11-06_163804_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.7533840000000112,
+    "bias": -0.7533840000000112,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.753
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": -0.108,
+     "nse": 0.304,
+     "volumeRatio": 0.192,
+     "peakRatio": 0.274,
+     "lag": -10.8,
+     "levelNSE": 0.526
+    }
+   },
+   {
+    "inputs": {
+     "calManning": "0.6",
+     "calInfil": "0.5"
+    },
+    "run": "2026-11-06_172956_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.8043839999999989,
+    "bias": -0.8043839999999989,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.804
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": -0.15,
+     "nse": 0.271,
+     "volumeRatio": 0.162,
+     "peakRatio": 0.251,
+     "lag": -11.2,
+     "levelNSE": 0.513
+    }
+   },
+   {
+    "inputs": {
+     "calManning": "0.8",
+     "calInfil": "0.1"
+    },
+    "run": "2026-11-06_183326_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.6783840000000225,
+    "bias": -0.6783840000000225,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.678
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": -0.079,
+     "nse": 0.34,
+     "volumeRatio": 0.211,
+     "peakRatio": 0.274,
+     "lag": -11.5,
+     "levelNSE": 0.535
+    }
+   },
+   {
+    "inputs": {
+     "calManning": "0.8",
+     "calInfil": "0.25"
+    },
+    "run": "2026-11-06_193718_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.7103840000000048,
+    "bias": -0.7103840000000048,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.71
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": -0.115,
+     "nse": 0.313,
+     "volumeRatio": 0.183,
+     "peakRatio": 0.259,
+     "lag": -10.8,
+     "levelNSE": 0.546
+    }
+   },
+   {
+    "inputs": {
+     "calManning": "0.8",
+     "calInfil": "0.5"
+    },
+    "run": "2026-11-06_204041_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.7643840000000068,
+    "bias": -0.7643840000000068,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.764
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": -0.155,
+     "nse": 0.278,
+     "volumeRatio": 0.156,
+     "peakRatio": 0.238,
+     "lag": -10.2,
+     "levelNSE": 0.532
+    }
+   },
+   {
+    "inputs": {
+     "calManning": "1",
+     "calInfil": "0.1"
+    },
+    "run": "2026-11-06_220627_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.6323840000000018,
+    "bias": -0.6323840000000018,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.632
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": -0.088,
+     "nse": 0.348,
+     "volumeRatio": 0.203,
+     "peakRatio": 0.261,
+     "lag": -10.5,
+     "levelNSE": 0.559
+    }
+   },
+   {
+    "inputs": {
+     "calManning": "1",
+     "calInfil": "0.25"
+    },
+    "run": "2026-11-06_230511_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.6743840000000034,
+    "bias": -0.6743840000000034,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.674
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": -0.123,
+     "nse": 0.319,
+     "volumeRatio": 0.177,
+     "peakRatio": 0.245,
+     "lag": -9.7,
+     "levelNSE": 0.559
+    }
+   },
+   {
+    "inputs": {
+     "calManning": "1",
+     "calInfil": "0.5"
+    },
+    "run": "2026-11-07_000446_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.7313840000000198,
+    "bias": -0.7313840000000198,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.731
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": -0.163,
+     "nse": 0.281,
+     "volumeRatio": 0.15,
+     "peakRatio": 0.223,
+     "lag": -8.3,
+     "levelNSE": 0.546
+    }
+   }
+  ],
+  "kept": {
+   "calManning": "0.6",
+   "calInfil": "0.1"
+  },
+  "calibration": {
+   "n": 1,
+   "rms": 0.7173840000000098,
+   "bias": -0.7173840000000098,
+   "run": "2026-11-06_154340_Calibration-Existing-condition",
+   "flow": {
+    "site": "0214643820",
+    "kge": -0.072,
+    "nse": 0.328,
+    "volumeRatio": 0.22,
+    "peakRatio": 0.289,
+    "lag": -11.5,
+    "levelNSE": 0.516
+   }
+  },
+  "validation": [
+   {
+    "case": "edwards-branch-clt-2024-01",
+    "title": "Edwards Branch, Charlotte NC — 9 January 2024, winter storm",
+    "asSet": {
+     "run": "2026-11-07_003958_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 1.3575120000000425,
+     "bias": -1.3575120000000425,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -1.358
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": -0.385,
+      "nse": -0.133,
+      "volumeRatio": 0.019,
+      "peakRatio": 0.036,
+      "lag": 1,
+      "levelNSE": 0.414
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-07_011715_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.8865120000000388,
+     "bias": -0.8865120000000388,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.887
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": -0.181,
+      "nse": 0.185,
+      "volumeRatio": 0.144,
+      "peakRatio": 0.222,
+      "lag": -22.2,
+      "levelNSE": 0.654
+     }
+    }
+   },
+   {
+    "case": "edwards-branch-clt-2023-08",
+    "title": "Edwards Branch, Charlotte NC — 10 August 2023, summer storm",
+    "asSet": {
+     "run": "2026-11-07_013024_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.6064719999999966,
+     "bias": -0.6064719999999966,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.606
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": -0.185,
+      "nse": 0.129,
+      "volumeRatio": 0.16,
+      "peakRatio": 0.21,
+      "lag": 2.2,
+      "levelNSE": 0.423
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-07_014406_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.0564719999999852,
+     "bias": -0.0564719999999852,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.056
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.429,
+      "nse": 0.771,
+      "volumeRatio": 0.518,
+      "peakRatio": 0.864,
+      "lag": -5.2,
+      "levelNSE": 0.648
+     }
+    }
+   }
+  ],
+  "note": "Roughness and infiltration together, kept by the flow at the gauge (control line below Sheffield Dr) over the whole storm. City data as cached on 5 November 2026. SUPERSEDED: The flow scores in this study are wrong: the case’s gauge line (2026-11-06) spanned only the creek channel, and on these storms part of the flood crossed the floodplain north of it uncounted (a line across the whole valley read 2.0 times the volume on 10 August 2023). The level errors stand. Superseded by the study after it.",
+  "superseded": "The flow scores in this study are wrong: the case’s gauge line (2026-11-06) spanned only the creek channel, and on these storms part of the flood crossed the floodplain north of it uncounted (a line across the whole valley read 2.0 times the volume on 10 August 2023). The level errors stand. Superseded by the study after it."
  }
 ]

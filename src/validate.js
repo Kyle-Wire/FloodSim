@@ -23,6 +23,7 @@ export const TARGETS = {
   flowNSE: [0.65, 0.5],       // Nash–Sutcliffe efficiency of the flow at a gauge over the storm (at least): Moriasi et al. 2007/2015 "good" and "satisfactory"
   flowVolume: [0.15, 0.25],   // the storm's flow volume at a gauge, |model / observed − 1| (Moriasi's PBIAS bands for streamflow)
   flowPeak: [0.15, 0.30],     // the peak flow at a gauge, |model / observed − 1|
+  lineEnds: [0.02, 0.05],     // the deepest water at either end of the line scored against a gauge (m): wet ends let flow pass around it
   mass: [1e-4, 1e-3],         // surface mass balance, |error| / all the water in (start, rain, rivers, tide)
   combined: [0.01, 0.05],     // with the pipes (SWMM continuity included)
   clipped: [1e-6, 1e-4],      // water added by the wet / dry clip, / rain
@@ -133,6 +134,10 @@ export function scorecard(input, T = TARGETS) {
       if (q.peakRatio != null) add('observations', `Gauge ${g.site}: peak flow (model / observed)`, [q.peakRatio, 'ratio'], T.flowPeak, level(Math.abs(q.peakRatio - 1), T.flowPeak), `${q.peakModel.toFixed(1)} against ${q.peakObs.toFixed(1)} m³/s`);
       if (q.nse != null) add('observations', `Gauge ${g.site}: flow over the storm, Nash–Sutcliffe (${q.hours.toFixed(0)} h)`, [q.nse, 'ratio'], T.flowNSE, level(q.nse, T.flowNSE, true), 'how well the modelled flow follows the gauge hour by hour: 1 is a perfect fit, 0 no better than the storm’s mean flow');
       if (q.kge != null) add('observations', `Gauge ${g.site}: flow, Kling–Gupta efficiency`, [q.kge, 'ratio'], null, 'info', `correlation ${q.r.toFixed(2)}, spread ${q.alpha.toFixed(2)}, mean ${q.beta.toFixed(2)} (each 1 when perfect)`);
+      const ends = (g.flow.endDepthM ?? []).filter(v => v != null);
+      if (ends.length) { const d = Math.max(...ends), st = level(d, T.lineEnds);
+        add('observations', `Gauge ${g.site}: deepest water at the flow line’s ends`, [d, 'm'], T.lineEnds, st, st === 'good' ? 'both ends stayed dry: all the flow crossed the line'
+          : 'water reached an end of the line, so some flow could pass around it uncounted and the flow scores above may read low: draw the line across the whole valley, from dry ground to dry ground'); }
     }
   }
   // flood maps, cell by cell at 4 in and over

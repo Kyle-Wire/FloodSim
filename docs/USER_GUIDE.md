@@ -901,8 +901,12 @@ the line against the gauge's measured discharge for the whole storm:
 | Flow over the storm, Nash–Sutcliffe | how well the flow follows the gauge hour by hour (1 is perfect, 0 no better than the average flow) | 0.65 / 0.5 |
 | Flow, Kling–Gupta efficiency | timing, spread and volume in one number (1 is perfect) | shown only |
 | Level over the storm, Nash–Sutcliffe | the level record's shape, not only its peak | shown only |
+| Deepest water at the flow line’s ends | whether all the flow crossed the line: water at an end means some went around it | under 2 cm / 5 cm |
 
-The flow is counted downstream whichever way you drew the line.
+The flow is counted downstream whichever way you drew the line. Draw it across the **whole valley**, not only the
+channel: in a big storm water also runs across the floodplain beside the creek, and a line that stops at the banks
+misses it. If the last line above is poor, the flow scores read low; redraw the line from dry ground to dry ground
+and run again.
 
 ### 9.6 Export step: 3D and HEC-RAS packages
 

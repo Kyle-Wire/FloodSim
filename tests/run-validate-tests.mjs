@@ -51,6 +51,9 @@ const MIN = 60e3, T0 = Date.parse('2021-09-01T18:00Z');
   check('scorecard: flow volume, peak and NSE rated, KGE and the level shape shown', it(/flow volume/).status === 'poor' && it(/peak flow/).status === 'poor' && it(/flow over the storm/).status === 'fair' && it(/Kling/).status === 'info' && it(/level over the storm/).status === 'info');
   const good = scorecard({ observed: true, gauges: [{ site: 'x', name: 'Creek', score: gaugeScore(obs, same), flow: { line: 'Line 1', score: a } }], mass: { surface: 0, combined: null, clipped: 0, rain: 1 } });
   check('scorecard: a perfect flow is good', ['flow volume', 'peak flow', 'flow over the storm'].every(k => good.items.find(i => i.label.includes(k)).status === 'good'));
+  // a gauge line whose end sat in water: some flow could pass around it, so the scorecard says so
+  const ends = (d) => scorecard({ observed: true, gauges: [{ site: 'x', name: 'Creek', score: gaugeScore(obs, same), flow: { line: 'Line 1', score: a, endDepthM: d } }], mass: { surface: 0, combined: null, clipped: 0, rain: 1 } }).items.find(i => /line’s ends/.test(i.label));
+  check('scorecard: dry line ends are good, a wet end is poor with the fix named', ends([0, 0.01]).status === 'good' && ends([0.4, 0]).status === 'poor' && /dry ground to dry ground/.test(ends([0.4, 0]).note) && ends(undefined) === undefined);
 }
 
 // ---- the STN event for a storm

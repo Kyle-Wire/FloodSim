@@ -1654,7 +1654,9 @@ calibrates by split sample:
    the case's `analysis.geojson`), the run also records the flow across it, and the scorecard sets it against the
    gauge's discharge record (NWIS 00060) over the whole storm (`src/validate.js` `hydrographScore`): the volume and the
    peak flow (model / observed), Nash–Sutcliffe efficiency, Kling–Gupta efficiency (correlation, spread and mean
-   ratio), the peak's lag, and the Nash–Sutcliffe of the level record. The scorecard rates NSE ≥ 0.65 good and ≥ 0.5
+   ratio), the peak's lag, and the Nash–Sutcliffe of the level record. The run also records the deepest water at each
+   end of every control line (`endDepthM`), and the scorecard rates a gauge line's wetter end (under 2 cm good, 5 cm
+   fair): water at an end means flow could pass around the line uncounted, and the flow scores would read low. The scorecard rates NSE ≥ 0.65 good and ≥ 0.5
    fair, and volume within 15 % good and 25 % fair (Moriasi et al. 2007 and 2015, for streamflow). The objective picks
    the values kept: the smallest level RMS (`--objective level`, the default) or the highest flow KGE
    (`--objective flow`). KGE scores the timing, the shape and the volume of the whole hydrograph, so it can tell

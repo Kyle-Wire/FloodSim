@@ -7,6 +7,29 @@ other storms the tuning never saw, as set and with the values frozen. The target
 levels within 0.5 ft (0.15 m). A model is calibrated when the storms it never saw meet the target with the values
 kept, not when the tuning storm does. See docs/METHODS.md §6.4.
 
+## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers — 2026-11-07
+
+Commit a8c1283. Every run: histSrc = radarFit. Target 0.15 m. Roughness and infiltration together, kept by the flow at the gauge (control line below Sheffield Dr) over the whole storm. City data as cached on 5 November 2026. SUPERSEDED: The flow scores in this study are wrong: the case’s gauge line (2026-11-06) spanned only the creek channel, and on these storms part of the flood crossed the floodplain north of it uncounted (a line across the whole valley read 2.0 times the volume on 10 August 2023). The level errors stand. Superseded by the study after it.
+
+| Values | Run | Level errors | RMS (m) | Bias (m) | Flow KGE | Flow NSE | Volume (model / gauge) | Peak flow (model / gauge) |
+|---|---|---|---|---|---|---|---|---|
+| roughness × 0.6, infiltration × 0.1 **(kept)** | 2026-11-06_154340_Calibration-Existing-condition | 1 | 0.72 | −0.72 | -0.07 | 0.33 | 0.22 | 0.29 |
+| roughness × 0.6, infiltration × 0.25 | 2026-11-06_163804_Calibration-Existing-condition | 1 | 0.75 | −0.75 | -0.11 | 0.30 | 0.19 | 0.27 |
+| roughness × 0.6, infiltration × 0.5 | 2026-11-06_172956_Calibration-Existing-condition | 1 | 0.80 | −0.80 | -0.15 | 0.27 | 0.16 | 0.25 |
+| roughness × 0.8, infiltration × 0.1 | 2026-11-06_183326_Calibration-Existing-condition | 1 | 0.68 | −0.68 | -0.08 | 0.34 | 0.21 | 0.27 |
+| roughness × 0.8, infiltration × 0.25 | 2026-11-06_193718_Calibration-Existing-condition | 1 | 0.71 | −0.71 | -0.12 | 0.31 | 0.18 | 0.26 |
+| roughness × 0.8, infiltration × 0.5 | 2026-11-06_204041_Calibration-Existing-condition | 1 | 0.76 | −0.76 | -0.15 | 0.28 | 0.16 | 0.24 |
+| roughness × 1, infiltration × 0.1 | 2026-11-06_220627_Calibration-Existing-condition | 1 | 0.63 | −0.63 | -0.09 | 0.35 | 0.20 | 0.26 |
+| roughness × 1, infiltration × 0.25 | 2026-11-06_230511_Calibration-Existing-condition | 1 | 0.67 | −0.67 | -0.12 | 0.32 | 0.18 | 0.24 |
+| roughness × 1, infiltration × 0.5 | 2026-11-07_000446_Calibration-Existing-condition | 1 | 0.73 | −0.73 | -0.16 | 0.28 | 0.15 | 0.22 |
+
+Kept (best flow KGE at the gauge): **roughness × 0.6, infiltration × 0.1**, calibration storm 0.72 m RMS (4.8× the target), flow KGE -0.07.
+
+| Storm it never saw | As set: RMS / bias (n) | Calibrated: RMS / bias (n) | Flow KGE as set | calibrated | Against the target |
+|---|---|---|---|---|---|
+| Edwards Branch, Charlotte NC — 9 January 2024, winter storm | 1.36 / −1.36 (1) | 0.89 / −0.89 (1) | -0.39 | -0.18 | 5.9× the target; the tuning carried over |
+| Edwards Branch, Charlotte NC — 10 August 2023, summer storm | 0.61 / −0.61 (1) | 0.06 / −0.06 (1) | -0.18 | 0.43 | meets; the tuning carried over |
+
 ## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers — 2026-11-06
 
 Commit 7fa115d. Every run: histSrc = radarFit. Target 0.15 m. first split-sample study: infiltration only, gauge-fitted radar

@@ -1794,7 +1794,7 @@ function resetRun() {
   const roofStages = roofHoldStages(c, net, roof, green);
   const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
   const sw = stormwaterLinks(c, F, net, new Set([...(net ? net.inlets.map(g => g.cell) : []), ...culv.flatMap(x => [x.a, x.b])]), gi);
-  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: [...clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, gauge: f.properties.gauge ?? null, faces: lf.perLine[l] })), ...winSegs.map((s, q) => ({ id: 'win:' + q, name: null, side: s.side, faces: lf.perLine[clines.length + q] }))], faces: lf.faces, samples: allLines.map(() => [[0, 0, 0, 0]]) },
+  run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: [...clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, gauge: f.properties.gauge ?? null, faces: lf.perLine[l], ends: lineEnds(f.geometry.coordinates) })), ...winSegs.map((s, q) => ({ id: 'win:' + q, name: null, side: s.side, faces: lf.perLine[clines.length + q] }))], faces: lf.faces, samples: allLines.map(() => [[0, 0, 0, 0]]) },
     window: win ? { ...win, segs: winSegs } : null, culv, roof, net, cso, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
   run.done = new Promise((resolve) => { run.finish = resolve; }); // resolved when the run ends (sweeps wait on it)
   $('runBtn').disabled = false; $('runBtn').textContent = 'Run'; $('exportBtn').disabled = false; $('rasBtn').disabled = false; $('hud').hidden = false;
@@ -2062,7 +2062,13 @@ async function gaugeFlow(r, w, gw, out, t1) {
   const model = CMP.hydrograph(sm).map(([t, q]) => [w.t0 + t * 1000, +(sign * q).toFixed(4)]);
   const obs = (await gaugeFlows(gw.g.site, w.t0 - 3600e3, t1 + 3600e3, fetcher).catch(() => [])).map(f => [f.t, +f.q.toFixed(4)]);
   const score = obs.length ? hydrographScore(obs, model) : null;
-  out.flow = { line: r.lines.defs[li].name ?? 'the control line', obs, model, score, why: !obs.length ? 'the gauge has no discharge record over the storm' : score ? '' : 'the line and the record share too few hours' };
+  out.flow = { line: r.lines.defs[li].name ?? 'the control line', obs, model, score, why: !obs.length ? 'the gauge has no discharge record over the storm' : score ? '' : 'the line and the record share too few hours',
+    ...(r.lines.defs[li].endDepth ? { endDepthM: r.lines.defs[li].endDepth } : {}) };
+}
+/** A control line's two end cells on the fine grid (index, or null off the grid), to check afterwards that its ends stayed dry. */
+function lineEnds(coords) {
+  const f = model.fine, p = toCells(f, [coords[0], coords.at(-1)]);
+  return p.map(([x, y]) => (x >= 0 && y >= 0 && x < f.nx && y < f.ny ? Math.floor(y) * f.nx + Math.floor(x) : null));
 }
 // ---- rain QA (src/rainqa.js): the storm's rain against the ASOS and CoCoRaHS gauges within 25 km of the site, over the
 // storm's own hours, filled into rec.validation.rain.stations (so summary.json keeps it, and saved runs report it)
@@ -2299,7 +2305,9 @@ async function finishRecord() {
   };
   const hazard = new Float32Array(Nf); for (let k = 0; k < Nf; k++) hazard[k] = wall(k) ? NaN : maxD[k] > 0.005 ? hz.cls.arr[cellOf(k)] : 0;
   if (L) r.lines.samples.forEach((sm, l) => { if (sm.at(-1)[0] < s.t - 1e-6) sm.push([s.t, L.net[l], L.plus[l], L.minus[l]]); });
-  const allLines = r.lines.defs.map((d, l) => ({ id: d.id, name: d.name, side: d.side, ...(d.gauge ? { gauge: d.gauge } : {}), faces: d.faces, volume: L ? L.net[l] : NaN, plus: L ? L.plus[l] : NaN, minus: L ? L.minus[l] : NaN, series: r.lines.samples[l] }));
+  // the deepest water each control line's ends saw: water at an end means flow could pass around the line, uncounted
+  for (const d of r.lines.defs) if (d.ends) d.endDepth = d.ends.map(k => (k == null || wall(k) ? null : +(maxD[k] ?? 0).toFixed(3)));
+  const allLines = r.lines.defs.map((d, l) => ({ id: d.id, name: d.name, side: d.side, ...(d.gauge ? { gauge: d.gauge } : {}), ...(d.endDepth ? { endDepth: d.endDepth } : {}), faces: d.faces, volume: L ? L.net[l] : NaN, plus: L ? L.plus[l] : NaN, minus: L ? L.minus[l] : NaN, series: r.lines.samples[l] }));
   const isWin = (l) => String(l.id).startsWith('win:'), lines = allLines.filter(l => !isWin(l)), winLines = allLines.filter(isWin);
   const m = r.mass ?? {}, outfalls = r.swmm && r.netMass ? r.netMass.externalOutflow * 1000 - (r.coupler?.totals.latOut ?? 0) - (r.coupler?.totals.outfallReturned ?? 0) : null;
   const ponds = r.outlets?.results() ?? [];
@@ -4254,7 +4262,7 @@ async function runFiles() {
     batch: run.batchInfo ?? null, // the batch study job (src/batch.js) this run was, for the sensitivity and EAD sections
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
     forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), utilityData: utilityData(), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
-    books: run.record?.books ?? null, validation: run.record?.validation ?? null, inflow: run.record?.inflow ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...CMP.lineStats(l) })) ?? null,
+    books: run.record?.books ?? null, validation: run.record?.validation ?? null, inflow: run.record?.inflow ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...(l.endDepth ? { endDepthM: l.endDepth } : {}), ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
     hazard: Object.fromEntries(Object.entries(STANDARDS).map(([k, st]) => [k, { name: st.name, note: st.note,
