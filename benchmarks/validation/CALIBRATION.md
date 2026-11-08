@@ -7,6 +7,23 @@ other storms the tuning never saw, as set and with the values frozen. The target
 levels within 0.5 ft (0.15 m). A model is calibrated when the storms it never saw meet the target with the values
 kept, not when the tuning storm does. See docs/METHODS.md §6.4.
 
+## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers — 2026-11-08
+
+Commit 62fbcc0. Every run: histSrc = radarFit. Target 0.15 m. Third study: Charlotte with separate storm sewers (combined-sewer mode was on by mistake before 7 Nov 2026); infiltration scored on the gauge's whole hydrograph
+
+| Values | Run | Level errors | RMS (m) | Bias (m) | Flow KGE | Flow NSE | Volume (model / gauge) | Peak flow (model / gauge) |
+|---|---|---|---|---|---|---|---|---|
+| infiltration × 0.25 **(kept)** | 2026-11-07_175352_Calibration-Existing-condition | 1 | 0.48 | −0.48 | 0.35 | 0.69 | 0.53 | 0.53 |
+| infiltration × 0.5 | 2026-11-07_184927_Calibration-Existing-condition | 1 | 0.55 | −0.55 | 0.26 | 0.65 | 0.45 | 0.48 |
+| infiltration × 1 | 2026-11-07_194210_Calibration-Existing-condition | 1 | 0.70 | −0.70 | 0.13 | 0.58 | 0.35 | 0.40 |
+
+Kept (best flow KGE at the gauge): **infiltration × 0.25**, calibration storm 0.48 m RMS (3.2× the target), flow KGE 0.35.
+
+| Storm it never saw | As set: RMS / bias (n) | Calibrated: RMS / bias (n) | Flow KGE as set | calibrated | Against the target |
+|---|---|---|---|---|---|
+| Edwards Branch, Charlotte NC — 9 January 2024, winter storm | 1.28 / −1.28 (1) | 0.90 / −0.90 (1) | -0.16 | 0.19 | 6.0× the target; the tuning carried over |
+| Edwards Branch, Charlotte NC — 10 August 2023, summer storm | 0.49 / −0.49 (1) | 0.07 / −0.07 (1) | 0.54 | 0.69 | meets; the tuning carried over |
+
 ## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers — 2026-11-07
 
 Commit a8c1283. Every run: histSrc = radarFit. Target 0.15 m. Roughness and infiltration together, kept by the flow at the gauge (control line below Sheffield Dr) over the whole storm. City data as cached on 5 November 2026. SUPERSEDED: The flow scores in this study are wrong: the case’s gauge line (2026-11-06) spanned only the creek channel, and on these storms part of the flood crossed the floodplain north of it uncounted (a line across the whole valley read 2.0 times the volume on 10 August 2023). The level errors stand. Superseded by the study after it.
