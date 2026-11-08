@@ -1,6 +1,6 @@
 // What the validation and calibration tools share: where projects live, the suite's cases, installing a case's project,
 // running a study of it headless (tools/batch.mjs), finding its filed runs, and the level errors a run's summary holds.
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -55,16 +55,46 @@ export function deriveProject(c, folder, set = {}) {
 
 /**
  * Run a project's study headless. `jobs` from src/batch.js expandJobs; a batch.json already there with the same jobs
- * (same ids in the same order) is kept, so a study cut short carries on where it stopped. → the study as batch.mjs left it
+ * from the same inputs (sameStudy) is kept, so a study cut short carries on where it stopped, its failed jobs tried
+ * again; otherwise the study starts afresh and an earlier study's checkpoint is set aside. → the study as batch.mjs left it
  */
 export function runStudy(folder, jobs, { url = null, headed = false } = {}) {
   const pj = readProject(folder), path = join(projectsDir, folder, 'batch.json');
-  const old = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : null, key = (js) => js.map(j => j.label + '|' + j.variant.key).join(';');
-  if (!old || key(old.jobs) !== key(jobs)) writeFileSync(path, JSON.stringify({ version: 1, created: new Date().toISOString(), base: pj.inputs ?? {}, jobs }, null, 1));
-  else console.log(`  carrying on the study in ${folder}/batch.json (${old.jobs.filter(j => j.status === 'done').length} of ${jobs.length} jobs done)`);
+  const old = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : null;
+  if (!sameStudy(old, jobs, pj.inputs)) {
+    writeFileSync(path, JSON.stringify({ version: 1, created: new Date().toISOString(), base: pj.inputs ?? {}, jobs }, null, 1));
+    setAsideCheckpoint(folder);
+  } else {
+    // a job that failed is tried again (from the start: a failed job's checkpoint is not its own)
+    const failed = old.jobs.filter(j => j.status === 'failed');
+    for (const j of failed) Object.assign(j, { status: 'pending', error: undefined, started: undefined });
+    if (failed.length) { writeFileSync(path, JSON.stringify(old, null, 1)); setAsideCheckpoint(folder); }
+    console.log(`  carrying on the study in ${folder}/batch.json (${old.jobs.filter(j => j.status === 'done').length} of ${jobs.length} jobs done${failed.length ? `, ${failed.length} that failed tried again` : ''})`);
+  }
   const r = spawnSync(process.execPath, [join(root, 'tools', 'batch.mjs'), folder, ...(url ? ['--url', url] : []), ...(headed ? ['--headed'] : [])], { stdio: 'inherit' });
   if (r.status !== 0) throw new Error(`tools/batch.mjs exited ${r.status}`);
   return JSON.parse(readFileSync(path, 'utf8'));
+}
+
+/**
+ * Whether a batch.json already in a project is this study: the same jobs (ids and labels in order) from the same project
+ * inputs. A study of the same jobs made before the project's settings changed is not (the Charlotte cases, Nov 2026: a
+ * validation study started with combined sewers on was carried on after they were turned off).
+ */
+export const sameStudy = (old, jobs, inputs = {}) => !!old && old.jobs?.map(j => j.id + '|' + j.label).join(';') === jobs.map(j => j.id + '|' + j.label).join(';')
+  && JSON.stringify(old.base ?? {}) === JSON.stringify(inputs ?? {});
+/**
+ * A checkpoint left in the project by an earlier study, moved to runs/_checkpoint.set-aside-<time> before a new study
+ * starts: job ids repeat between studies of the same storms, and the headless runner resumes a job whose id the
+ * checkpoint names, which fails when the settings differ (7 Nov 2026, January 2024 Charlotte storm).
+ */
+function setAsideCheckpoint(folder) {
+  const ck = join(projectsDir, folder, 'runs', '_checkpoint'), meta = join(ck, 'meta.json');
+  if (!existsSync(meta)) return;
+  let m = null; try { m = JSON.parse(readFileSync(meta, 'utf8')); } catch { /* unreadable: set it aside too */ }
+  if (m && !m.forcing) return; // cleared
+  const to = `${ck}.set-aside-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}`;
+  renameSync(ck, to); console.log(`  set aside an earlier study's checkpoint (${m?.label ?? 'a run'}) as runs/${to.split(/[\/]/).pop()}`);
 }
 
 /** A filed run's summary (runs/<dir>/summary.json) or null. */

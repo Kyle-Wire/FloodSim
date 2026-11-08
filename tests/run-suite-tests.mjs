@@ -1,7 +1,7 @@
 // The validation and calibration tools' shared scoring (tools/suite.mjs): the level errors a run's summary holds, marks
 // skipped under decks or indoors left out, gauges' peaks in; and the calibration page with and without validation storms.
 // Usage: node tests/run-suite-tests.mjs
-import { levelErrors, staleInputs } from '../tools/suite.mjs';
+import { levelErrors, staleInputs, sameStudy } from '../tools/suite.mjs';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readFileSync, cpSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -40,6 +40,15 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   const cas = { inputs: { csoOn: false, downspout: '0', calInfil: '1' } };
   check('installed copy with an old setting is stale', JSON.stringify(staleInputs(cas, { inputs: { csoOn: true, downspout: '100', calInfil: '1', extra: 5 } })) === '["csoOn","downspout"]');
   check('…and one that matches is not', staleInputs(cas, { inputs: { ...cas.inputs, extra: 5 } }).length === 0);
+}
+
+// ---- a study already in a project is carried on only when it is the same jobs from the same inputs
+{
+  const jobs = [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }], inputs = { csoOn: false, downspout: '0' };
+  const old = { base: inputs, jobs: jobs.map(j => ({ ...j, status: 'done' })) };
+  check('same jobs, same inputs: carried on', sameStudy(old, jobs, { ...inputs }));
+  check('same jobs, inputs changed since: a new study', !sameStudy({ ...old, base: { csoOn: true, downspout: '100' } }, jobs, inputs));
+  check('other jobs: a new study', !sameStudy(old, jobs.slice(0, 1), inputs) && !sameStudy(null, jobs, inputs));
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall suite tests passed');
