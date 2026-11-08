@@ -136,7 +136,8 @@
     }
    }
   ],
-  "note": "first split-sample study: infiltration only, gauge-fitted radar"
+  "note": "first split-sample study: infiltration only, gauge-fitted radar",
+  "superseded": "Combined-sewer mode was on in every run (the case files carried it, with downspouts 100 % to the sewer, though Charlotte’s storm sewers are separate): pipe ends the outfall layer missed took their water out of the model, and on 12 June 2025 the gauge saw under half the flow. Superseded by the studies of 2026-11-08."
  },
  {
   "created": "2026-11-07T06:44:11.559Z",
@@ -514,7 +515,7 @@
    }
   ],
   "note": "Roughness and infiltration together, kept by the flow at the gauge (control line below Sheffield Dr) over the whole storm. City data as cached on 5 November 2026. SUPERSEDED: The flow scores in this study are wrong: the case’s gauge line (2026-11-06) spanned only the creek channel, and on these storms part of the flood crossed the floodplain north of it uncounted (a line across the whole valley read 2.0 times the volume on 10 August 2023). The level errors stand. Superseded by the study after it.",
-  "superseded": "The flow scores in this study are wrong: the case’s gauge line (2026-11-06) spanned only the creek channel, and on these storms part of the flood crossed the floodplain north of it uncounted (a line across the whole valley read 2.0 times the volume on 10 August 2023). The level errors stand. Superseded by the study after it."
+  "superseded": "The flow scores in this study are wrong: the case’s gauge line (2026-11-06) spanned only the creek channel, and on these storms part of the flood crossed the floodplain north of it uncounted (a line across the whole valley read 2.0 times the volume on 10 August 2023). The level errors stand. Combined-sewer mode was on in every run (the case files carried it, with downspouts 100 % to the sewer, though Charlotte’s storm sewers are separate): pipe ends the outfall layer missed took their water out of the model, and on 12 June 2025 the gauge saw under half the flow. Superseded by the studies of 2026-11-08."
  },
  {
   "created": "2026-11-08T02:14:45.535Z",
@@ -727,5 +728,218 @@
    }
   ],
   "note": "Third study: Charlotte with separate storm sewers (combined-sewer mode was on by mistake before 7 Nov 2026); infiltration scored on the gauge's whole hydrograph"
+ },
+ {
+  "created": "2026-11-08T06:42:51.164Z",
+  "commit": "6d047cc",
+  "case": "edwards-branch-clt",
+  "title": "Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers",
+  "set": {
+   "histSrc": "radarFit",
+   "calInfil": "0.25"
+  },
+  "vary": {
+   "gwShare": [
+    "0.1",
+    "0.2",
+    "0.3"
+   ]
+  },
+  "target": 0.15,
+  "objective": "flow",
+  "points": [
+   {
+    "inputs": {
+     "gwShare": "0.1"
+    },
+    "run": "2026-11-07_221427_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.47538400000001957,
+    "bias": -0.47538400000001957,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.475
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.373,
+     "nse": 0.696,
+     "volumeRatio": 0.557,
+     "peakRatio": 0.525,
+     "lag": -7.7,
+     "levelNSE": 0.753
+    }
+   },
+   {
+    "inputs": {
+     "gwShare": "0.2"
+    },
+    "run": "2026-11-07_231113_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.4743840000000148,
+    "bias": -0.4743840000000148,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.474
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.391,
+     "nse": 0.698,
+     "volumeRatio": 0.583,
+     "peakRatio": 0.526,
+     "lag": -7.7,
+     "levelNSE": 0.742
+    }
+   },
+   {
+    "inputs": {
+     "gwShare": "0.3"
+    },
+    "run": "2026-11-08_001033_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.47238400000000524,
+    "bias": -0.47238400000000524,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.472
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.409,
+     "nse": 0.7,
+     "volumeRatio": 0.609,
+     "peakRatio": 0.527,
+     "lag": -8,
+     "levelNSE": 0.731
+    }
+   }
+  ],
+  "kept": {
+   "gwShare": "0.3"
+  },
+  "calibration": {
+   "n": 1,
+   "rms": 0.47238400000000524,
+   "bias": -0.47238400000000524,
+   "run": "2026-11-08_001033_Calibration-Existing-condition",
+   "flow": {
+    "site": "0214643820",
+    "kge": 0.409,
+    "nse": 0.7,
+    "volumeRatio": 0.609,
+    "peakRatio": 0.527,
+    "lag": -8,
+    "levelNSE": 0.731
+   }
+  },
+  "validation": [
+   {
+    "case": "edwards-branch-clt-2024-01",
+    "title": "Edwards Branch, Charlotte NC — 9 January 2024, winter storm",
+    "asSet": {
+     "run": "2026-11-08_004413_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.9005120000000204,
+     "bias": -0.9005120000000204,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.901
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.186,
+      "nse": 0.606,
+      "volumeRatio": 0.413,
+      "peakRatio": 0.437,
+      "lag": -22.8,
+      "levelNSE": 0.778
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-08_011852_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.8805120000000386,
+     "bias": -0.8805120000000386,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.881
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.245,
+      "nse": 0.641,
+      "volumeRatio": 0.474,
+      "peakRatio": 0.454,
+      "lag": -23,
+      "levelNSE": 0.731
+     }
+    }
+   },
+   {
+    "case": "edwards-branch-clt-2023-08",
+    "title": "Edwards Branch, Charlotte NC — 10 August 2023, summer storm",
+    "asSet": {
+     "run": "2026-11-08_013052_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.06547199999999975,
+     "bias": -0.06547199999999975,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.065
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.695,
+      "nse": 0.881,
+      "volumeRatio": 1.262,
+      "peakRatio": 1.238,
+      "lag": 1.3,
+      "levelNSE": 0.685
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-08_014247_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.0604720000000043,
+     "bias": -0.0604720000000043,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.06
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.647,
+      "nse": 0.872,
+      "volumeRatio": 1.312,
+      "peakRatio": 1.247,
+      "lag": 1,
+      "levelNSE": 0.645
+     }
+    }
+   }
+  ],
+  "note": "Fourth study: groundwater return (share of the infiltrated water back to the streams, lag 12 h) with infiltration x0.25 from the third study"
  }
 ]

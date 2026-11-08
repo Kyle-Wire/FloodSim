@@ -520,8 +520,15 @@ all n together.
   overrides the survey for every cell. Units without horizons fall back to their hydrologic group's texture, else
   compacted urban fill.
 - Verified: ponded Green-Ampt matches the analytic solution to 0.3 %; GPU against CPU to 1e-7 (README).
+- **Groundwater return (opt-in, off by default)** (`src/groundwater.js`; Calibrate: *Groundwater return*, *Groundwater
+  lag*). A share of the water infiltrated goes into one store for the area, and the store empties into the mapped
+  streams as a linear reservoir: rate = store / lag, so once the rain stops the return falls by a factor e every lag.
+  It enters through exchange cells about every 25 m along the snapped stream paths (§3.3), so the books count it as
+  inflow (`books.groundwater`, with what is left in the store as `books.groundwaterStore`). The rest of the infiltrated
+  water stays in the ground for the run. Neither setting is measured: they are fitted to a stream gauge's recession
+  after the storm (§6.4). Verified: the store, its emptying and its books (`tests/run-groundwater-tests.mjs`).
 - Not represented: interception, depression storage other than what the terrain holds, evaporation, recovery of
-  infiltration capacity between rain bursts, and lateral subsurface flow.
+  infiltration capacity between rain bursts, and lateral subsurface flow (other than the lumped groundwater return).
 
 ### 3.6 Rainfall
 
@@ -1469,6 +1476,20 @@ rest is still the cloudburst core no gauge but CRN-47 saw, the infiltration and 
 calibration study (§6.4) uses this rain. With infiltration × 0.25, the value it kept, the gauge reads 0.68 m low here,
 0.99 m low in January 2024 and 0.17 m low in August 2023.
 
+**Combined-sewer mode was on in every run above** (found 7 November 2026). The three Charlotte case files carried
+*Combined sewer area* ticked and downspouts at 100 % to the sewer, although Charlotte's storm sewers are separate (the
+city's data says so, and a saved project's settings override what the build reads from the data). So every run added
+sanitary flow, sent pipe flow to an interceptor that leaves the model, and, worst, let the interior pipe ends the
+outfall layer missed take their water out of the model (the `openEnd` rule above). On 12 June 2025, with infiltration
+× 0.1 and roughness × 0.6, about 115,000 m³ was lost that way, and the gauge saw under half the flow. The case files
+now have it off and downspouts at 0 % (commit c99d92c). The app warns when combined-sewer treatment is on in an area
+whose drainage data shows separate sewers (`app/map.js` `csoSetup`). The study tools replace an installed case project
+whose settings differ from the case file (`tools/suite.mjs` `installCase`, commit d6f02cc). They also start a study
+afresh when the project's settings have changed since it began, and set aside a checkpoint an earlier study left
+(commit 62fbcc0: the January 2024 rerun first resumed a combined-sewer checkpoint). The level errors above, and the
+first two studies in §6.4, are of the combined-sewer model. With separate sewers and infiltration × 0.25, June 2025
+reads 0.48 m low (it was 0.68 m), and the flow past the gauge is 53 % of USGS's volume (§6.4, third study).
+
 ### 5.13 Earlier observation comparisons recorded in the README
 
 These are recorded in the README as development history. A reviewer should treat them as partial validation:
@@ -1767,6 +1788,48 @@ run to the last digit (gauge −0.171 m, the same steps, pipe exchange and peak 
 and the run's forcing record then held its address, not what came back, so runs on two versions of the city's data
 looked like the same drainage to Compare. It now also holds a count and hash of what each layer returned
 (`utilityData`, §7.11), and Compare refuses such a pair and names the reason.
+
+**Both studies above ran a combined sewer by mistake** (§5.12, end): their level errors and the second study's flow
+scores are superseded by the two studies below. The second study also stopped partway on 7 November 2026, unrecorded:
+it had the same fault.
+
+**Third study: Charlotte with separate storm sewers, infiltration on the whole hydrograph** (2026-11-08, commit
+62fbcc0, `--objective flow`, gauge-fitted radar, roughness as set).
+
+| Storm | Infiltration × 1 (as set) | × 0.5 | × 0.25 (kept) |
+|---|---|---|---|
+| 12 June 2025 (tuning): level / NSE / volume | −0.70 m / 0.58 / 35 % | −0.55 m / 0.65 / 45 % | **−0.48 m / 0.69 / 53 %** |
+| 9 January 2024 (never seen) | −1.28 m / 0.19 / 17 % | | **−0.90 m / 0.61 / 41 %** |
+| 10 August 2023 (never seen) | −0.49 m / 0.67 / 74 % | | **−0.07 m / 0.88 / 126 %** |
+
+- **Separate sewers moved every storm toward the gauge.** With the kept value the flow's Kling–Gupta efficiency is
+  0.19–0.69 over the three storms, against −0.18 to 0.43 in the second study (whose gauge line also missed the
+  floodplain).
+- **One infiltration value does not fit summer and winter.** August 2023 meets the 0.15 m bar but now makes 26 % too
+  much water. January 2024 makes 41 % of the gauge's. In January the model gave no flow at all for the storm's first
+  12 hours, while the gauge had already passed 6,600 m³: the soil soaked up everything. All three storms start at
+  *Normal* wetness (Se = 0.40). A winter storm on wet ground is the case the paragraph above warned of, and the
+  kept value is again the lowest tried. So the next change is the soil's starting wetness, set from the rain of the
+  days before each storm (an antecedent-rain rule), not a lower infiltration everywhere.
+
+**Fourth study: groundwater return** (2026-11-08, commit 6d047cc, infiltration × 0.25 on every run, lag 12 h; §3.5).
+After the storm the June 2025 model drained to 0.04 m³/s where the gauge still ran at 0.10, and passed 12,100 m³ from
+two hours after the peak to the run's end against the gauge's 30,400.
+
+| Storm | No return | 10 % | 20 % | 30 % (kept) |
+|---|---|---|---|---|
+| 12 June 2025 (tuning): level / KGE / volume | −0.48 m / 0.35 / 53 % | −0.48 m / 0.37 / 56 % | −0.47 m / 0.39 / 58 % | **−0.47 m / 0.41 / 61 %** |
+| 9 January 2024 (never seen) | −0.90 m / 0.19 / 41 % | | | **−0.88 m / 0.24 / 47 %** |
+| 10 August 2023 (never seen) | −0.07 m / 0.69 / 126 % | | | **−0.06 m / 0.65 / 131 %** |
+
+- **It fixes the tail it was meant for.** At 30 %, the June recession passes 27,400 m³ against the gauge's 30,400 (no
+  return: 12,100), and January's 8,800 m³ against 11,800 (5,000). 30,100 m³ came back in June, and 11,600 m³ was still
+  in the store at the end. The surface books close (+0.001 %), and the combined books are unchanged at −1.0 %.
+- **It does not touch the peak.** Peak flow and peak level barely move: the return is slow water, and the shortfall in
+  June and January is at the peak. June's flow at the run's end is now 0.18 m³/s against the gauge's 0.10, so 30 %
+  with a 12 h lag returns a little too much, too soon. August, already too wet, gets slightly worse.
+- **So it stays off by default.** It is a fitted setting for matching a gauge's recession, worth turning on for
+  long-duration runs or baseflow checks. It is not a fix for low peaks.
 
 ### 6.5 A reviewer's checklist
 

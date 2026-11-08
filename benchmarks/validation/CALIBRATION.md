@@ -9,6 +9,23 @@ kept, not when the tuning storm does. See docs/METHODS.md §6.4.
 
 ## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers — 2026-11-08
 
+Commit 6d047cc. Every run: histSrc = radarFit, calInfil = 0.25. Target 0.15 m. Fourth study: groundwater return (share of the infiltrated water back to the streams, lag 12 h) with infiltration x0.25 from the third study
+
+| Values | Run | Level errors | RMS (m) | Bias (m) | Flow KGE | Flow NSE | Volume (model / gauge) | Peak flow (model / gauge) |
+|---|---|---|---|---|---|---|---|---|
+| groundwater return 0.1 | 2026-11-07_221427_Calibration-Existing-condition | 1 | 0.48 | −0.48 | 0.37 | 0.70 | 0.56 | 0.53 |
+| groundwater return 0.2 | 2026-11-07_231113_Calibration-Existing-condition | 1 | 0.47 | −0.47 | 0.39 | 0.70 | 0.58 | 0.53 |
+| groundwater return 0.3 **(kept)** | 2026-11-08_001033_Calibration-Existing-condition | 1 | 0.47 | −0.47 | 0.41 | 0.70 | 0.61 | 0.53 |
+
+Kept (best flow KGE at the gauge): **groundwater return 0.3**, calibration storm 0.47 m RMS (3.1× the target), flow KGE 0.41.
+
+| Storm it never saw | As set: RMS / bias (n) | Calibrated: RMS / bias (n) | Flow KGE as set | calibrated | Against the target |
+|---|---|---|---|---|---|
+| Edwards Branch, Charlotte NC — 9 January 2024, winter storm | 0.90 / −0.90 (1) | 0.88 / −0.88 (1) | 0.19 | 0.24 | 5.9× the target; the tuning carried over |
+| Edwards Branch, Charlotte NC — 10 August 2023, summer storm | 0.07 / −0.07 (1) | 0.06 / −0.06 (1) | 0.69 | 0.65 | meets; the tuning carried over |
+
+## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers — 2026-11-08
+
 Commit 62fbcc0. Every run: histSrc = radarFit. Target 0.15 m. Third study: Charlotte with separate storm sewers (combined-sewer mode was on by mistake before 7 Nov 2026); infiltration scored on the gauge's whole hydrograph
 
 | Values | Run | Level errors | RMS (m) | Bias (m) | Flow KGE | Flow NSE | Volume (model / gauge) | Peak flow (model / gauge) |
