@@ -32,7 +32,7 @@ const argv = process.argv.slice(2), opt = (k, d) => { const i = argv.indexOf('--
 const all = (k) => argv.flatMap((a, i) => (a === '--' + k && i + 1 < argv.length ? [argv[i + 1]] : []));
 const pairs = (list) => Object.fromEntries(list.map(s => { const i = s.indexOf('='); return [s.slice(0, i), s.slice(i + 1)]; }));
 const path = join(here, 'calibration.json'), studies = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : [];
-export const LABELS = { calManning: 'roughness ×', calInfil: 'infiltration ×', calClog: 'inlet clogging' };
+export const LABELS = { calManning: 'roughness ×', calInfil: 'infiltration ×', calClog: 'inlet clogging', gwShare: 'groundwater return', gwLag: 'groundwater lag h' };
 
 if (!argv.includes('--page')) {
   const cases = loadCases(), byId = (id) => cases.find(c => c.id === id) ?? fail(`no case "${id}" in cases.json`);

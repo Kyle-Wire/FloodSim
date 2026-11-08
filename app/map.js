@@ -25,6 +25,7 @@ import { describeSource, fetchFeatures, detectPipeFields, pipeRecords, pointReco
 import { realNetwork } from '../src/network-real.js';
 import { breachChannels, culvertLinks, culvertDiameter } from '../src/channels.js';
 import { CulvertLinks, LinkHub } from '../src/links.js';
+import { GroundwaterReturn, streamCells } from '../src/groundwater.js';
 import { attachStorage, networkToLayer } from '../src/infra.js';
 import { initInfra } from './infra-ui.js';
 import { initDesign } from './design-ui.js';
@@ -1918,7 +1919,8 @@ function ensureSolver() {
   inflows.forEach(e => e.cells.forEach(k => used.add(k)));
   for (const e of inflows.filter(e => e.edgeWidth)) log(`${e.name || e.label}: enters across the model edge over ${e.edgeWidth} m of channel; the edge is closed across it and the flow goes in just inside`, 'ok');
   run.inflow = inflows.length ? new InflowLinks(inflows) : null;
-  const cells = [...base, ...(run.inflow?.cells ?? [])], inletCells = cells.length ? cells : undefined;
+  run.gw = groundwaterFor(c, F, used);
+  const cells = [...base, ...(run.inflow?.cells ?? []), ...(run.gw?.cells ?? [])], inletCells = cells.length ? cells : undefined;
   const shared = cells.length - new Set(cells).size; // the exchange kernel runs one thread per point: a shared cell loses water
   if (shared) log(`${shared} exchange point${shared > 1 ? 's share a cell' : ' shares a cell'} with another: the surface books will not close`, 'warn');
   run.solver = new GPUSolver(device, {
@@ -1959,8 +1961,8 @@ function ensureSolver() {
   if (run.outlets) run.outlets.coupler = run.coupler ?? null; // network outlets hand their water to SWMM through the coupler
   run.underdrains = coupled && run.sw.under.length ? new UnderdrainLinks(run.solver, run.sw.under, { cellArea: F * F, coupler: run.coupler }) : null;
   // outlets and underdrains step before the coupler, so SWMM gets their water in the same exchange
-  const members = [run.outlets, run.underdrains, run.coupler, run.culverts, run.inflow].filter(Boolean);
-  run.exchanger = members.length > 1 || run.culverts || run.inflow || run.outlets ? new LinkHub(run.solver, members, 2) : run.coupler; // every 2 s
+  const members = [run.outlets, run.underdrains, run.coupler, run.culverts, run.inflow, run.gw].filter(Boolean); // in the order of the solver's exchange cells
+  run.exchanger = members.length > 1 || run.culverts || run.inflow || run.outlets || run.gw ? new LinkHub(run.solver, members, 2) : run.coupler; // every 2 s
   for (const id of ['drainSrc', 'networkCtl', 'lumpedCtl']) $(id).classList.add('locked');
   setTiers();
   run.hmax = new Float32Array(c.nx * c.ny); run.smax = new Float32Array(c.nx * c.ny);
@@ -2240,7 +2242,7 @@ async function loop(gen) {
         // + river inflow and the water on the ground at the start; underdrains: GI water the books count as infiltrated that
         // went into the pipes; outlets off the model. Over all the water that came in (as the surface books)
         // + sanitary flow and the water it starts the pipes with (combined sewers)
-        const initial = run.solver.vol.initial + (c.initialStored ?? 0) * 1000, inflowV = (run.inflow?.totals.volume ?? 0) + (c.dryWeatherInflow ?? 0) * 1000;
+        const initial = run.solver.vol.initial + (c.initialStored ?? 0) * 1000, inflowV = (run.inflow?.totals.volume ?? 0) + (run.gw?.totals.volume ?? 0) + (c.dryWeatherInflow ?? 0) * 1000;
         run.netMass.combinedRel = (initial + rain + inflowV + (run.underdrains?.totals.underdrain ?? 0) - (run.outlets?.totals.offsite ?? 0) - m.infil - m.outflow - outfalls - m.volume - c.finalStored * 1000) / Math.max(1e-30, initial + rain + inflowV + Math.max(0, -m.outflow));
       }
       readouts(); run.wall = (performance.now() - run.wall0) / 1000;
@@ -2252,6 +2254,18 @@ async function loop(gen) {
     console.error(e); run.playing = false; log('Solver error: ' + e.message, 'err'); run.finish?.(e); return;
   }
   nextTick(() => loop(gen));
+}
+
+/**
+ * Groundwater return (Calibrate: src/groundwater.js) for a run on grid c: a share of the infiltrated water back into the
+ * mapped streams, on cells no other exchange point uses. → GroundwaterReturn or null (off, or no streams)
+ */
+function groundwaterFor(c, F, used) {
+  const share = Number($('gwShare').value), lagH = Number($('gwLag').value); if (!(share > 0)) return null;
+  const cells = streamCells(model.f.channels?.paths, model.fine, c, F, used);
+  if (!cells.length) { log('Groundwater return is set, but no mapped streams cross the model to return it to: it is off for this run', 'warn'); return null; }
+  log(`Groundwater return: ${Math.round(share * 100)} % of the water that soaks in comes back into the streams through ${cells.length} points along them, falling off by about two-thirds every ${lagH} h after the rain (a fitted setting, not measured)`, 'ok');
+  return new GroundwaterReturn(cells, { share, lagH });
 }
 
 // ------------------------------------------------------------------ run records (comparisons)
@@ -2268,7 +2282,7 @@ function forcingRecord(r) {
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
     outlet: r.outletReady ? { site: r.outletReady.g.site, length: Number($('outLen').value) || null, readings: r.outletReady.level.length, flows: r.outletReady.flow.length,
       reach: r.outletReady.reach ? { sections: r.outletReady.reach.sections.length, km: r.outletReady.reach.length / 1000, depth: r.outletReady.reach.depth } : 'prismatic' } : null,
-    antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
+    antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(Number($('gwShare').value) > 0 ? { groundwater: val('gwShare', 'gwLag') } : {}), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
@@ -2326,7 +2340,7 @@ async function finishRecord() {
   const when = new Date(), forcing = CMP.fingerprint(forcingRecord(r));
   const rec = { id: ++recordSeq, scenario: r.scenario, drainSettings: drainSettings(), label: `${r.scenario ?? 'Existing conditions'} · ${$('stormTag').textContent || 'storm'} · ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
     saved: when.toISOString(), forcing, commit: appCommit, ...(appChanged.length ? { codeChanged: appChanged } : {}), designHash: gridHash(), storm: stormLabel(r.storm), stormInfo: { ari: r.storm?.ari ?? null, durationMin: r.storm?.durationMin ?? null }, batch: r.batchInfo ?? null, geo: { nx: W, ny: fine.ny, x0: fine.x0, y0: fine.y1 - fine.ny * fine.dx, dx: fine.dx },
-    grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0,
+    grids, hazard, lines, newBuildings, ponds, network: books.network, hgl: books.hgl, inlets: books.inlets, ground: r.scenario ? Float32Array.from(model.f.z) : null, books: { rain: m.rain, inflow: r.inflow?.totals.volume ?? 0, ...(r.gw ? { groundwater: r.gw.totals.volume, groundwaterStore: r.gw.store } : {}), infil: m.infil, outflow: m.outflow, outfalls, stored: m.volume, underdrain: r.underdrains?.totals.underdrain ?? 0, outletsOffsite: r.outlets?.totals.offsite ?? 0,
       // the rest of the combined books (line ~1842): rain piped from roofs straight to the sewers (not in `rain`, the rain on the surface), sanitary flow, water at the start, the pipes' storage
       roofs: r.coupler?.totals.roofToSewer ?? 0, sanitary: (r.netMass?.dryWeatherInflow ?? 0) * 1000, initial: s.vol?.initial ?? 0, pipesStart: (r.netMass?.initialStored ?? 0) * 1000, pipesEnd: (r.netMass?.finalStored ?? 0) * 1000 }, design: model.design ? { name: model.design.name, totals: model.design.log.totals } : null };
   rec.wall = r.wall; rec.simulatedS = s.t; rec.tide = tideRec(r);
@@ -2571,7 +2585,7 @@ async function runJob(job, note, { resume = false, base = null } = {}) {
 const batchUI = initBatch({
   scenarios: () => design.scenarios.map(sc => sc.name), aris: () => [...$('ari').options].map(o => Number(o.value)), durations: () => [...$('a14dur').options].map(o => ({ value: Number(o.value), label: o.textContent })),
   project: () => projects.current, readText: (p) => readProjectFile(projects.current.folder, p), writeFile: (p, d) => writeProjectFile(projects.current.folder, p, d),
-  runJob, checkpointMeta, inputs: () => ({ dxSel: $('dxSel').value, ari: $('ari').value, a14dur: $('a14dur').value, calManning: $('calManning').value, calInfil: $('calInfil').value, uplift: $('uplift').value,
+  runJob, checkpointMeta, inputs: () => ({ dxSel: $('dxSel').value, ari: $('ari').value, a14dur: $('a14dur').value, calManning: $('calManning').value, calInfil: $('calInfil').value, gwShare: $('gwShare').value, gwLag: $('gwLag').value, uplift: $('uplift').value,
     ...Object.fromEntries(['dtMode', 'dtPhase', 'dtDate', 'dtSurge', 'dtSurgeM', 'slrScen', 'slrYear', 'slrHist'].map(id => [id, $(id).type === 'checkbox' ? $(id).checked : $(id).value])) }),
   extraVariants: cmpdVariants, extraStorms: () => [...cmpdStorms(), ...ncStorms()], // compound flooding: SLR variants, joint design pairs; the nowcast's dry / middle / wet members
   stormSrc: () => stormSrc, ready: () => !!(model && device), log,
@@ -2802,6 +2816,7 @@ function readMass() {
 }
 async function readMassNow() {
   const st = await run.solver.readState(); run.mass = st.mass;
+  run.gw?.recharge(st.mass.infil); // groundwater return: the store fills from what has soaked in
   if (run.culverts || run.outlets) { // water a culvert or pond outlet took upstream and has not yet delivered downstream counts as stored
     const m = run.mass, inTransit = (run.culverts?.pending.reduce((a, p) => a + p.vol, 0) ?? 0) + (run.outlets?.inTransit ?? 0);
     m.culvertInTransit = inTransit; m.volume += inTransit; m.rel = (m.volume - m.expected) / Math.max(1e-30, Math.abs(m.expected), run.solver.vol.initial + m.rain + Math.max(0, -m.exchanged) + Math.max(0, -m.outflow));
@@ -3995,7 +4010,7 @@ $('swmmPreset').addEventListener('change', () => {
 });
 for (const id of SWMM_FIELDS) $(id).addEventListener('input', syncSwmmPreset);
 syncSwmmPreset();
-for (const [id, f] of [['calManning', v => `${Number(v).toFixed(2)}×`], ['calInfil', v => `${Number(v).toFixed(2)}×`], ['calClog', v => `${Math.round(v * 100)} %`]]) {
+for (const [id, f] of [['calManning', v => `${Number(v).toFixed(2)}×`], ['calInfil', v => `${Number(v).toFixed(2)}×`], ['calClog', v => `${Math.round(v * 100)} %`], ['gwShare', v => (Number(v) > 0 ? `${Math.round(v * 100)} % of what soaks in` : 'off')], ['gwLag', v => `${v} h`]]) {
   const upd = () => { $(id + 'Out').textContent = f($(id).value); }; $(id).addEventListener('input', upd); upd();
   $(id).addEventListener('change', () => { if (model && (!run || !run.solver)) resetRun(); });
 }

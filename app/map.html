@@ -923,6 +923,9 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
       <div class="field" style="margin-top:0"><label for="calManning">Roughness (Manning n) ×</label><output id="calManningOut"></output><input type="range" id="calManning" min="0.6" max="1.6" step="0.05" value="1"></div>
       <div class="field"><label for="calInfil">Infiltration ×</label><output id="calInfilOut"></output><input type="range" id="calInfil" min="0.1" max="2" step="0.05" value="1"></div>
       <div class="field"><label for="calClog">Inlet clogging</label><output id="calClogOut"></output><input type="range" id="calClog" min="0" max="0.7" step="0.05" value="0"></div>
+      <div class="field"><label for="gwShare" title="Share of the water that soaks in which seeps back into the streams after the storm">Groundwater return</label><output id="gwShareOut"></output><input type="range" id="gwShare" min="0" max="0.6" step="0.05" value="0"></div>
+      <div class="field"><label for="gwLag" title="How slowly the seepage comes back: after the rain stops it falls by about two-thirds every this many hours">Groundwater lag</label><output id="gwLagOut"></output><input type="range" id="gwLag" min="2" max="72" step="1" value="12"></div>
+      <p class="note">Groundwater return: some of the rain that soaks in seeps back into the streams over the following hours and days, which keeps a creek running after the storm. It is off at 0. The lag is how slowly it comes back. Neither is measured: fit them to a stream gauge's flow after the storm.</p>
       <p class="vlabel">Sweep</p>
       <label class="toggle" style="margin-top:0"><input type="checkbox" id="calSpeed" checked> Sweep in the 4 m speed mode (then confirm the best at 1 m)</label>
       <div class="row"><select id="calLevels" aria-label="Values per setting"><option value="2">2 values each (8 runs)</option><option value="3" selected>3 values each (27 runs)</option></select>
