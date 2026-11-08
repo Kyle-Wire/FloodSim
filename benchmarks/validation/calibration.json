@@ -941,5 +941,241 @@
    }
   ],
   "note": "Fourth study: groundwater return (share of the infiltrated water back to the streams, lag 12 h) with infiltration x0.25 from the third study"
+ },
+ {
+  "created": "2026-11-08T18:13:17.470Z",
+  "commit": "ddd6339+dirty",
+  "case": "edwards-branch-clt",
+  "title": "Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers",
+  "set": {
+   "histSrc": "radarFit",
+   "wetness": "auto"
+  },
+  "vary": {
+   "calInfil": [
+    "0.1",
+    "0.15",
+    "0.25"
+   ]
+  },
+  "target": 0.15,
+  "objective": "flow",
+  "points": [
+   {
+    "inputs": {
+     "calInfil": "0.1"
+    },
+    "run": "2026-11-08_094514_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.440384000000023,
+    "bias": -0.440384000000023,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.44
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.432,
+     "nse": 0.714,
+     "volumeRatio": 0.607,
+     "peakRatio": 0.55,
+     "lag": -8.2,
+     "levelNSE": 0.759
+    }
+   },
+   {
+    "inputs": {
+     "calInfil": "0.15"
+    },
+    "run": "2026-11-08_104421_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.46138400000000956,
+    "bias": -0.46138400000000956,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.461
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.389,
+     "nse": 0.704,
+     "volumeRatio": 0.565,
+     "peakRatio": 0.536,
+     "lag": -8.5,
+     "levelNSE": 0.764
+    }
+   },
+   {
+    "inputs": {
+     "calInfil": "0.25"
+    },
+    "run": "2026-11-08_114144_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.4993840000000205,
+    "bias": -0.4993840000000205,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.499
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.325,
+     "nse": 0.684,
+     "volumeRatio": 0.507,
+     "peakRatio": 0.511,
+     "lag": -7.7,
+     "levelNSE": 0.766
+    }
+   }
+  ],
+  "kept": {
+   "calInfil": "0.1"
+  },
+  "calibration": {
+   "n": 1,
+   "rms": 0.440384000000023,
+   "bias": -0.440384000000023,
+   "run": "2026-11-08_094514_Calibration-Existing-condition",
+   "flow": {
+    "site": "0214643820",
+    "kge": 0.432,
+    "nse": 0.714,
+    "volumeRatio": 0.607,
+    "peakRatio": 0.55,
+    "lag": -8.2,
+    "levelNSE": 0.759
+   }
+  },
+  "validation": [
+   {
+    "case": "edwards-branch-clt-2024-01",
+    "title": "Edwards Branch, Charlotte NC — 9 January 2024, winter storm",
+    "asSet": {
+     "run": "2026-11-08_121315_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 1.1735120000000165,
+     "bias": -1.1735120000000165,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -1.174
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": -0.081,
+      "nse": 0.293,
+      "volumeRatio": 0.227,
+      "peakRatio": 0.255,
+      "lag": -14.7,
+      "levelNSE": 0.605
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-08_124904_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.7735120000000393,
+     "bias": -0.7735120000000393,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.774
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.389,
+      "nse": 0.75,
+      "volumeRatio": 0.577,
+      "peakRatio": 0.558,
+      "lag": -17.2,
+      "levelNSE": 0.815
+     }
+    }
+   },
+   {
+    "case": "edwards-branch-clt-2023-08",
+    "title": "Edwards Branch, Charlotte NC — 10 August 2023, summer storm",
+    "asSet": {
+     "run": "2026-11-08_130101_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.6334719999999834,
+     "bias": -0.6334719999999834,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.633
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.375,
+      "nse": 0.536,
+      "volumeRatio": 0.635,
+      "peakRatio": 0.505,
+      "lag": 10.3,
+      "levelNSE": 0.584
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-08_131313_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.004527999999993426,
+     "bias": 0.004527999999993426,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": 0.005
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.497,
+      "nse": 0.819,
+      "volumeRatio": 1.409,
+      "peakRatio": 1.371,
+      "lag": 0.2,
+      "levelNSE": 0.661
+     }
+    }
+   }
+  ],
+  "note": "Fifth study: starting soil wetness from the rain of the 5 days before each storm (NRCS AMC, USGS rain gauges): June 2025 and August 2023 start dry, January 2024 wet. Groundwater return off.",
+  "control": {
+   "note": "Infiltration x0.1 at Normal wetness, to separate the wetness rule from the lower infiltration",
+   "runs": [
+    {
+     "case": "edwards-branch-clt-2024-01",
+     "run": "2026-11-08_134947_Calibration-Existing-condition",
+     "error": -0.803,
+     "kge": 0.342,
+     "nse": 0.724,
+     "volumeRatio": 0.537,
+     "peakRatio": 0.53
+    },
+    {
+     "case": "edwards-branch-clt-2023-08",
+     "run": "2026-11-08_140159_Calibration-Existing-condition",
+     "error": 0.03,
+     "kge": 0.426,
+     "nse": 0.785,
+     "volumeRatio": 1.461,
+     "peakRatio": 1.419
+    }
+   ]
+  }
  }
 ]

@@ -678,7 +678,7 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
         <div class="field"><label for="infilModel">Infiltration</label>
           <select id="infilModel"><option value="ga">Green-Ampt from the soil survey</option><option value="const">Constant rate by soil group</option></select></div>
         <div class="field"><label for="wetness">Soil wetness before the storm</label>
-          <select id="wetness"><option value="dry">Dry</option><option value="normal" selected>Normal</option><option value="wet">Wet (rain in the days before)</option><option value="saturated">Saturated</option></select></div>
+          <select id="wetness"><option value="dry">Dry</option><option value="normal" selected>Normal</option><option value="wet">Wet (rain in the days before)</option><option value="saturated">Saturated</option><option value="auto">From the rain before the storm (historic storms)</option></select></div>
         <div class="field"><label for="wtDepth">Water table depth, m (blank = soil survey)</label><input id="wtDepth" type="number" min="0" step="0.1" placeholder="soil survey" style="width:7em"></div>
         <p class="note" id="wtNote"></p>
         <div class="field"><label for="startWater">Rivers, lakes and tidal water start at</label>

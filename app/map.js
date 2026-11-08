@@ -40,6 +40,7 @@ import { buildBarriers, BarrierWatch } from '../src/barriers.js';
 import { buildSubgrid, fineDepth, CT as SG_CT, FT as SG_FT } from '../src/subgrid.js';
 import { watershed } from '../src/watershed.js';
 import { gaCells, WETNESS, COLLAPSE_CLASSES } from '../src/soil.js';
+import { antecedentRain } from '../src/antecedent.js';
 import { sedimentCells } from '../src/sediment.js';
 import { findBanks, bankClass, BANK_CLASSES, UNRATED } from '../src/banks.js';
 import { scourCells, scourClass, SCOUR_CLASSES, NOT_ERODIBLE } from '../src/scour.js';
@@ -1065,6 +1066,7 @@ $('histLoad').onclick = async () => {
       st = padForSurge(st, wl); st.wl = wl;
     }
     st.rp = stormRP(st);
+    st.antecedent = await antecedentRain(lon, lat, st.t0, fetcher).catch((err) => { console.warn('rain before the storm:', err); return null; });
     hist.storm = st; updateStorm(); if (model && !(run?.solver)) resetRun();
   } catch (err) { console.error(err); $('histNote').textContent = 'Could not load this event: ' + err.message; }
   finally { btn.disabled = false; btn.textContent = 'Load event'; }
@@ -1086,7 +1088,12 @@ function histSummary(st) {
   const rp = st.rp ? Object.entries(st.rp).map(([m, r]) => `${fmtDur(Number(m))} ${r.mm.toFixed(0)} mm ${r.label}`).join(' · ') : '';
   const wl = st.wl ? ` Water level peaks at ${Math.max(...st.wl.v).toFixed(2)} m ${st.wl.datum} (${st.wl.name})` + (st.wl.observedUntil ? `; observed to ${new Date(st.wl.observedUntil).toISOString().slice(11, 16)} UTC, then ${st.wl.surge != null ? `NOAA's tide prediction ${st.wl.surge >= 0 ? '+' : '−'} ${Math.abs(st.wl.surge).toFixed(2)} m of surge (the last hour's difference, held)` : 'held at the last reading (no tide prediction here)'}.` : '.') : '';
   return `${st.name}: ${st.total.toFixed(0)} mm${st.radar ? ' (mean over the area)' : ''}, peak ${st.peakIntensity.toFixed(0)} mm/hr over ${st.blockMin} min. ${rp ? 'Against Atlas 14 at the site: ' + rp + '.' : ''}${wl} Source: ${st.source}.` +
-    (st.radar ? ' ' + radarNoteText(st.radar) : '');
+    (st.radar ? ' ' + radarNoteText(st.radar) : '') + (st.antecedent ? ' ' + rainBeforeText(st.antecedent) : '');
+}
+/** The rain of the days before a historic storm and the starting wetness it gives (src/antecedent.js). */
+function rainBeforeText(a) {
+  return `The ${a.days} days before: ${a.mm.toFixed(0)} mm (${a.source}), NRCS AMC ${a.amc} for the ${a.season} season (${(a.bounds[0] / 25.4).toFixed(1)}–${(a.bounds[1] / 25.4).toFixed(1)} in is AMC II): ` +
+    ($('wetness').value === 'auto' ? `the soil starts ${a.wetness}.` : `“From the rain before the storm” would start the soil ${a.wetness}.`);
 }
 
 /**
@@ -1745,7 +1752,7 @@ function resetRun() {
   if (model.bathy) bathyCells(c, F);
   // infiltration: Green-Ampt from the soil survey (c.infil becomes K; the run carries ψΔθ and the water-table storage)
   const wt = $('wtDepth').value.trim() === '' ? null : Math.max(0.05, Number($('wtDepth').value));
-  const ga = $('infilModel').value === 'ga' && model.f.ga ? gaCells(model.f, c.nx, c.ny, F, c.mask, { Se: emu?.se ?? WETNESS[$('wetness').value], wtOverride: wt, perCellArea: !!c.sg }) : null;
+  const ga = $('infilModel').value === 'ga' && model.f.ga ? gaCells(model.f, c.nx, c.ny, F, c.mask, { Se: emu?.se ?? WETNESS[wetnessKey()], wtOverride: wt, perCellArea: !!c.sg }) : null;
   if (ga) c.infil = ga.K;
   if (cal().infil !== 1) c.infil = c.infil.map(v => v * cal().infil);
   // scour: critical shear of the erodible ground and the n for the shear (the subgrid mode has no per-cell n of its own)
@@ -2282,7 +2289,7 @@ function forcingRecord(r) {
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
     outlet: r.outletReady ? { site: r.outletReady.g.site, length: Number($('outLen').value) || null, readings: r.outletReady.level.length, flows: r.outletReady.flow.length,
       reach: r.outletReady.reach ? { sections: r.outletReady.reach.sections.length, km: r.outletReady.reach.length / 1000, depth: r.outletReady.reach.depth } : 'prismatic' } : null,
-    antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...(Number($('gwShare').value) > 0 ? { groundwater: val('gwShare', 'gwLag') } : {}), ...(emu?.se != null && Math.abs(emu.se - WETNESS[$('wetness').value]) > 1e-9 ? { se: emu.se } : {}) },
+    antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...($('wetness').value === 'auto' ? { start: wetnessKey(), rainBefore: stormBase()?.antecedent ? (({ mm, days, source, amc, season }) => ({ mm, days, source, amc, season }))(stormBase().antecedent) : null } : {}), ...(Number($('gwShare').value) > 0 ? { groundwater: val('gwShare', 'gwLag') } : {}), ...(emu?.se != null && Math.abs(emu.se - WETNESS[wetnessKey()]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
@@ -2667,7 +2674,7 @@ function emuParams(scName) {
   out.push({ key: 'rain', label: 'Rain depth factor', unit: '×', min: 0.6, max: 1.4, value: 1 });
   if (inflow.entries.length) out.push({ key: 'inflow', label: 'River inflow scale', unit: '×', min: 0.5, max: 1.5, value: 1 });
   if ((stormSrc === 'hist' || stormSrc === 'radar') && currentStorm()?.wl) out.push({ key: 'tide', label: 'Tide / surge offset', unit: 'm', min: -0.3, max: 0.6, value: 0 });
-  if ($('infilModel').value === 'ga') out.push({ key: 'se', label: 'Soil wetness at the start (Se)', unit: '', min: 0.15, max: 0.95, value: WETNESS[$('wetness').value] });
+  if ($('infilModel').value === 'ga') out.push({ key: 'se', label: 'Soil wetness at the start (Se)', unit: '', min: 0.15, max: 0.95, value: WETNESS[wetnessKey()] });
   if (scName) { const { log } = designAt(scName, null); const sc = design.scenarios.find(s => s.name === scName); for (const v of designVariables(sc.design, log)) out.push({ key: 'design:' + v.key, label: `${v.featureName}: ${v.label}`, unit: v.kind === 'ratio' ? 'H:V' : 'm', kind: v.kind, min: v.min, max: v.max, value: v.value }); }
   return out;
 }
@@ -3500,15 +3507,30 @@ async function rasFiles() {
 
 // ------------------------------------------------------------------ start
 // ------------------------------------------------------------------ soils, infiltration, groundwater
+/**
+ * The wetness preset the run starts from: the one picked, or with "From the rain before the storm", the one the 5 days'
+ * rain before a historic storm gives (src/antecedent.js, NRCS AMC); Normal for a storm without that record.
+ */
+function wetnessKey() {
+  if ($('wetness').value !== 'auto') return $('wetness').value;
+  return stormBase()?.antecedent?.wetness ?? 'normal';
+}
+/** The starting wetness in words, for the soils row and the storm note. */
+function wetnessText() {
+  if ($('wetness').value !== 'auto') return $('wetness').selectedOptions[0].textContent.toLowerCase();
+  const a = stormBase()?.antecedent;
+  return a ? `${a.wetness} (${a.mm.toFixed(0)} mm in the ${a.days} days before: AMC ${a.amc})` : 'normal (no record of the rain before this storm)';
+}
 function soilsRow() {
   const { soils } = model, hsg = [...new Set(soils.map(s => s.hsg || 'none'))];
   if (!soils.length) return 'not available: compacted fill (2 mm/hr)';
   if ($('infilModel').value !== 'ga') return `SSURGO, ${soils.length} units (HSG ${hsg.join(', ')}); constant rates by group, Urban land = compacted fill 2 mm/hr`;
   const p = soils.map(s => s.props).filter(x => x?.K > 0), tex = [...new Set(p.map(x => x.texture))], wts = p.map(x => x.wt).filter(v => v != null);
   return `SSURGO Green-Ampt, ${p.length} of ${soils.length} units with horizon data (${tex.join(', ') || 'none'}; the rest by hydrologic group or compacted fill), ` +
-    `K ${p.length ? `${Math.min(...p.map(x => x.K * 3.6e6)).toFixed(1)}–${Math.max(...p.map(x => x.K * 3.6e6)).toFixed(1)} mm/hr` : 'by group'}, ${$('wetness').selectedOptions[0].textContent.toLowerCase()} start, ` +
+    `K ${p.length ? `${Math.min(...p.map(x => x.K * 3.6e6)).toFixed(1)}–${Math.max(...p.map(x => x.K * 3.6e6)).toFixed(1)} mm/hr` : 'by group'}, ${wetnessText()} start, ` +
     ($('wtDepth').value.trim() ? `water table set at ${$('wtDepth').value} m` : wts.length ? `water table ${Math.min(...wts).toFixed(1)}–${Math.max(...wts).toFixed(1)} m (survey)` : 'no shallow water table in the survey') + (p.length ? '<span class="pill good">tier 1</span>' : '<span class="pill warn">defaults</span>');
 }
+$('wetness').addEventListener('change', () => { const st = currentStorm(); if (st?.pattern === 'historic') $('stormSummary').textContent = histSummary(st); });
 for (const id of ['infilModel', 'wetness', 'wtDepth', 'sedOn', 'topsoil', 'debrisOn', 'bankOn']) $(id).addEventListener('change', () => { if (model) { setTiers(); if (!run || !run.solver) resetRun(); } });
 /** The nearest USGS groundwater well with measured levels (Water Data API field measurements since 2000), as a check
  *  on the survey's water table. Depth below land surface; wells can tap deeper aquifers than the water table. */

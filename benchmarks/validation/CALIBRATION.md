@@ -9,6 +9,23 @@ kept, not when the tuning storm does. See docs/METHODS.md §6.4.
 
 ## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers — 2026-11-08
 
+Commit ddd6339+dirty. Every run: histSrc = radarFit, wetness = auto. Target 0.15 m. Fifth study: starting soil wetness from the rain of the 5 days before each storm (NRCS AMC, USGS rain gauges): June 2025 and August 2023 start dry, January 2024 wet. Groundwater return off.
+
+| Values | Run | Level errors | RMS (m) | Bias (m) | Flow KGE | Flow NSE | Volume (model / gauge) | Peak flow (model / gauge) |
+|---|---|---|---|---|---|---|---|---|
+| infiltration × 0.1 **(kept)** | 2026-11-08_094514_Calibration-Existing-condition | 1 | 0.44 | −0.44 | 0.43 | 0.71 | 0.61 | 0.55 |
+| infiltration × 0.15 | 2026-11-08_104421_Calibration-Existing-condition | 1 | 0.46 | −0.46 | 0.39 | 0.70 | 0.56 | 0.54 |
+| infiltration × 0.25 | 2026-11-08_114144_Calibration-Existing-condition | 1 | 0.50 | −0.50 | 0.33 | 0.68 | 0.51 | 0.51 |
+
+Kept (best flow KGE at the gauge): **infiltration × 0.1**, calibration storm 0.44 m RMS (2.9× the target), flow KGE 0.43.
+
+| Storm it never saw | As set: RMS / bias (n) | Calibrated: RMS / bias (n) | Flow KGE as set | calibrated | Against the target |
+|---|---|---|---|---|---|
+| Edwards Branch, Charlotte NC — 9 January 2024, winter storm | 1.17 / −1.17 (1) | 0.77 / −0.77 (1) | -0.08 | 0.39 | 5.2× the target; the tuning carried over |
+| Edwards Branch, Charlotte NC — 10 August 2023, summer storm | 0.63 / −0.63 (1) | 0.00 / +0.00 (1) | 0.38 | 0.50 | meets; the tuning carried over |
+
+## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers — 2026-11-08
+
 Commit 6d047cc. Every run: histSrc = radarFit, calInfil = 0.25. Target 0.15 m. Fourth study: groundwater return (share of the infiltrated water back to the streams, lag 12 h) with infiltration x0.25 from the third study
 
 | Values | Run | Level errors | RMS (m) | Bias (m) | Flow KGE | Flow NSE | Volume (model / gauge) | Peak flow (model / gauge) |

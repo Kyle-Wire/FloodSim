@@ -432,7 +432,7 @@ It is not used with a tide on the edges.
 |---|---|---|
 | **Roof runoff routed to ground** | 0–100 % | 100 % |
 | **Infiltration** | **Green-Ampt from the soil survey**, **Constant rate by soil group** | Green-Ampt |
-| **Soil wetness before the storm** | **Dry**, **Normal**, **Wet (rain in the days before)**, **Saturated** | Normal |
+| **Soil wetness before the storm** | **Dry**, **Normal**, **Wet (rain in the days before)**, **Saturated**, **From the rain before the storm (historic storms)**: the app adds up the rain of the 5 days before the storm at the USGS rain gauges nearby (or the site's gridded record) and picks Dry, Normal or Wet by the NRCS rule, which allows more rain in summer, when plants take it up. The storm's note says how much fell and what it picked; a design storm starts Normal | Normal |
 | **Water table depth, m (blank = soil survey)** | a depth overrides the survey for every cell | blank |
 | **Rivers, lakes and tidal water start at** | **Gauge levels (at the storm start; latest reading for design storms)**, **The lidar water surface (no extra water)** | Gauge levels |
 

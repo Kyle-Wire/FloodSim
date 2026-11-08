@@ -652,7 +652,10 @@ storm*, *Water table depth*; `src/soil.js`). The default; *Constant rate by soil
   and texture → wetting-front suction (Rawls, Brakensiek & Miller 1983); depth to the seasonal high water table and
   bedrock. Units without horizons fall back to their hydrologic group's texture, else compacted urban fill.
 - **Green-Ampt:** capacity K·(1 + ψΔθ/F) on each cell's pervious share (streets, roofs and water take none), F the depth
-  infiltrated so far, Δθ = effective porosity × (1 − initial wetness): dry, normal, wet or saturated start. Once the soil
+  infiltrated so far, Δθ = effective porosity × (1 − initial wetness): dry, normal, wet or saturated start, or for a
+  historic storm *From the rain before the storm*: the 5-day rain before it (median of the USGS rain gauges within 8 km,
+  else the IEM Reanalysis at the site) gives the NRCS antecedent moisture class, I dry, II normal, III wet
+  (`src/antecedent.js`). Once the soil
   holds Δθ × (depth to the water table or bedrock), it takes nothing more (saturation excess), so a shallow water table
   floods sooner. A water-table depth typed in overrides the survey for every cell.
 - **Groundwater check:** the nearest USGS well with levels since 2000 (Water Data API field measurements) is shown

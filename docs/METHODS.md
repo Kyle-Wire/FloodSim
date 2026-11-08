@@ -515,7 +515,12 @@ all n together.
   - depth to the seasonal high water table and to bedrock.
 
   Capacity is K·(1 + ψΔθ/F) on the cell's pervious share, with Δθ = effective porosity × (1 − Se). The initial wetness
-  presets are Se = 0.15 / 0.40 / 0.70 / 0.95 (dry / normal / wet / saturated; `WETNESS`). Once the soil holds
+  presets are Se = 0.15 / 0.40 / 0.70 / 0.95 (dry / normal / wet / saturated; `WETNESS`). For a historic storm the
+  preset can come from the rain of the 5 days before it (*From the rain before the storm*, `src/antecedent.js`): the
+  NRCS antecedent moisture condition (SCS NEH-4 ch. 4, table 4.2), AMC I below 0.5 in, III above 1.1 in in the dormant
+  season (November–March), 1.4 and 2.1 in in the growing season (April–October, this app's reading for the lower 48),
+  maps to dry / normal / wet. The 5-day rain is the median of the USGS rain gauges (NWIS 00045) within 8 km that
+  reported through the 5 days, else the IEM Reanalysis hourly rain at the site. Once the soil holds
   Δθ × (depth to the water table or bedrock), infiltration stops (saturation excess). A typed water-table depth
   overrides the survey for every cell. Units without horizons fall back to their hydrologic group's texture, else
   compacted urban fill.
@@ -1831,6 +1836,38 @@ two hours after the peak to the run's end against the gauge's 30,400.
 - **So it stays off by default.** It is a fitted setting for matching a gauge's recession, worth turning on for
   long-duration runs or baseflow checks. It is not a fix for low peaks.
 
+**Fifth study: starting wetness from the rain before the storm** (2026-11-08, ddd6339 with `src/antecedent.js`; groundwater
+return off). The five-day rain at the USGS gauges within 8 km, by the NRCS rule (§3.5): June 2025 20 mm, growing season,
+AMC I, starts *dry*; January 2024 29.5 mm, dormant, AMC III, *wet*; August 2023 23 mm, growing, AMC I, *dry*. Infiltration
+tuned again on June over × 0.1 / 0.15 / 0.25, with the other two storms checked at the kept value. Each cell is peak-level error at the
+gauge / flow volume against the gauge's / flow NSE.
+
+| Storm | Third study: *Normal*, × 0.25 | Control: *Normal*, × 0.1 | Rule, × 0.1 (kept) |
+|---|---|---|---|
+| 12 June 2025 (tuning; *dry*) | −0.48 m / 53 % / 0.69 | | **−0.44 m / 61 % / 0.71** |
+| 9 January 2024 (never seen; *wet*) | −0.90 m / 41 % / 0.61 | −0.80 m / 54 % / 0.72 | **−0.77 m / 58 % / 0.75** |
+| 10 August 2023 (never seen; *dry*) | −0.07 m / 126 % / 0.88 | +0.03 m / 146 % / 0.79 | **0.00 m / 141 % / 0.82** |
+
+- **The rule moves the two storms it was not tuned on the right way, and only a little.** At × 0.1, against *Normal*, January
+  gains 4 points of volume and August loses 5; the flow's Kling–Gupta efficiency rises from 0.34 to 0.39 and from 0.43 to
+  0.50. In January's first 12 hours the model passes 3,500 m³ (*Normal*: 1,950; the gauge: 12,700). June at × 0.25 runs the
+  other way, as a dry start should (53 % to 51 %). Most of the change from the third study is the lower infiltration, not
+  the starting wetness.
+- **The gap between the storms is not winter against summer.** January and June now fall short by the same share (58 %,
+  61 %), but June and August, both summer and both *dry*, are 61 % and 141 %. August's level error of 0.00 m is not a good
+  result: the model reaches the level with 37 % too much peak flow.
+- **× 0.1 is again the lowest value tried, and it is not adopted.** The case files stay at × 1 and the default wetness at
+  *Normal*. A value that keeps falling at the edge of its range is compensating for something else.
+- **Soil cannot close June or January.** Over the 2.5 km² watershed the gauge passed 91 mm in June, 66 mm in January and
+  16 mm in August. Against the model's rain (the mean over the model box: 94, 68 and 41 mm) that is 97 %, 97 % and 39 %.
+  The model, with almost no infiltration, passes 59 % in June and 56 % in January: about 23 % of its rain still soaks in,
+  and 12–13 % is still held in the model at the end. USGS rain gauge 351229080460245, at the centre of the box, caught
+  110 mm in June and 87 mm in January over the same windows (17 % and 27 % above the box mean) and 40 mm in August (the
+  same). One gauge is a point and the box mean an area, but the rain is short in exactly the two
+  storms that fall short and matches in the one that does not. With that gauge's rain the stream gauge's share would be 83 %, 77 % and
+  40 %: still very high for June and January. What is left is the gauge's rating in large floods and pipes bringing
+  water across the mapped divide.
+
 ### 6.5 A reviewer's checklist
 
 1. Commit and fingerprint recorded in `summary.json`; commit not `+dirty` for a submitted result.
@@ -1882,7 +1919,7 @@ known limits", "Known limits (solver)" and section caveats, and the code as cite
 | Limitation | Effect | Mitigation |
 |---|---|---|
 | Green-Ampt parameters from SSURGO by texture (Rawls et al.); K halved; "Urban land" uses group or fill defaults | Infiltration uncertain by factors of several. On impervious urban sites the effect on peak ponding is small (South Street infiltration × 0.5: area +1.3 %). | Infiltration × 0.5 sensitivity variant; set initial wetness to match antecedent conditions. |
-| Initial wetness is a single preset per run | Over- or under-infiltration early in the storm. | Dry/normal/wet/saturated runs; emulator over Se. |
+| Initial wetness is a single preset per run | Over- or under-infiltration early in the storm. | Dry/normal/wet/saturated runs; emulator over Se; for a historic storm, the preset from the 5-day rain before it (§3.5). |
 | No interception, evaporation, or infiltration recovery between bursts | Slight **overestimate** of runoff for long or multi-burst events. | — |
 | Impervious fraction is the NLCD class midpoint, not mapped imperviousness | Local over- or under-estimate of runoff. | — |
 | Manning's n from NLCD class tables, not calibrated; constant with depth | Shallow sheet-flow resistance is not depth-dependent. Timing and peak speeds uncertain; peak depths at ponds insensitive (South Street roughness × 1.2: area −0.3 %). | Roughness ± 20 % variants; calibrate to marks where they constrain it. |
