@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { codeState, CODE_PATHS } from './codestate.mjs';
 
 export const root = fileURLToPath(new URL('..', import.meta.url)), here = join(root, 'benchmarks', 'validation');
 export const projectsDir = process.env.FLOODSIM_PROJECTS || join(homedir(), 'Documents', 'FloodSim Projects');
@@ -61,8 +62,9 @@ export function deriveProject(c, folder, set = {}) {
 export function runStudy(folder, jobs, { url = null, headed = false } = {}) {
   const pj = readProject(folder), path = join(projectsDir, folder, 'batch.json');
   const old = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : null;
-  if (!sameStudy(old, jobs, pj.inputs)) {
-    writeFileSync(path, JSON.stringify({ version: 1, created: new Date().toISOString(), base: pj.inputs ?? {}, jobs }, null, 1));
+  const code = codeVersion();
+  if (!sameStudy(old, jobs, pj.inputs, code)) {
+    writeFileSync(path, JSON.stringify({ version: 1, created: new Date().toISOString(), base: pj.inputs ?? {}, code, jobs }, null, 1));
     setAsideCheckpoint(folder);
   } else {
     // a job that failed is tried again (from the start: a failed job's checkpoint is not its own)
@@ -79,10 +81,16 @@ export function runStudy(folder, jobs, { url = null, headed = false } = {}) {
 /**
  * Whether a batch.json already in a project is this study: the same jobs (ids and labels in order) from the same project
  * inputs. A study of the same jobs made before the project's settings changed is not (the Charlotte cases, Nov 2026: a
- * validation study started with combined sewers on was carried on after they were turned off).
+ * validation study started with combined sewers on was carried on after they were turned off). Nor is one made with other
+ * model code (`code`: a study repeated after a fix would hand back the old runs as its results).
  */
-export const sameStudy = (old, jobs, inputs = {}) => !!old && old.jobs?.map(j => j.id + '|' + j.label).join(';') === jobs.map(j => j.id + '|' + j.label).join(';')
-  && JSON.stringify(old.base ?? {}) === JSON.stringify(inputs ?? {});
+export const sameStudy = (old, jobs, inputs = {}, code) => !!old && old.jobs?.map(j => j.id + '|' + j.label).join(';') === jobs.map(j => j.id + '|' + j.label).join(';')
+  && JSON.stringify(old.base ?? {}) === JSON.stringify(inputs ?? {}) && (code === undefined || old.code === code);
+/** The last commit that touched anything that can change a result (+ when such files are also edited but not committed). */
+function codeVersion() {
+  const r = spawnSync('git', ['log', '-1', '--format=%h', '--', ...CODE_PATHS], { cwd: root, encoding: 'utf8' });
+  return (r.status === 0 ? r.stdout.trim() : '') + (codeState(root).dirty ? '+' : '');
+}
 /**
  * A checkpoint left in the project by an earlier study, moved to runs/_checkpoint.set-aside-<time> before a new study
  * starts: job ids repeat between studies of the same storms, and the headless runner resumes a job whose id the

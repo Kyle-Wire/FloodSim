@@ -48,6 +48,7 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   const old = { base: inputs, jobs: jobs.map(j => ({ ...j, status: 'done' })) };
   check('same jobs, same inputs: carried on', sameStudy(old, jobs, { ...inputs }));
   check('same jobs, inputs changed since: a new study', !sameStudy({ ...old, base: { csoOn: true, downspout: '100' } }, jobs, inputs));
+  check('same jobs and inputs, other model code: a new study, not the old runs handed back', !sameStudy({ ...old, code: 'aaa' }, jobs, inputs, 'bbb') && !sameStudy(old, jobs, inputs, 'bbb') && sameStudy({ ...old, code: 'bbb' }, jobs, inputs, 'bbb'));
   check('other jobs: a new study', !sameStudy(old, jobs.slice(0, 1), inputs) && !sameStudy(null, jobs, inputs));
 }
 
