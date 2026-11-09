@@ -1928,6 +1928,51 @@ storm-wide bias, 86 mm), wetness from the rain before the storm.
   every cell including deep undisturbed soil, the sweep had three values, and the model still strands 13 % of the rain in
   January and June at the end of the run.
 
+**Seventh study: the sewer's false outlets removed** (9 November 2026, commits 46510b2 and 5cbcb70; projects "… (calibration)").
+The sixth study's runs still stranded water in pools, and the largest (35.1977, −80.7666; 2 ha, about 24,000 m³ in January) had no
+pond on the USGS imagery. The cause was the network builder. A pipe whose inverts rise along its drawn direction was always
+turned round, so a placeholder invert (Charlotte's P_130098: 719.8 → 733 ft, "Pipe-DS point is assumed") stopped a main dead
+and its whole flow came out of the ground at that manhole. Now, where a main arrives as drawn, no outfall is there and the
+pipe drawn onward was turned round by its inverts, that pipe keeps its drawn direction and the hump comes out (46 pipes
+at Charlotte). A lone pipe with rising inverts is still taken as drawn backwards. Separately, pipe heads at a placed endwall or
+flared end with no grate were closed; they now take surface water through the barrels (22 heads, up to 72 in).
+
+Storm-wide water returned to the ground from pipe ends (m³) and water left standing over 30 cm at the end of the run:
+
+| Storm (same limit, 10 cm, for August; else old 10 cm against new 20 cm) | Returned where no endwall exists: before → after | Over 30 cm at the end: before → after | The false pool: before → after |
+|---|---|---|---|
+| August 2023 | 187,652 → 11,840 | 23,614 → 12,391 | 8,445 → 81 |
+| January 2024 | 579,187 → 39,730 | 44,207 → 14,202 | 24,469 → 83 |
+| June 2025 | 958,679 → 37,875 | 47,124 → 13,810 | 26,788 → 83 |
+
+The same study as the sixth then ran again (level error at the gauge / volume / peak / NSE):
+
+| Storm | Soil limit | Before the fix | After the fix |
+|---|---|---|---|
+| August 2023 (tuned) | 5 cm | −0.01 m* / 145 % / 135 % | +0.04 m / 177 % / 152 % / 0.46 |
+| | 10 cm | −0.33 m / 105 % / 83 % / 0.61 | −0.21 m / 132 % / 103 % / 0.58 |
+| | 20 cm | −0.63 m / 66 % / 51 % | **−0.44 m / 90 % / 72 % / 0.68 (kept)** |
+| January 2024 (never seen) | none | −0.91 m / 38 % / 45 % / 0.57 | −0.82 m / 48 % / 54 % / 0.72 |
+| | kept value (10 cm before, 20 cm after) | −0.47 m / 95 % / 83 % / 0.93 | **−0.41 m / 104 % / 93 % / 0.95** |
+| June 2025 (never seen) | none | −0.76 m / 32 % / 37 % / 0.55 | −0.69 m / 41 % / 42 % / 0.63 |
+| | kept value (10 cm before, 20 cm after) | −0.45 m / 68 % / 54 % / 0.73 | −0.68 m / 65 % / 43 % / 0.66 |
+
+\* as reported in the sixth study's sweep.
+
+- **The fault is gone and the books are honest.** The false pool is empty in all three storms, and 94 % of the water that
+  came back up at places with no outlet now stays in the pipes. 61 pipe ends with no endwall remain; the city layer shows
+  nothing carrying on past them, and they return 4–6 % of what they did.
+- **At a like-for-like soil limit, flow at the gauge rises by 9–26 points of volume and the level by 0.05–0.19 m.** The water
+  that was stranded or sent back reaches the creek.
+- **The tuning moved.** More water now reaches the creek, so August picks a 20 cm limit instead of 10 cm by flow score. That
+  choice is what makes June's level look worse here (−0.68 against −0.45 m): 20 cm is a thirstier limit. The 10 cm limit
+  was not rerun on June or January after the fix.
+- **It still is not good enough.** Levels are 0.4–0.7 m low against a 0.15 m target. January's flow is now close (volume 104 %,
+  peak 93 %, NSE 0.95). June's peak is 43 % and its volume 65 %, which points back at June's rain, already known to be
+  short (94 mm over the box against 110 mm at the in-watershed gauge). The soil limit stays off by default.
+- The direction and entrance changes apply to every network built from a real pipe layer and are on by default. Other cases
+  with real pipes (Portland, §5.7) have not been rerun.
+
 ### 6.5 A reviewer's checklist
 
 1. Commit and fingerprint recorded in `summary.json`; commit not `+dirty` for a submitted result.

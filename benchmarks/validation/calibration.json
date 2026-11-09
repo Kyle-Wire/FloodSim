@@ -1390,5 +1390,218 @@
    }
   ],
   "note": "Sixth study: a shallow limit on soil storage (the water-table depth input, every cell), tuned on the short dry storm, frozen, checked on the two large ones; January on the rain with the storm-wide bias; infiltration x1, wetness from the rain before the storm"
+ },
+ {
+  "created": "2026-11-09T21:32:01.744Z",
+  "commit": "5cbcb70",
+  "case": "edwards-branch-clt-2023-08",
+  "title": "Edwards Branch, Charlotte NC — 10 August 2023, summer storm",
+  "set": {
+   "histSrc": "radarFit",
+   "wetness": "auto"
+  },
+  "vary": {
+   "wtDepth": [
+    "0.05",
+    "0.1",
+    "0.2"
+   ]
+  },
+  "target": 0.15,
+  "objective": "flow",
+  "points": [
+   {
+    "inputs": {
+     "wtDepth": "0.05"
+    },
+    "run": "2026-11-09_131117_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.043528000000009115,
+    "bias": 0.043528000000009115,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": 0.044
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.092,
+     "nse": 0.464,
+     "volumeRatio": 1.768,
+     "peakRatio": 1.525,
+     "lag": 2.2,
+     "levelNSE": 0.452
+    }
+   },
+   {
+    "inputs": {
+     "wtDepth": "0.1"
+    },
+    "run": "2026-11-09_132327_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.21447200000000066,
+    "bias": -0.21447200000000066,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.214
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.622,
+     "nse": 0.583,
+     "volumeRatio": 1.324,
+     "peakRatio": 1.03,
+     "lag": 6.8,
+     "levelNSE": 0.416
+    }
+   },
+   {
+    "inputs": {
+     "wtDepth": "0.2"
+    },
+    "run": "2026-11-09_133522_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.44447199999999043,
+    "bias": -0.44447199999999043,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.444
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.693,
+     "nse": 0.68,
+     "volumeRatio": 0.903,
+     "peakRatio": 0.719,
+     "lag": 7.3,
+     "levelNSE": 0.582
+    }
+   }
+  ],
+  "kept": {
+   "wtDepth": "0.2"
+  },
+  "calibration": {
+   "n": 1,
+   "rms": 0.44447199999999043,
+   "bias": -0.44447199999999043,
+   "run": "2026-11-09_133522_Calibration-Existing-condition",
+   "flow": {
+    "site": "0214643820",
+    "kge": 0.693,
+    "nse": 0.68,
+    "volumeRatio": 0.903,
+    "peakRatio": 0.719,
+    "lag": 7.3,
+    "levelNSE": 0.582
+   }
+  },
+  "validation": [
+   {
+    "case": "edwards-branch-clt-2024-01",
+    "title": "Edwards Branch, Charlotte NC — 9 January 2024, winter storm",
+    "asSet": {
+     "run": "2026-11-09_140812_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.8195120000000315,
+     "bias": -0.8195120000000315,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.82
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.303,
+      "nse": 0.724,
+      "volumeRatio": 0.479,
+      "peakRatio": 0.539,
+      "lag": 4.5,
+      "levelNSE": 0.816
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-09_144447_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.41051200000003973,
+     "bias": -0.41051200000003973,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.411
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.918,
+      "nse": 0.95,
+      "volumeRatio": 1.044,
+      "peakRatio": 0.931,
+      "lag": -19,
+      "levelNSE": 0.827
+     }
+    }
+   },
+   {
+    "case": "edwards-branch-clt",
+    "title": "Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers",
+    "asSet": {
+     "run": "2026-11-09_153807_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.6893840000000182,
+     "bias": -0.6893840000000182,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.689
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.193,
+      "nse": 0.631,
+      "volumeRatio": 0.409,
+      "peakRatio": 0.423,
+      "lag": -4.2,
+      "levelNSE": 0.752
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-09_163154_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.676384000000013,
+     "bias": -0.676384000000013,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.676
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.36,
+      "nse": 0.657,
+      "volumeRatio": 0.647,
+      "peakRatio": 0.429,
+      "lag": -3.8,
+      "levelNSE": 0.663
+     }
+    }
+   }
+  ],
+  "note": "Seventh study (Charlotte): same as the sixth but with the pipe network fixed: a rising invert no longer stops a main dead (46 pipes keep their drawn direction, 52 false outfalls gone) and culvert heads at endwalls take water. Soil limit retuned on August; infiltration x1, wetness auto."
  }
 ]

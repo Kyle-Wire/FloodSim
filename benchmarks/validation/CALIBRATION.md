@@ -9,6 +9,23 @@ kept, not when the tuning storm does. See docs/METHODS.md §6.4.
 
 ## Edwards Branch, Charlotte NC — 10 August 2023, summer storm — 2026-11-09
 
+Commit 5cbcb70. Every run: histSrc = radarFit, wetness = auto. Target 0.15 m. Seventh study (Charlotte): same as the sixth but with the pipe network fixed: a rising invert no longer stops a main dead (46 pipes keep their drawn direction, 52 false outfalls gone) and culvert heads at endwalls take water. Soil limit retuned on August; infiltration x1, wetness auto.
+
+| Values | Run | Level errors | RMS (m) | Bias (m) | Flow KGE | Flow NSE | Volume (model / gauge) | Peak flow (model / gauge) |
+|---|---|---|---|---|---|---|---|---|
+| soil limit depth m 0.05 | 2026-11-09_131117_Calibration-Existing-condition | 1 | 0.04 | +0.04 | 0.09 | 0.46 | 1.77 | 1.52 |
+| soil limit depth m 0.1 | 2026-11-09_132327_Calibration-Existing-condition | 1 | 0.21 | −0.21 | 0.62 | 0.58 | 1.32 | 1.03 |
+| soil limit depth m 0.2 **(kept)** | 2026-11-09_133522_Calibration-Existing-condition | 1 | 0.44 | −0.44 | 0.69 | 0.68 | 0.90 | 0.72 |
+
+Kept (best flow KGE at the gauge): **soil limit depth m 0.2**, calibration storm 0.44 m RMS (3.0× the target), flow KGE 0.69.
+
+| Storm it never saw | As set: RMS / bias (n) | Calibrated: RMS / bias (n) | Flow KGE as set | calibrated | Against the target |
+|---|---|---|---|---|---|
+| Edwards Branch, Charlotte NC — 9 January 2024, winter storm | 0.82 / −0.82 (1) | 0.41 / −0.41 (1) | 0.30 | 0.92 | 2.7× the target; the tuning carried over |
+| Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers | 0.69 / −0.69 (1) | 0.68 / −0.68 (1) | 0.19 | 0.36 | 4.5× the target; the tuning carried over |
+
+## Edwards Branch, Charlotte NC — 10 August 2023, summer storm — 2026-11-09
+
 Commit 2524f63. Every run: histSrc = radarFit, wetness = auto. Target 0.15 m. Sixth study: a shallow limit on soil storage (the water-table depth input, every cell), tuned on the short dry storm, frozen, checked on the two large ones; January on the rain with the storm-wide bias; infiltration x1, wetness from the rain before the storm
 
 | Values | Run | Level errors | RMS (m) | Bias (m) | Flow KGE | Flow NSE | Volume (model / gauge) | Peak flow (model / gauge) |
