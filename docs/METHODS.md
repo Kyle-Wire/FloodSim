@@ -1905,6 +1905,29 @@ gauge / flow volume against the gauge's / flow NSE.
   dry ground that runs off this little points away from the rain and toward how much of the paved area really reaches the
   creek.
 
+**Sixth study: a shallow limit on what the soil can take** (9 November 2026, commit 2524f63; projects "… (calibration)").
+The creek loses a nearly constant depth per storm: about 25 mm in August, 20–25 mm in January and 9–25 mm in June. Green-Ampt's
+only limit is the water table or bedrock, so the model's loss grows with the storm. The water-table depth input, applied to
+every cell, stands in for a shallow layer that fills (*soil limit* below). Tuned on the short dry storm, August (5, 10, 20 cm;
+flow objective), then frozen and run on the two large storms. Infiltration × 1, rain fitted to the gauges (January with the
+storm-wide bias, 86 mm), wetness from the rain before the storm.
+
+| Storm | No limit: level / volume / peak / NSE | Soil limit 10 cm: level / volume / peak / NSE |
+|---|---|---|
+| 10 August 2023 (tuned; 5 cm: 0.01 m low / 145 % / 135 %; 20 cm: 0.63 m low / 66 % / 51 %) | not run in this study | −0.33 m / 105 % / 83 % / 0.61 |
+| 9 January 2024 (never seen) | −0.91 m / 38 % / 45 % / 0.57 | **−0.47 m / 95 % / 83 % / 0.93** |
+| 12 June 2025 (never seen) | −0.76 m / 32 % / 37 % / 0.55 | −0.45 m / 68 % / 54 % / 0.73 |
+
+- **The limit does what the bucket predicts, on storms it was not tuned on.** Over the 2.54 km² watershed the model now
+  carries about 40 %, 72 % and 64 % of the rain (August, January, June); the creek carried 38 %, 77 % and 95 % (June's rain
+  uncertain, about 80 % at the in-watershed gauge's 110 mm). Earlier the model's share was 55–59 % in all three.
+- **It still is not good enough.** Every level is 0.3–0.5 m low against a target of 0.15 m. Peak flow is 83 %, 83 % and 54 %
+  of the gauge's. August reads better on level with the 5 cm limit, which carries 145 % of the volume: volume and level
+  cannot both be matched there, so the water arrives too spread out, or the channel at the gauge carries it too easily.
+- **Not adopted.** The case files and defaults do not change. A 10 cm layer has not been measured here, the input applies to
+  every cell including deep undisturbed soil, the sweep had three values, and the model still strands 13 % of the rain in
+  January and June at the end of the run.
+
 ### 6.5 A reviewer's checklist
 
 1. Commit and fingerprint recorded in `summary.json`; commit not `+dirty` for a submitted result.

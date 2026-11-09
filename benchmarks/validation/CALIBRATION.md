@@ -7,6 +7,23 @@ other storms the tuning never saw, as set and with the values frozen. The target
 levels within 0.5 ft (0.15 m). A model is calibrated when the storms it never saw meet the target with the values
 kept, not when the tuning storm does. See docs/METHODS.md §6.4.
 
+## Edwards Branch, Charlotte NC — 10 August 2023, summer storm — 2026-11-09
+
+Commit 2524f63. Every run: histSrc = radarFit, wetness = auto. Target 0.15 m. Sixth study: a shallow limit on soil storage (the water-table depth input, every cell), tuned on the short dry storm, frozen, checked on the two large ones; January on the rain with the storm-wide bias; infiltration x1, wetness from the rain before the storm
+
+| Values | Run | Level errors | RMS (m) | Bias (m) | Flow KGE | Flow NSE | Volume (model / gauge) | Peak flow (model / gauge) |
+|---|---|---|---|---|---|---|---|---|
+| soil limit depth m 0.05 | 2026-11-09_083715_Calibration-Existing-condition | 1 | 0.01 | −0.01 | 0.49 | 0.72 | 1.45 | 1.35 |
+| soil limit depth m 0.1 **(kept)** | 2026-11-09_084940_Calibration-Existing-condition | 1 | 0.33 | −0.33 | 0.71 | 0.61 | 1.05 | 0.83 |
+| soil limit depth m 0.2 | 2026-11-09_090147_Calibration-Existing-condition | 1 | 0.63 | −0.63 | 0.39 | 0.54 | 0.66 | 0.51 |
+
+Kept (best flow KGE at the gauge): **soil limit depth m 0.1**, calibration storm 0.33 m RMS (2.2× the target), flow KGE 0.71.
+
+| Storm it never saw | As set: RMS / bias (n) | Calibrated: RMS / bias (n) | Flow KGE as set | calibrated | Against the target |
+|---|---|---|---|---|---|
+| Edwards Branch, Charlotte NC — 9 January 2024, winter storm | 0.91 / −0.91 (1) | 0.47 / −0.47 (1) | 0.15 | 0.80 | 3.1× the target; the tuning carried over |
+| Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers | 0.76 / −0.76 (1) | 0.45 / −0.45 (1) | 0.08 | 0.45 | 3.0× the target; the tuning carried over |
+
 ## Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers — 2026-11-08
 
 Commit ddd6339+dirty. Every run: histSrc = radarFit, wetness = auto. Target 0.15 m. Fifth study: starting soil wetness from the rain of the 5 days before each storm (NRCS AMC, USGS rain gauges): June 2025 and August 2023 start dry, January 2024 wet. Groundwater return off.

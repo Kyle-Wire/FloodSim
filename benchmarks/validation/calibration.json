@@ -1177,5 +1177,218 @@
     }
    ]
   }
+ },
+ {
+  "created": "2026-11-09T17:09:42.744Z",
+  "commit": "2524f63",
+  "case": "edwards-branch-clt-2023-08",
+  "title": "Edwards Branch, Charlotte NC — 10 August 2023, summer storm",
+  "set": {
+   "histSrc": "radarFit",
+   "wetness": "auto"
+  },
+  "vary": {
+   "wtDepth": [
+    "0.05",
+    "0.1",
+    "0.2"
+   ]
+  },
+  "target": 0.15,
+  "objective": "flow",
+  "points": [
+   {
+    "inputs": {
+     "wtDepth": "0.05"
+    },
+    "run": "2026-11-09_083715_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.012472000000002481,
+    "bias": -0.012472000000002481,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.012
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.487,
+     "nse": 0.717,
+     "volumeRatio": 1.446,
+     "peakRatio": 1.349,
+     "lag": 1.8,
+     "levelNSE": 0.537
+    }
+   },
+   {
+    "inputs": {
+     "wtDepth": "0.1"
+    },
+    "run": "2026-11-09_084940_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.3344720000000052,
+    "bias": -0.3344720000000052,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.334
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.711,
+     "nse": 0.615,
+     "volumeRatio": 1.046,
+     "peakRatio": 0.827,
+     "lag": 8.2,
+     "levelNSE": 0.459
+    }
+   },
+   {
+    "inputs": {
+     "wtDepth": "0.2"
+    },
+    "run": "2026-11-09_090147_Calibration-Existing-condition",
+    "n": 1,
+    "rms": 0.6334719999999834,
+    "bias": -0.6334719999999834,
+    "errors": [
+     {
+      "kind": "gauge",
+      "id": "0214643820",
+      "error": -0.633
+     }
+    ],
+    "flow": {
+     "site": "0214643820",
+     "kge": 0.386,
+     "nse": 0.535,
+     "volumeRatio": 0.661,
+     "peakRatio": 0.505,
+     "lag": 10.3,
+     "levelNSE": 0.562
+    }
+   }
+  ],
+  "kept": {
+   "wtDepth": "0.1"
+  },
+  "calibration": {
+   "n": 1,
+   "rms": 0.3344720000000052,
+   "bias": -0.3344720000000052,
+   "run": "2026-11-09_084940_Calibration-Existing-condition",
+   "flow": {
+    "site": "0214643820",
+    "kge": 0.711,
+    "nse": 0.615,
+    "volumeRatio": 1.046,
+    "peakRatio": 0.827,
+    "lag": 8.2,
+    "levelNSE": 0.459
+   }
+  },
+  "validation": [
+   {
+    "case": "edwards-branch-clt-2024-01",
+    "title": "Edwards Branch, Charlotte NC — 9 January 2024, winter storm",
+    "asSet": {
+     "run": "2026-11-09_093505_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.9135120000000256,
+     "bias": -0.9135120000000256,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.914
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.148,
+      "nse": 0.57,
+      "volumeRatio": 0.377,
+      "peakRatio": 0.445,
+      "lag": 7.5,
+      "levelNSE": 0.753
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-09_101444_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.4665120000000229,
+     "bias": -0.4665120000000229,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.467
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.801,
+      "nse": 0.925,
+      "volumeRatio": 0.947,
+      "peakRatio": 0.834,
+      "lag": -18.8,
+      "levelNSE": 0.792
+     }
+    }
+   },
+   {
+    "case": "edwards-branch-clt",
+    "title": "Edwards Branch, Charlotte NC — 12 June 2025, real storm sewers",
+    "asSet": {
+     "run": "2026-11-09_110907_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.7563839999999971,
+     "bias": -0.7563839999999971,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.756
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.081,
+      "nse": 0.546,
+      "volumeRatio": 0.323,
+      "peakRatio": 0.372,
+      "lag": -4,
+      "levelNSE": 0.714
+     }
+    },
+    "calibrated": {
+     "run": "2026-11-09_120937_Validation-Existing-conditions",
+     "n": 1,
+     "rms": 0.4533839999999998,
+     "bias": -0.4533839999999998,
+     "errors": [
+      {
+       "kind": "gauge",
+       "id": "0214643820",
+       "error": -0.453
+      }
+     ],
+     "flow": {
+      "site": "0214643820",
+      "kge": 0.448,
+      "nse": 0.735,
+      "volumeRatio": 0.675,
+      "peakRatio": 0.538,
+      "lag": -5,
+      "levelNSE": 0.697
+     }
+    }
+   }
+  ],
+  "note": "Sixth study: a shallow limit on soil storage (the water-table depth input, every cell), tuned on the short dry storm, frozen, checked on the two large ones; January on the rain with the storm-wide bias; infiltration x1, wetness from the rain before the storm"
  }
 ]
