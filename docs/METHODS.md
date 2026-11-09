@@ -1959,10 +1959,10 @@ The same study as the sixth then ran again (level error at the gauge / volume / 
 
 \* as reported in the sixth study's sweep.
 
-- **The fault is gone and the books are honest.** The false pool is empty in all three storms, and 94 % of the water that
+- **The fault is gone and the books are honest.** The false pool is empty in all three storms, and 93–96 % of the water that
   came back up at places with no outlet now stays in the pipes. 61 pipe ends with no endwall remain; the city layer shows
-  nothing carrying on past them, and they return 4–6 % of what they did.
-- **At a like-for-like soil limit, flow at the gauge rises by 9–26 points of volume and the level by 0.05–0.19 m.** The water
+  nothing carrying on past them, and they return 4–7 % of what they did.
+- **At a like-for-like soil limit, flow at the gauge rises by 9–32 points of volume and the level by 0.05–0.19 m.** The water
   that was stranded or sent back reaches the creek.
 - **The tuning moved.** More water now reaches the creek, so August picks a 20 cm limit instead of 10 cm by flow score. That
   choice is what makes June's level look worse here (−0.68 against −0.45 m): 20 cm is a thirstier limit. The 10 cm limit
