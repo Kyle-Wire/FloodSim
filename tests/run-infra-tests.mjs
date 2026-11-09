@@ -50,6 +50,29 @@ const fc = (features) => ({ type: 'FeatureCollection', features });
   check('estimated inverts survive the round trip', near(Math.min(...synth.nodes.filter(n => !n.offsite).map(n => n.invert)), invNet, 1e-3), `lowest on-site invert ${invNet.toFixed(3)} m (synthetic ${invSynth.toFixed(3)})`);
 }
 
+// ---- direction: a rising placeholder invert must not cut a main; a culvert head at an endwall takes water
+{
+  const P = (x0, x1, upInv, dnInv, D = 0.9) => ({ line: [ll(x0, 100), ll(x1, 100)], h: D, upInv, dnInv });
+  const pts = [P(20, 60, 8.0, 7.8), P(60, 100, 7.8, 9.5), P(100, 140, 9.5, 7.4), P(140, 180, 7.4, 7.2)]; // the second rises to a placeholder at x = 100
+  const end = { lon: ll(180, 100)[0], lat: ll(180, 100)[1] };
+  const net = realNetwork(g, f, pts, sim, { outfalls: [end] }), real = net.pipes.filter(p => p.real);
+  const on = (x) => net.nodes.findIndex(n => Math.abs(n.p[0] - x) < 1.5);
+  check('a rising placeholder does not stop the main: one way out, at the endwall', net.nodes.filter(n => n.outfall && !n.edge).length === 1 && net.stats.openEnds === 0 && net.stats.restoredPipes === 1, JSON.stringify({ restored: net.stats.restoredPipes, openEnds: net.stats.openEnds }));
+  const hump = real.find(p => p.from === on(60)), next = real.find(p => p.from === on(100));
+  check('the pipe keeps its drawn direction and the hump comes out', hump && hump.to === on(100) && next && next.to === on(140) && net.nodes[on(100)].invert < 7.8, `invert at the hump ${net.nodes[on(100)].invert?.toFixed(2)} m`);
+
+  const alone = realNetwork(g, f, [{ line: [ll(40, 60), ll(90, 60)], h: 0.6, upInv: 7.0, dnInv: 7.6 }], sim, {});
+  check('a lone pipe with rising inverts is still taken as drawn backwards', alone.stats.restoredPipes === 0 && alone.pipes.filter(p => p.real)[0].from === alone.nodes.findIndex(n => Math.abs(n.p[0] - 90) < 1.5));
+
+  const head = ll(40, 40), inl = ll(120, 44);
+  const box = realNetwork(g, f, [{ line: [head, ll(100, 40)], h: 1.2, w: 1.5, shape: 'RECT_CLOSED', barrels: 2, upInv: 8.5, dnInv: 8.2 }, { line: [ll(100, 40), ll(190, 40)], h: 1.2, upInv: 8.2, dnInv: 7.8 }], sim,
+    { realInlets: [{ lon: inl[0], lat: inl[1] }], outfalls: [{ lon: head[0], lat: head[1] }, { lon: ll(190, 40)[0], lat: ll(190, 40)[1] }] });
+  const at = box.inlets.find(e => box.nodes[e.node].name === 'J' + box.nodes.findIndex(n => Math.abs(n.p[0] - 40) < 1.5));
+  check('a pipe head at an endwall with no grate takes water through its barrels', box.stats.culvertEntrances === 1 && at?.grates === 1 && at.crest === 0 && near(at.parts[0][1].inletArea, 3.6, 1e-6) && near(at.parts[0][1].inletPerim, 3, 1e-6), JSON.stringify(at?.parts));
+  const lid = realNetwork(g, f, [{ line: [head, ll(100, 40)], h: 1.2, upInv: 8.5, dnInv: 8.2 }], sim, { realInlets: [{ lon: inl[0], lat: inl[1] }] });
+  check('without an endwall the head stays a closed manhole', lid.stats.culvertEntrances === 0);
+}
+
 // ---- a drawn network: manhole inverts fill pipe inverts, a placed outfall ends the network, per-pipe roughness
 {
   const pts = { a: ll(40, 100), b: ll(100, 100), c: ll(160, 100), o: ll(180, 100) };

@@ -16,6 +16,11 @@
 //   7. an interior pipe end no outfall claims: in a separate storm sewer it discharges where it ends (`openEnd`: an
 //      endwall the layer missed, or a gap whose water surfaces nearby); in a combined sewer (`opts.combined`) it may be a
 //      gap on the way to the interceptor, so its water leaves the model
+//   8. a pipe whose inverts rise along its drawn direction is first taken as drawn backwards. Where that would stop a main
+//      dead (water arrives, nothing leaves, no outfall claims the manhole) the inverts are the error (a placeholder), so
+//      the pipe keeps its drawn direction and the hump comes out
+//   9. a pipe that starts at a placed endwall or flared end, with no grate, is a culvert entrance: surface water goes in
+//      through the barrel's own opening
 import { toCells } from './ingest.js';
 import { DESIGN_DEFAULTS, addOutlets, exchangePoints } from './drainage.js';
 
@@ -181,10 +186,47 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     }
     const flip = up != null ? dn > up : dist[q.b] > dist[q.a] || (dist[q.b] === dist[q.a] && nodes[q.b].ground > nodes[q.a].ground);
     if (flip) { [q.a, q.b] = [q.b, q.a]; [up, dn] = [dn, up]; }
-    Object.assign(q, { D: q.r.h, Wd: q.r.w, shape: q.r.shape, barrels: q.r.barrels, invUp: up, invDn: dn, given: up != null });
+    Object.assign(q, { D: q.r.h, Wd: q.r.w, shape: q.r.shape, barrels: q.r.barrels, invUp: up, invDn: dn, given: up != null, reversed: flip && up != null });
   }
   const into = nodes.map(() => []), outOf = nodes.map(() => []);
   raw.forEach((q, k) => { into[q.b].push(k); outOf[q.a].push(k); });
+
+  // ---- 3a. a false dead end: a main arrives in the direction it was drawn, no outfall is here, and the pipe drawn onward
+  //          was turned round by rising inverts. Those inverts are the error (often a placeholder hump): turn it back and
+  //          look again, since the dead end moves one pipe downstream. A run where nothing arrives as drawn may really end
+  //          here, so it is left alone.
+  const restored = [];
+  for (let moved = true; moved;) {
+    moved = false;
+    for (let i = 0; i < nodes.length; i++) {
+      if (!into[i].length || outOf[i].length || nodes[i].edge || userOut.has(i) || !into[i].some(k => !raw[k].reversed)) continue;
+      const back = into[i].filter(k => raw[k].reversed).sort((a, b) => (raw[b].r.h || 0) - (raw[a].r.h || 0))[0];
+      if (back === undefined) continue;
+      const q = raw[back];
+      into[i].splice(into[i].indexOf(back), 1); outOf[q.a].splice(outOf[q.a].indexOf(back), 1);
+      [q.a, q.b] = [q.b, q.a]; [q.invUp, q.invDn] = [q.invDn, q.invUp]; q.reversed = false;
+      into[q.b].push(back); outOf[q.a].push(back);
+      restored.push(back); moved = true;
+    }
+  }
+  // the hump: a top end far below the main arriving there is the bad one; otherwise the bottom end is, and it comes down
+  // to the top end, carrying on downstream only as far as later pipes stand above it
+  for (const k of restored) {
+    const q = raw[k], fall = o.minSlope * q.L;
+    if (q.invDn <= q.invUp - fall) continue; // already repaired from upstream
+    const arrive = Math.min(...into[q.a].filter(j => j !== k && raw[j].given).map(j => raw[j].invDn), Infinity);
+    if (arrive < Infinity && arrive - q.invUp > 0.3 && arrive > q.invDn + fall) { q.invUp = arrive; continue; }
+    q.invDn = q.invUp - fall;
+    const done = new Set([k]), stack = [[q.b, q.invDn]];
+    while (stack.length) {
+      const [i, z] = stack.pop();
+      for (const j of outOf[i]) {
+        const r = raw[j]; if (done.has(j) || !r.given || r.invUp <= z) continue;
+        done.add(j); r.invUp = z;
+        if (r.invDn > z - o.minSlope * r.L) { r.invDn = z - o.minSlope * r.L; stack.push([r.b, r.invDn]); }
+      }
+    }
+  }
   let filled = 0;
   for (let pass = 0; pass < 50; pass++) {
     let changed = false;
@@ -214,6 +256,17 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     if (!changed) break;
   }
 
+  // ---- culvert entrances: a pipe that starts at a placed endwall or flared end with no grate takes surface water through
+  //      its barrels, from the lowest ground within 5 m (inlet control: weir 1.64 SI, orifice 0.6, FHWA HDS-5 headwall range)
+  let entrances = 0;
+  if (realInlets) nodes.forEach((n, i) => {
+    if (into[i].length || !outOf[i].length || n.edge || !userOut.has(i) || n.grates.length) return;
+    const q = outOf[i].map(k => raw[k]).sort((a, b) => b.D - a.D)[0], rect = q.shape === 'RECT_CLOSED', b = q.barrels > 1 ? q.barrels : 1, wide = rect ? q.Wd : q.D;
+    n.inletFine = [lowest(n.p, Math.max(1, Math.round(5 / dx)))]; n.grateOpen = [1]; n.grateCrest = [0];
+    n.grateHyd = [{ inletArea: b * (rect ? wide * q.D : Math.PI / 4 * q.D * q.D), inletPerim: b * wide, Cw: 0.37, Co: 0.6 }];
+    entrances++;
+  });
+
   // ---- outfalls: every manhole with no pipe leaving it (boundary ends continue off-site, interior ends are free)
   const outNodes = nodes.map((n, i) => {
     const sink = into[i].length > 0 && outOf[i].length === 0;
@@ -236,7 +289,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     stats: { junctions: outNodes.filter(n => !n.outfall).length, outfalls: outNodes.filter(n => n.outfall).length, pipes: outPipes.length,
       inlets: inlets.filter(g => g.grates > 0).length, grates: inlets.reduce((s, g) => s + g.grates, 0), lids: inlets.filter(g => !g.grates).length,
       realInlets, unconnectedGrates: unconnected, realOutfalls: 0, offsiteOutlets: outNodes.filter(n => n.offsite).length,
-      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, interiorEnds, placedOutfalls: outNodes.filter(n => n.placed).length, openEnds: outNodes.filter(n => n.openEnd).length,
+      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, interiorEnds, placedOutfalls: outNodes.filter(n => n.placed).length, openEnds: outNodes.filter(n => n.openEnd).length, restoredPipes: restored.length, culvertEntrances: entrances,
       pipeLength: outPipes.filter(q => !q.offsite).reduce((s, q) => s + q.L, 0), minD: Math.min(...outPipes.map(q => q.D)), maxD: Math.max(...outPipes.map(q => q.D)), served: 0 },
   };
 }

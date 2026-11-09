@@ -1713,12 +1713,12 @@ function updateDrainUI() {
       const u = model.util, head = net.drawn
         ? `Data tier 1: <b>${s.realPipes} pipes from the infrastructure layer</b>, ${(s.pipeLength / 1000).toFixed(2)} km from ${Math.round(s.minD * 1000)} to ${Math.round(s.maxD * 1000)} mm; ` +
           `inverts ${s.inverts}${s.filledSizes ? `, ${s.filledSizes} missing sizes taken from neighbouring pipes` : ''}. ${s.grates} ${s.realInlets ? 'catch basins' : 'inlets assumed, one per manhole'}` +
-          `${s.unconnectedGrates ? ` (${s.unconnectedGrates} more than 30 m from any pipe, left out)` : ''}; ${s.offsiteOutlets} pipes continue past the area, ${s.interiorEnds} end inside it` +
+          `${s.unconnectedGrates ? ` (${s.unconnectedGrates} more than 30 m from any pipe, left out)` : ''}; ${s.offsiteOutlets} pipes continue past the area, ${s.interiorEnds} end inside it${s.restoredPipes ? `, ${s.restoredPipes} pipes kept the direction drawn because their depths would have stopped a main dead` : ''}${s.culvertEntrances ? `, ${s.culvertEntrances} culvert entrances take surface water` : ''}` +
           `${run.storage?.length ? `; ${run.storage.length} storage units (${fmtVol(run.storage.reduce((a, t) => a + t.volume, 0))}) joined to manholes` : ''}.`
         : net.tier === 1
         ? `Data tier 1: <b>${s.realPipes} of your pipes</b> (${model.linked.names.pipes.join(', ')}), ${(s.pipeLength / 1000).toFixed(1)} km from ${Math.round(s.minD * 1000)} to ${Math.round(s.maxD * 1000)} mm; ` +
           `inverts ${s.inverts}${s.filledSizes ? `, ${s.filledSizes} missing sizes taken from neighbouring pipes` : ''}. ${s.grates} ${s.realInlets ? 'linked inlets' : 'inlets assumed, one per manhole'}` +
-          `${s.unconnectedGrates ? ` (${s.unconnectedGrates} more than 30 m from any pipe, left out)` : ''}; ${s.tees} side connections joined; ${s.offsiteOutlets} pipes continue past the area, ${s.interiorEnds} end inside it.`
+          `${s.unconnectedGrates ? ` (${s.unconnectedGrates} more than 30 m from any pipe, left out)` : ''}; ${s.tees} side connections joined; ${s.offsiteOutlets} pipes continue past the area, ${s.interiorEnds} end inside it${s.restoredPipes ? `, ${s.restoredPipes} pipes kept the direction drawn because their depths would have stopped a main dead` : ''}${s.culvertEntrances ? `, ${s.culvertEntrances} culvert entrances take surface water` : ''}.`
         : s.realInlets
         ? `Data tier 2+: <b>${s.grates} real inlets</b> from ${u.utility.name} (${u.utility.license})${s.unconnectedGrates ? `, ${s.unconnectedGrates} too far from a street to connect` : ''}; ` +
           `pipes are synthetic because ${u.utility.name} does not publish its mains. ${s.junctions} manholes, ${(s.pipeLength / 1000).toFixed(1)} km of pipe from ${Math.round(s.minD * 1000)} to ${Math.round(s.maxD * 1000)} mm, ` +
