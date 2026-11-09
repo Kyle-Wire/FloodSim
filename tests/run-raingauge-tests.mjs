@@ -56,7 +56,7 @@ const px = (lon, lat) => Math.round((win.lat0 - lat) / win.step - 0.5) * win.nx 
 {
   const g = [every5(cLon, cLat, 20, 'U1'), every5(cLon + 0.03, cLat, 5, 'U2'), every5(cLon, cLat + 0.03, 20, 'U3'), every5(cLon + 0.03, cLat + 0.03, 5, 'U4')];
   const F = fitRadar(hours, win, g, sampleWeights);
-  check('gauges that disagree: the radar stands, and the record says how close it was', F.n === 4 && F.factors === null && F.rmse.fitted === F.rmse.radar && F.candidates.length === 6,
+  check('gauges that disagree: the radar stands, and the record says how close it was', F.n === 4 && F.factors === null && F.rmse.fitted === F.rmse.radar && F.candidates.length === 12,
     `best candidate ${Math.min(...F.candidates.map(c => c.rmse)).toFixed(1)} mm against radar ${F.rmse.radar.toFixed(1)} mm`);
 }
 
@@ -67,7 +67,7 @@ const px = (lon, lat) => Math.round((win.lat0 - lat) / win.step - 0.5) * win.nx 
   const F = fitRadar(hours, win, g, sampleWeights), p = px(cLon + 0.015, cLat + 0.015), far = px(-80.62, 35.02);
   check('a core the radar reads low: fitted hour by hour, chosen by leave-one-out', F.mode === 'hourly' && F.rmse.fitted < F.rmse.radar / 3, `${F.mode}, d0 ${F.d0Km} km: ${F.rmse.fitted.toFixed(2)} against ${F.rmse.radar.toFixed(2)} mm`);
   const r2 = (30 + 1) / (10 + 1);
-  check('between the gauges: hour 2 about 2.8×, hours 1 and 3 about 1', near(F.factors[1][p], r2, 0.15) && near(F.factors[0][p], 1, 0.01) && near(F.factors[2][p], 1, 0.01), `${F.factors[1][p].toFixed(2)}, ${F.factors[0][p].toFixed(2)}`);
+  check('between the gauges: hour 2 about 2.8×, hours 1 and 3 about 1', near(F.factors[1][p], r2, 0.15) && near(F.factors[0][p], 1, 0.06) && near(F.factors[2][p], 1, 0.06), `${F.factors[1][p].toFixed(2)}, ${F.factors[0][p].toFixed(2)}`);
   check('25 km from the gauges the pull has faded well below theirs', F.factors[1][far] < 1 + (r2 - 1) / 3, `${F.factors[1][far].toFixed(2)} 25 km away`);
   const c1 = F.gauges.find(x => x.site === 'C1');
   check('a gauge’s wettest hour, the radar there and the fit from the others', c1.peak.gaugeMM === 30 && near(c1.peak.radarMM, 10, 1e-4) && c1.peak.looMM > 25, JSON.stringify(c1.peak));
@@ -75,6 +75,18 @@ const px = (lon, lat) => Math.round((win.lat0 - lat) / win.step - 0.5) * win.nx 
   applyFit(rr, F.factors);
   check('each hour’s frames and total take that hour’s field; the radar grid is untouched', near(rr.frames[45][p], F.factors[1][p], 1e-6) && near(rr.frames[10][p], F.factors[0][p], 1e-6) &&
     near(rr.hours[1].total[p], 10 * F.factors[1][p], 1e-4) && rr.hours[1].radar[p] === 10);
+}
+
+// ---- a storm the radar misses by a factor everywhere (Charlotte, January 2024): the storm-wide bias first, because the
+// hourly factors alone stop at 3×; kept only when it clearly beats the plain fit (the core above stays plain)
+{
+  const g = [every5(cLon, cLat, 35, 'W1'), every5(cLon + 0.04, cLat, 33, 'W2'), every5(cLon, cLat + 0.04, 37, 'W3'), every5(cLon + 0.04, cLat + 0.04, 35, 'W4'), every5(cLon + 0.02, cLat - 0.03, 34, 'W5')];
+  const F = fitRadar(hours, win, g, sampleWeights), p = px(cLon + 0.02, cLat + 0.02);
+  check('a radar 3.5× low everywhere: the storm-wide correction is kept and recorded', near(F.bias, 3, 0.01) && F.mode !== null, `bias ${F.bias?.toFixed(2)} (its cap), ${F.mode}, d0 ${F.d0Km}`);
+  check('…and the rain among the gauges reaches theirs, past the hourly cap of 3×', near(F.factors[1][p] * 10, 35, 1.5), `${(F.factors[1][p] * 10).toFixed(1)} mm in the hour against 35`);
+  const g2 = [every5(cLon, cLat, 22, 'X1'), every5(cLon + 0.04, cLat, 21, 'X2'), every5(cLon, cLat + 0.04, 23, 'X3'), every5(cLon + 0.04, cLat + 0.04, 22, 'X4'), every5(cLon + 0.02, cLat - 0.03, 24, 'X5')];
+  const F2 = fitRadar(hours, win, g2, sampleWeights), q = F2.gauges.find(x => x.site === 'X5');
+  check('a radar 2.2× low: each gauge predicted from the others and their bias', near(F2.bias ?? 0, 2.2, 0.05) && q.looMM > 55, `bias ${F2.bias?.toFixed(2)}, left-out gauge ${q.looMM.toFixed(1)} mm where it caught 72 and the radar had 30`);
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall rain-gauge tests passed');

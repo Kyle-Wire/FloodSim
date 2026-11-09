@@ -563,7 +563,8 @@ all n together.
   (bilinear). A gauge that reported in under 90 % of the hours the radar had rain there, or with under 5 mm in both, is
   left out. Log ratios ln((G + 1) / (R + 1)), capped at 3× either way, are spread by inverse distance 1 / (d² + d0²)
   with a neutral weight 1 / (10 km)² on no change. They are taken either hour by hour or on storm totals. Each
-  candidate (hourly or storm; d0 = 1, 3 or 8 km) predicts every gauge's hours from the other gauges, and the one with the
+  candidate (hourly or storm; d0 = 1, 3 or 8 km; with or without a storm-wide radar bias taken out first, for storms
+  the radar misses by a factor) predicts every gauge's hours from the other gauges, and the one with the
   smallest RMS error per gauge-hour is kept, but only if it beats the radar alone; otherwise the radar-only rain stands.
   The 2-minute frames and hourly totals take their hour's field. The run record keeps every gauge (totals, wettest
   hour, the leave-one-out prediction) and every candidate's score. With no gauges that reported, the gauge-corrected
@@ -1867,6 +1868,42 @@ gauge / flow volume against the gauge's / flow NSE.
   storms that fall short and matches in the one that does not. With that gauge's rain the stream gauge's share would be 83 %, 77 % and
   40 %: still very high for June and January. What is left is the gauge's rating in large floods and pipes bringing
   water across the mapped divide.
+
+**What those checks found** (8 November 2026; analysis of the data, no new model runs).
+
+- **January's rain is short, and the cause is the radar fit.** The MRMS radar-only total over the area is 37 mm. All 27
+  USGS rain gauges within 10 km caught more, 1.5 to 2.9 times the radar at their own pixels (2.25 times over all of them),
+  and the five nearest the area caught 77–90 mm (mean 83). The fit (§3.6) takes the area to 68 mm: it is right to raise the
+  radar, but it stops short. Left-out gauges average 63 mm where they caught 80. The hourly factor cap of 3 is part of it
+  (at a cap of 6: 76 mm); removing the pull toward the radar is not (69 mm). A storm-wide radar bias taken out first, the
+  fit then working on what is left, gives **86.5 mm** over the watershed, cuts the leave-one-out error from 3.38 to 2.45 mm
+  per gauge-hour, and brings the left-out gauges to 82 mm against 80. It barely moves June (94.1 to 92.9 mm; 3.61 to
+  3.64 mm) or August (40.8 to 41.3 mm; 3.38 mm both), where the radar's storm-wide bias is 0.91 and 1.26. The left-out
+  gauges had a small say in that bias (one part in 27). With 86.5 mm, January's creek passed 76 % of the rain, not 96 %.
+  The fit now tries this step and keeps it only if it beats the plain fit by more than 5 % on the left-out gauges; the
+  bias fades away from the gauges as the local factors do. As built, January comes to 85.8 mm over the watershed (left-out
+  gauges 80.7 mm against 79.9) and June and August keep the plain fit.
+- **June's rain cannot be settled.** Basin mean 94 mm. The gauge in the watershed caught 110 mm, but the four others
+  within 4.7 km of the area's centre caught 41–82 mm: a storm cell only one gauge saw. The true mean is somewhere from
+  about 94 to 110 mm.
+- **The watershed mean is the box mean.** StreamStats' outline (2.54 km²) gives 94.1, 68.4 and 40.8 mm, the same as the
+  box in every storm to within 0.2 mm. The difference is not the shape of the area.
+- **The gauge's rating is poorly anchored in floods but shows no sign of reading high.** USGS's flow measurements at this
+  site (177 visits): the largest made by wading or by acoustic profiler is 72.8 cfs, and only four exceed that, three of
+  them indirect (from flood marks after the event) and rated Poor, and the fourth 225 cfs of unspecified method. Against
+  the annual peaks' stage–discharge pairs, which lie on one curve for 2004–2024, the indirect values are 1,100 cfs at
+  8.67 ft (peak record 959), 820 at 8.64 ft (953) and 2,930 at 9.90 ft (2,560 published). They fall on both sides of the
+  curve, by 13–16 %. 75–80 % of each storm's volume passed above 225 cfs, and 58 % of June's above 881 cfs, so a
+  flood-range error of ±15 % moves the storm volumes by roughly ±10 %. It is a real uncertainty but it does not explain
+  a 40 % shortfall, and nothing here says its sign. The level error is not affected by the rating at all.
+- **Pipes across the divide are about even.** Charlotte's pipe layer, 10,015 pipes around the site, traced by their
+  upstream and downstream structures against StreamStats' outline: 38 pipes from outside drain in (0.20 km² by the
+  100 m squares they pass through), and 52 inside drain out (0.18 km²). These are rough areas (a pipe's direction taken
+  from its drawn order), but both are under a tenth of the watershed and they offset.
+- **August is the opposite problem and remains open.** The rain agrees (41 mm against nearby gauges of 27–44 mm) and the
+  creek passed 39 % of it. The model passes more than the gauge at any infiltration tried (126–146 %). A short storm on
+  dry ground that runs off this little points away from the rain and toward how much of the paved area really reaches the
+  creek.
 
 ### 6.5 A reviewer's checklist
 

@@ -4,6 +4,10 @@
 // 42 mm; docs/METHODS.md §5.12). Many cities run dense tipping-bucket networks with USGS (NWIS parameter 00045), so
 // the radar can be fitted to the gauges around the site:
 //
+//   0. optionally (step 4 decides), a storm-wide radar bias first: the gauges' total over the radar's at their pixels, so
+//      the fit below works on what is left. A radar that misses a whole storm by a factor (Charlotte, 9 January 2024:
+//      2.25, a cold stratiform storm) is more than the local factors can carry: hour by hour they are capped, and pull
+//      toward 1 where gauges are few
 //   1. each gauge's rain per hour G against the radar-only rain R at its pixel (bilinear) in the same hour; a gauge that
 //      reported in under 90 % of the hours the radar had rain there, or caught and saw under `minMM` all storm, is left
 //      out
@@ -11,8 +15,8 @@
 //      per hour or over the whole storm
 //   3. a factor field over the radar window: inverse-distance weights 1 / (d² + d0²) on the log ratios, plus a neutral
 //      weight 1 / R0² on ln 1 = 0, so far from every gauge the radar stands as it is
-//   4. leave-one-out: each gauge's hours predicted from the field the other gauges make. Every candidate (per hour or per
-//      storm, d0 of 1, 3 or 8 km) is scored by its RMS error over the gauge-hours, and the best is kept only if it
+//   4. leave-one-out: each gauge's hours predicted from the field the other gauges make (and the bias of the others).
+//      Every candidate (per hour or per storm, d0 of 1, 3 or 8 km, with and without the storm-wide bias) is scored by its RMS error over the gauge-hours, and the best is kept only if it
 //      beats the radar alone; otherwise the radar stands, and the record says so
 //   5. every 2-minute frame and hourly total times its hour's field: the radar keeps its pattern in space and within the
 //      hour, the gauges set the amount around them
@@ -20,7 +24,7 @@
 // depends on how far apart they are against the size of the storm cells, hence the leave-one-out choice.
 
 const NWIS = 'https://waterservices.usgs.gov/nwis', IN = 25.4, HOUR = 3600e3;
-export const FIT = { bufferKm: 10, minMM: 5, maxFactor: 3, reg: 1, neutralKm: 10, minCover: 0.9, d0s: [1, 3, 8], modes: ['hourly', 'storm'] };
+export const FIT = { bufferKm: 10, minMM: 5, maxFactor: 3, reg: 1, neutralKm: 10, minCover: 0.9, d0s: [1, 3, 8], modes: ['hourly', 'storm'], minBiasGauges: 3, minBiasGain: 0.05 };
 
 /** NWIS instantaneous precipitation (00045, inches per interval) for a lon/lat box and window (ms UTC). */
 export const rainURL = ([w, s, e, n], t0, t1) =>
@@ -90,27 +94,32 @@ export function fitRadar(hours, win, gauges, sampleWeights, o = {}) {
     if (wet && cover / wet < P.minCover) { row.why = `reported in ${cover} of the ${wet} hours the radar had rain there`; continue; }
     if (row.gaugeMM < P.minMM && row.radarMM < P.minMM) { row.why = `under ${P.minMM} mm in both`; continue; }
     row.used = true;
-    row.storm = lr(row.gaugeMM, row.radarMM);
     if (Math.abs(Math.log((row.gaugeMM + P.reg) / (row.radarMM + P.reg))) > cap) row.why = `storm total ${(row.gaugeMM / Math.max(row.radarMM, 0.1)).toFixed(1)}× the radar's, capped at ${P.maxFactor}×`;
   }
   const used = rows.filter(r => r.used), ll = (r) => [r.lon, r.lat];
-  // the log field at a point for hour h (mode 'hourly') or the storm, from the used gauges but `skip`
-  const logAt = (pt, h, mode, d0, skip = null) => {
-    let s = 0, w = 1 / P.neutralKm ** 2;
+  // the storm-wide bias: the gauges' total over the radar's at their pixels, all but `skip` (1 with too few gauges)
+  const biasOf = (skip = null) => {
+    const o = used.filter(r => r !== skip); if (o.length < P.minBiasGauges) return 1;
+    const b = (o.reduce((a, r) => a + r.gaugeMM, 0) + P.reg) / (o.reduce((a, r) => a + r.radarMM, 0) + P.reg);
+    return Math.max(1 / P.maxFactor, Math.min(P.maxFactor, b));
+  };
+  // the log field at a point for hour h (mode 'hourly') or the storm, from the used gauges but `skip`, over a radar times b
+  const logAt = (pt, h, mode, d0, skip = null, b = 1) => {
+    const none = 1 / P.neutralKm ** 2; let s = 0, w = none;
     for (const r of used) {
       if (r === skip) continue;
-      const v = mode === 'storm' ? r.storm : Number.isNaN(r.gh[h]) || !Number.isFinite(r.rh[h]) ? null : lr(r.gh[h], r.rh[h]);
+      const v = mode === 'storm' ? lr(r.gaugeMM, r.radarMM * b) : Number.isNaN(r.gh[h]) || !Number.isFinite(r.rh[h]) ? null : lr(r.gh[h], r.rh[h] * b);
       if (v === null) continue;
       const wi = 1 / (km(pt, ll(r)) ** 2 + d0 ** 2); s += wi * v; w += wi;
     }
-    return s / w;
+    return s / w + Math.log(b) * (1 - none / w); // the bias fades with the gauges, like the local factors: far from all of them the radar stands
   };
   // leave-one-out over the gauge-hours with rain in either
-  const score = (mode, d0) => {
+  const score = (mode, d0, bias = false) => {
     let e2 = 0, e2r = 0, n = 0;
     for (const r of used) {
-      const sf = mode === 'storm' ? Math.exp(logAt(ll(r), 0, 'storm', d0, r)) : 0;
-      r.loo = r.rh.map((R, h) => (Number.isFinite(R) ? R * (mode === 'storm' ? sf : Math.exp(logAt(ll(r), h, mode, d0, r))) : NaN));
+      const b = bias ? biasOf(r) : 1, sf = mode === 'storm' ? Math.exp(logAt(ll(r), 0, 'storm', d0, r, b)) : 0;
+      r.loo = r.rh.map((R, h) => (Number.isFinite(R) ? R * (mode === 'storm' ? sf : Math.exp(logAt(ll(r), h, mode, d0, r, b))) : NaN));
       for (let h = 0; h < H; h++) {
         const G = r.gh[h], R = r.rh[h];
         if (Number.isNaN(G) || !Number.isFinite(R) || !(G + R > 0.5)) continue;
@@ -120,27 +129,31 @@ export function fitRadar(hours, win, gauges, sampleWeights, o = {}) {
     return { rmse: n ? Math.sqrt(e2 / n) : Infinity, radar: n ? Math.sqrt(e2r / n) : Infinity, n };
   };
   const candidates = [];
-  for (const mode of P.modes) for (const d0 of P.d0s) { const s = score(mode, d0); candidates.push({ mode, d0Km: d0, rmse: s.rmse, radar: s.radar, n: s.n }); }
-  const best = candidates.reduce((a, c) => (c.rmse < a.rmse ? c : a), { rmse: Infinity });
+  // the plain fits first: on a tie the simpler one is kept
+  for (const bias of used.length > P.minBiasGauges ? [false, true] : [false]) for (const mode of P.modes) for (const d0 of P.d0s) { const s = score(mode, d0, bias); candidates.push({ mode, d0Km: d0, bias, rmse: s.rmse, radar: s.radar, n: s.n }); }
+  // the storm-wide bias reaches the whole window, gauges or not, so it is kept only if it clearly does better
+  const least = (l) => l.reduce((a, c) => (c.rmse < a.rmse ? c : a), { rmse: Infinity });
+  const plain = least(candidates.filter(c => !c.bias)), biased = least(candidates.filter(c => c.bias));
+  const best = biased.rmse < plain.rmse * (1 - P.minBiasGain) ? biased : plain;
   const radarRmse = candidates[0]?.radar ?? null, keep = used.length && best.rmse < radarRmse;
   // the gauges' leave-one-out under the kept fit (or the radar), their totals and wettest hours
-  if (used.length) score(keep ? best.mode : 'storm', keep ? best.d0Km : 1);
+  if (used.length) score(keep ? best.mode : 'storm', keep ? best.d0Km : 1, keep && best.bias);
   for (const r of used) {
     const loo = keep ? r.loo : r.rh; let k = 0;
     for (let h = 0; h < H; h++) if (r.gh[h] > (r.gh[k] || 0) || Number.isNaN(r.gh[k])) k = h;
     r.looMM = sum(r.gh.map((G, h) => (Number.isNaN(G) ? NaN : loo[h])));
     r.peak = { gaugeMM: r.gh[k], radarMM: r.rh[k], looMM: loo[k] };
   }
-  let factors = null;
+  let factors = null; const bias = keep && best.bias ? biasOf() : null;
   if (keep) {
     const pts = Array.from({ length: win.nx * win.ny }, (_, p) => pixelLL(win, p));
-    const one = (h) => Float32Array.from(pts, pt => Math.exp(logAt(pt, h, best.mode, best.d0Km)));
+    const b = bias ?? 1, one = (h) => Float32Array.from(pts, pt => Math.exp(logAt(pt, h, best.mode, best.d0Km, null, b)));
     if (best.mode === 'storm') { const f = one(0); factors = hours.map(() => f); } else factors = hours.map((_, h) => one(h));
   }
-  return { factors, mode: keep ? best.mode : null, d0Km: keep ? best.d0Km : null, n: used.length,
+  return { factors, mode: keep ? best.mode : null, d0Km: keep ? best.d0Km : null, bias, n: used.length,
     rmse: used.length ? { radar: radarRmse, fitted: keep ? best.rmse : radarRmse } : null,
-    candidates: candidates.map(({ mode, d0Km, rmse }) => ({ mode, d0Km, rmse })),
-    gauges: rows.map(({ gh, rh, loo, storm, ...r }) => r) };
+    candidates: candidates.map(({ mode, d0Km, bias, rmse }) => ({ mode, d0Km, bias, rmse })),
+    gauges: rows.map(({ gh, rh, loo, ...r }) => r) };
 }
 
 /** Step 5: each hour's frames (30 per hour, in step with `hours`) and total times that hour's field (in place). */

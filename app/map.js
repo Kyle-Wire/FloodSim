@@ -1120,7 +1120,7 @@ async function radarStorm(e, hourly, { gauge = true, fit = false } = {}) {
     if (st && !gauge && !fit) st.radar.unadjusted = true;
     if (st && fit) { // the gauges nearest the area first, for the note and the record
       const mid = model.site, d = (g) => Math.hypot((g.lon - mid[0]) * Math.cos(mid[1] * Math.PI / 180), g.lat - mid[1]) * 111.32, r1 = (v) => (Number.isFinite(v) ? +v.toFixed(1) : null);
-      st.radar.fit = { n: F?.n ?? 0, found: gauges.length, mode: F?.mode ?? null, d0Km: F?.d0Km ?? null, rmse: F?.rmse ?? null, candidates: F?.candidates ?? [], bufferKm: RG.FIT.bufferKm,
+      st.radar.fit = { n: F?.n ?? 0, found: gauges.length, mode: F?.mode ?? null, d0Km: F?.d0Km ?? null, bias: F?.bias ?? null, rmse: F?.rmse ?? null, candidates: F?.candidates ?? [], bufferKm: RG.FIT.bufferKm,
         gauges: (F?.gauges ?? []).map(g => ({ ...g, km: +d(g).toFixed(1), gaugeMM: r1(g.gaugeMM), radarMM: r1(g.radarMM), looMM: r1(g.looMM),
           peak: g.peak && { gaugeMM: r1(g.peak.gaugeMM), radarMM: r1(g.peak.radarMM), looMM: r1(g.peak.looMM) } })).sort((a, b) => a.km - b.km) };
     }
@@ -1198,7 +1198,7 @@ function fitNoteText(R) {
     (f.mode ? ` and the fit made from the other gauges ${g0.looMM.toFixed(0)} and ${g0.peak.looMM.toFixed(0)} mm.` : '.') : '';
   const out = f.found > f.n ? ` ${f.found - f.n} other gauge${f.found - f.n > 1 ? 's' : ''} not used (short record or dry).` : '';
   if (!f.mode) return `${f.n} USGS rain gauges within ${f.bufferKm} km, but no fit predicts a left-out gauge better than the radar alone (${f.rmse.radar.toFixed(1)} mm RMS per gauge-hour): the radar-only rain is used as it is; the gauges are too far apart for this storm's cells.${near}${out}`;
-  return `Radar-only rain fitted to ${f.n} USGS rain gauges within ${f.bufferKm} km, ${f.mode === 'hourly' ? 'hour by hour' : 'on storm totals'} (d0 ${f.d0Km} km, chosen by leave-one-out): ` +
+  return `Radar-only rain fitted to ${f.n} USGS rain gauges within ${f.bufferKm} km, ${f.bias != null ? `after a storm-wide radar correction of × ${f.bias.toFixed(2)}, ` : ''}${f.mode === 'hourly' ? 'hour by hour' : 'on storm totals'} (d0 ${f.d0Km} km, chosen by leave-one-out): ` +
     `${R.hoursMM.toFixed(0)} mm over the area against ${R.radarMM.toFixed(0)} mm from the radar alone. Each gauge predicted from the others: ${f.rmse.fitted.toFixed(1)} mm RMS per gauge-hour against ${f.rmse.radar.toFixed(1)} mm for the radar alone.${near}${out}`;
 }
 // ------------------------------------------------------------------ radar and nowcast (src/nowcast.js)
