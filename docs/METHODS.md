@@ -1725,6 +1725,28 @@ January peak, overtopping included. The estimate is sensitive to the flow and to
 None of the 10 other end sections the entrance rule keeps closed lies within 300 m of the creek path, except J475 (the
 crossing's west endwall above) and J36 (the box entrance).
 
+**Experiment C: the starting pool removed, one change (set up and predicted 10 November 2026, before the run).**
+Question: how much of the extended domain's January stage at Sheffield Dr comes from the false starting pool?
+
+What found the seed: the cells that start exactly 0.36 m deep around 210.9 m are on an OSM stream (way 1075557681)
+joining Edwards Branch at the crossing, on 210.5 m ground, 1.4 m above the gauge's water. The rise reached it because
+it is connected water. The bridge-deck guard in `waterBase` keeps a cell's own height when its neighbours share it, as
+a pool above a dam would, and the tributary's cells share theirs. The change is an opt-in limit on how far a river
+gauge's rise is carried along the water (`startReach`, commit aa8beb3, branch `exp/start-reach`), set to 0: the gauge's
+own pool only. That is in effect what the standard domain started with (238 m³). Everything else is the original
+extended-west run: box closed, no opened heads, the same forcing, scenario, roughness, boundary and gauge reading.
+
+Predictions written before the run:
+
+1. The starting water is near the standard domain's, under 1,000 m³ against 64,600 m³, with none of it around the box
+   entrance. Six minutes in, the gauge stays near 209.0 m instead of jumping to 210.6 m. Through the pre-storm hours it
+   follows the standard domain (about 208.9 m), not 209.8 m.
+2. The gauge peak stays within 0.05 m of 211.33 m. The extended runs' pre-storm levels differed by 0.4 m with the box
+   open or closed, yet their peaks agreed within 0.01 m. The crossing, still modelled as two outfalls, still holds the
+   reach above it near 210.8 m at the peak.
+3. The level NSE improves on −0.60, because the pre-storm hours no longer sit 0.3–0.7 m high. The end-of-run level at
+   Sheffield Dr stays above the observed 209.25 m, because the closed box and the crossing still hold water.
+
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
 | Sheffield Dr culvert misread | Confirmed and corrected (143d18e) |
