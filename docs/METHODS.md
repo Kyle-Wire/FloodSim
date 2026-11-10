@@ -2229,6 +2229,20 @@ Opening a project rebuilds the model from the saved settings and reloads a histo
 - Headless: `npm run batch -- "<project folder>"` runs the study in headless Chrome or Edge on the machine's GPU, and
   relaunches after a browser or GPU crash (`--retries`, default 3). The README reports the headless run matching the
   in-app run cell for cell.
+- **Experiment ledger** (`tools/ledger.mjs "<project>" … [--near lon,lat[,r]] [--out ledger.md]`). One row per saved
+  run across project folders, from each run's own record: configuration (scenario, variant), hydrology (rain, soil
+  limit, peak flow and volume against the gauge), hydraulics (gauge peak, error, lag, level NSE / RMSE), geometry (the
+  scenario's features, and the pipes of 1.5 m rise or more near a point, with shape, size and inverts), boundary
+  (free outfall, fixed level, river outlet; the model box) and integrity (forcing, design hash, commit, changed code).
+  Requested and applied are kept apart: the scenario the batch job asked for and the one the run had, the boundary
+  in the inputs and the one the run recorded (`summary.json` `boundary`, from 10 Nov 2026), with an execution status.
+  Run pairs get one of three findings: the same record with results within a noise band (`--noise`, default 3 cm of
+  gauge peak, 2 % of peak flow, 0.02 of NSE) is reproducible; the same record beyond it is to investigate (something
+  unrecorded differed); different inputs within it are insensitive to what differs, or compensating changes. The band
+  is a working threshold, not a definition of equivalence; the largest gap the repeats measured is printed beside it.
+  An older record that is `+dirty` without a content hash can only be "reproducible, unless the code differed".
+  Structures are found by location (pipes of 1.5 m rise or more within a radius of a point), not by a persistent id.
+  Written as Markdown and CSV.
 
 ### 8.6 Checkpoints
 
