@@ -1573,17 +1573,46 @@ coordinates cannot place the gauge. Across the outlet channel the peak water sur
 falls from 211.44 m at 1 m below the outlet face to 211.29 m at 3 m, 211.20 m at 5 m and 211.15 m at 10 m. The observed
 peak, 211.36 m, falls between the first two. The scored series peaks at 211.10 m, while the median of the same kind of
 cells' own peaks is 211.34 m: either the cells peak at different times, or the scorecard reads cells further
-downstream. The run does not keep each cell's series, so this cannot yet be told apart. Where the gauge is read is
-therefore a first-order uncertainty here, as large as the remaining deficit. No reading point is adopted for matching
-the observed peak: the reading should follow the gauge's described position (left bank, downstream end of the
-culvert), and needs the per-cell series to be scored over the whole storm.
+downstream. That run did not keep each cell's series. No reading point is adopted for matching the observed peak: the
+reading should follow the gauge's described position (left bank, downstream end of the culvert).
+
+**Experiment A: the gauge read four ways from each cell's series (10 November 2026).** January was rerun with the
+same frozen configuration (culvert fix, channel scenario, free outfall), keeping every watched cell's water surface
+each minute (`gauge_cells.json`). The run resumed from a checkpoint at 21:12 of the storm. A resumed run then stopped
+reading frames back (fixed in 742b56e), so the series end there, 2.4 h after the peak. Scores below are over the
+observations up to 21:12 (94 % of them). Positions are along the barrel axis below the outlet endwall.
+
+| Reading | Peak (m) | Error (m) | Level NSE |
+|---|---|---|---|
+| 1. Scorecard: median of the 9 nearest wet cells | 211.15 | −0.22 | 0.84 |
+| 2. Single cells, 3–13 m below the outlet | 211.08–211.17 | −0.28 to −0.19 | 0.83–0.84 |
+| 2. The cell at the outlet face (0–2 m, the pipe's outfall cell) | 212.08 | +0.72 | 0.67 |
+| 3. Left bank at the outlet end | the outfall cell alone | — | — |
+| 4. Cross-section at the face / 3 / 5 / 10 m below | 212.08 / 211.08 / 211.16 / 211.15 | — | — |
+
+At the 2 m solver cell the outlet channel is one cell wide, so readings 3 and 4 reduce to single cells: the grid cannot
+tell the left bank from the channel centre or from a cross-section mean. The outfall cell, at the barrel invert
+(208.75 m), receives the pipe's discharge. Its level swings by 0.3–0.7 m from one minute to the next around the peak
+(211.39 to 212.08 m within 10 minutes), and it stands 1.0 m above the cell 2.5 m downstream. That is the exit jet's
+exchange, not a stage that a gauge could read, so it is not a defensible reading. Every other cell from 3 m to 13 m
+below the outlet peaks between 211.08 and 211.17 m with the same timing (20–22 min early) and the same shape (NSE
+0.83–0.84). The scorecard's 211.15 m agrees with the cells' own peaks. The earlier 211.34 m came from the 1 m peak
+grid, which blends in the outfall cell, not from cells peaking at different times. The earlier run of the same
+configuration scored 211.10 m. The 0.05 m difference comes from when the readings were taken, with the outfall cell
+inside the 9-cell median. It is the noise floor of the peak score here.
+
+Read against the four outcomes set before the run: no defensible reading approaches the observed peak, and the
+single-cell peaks below the outfall cell agree within 0.09 m. The deficit, about 0.2 m, is hydraulic, not an artefact
+of extraction or aggregation. The one unresolved part is local: the gauge stands where the 2 m grid has a single
+cell between the outfall cell and a uniform channel, so a stage within the first 2–3 m of the endwall cannot be
+represented at this resolution.
 
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
 | Sheffield Dr culvert misread | Confirmed and corrected (143d18e) |
 | Lidar bed above the surveyed invert below the outlet | Supported by the sensitivity scenario; not adopted as the default |
 | Free outfall at the west edge drawing the gauge down | Rejected as a main cause (+0.07 m at 0.6 m above the free outfall) |
-| Where the gauge is read, across a steep drawdown | Open: as large as the deficit; needs per-cell series |
+| Where the gauge is read, across a steep drawdown | Tested (Experiment A): every defensible reading is 0.19–0.28 m low; only the pipe's outfall cell reads high, and it is not a stage. The first 2–3 m below the endwall is unresolved at 2 m |
 | Downstream twin box culvert | Connectivity fault found (entrance type not read); its effect at the gauge predicted small, untested |
 | Channel roughness | Deferred: it shifts the stage curve but does not change its slope |
 
