@@ -422,7 +422,7 @@ try { $('linkDatum').value = localStorage.getItem('floodsim.linkDatum') ?? '0'; 
 for (const id of [...linkFields, 'linkUnits', 'linkDatum']) $(id).addEventListener('change', () => { try { localStorage.setItem('floodsim.' + id, $(id).value); } catch { /* storage off */ } });
 const splitLinks = (s) => s.split(/[\s,]+/).map(x => x.trim()).filter(Boolean);
 /** The linked layers and their datum for the run's fingerprint: present only when set, so runs without them keep their hashes. */
-function linkedPart() { const l = linkedLinks(), d = Number($('linkDatum').value) || 0; return { ...(l.pipes.length || l.inlets.length || l.outfalls.length ? { linked: CMP.hashOf(l) } : {}), ...(d ? { linkDatum: d } : {}) }; }
+function linkedPart() { const l = linkedLinks(), d = Number($('linkDatum').value) || 0, h = openHeads(); return { ...(h.length ? { openHeads: h } : {}), ...(l.pipes.length || l.inlets.length || l.outfalls.length ? { linked: CMP.hashOf(l) } : {}), ...(d ? { linkDatum: d } : {}) }; }
 /**
  * What the utility layers returned, as counts and hashes: the linked pipes, inlets and outfalls, and the built-in
  * utility's inlets and outfalls. The links alone (linkedPart) do not change when a city republishes its data; this does,
@@ -435,6 +435,8 @@ function utilityData() {
   for (const [k, a] of [['pipes', L?.pipes], ['inlets', L?.inlets], ['outfalls', L?.outfalls], ['utilityInlets', u?.inlets], ['utilityOutfalls', u?.outfalls]]) { const p = part(a); if (p) o[k] = p; }
   return (model.utilityData = Object.keys(o).length ? o : null);
 }
+/** Pipe heads to open as culvert entrances (Drainage → linked pipes): one lon,lat per line. → [{ lon, lat }] */
+function openHeads() { return ($('openHeads')?.value ?? '').split(/\n+/).map(l => l.split(/[\s,;]+/).filter(Boolean).map(Number)).filter(a => a.length === 2 && a.every(Number.isFinite)).map(([lon, lat]) => ({ lon, lat })); }
 function linkedLinks() { return { pipes: splitLinks($('linkPipes').value), inlets: splitLinks($('linkInlets').value), outfalls: splitLinks($('linkOutfalls').value) }; }
 /** Fetch every linked layer inside the box; pipes get their fields detected per layer (units overridable). */
 async function loadLinked(links, bounds) {
@@ -1662,11 +1664,11 @@ function makeNetwork(c, F, { ignoreLayer = false } = {}) {
   const combined = $('csoOn').checked; // combined sewer: interior pipe ends no outfall claims leave the model (src/network-real.js)
   const withQ = (net) => { if (net) for (const p of net.pipes) p.Qfull = 0.3117 / (p.n ?? net.opts.n) * p.D ** (8 / 3) * Math.sqrt(p.S); return net; };
   if (lay?.pipes.length) { // tier 1: pipes the user drew or imported
-    const net = realNetwork(model.fine, model.f, lay.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined });
+    const net = realNetwork(model.fine, model.f, lay.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined, openHeads: openHeads() });
     if (net) { net.drawn = true; return withQ(net); }
   }
   if (L?.pipes.length) { // tier 1: the user's linked pipes
-    const net = realNetwork(model.fine, model.f, L.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined });
+    const net = realNetwork(model.fine, model.f, L.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined, openHeads: openHeads() });
     if (net) return withQ(net);
   }
   return withQ(synthNetwork(model.fine, model.f, model.osm, model.atlas14, { ...c, F }, { designARI: Number($('designAri').value), spacing: Number($('spacing').value),

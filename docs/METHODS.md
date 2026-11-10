@@ -1630,6 +1630,32 @@ say. The ledger flags them, and flags any gauge series with more than 30 min bet
 checked. Their NSE and full-hydrograph results have uncertain provenance and are not treated as equivalent to
 uninterrupted runs.
 
+**Experiment B: the downstream culvert entrance, one structure (set up and predicted 10 November 2026, before the
+run).** Question: does representing the downstream twin box culvert as a connected hydraulic structure materially
+change the January gauge stage? The entrance head J36 (city box 113894163, surveyed upstream invert 671 ft = 204.52 m)
+takes no water for two reasons. Its structure is `STRUCT_TYPE` "Culvert", which the city's own domain names
+"Endsection-Culvert", and the run's outfall query asks only for Endwall and FES. And a 0.38 m pipe drains into the same
+node, while the entrance rule (§3.9) opens a pipe head only where nothing arrives. That rule also keeps 10 other placed
+end sections in the extended box closed, among them a 2.44 m endwall between Sheffield Dr and the box. Changing the
+rule or the structure filter would open all of them at once, so neither is changed. Instead the run lists this one
+head (`openHeads`, an opt-in input entering the run fingerprint; branch `exp/culvert-entrance`). The twin head J1766
+stays as the city records it: its pipe has no upstream invert, and none is assumed. The test is therefore one barrel of
+two, with surveyed geometry only.
+
+Everything else is the extended-west run's inputs: January forcing and hydrology, the Sheffield fix, the channel
+scenario, a free outfall at the extended west edge, the same roughness and the same gauge reading.
+
+Predictions written before the run:
+
+1. Before the storm the creek above the box no longer stands at the dammed 209.84 m. It falls toward the ground at the
+   entrance (206.87 m in the model).
+2. Headwater at J36 near the 25 m³/s peak is about 209.7 m. This is HDS-5 inlet control for one 7 × 7 ft barrel (box,
+   30–75° wingwall coefficients). The 207.0–207.2 m estimate was for both barrels, and the twin stays closed here.
+3. At the gauge the peak falls from the extended run's 211.33 m back to within 0.05 m of the standard-domain 211.15 m.
+   The reasoning: a fixed level of 210.8 m at the standard west edge lifted the gauge only 0.07 m, and 209.7 m is 1.1 m
+   lower. A peak more than 0.10 m above 211.15 m would contradict this and mean the downstream box matters at Sheffield
+   Dr.
+
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
 | Sheffield Dr culvert misread | Confirmed and corrected (143d18e) |

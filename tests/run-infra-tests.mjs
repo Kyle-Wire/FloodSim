@@ -71,6 +71,12 @@ const fc = (features) => ({ type: 'FeatureCollection', features });
   check('a pipe head at an endwall with no grate takes water through its barrels', box.stats.culvertEntrances === 1 && at?.grates === 1 && at.crest === 0 && near(at.parts[0][1].inletArea, 3.6, 1e-6) && near(at.parts[0][1].inletPerim, 3, 1e-6), JSON.stringify(at?.parts));
   const lid = realNetwork(g, f, [{ line: [head, ll(100, 40)], h: 1.2, upInv: 8.5, dnInv: 8.2 }], sim, { realInlets: [{ lon: inl[0], lat: inl[1] }] });
   check('without an endwall the head stays a closed manhole', lid.stats.culvertEntrances === 0);
+  // a small pipe draining into the endwall's node: closed by default (Charlotte's twin box below Edwards Branch), open
+  // only where the run lists the head (openHeads), and a listed point with no head near it changes nothing
+  const feeder = [{ line: [ll(40, 60), head], h: 0.38, upInv: 9.0, dnInv: 8.8 }, { line: [head, ll(100, 40)], h: 1.2, w: 1.5, shape: 'RECT_CLOSED', barrels: 2, upInv: 8.5, dnInv: 8.2 }, { line: [ll(100, 40), ll(190, 40)], h: 1.2, upInv: 8.2, dnInv: 7.8 }];
+  const fo = { realInlets: [{ lon: inl[0], lat: inl[1] }], outfalls: [{ lon: head[0], lat: head[1] }, { lon: ll(190, 40)[0], lat: ll(190, 40)[1] }] };
+  const shut = realNetwork(g, f, feeder, sim, fo), opened = realNetwork(g, f, feeder, sim, { ...fo, openHeads: [{ lon: head[0], lat: head[1] }] }), far = realNetwork(g, f, feeder, sim, { ...fo, openHeads: [{ lon: ll(160, 160)[0], lat: ll(160, 160)[1] }] });
+  check('an endwall node that a smaller pipe drains into stays closed unless its head is listed', shut.stats.culvertEntrances === 0 && opened.stats.culvertEntrances === 1 && opened.stats.openedHeads === 1 && far.stats.culvertEntrances === 0 && far.stats.openedHeads === 0, `${shut.stats.culvertEntrances} / ${opened.stats.culvertEntrances} / ${far.stats.culvertEntrances}`);
 }
 
 // ---- a culvert in two lengths under a road: surveyed only at its endwalls, with a thin cover at the entrance

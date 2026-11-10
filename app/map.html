@@ -557,6 +557,7 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
         <label class="lab" for="linkInlets">Inlets / catch basins (points)</label><textarea id="linkInlets" rows="1" spellcheck="false"></textarea>
         <label class="lab" for="linkOutfalls">Outfalls (points)</label><textarea id="linkOutfalls" rows="1" spellcheck="false"></textarea>
         <div class="field"><label for="linkUnits">Pipe size units</label><select id="linkUnits"><option value="auto">Detect</option><option value="in">inches</option><option value="mm">millimetres</option><option value="ft">feet</option><option value="m">metres</option></select></div>
+        <div class="field"><label for="openHeads" title="Experimental, opt-in. A pipe head at one of these points (the nearest node within 5 m with a pipe leaving it) takes surface water like an endwall's barrels, even where smaller pipes also drain into it. One lon,lat per line; empty = none.">Pipe heads to open as culvert entrances</label><textarea id="openHeads" rows="1" style="width:16em" placeholder="lon,lat"></textarea></div>
         <div class="field"><label for="linkDatum" title="Inverts on a local datum: what to add to reach NAVD88, in the inverts' own units (City of Portland datum: +2.10 ft). 0 = already NAVD88.">Add to inverts (to NAVD88)</label><input id="linkDatum" type="number" step="0.01" value="0" style="width:6em"></div>
         <div class="row"><button class="btn" id="linkCheck" type="button">Check links</button></div>
         <ul class="log" id="linkLog"></ul>

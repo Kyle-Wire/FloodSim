@@ -69,11 +69,19 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
 
   // ---- 1c. placed outfalls: the nearest pipe end within 5 m discharges there
   const userOut = new Set();
+  // pipe heads opened by hand (o.openHeads, [{lon, lat}]): the nearest node within 5 m with a pipe leaving it becomes a
+  // culvert entrance like an endwall's, even where smaller pipes also drain into it. Opt-in, one structure at a time.
+  const openHeads = new Set();
   for (const q of o.outfalls ?? []) {
     const p = toCells(fine, [[q.lon, q.lat]])[0]; let bk = -1, bd = Infinity;
     nodes.forEach((n, k) => { const d = Math.hypot(n.p[0] - p[0], n.p[1] - p[1]) * dx; if (d < bd) { bd = d; bk = k; } });
     if (bk < 0 || bd > 5) continue;
     if (q.boundary) nodes[bk].edge = true; else userOut.add(bk);
+  }
+  for (const q of o.openHeads ?? []) {
+    const p = toCells(fine, [[q.lon, q.lat]])[0]; let bk = -1, bd = Infinity;
+    nodes.forEach((n, k) => { const d = Math.hypot(n.p[0] - p[0], n.p[1] - p[1]) * dx; if (d < bd) { bd = d; bk = k; } });
+    if (bk >= 0 && bd <= 5) openHeads.add(bk);
   }
 
   // nearest point on any pipe to p (cell coords), optionally skipping pipes that already end at node `skip`
@@ -279,7 +287,8 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
   //      its barrels, from the lowest ground within 5 m (inlet control: weir 1.64 SI, orifice 0.6, FHWA HDS-5 headwall range)
   let entrances = 0;
   if (realInlets) nodes.forEach((n, i) => {
-    if (into[i].length || !outOf[i].length || n.edge || !userOut.has(i) || n.grates.length) return;
+    if (!outOf[i].length || n.edge || n.grates.length) return;
+    if (!openHeads.has(i) && (into[i].length || !userOut.has(i))) return;
     const q = outOf[i].map(k => raw[k]).sort((a, b) => b.D - a.D)[0], rect = q.shape === 'RECT_CLOSED', b = q.barrels > 1 ? q.barrels : 1, wide = rect ? q.Wd : q.D;
     n.inletFine = [lowest(n.p, Math.max(1, Math.round(5 / dx)))]; n.grateOpen = [1]; n.grateCrest = [0];
     n.grateHyd = [{ inletArea: b * (rect ? wide * q.D : Math.PI / 4 * q.D * q.D), inletPerim: b * wide, Cw: 0.37, Co: 0.6 }];
@@ -308,7 +317,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     stats: { junctions: outNodes.filter(n => !n.outfall).length, outfalls: outNodes.filter(n => n.outfall).length, pipes: outPipes.length,
       inlets: inlets.filter(g => g.grates > 0).length, grates: inlets.reduce((s, g) => s + g.grates, 0), lids: inlets.filter(g => !g.grates).length,
       realInlets, unconnectedGrates: unconnected, realOutfalls: 0, offsiteOutlets: outNodes.filter(n => n.offsite).length,
-      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, invBridged, interiorEnds, placedOutfalls: outNodes.filter(n => n.placed).length, openEnds: outNodes.filter(n => n.openEnd).length, restoredPipes: restored.length, culvertEntrances: entrances,
+      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, invBridged, interiorEnds, placedOutfalls: outNodes.filter(n => n.placed).length, openEnds: outNodes.filter(n => n.openEnd).length, restoredPipes: restored.length, culvertEntrances: entrances, openedHeads: [...openHeads].filter(i => outOf[i].length).length,
       pipeLength: outPipes.filter(q => !q.offsite).reduce((s, q) => s + q.L, 0), minD: Math.min(...outPipes.map(q => q.D)), maxD: Math.max(...outPipes.map(q => q.D)), served: 0 },
   };
 }
