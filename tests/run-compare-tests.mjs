@@ -8,6 +8,7 @@ import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { runSegment } from '../app/projects.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -163,6 +164,14 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   const html = C.summaryHTML({ a: run('Existing conditions'), b: run('Proposed'), band: 0.003, site: true, impact: { cells: 3, area: 3, maxRise: 0.02, newlyWet: 1, newlyWetArea: 1, affected: [{ id: 'e0', rise: 0.02 }] },
     maps: [{ title: 'Max depth', stats: { rise: 3, fall: 1, maxRise: 0.02, maxFall: -0.01 }, scale: 1000, dp: 0, unit: ' mm' }], wetDry: { wet: 1, dry: 0 }, totals: { 'Δ runoff volume': '+12 m³' }, buildings: [], outlets: [] });
   check('one-page summary names both runs, the fingerprint and the impact', /Proposed vs Existing conditions/.test(html) && /f00dcafe/.test(html) && /\+20 mm/.test(html) && /3 mm/.test(html));
+}
+
+// ---- run folder names: every label gives a segment the local server accepts (its SEG rule), or none
+{
+  const SEG = /^[\w\-.]{1,80}$/, labels = ['Culvert fix + channel (frozen) · per-cell gauge series', "Bob's & Ann's, (draft)", 'plain', '((()))', '  ', '...', 'a'.repeat(90), 'Fixed 210.8 m'];
+  const segs = labels.map(runSegment);
+  check('run folder name: a label with ( ) & , \' · gives a segment the server takes', segs.every(s => s === '' || (SEG.test(s) && !/^\.+$/.test(s) && s.length <= 30)), JSON.stringify(segs));
+  check('run folder name: readable and unchanged where it was already safe', segs[0] === 'Culvert-fix-channel-frozen-per' && segs[2] === 'plain' && segs[7] === 'Fixed-210-8-m' && segs[4] === 'Project');
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nAll comparison tests passed');

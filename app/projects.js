@@ -13,6 +13,12 @@ const q = (o) => new URLSearchParams(o).toString();
 
 /** Folder name from a project name: letters, digits, spaces and - _ ( ) & , ' only. */
 export const folderName = (name) => name.replace(/[^\w\-()&,' ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Project';
+/**
+ * A run folder's name from its label: what the local server takes as a path segment (letters, digits, - _ .; its SEG
+ * rule), at most 30 characters. folderName keeps ( ) & , ' for project folders, and a label like "Culvert fix (frozen)"
+ * made the server refuse every file of a finished run.
+ */
+export const runSegment = (label) => folderName(label).replace(/[^\w\-.]+/g, '-').replace(/-{2,}/g, '-').replace(/^[-.]+/, '').slice(0, 30).replace(/[-.]+$/, '');
 export const stamp = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}${String(d.getSeconds()).padStart(2, '0')}`;
 
 // the most one request carries: a browser can fail a big upload outright (the desktop app's browser pane drops the tab
@@ -74,7 +80,7 @@ export function initProjects({ capture, layer, restore, runFiles, scenarios = ()
     if (!current) return null;
     if (!(await sameArea())) { status(`This run's area is not “${current.name}”'s: save it as a project first (not filed)`, 'warn'); return null; }
     const files = await runFiles(); if (!files) { status('No finished run to save', 'warn'); return null; }
-    const dir = 'runs/' + stamp() + (label ? '_' + folderName(label).replace(/ /g, '-').slice(0, 30) : '');
+    const dir = 'runs/' + stamp() + (label && runSegment(label) ? '_' + runSegment(label) : '');
     for (const f of files) await writeFile(current.folder, dir + '/' + f.path, f.data);
     lastSaved = { folder: current.folder, dir, run: files.run ?? null };
     status(`Run saved to ${dir}`, 'ok'); return dir;
