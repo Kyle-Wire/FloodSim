@@ -656,7 +656,7 @@ all n together.
   downstream gauge, the open water on the chosen edge (`tidalEdgeCells` with that side, up to the level) is held at
   one entered level for the whole storm, on any storm. It is a boundary sensitivity test, or a pond or lake the stream
   runs into; a constant level also ponds the channel at baseflow, so the rising and falling limbs are not a fit test.
-  The level and side are a fingerprint part (`outlet`, §8.2). Used for the Charlotte boundary test (§5.12).
+  The level and side are a fingerprint part (`outlet`, §8.2). Used for the Charlotte boundary test (§5.12.1).
 - **River outlet** (`src/outlet.js`; Storm → River leaving the area). A free outfall drains a deep river off the edge
   as if over a fall, and the river upstream draws down toward it (Manayunk, §5.8: 3.6 m at the edge). When the user
   sets a downstream USGS gauge on a historic storm, the edge facing the gauge holds a level instead:
@@ -724,7 +724,13 @@ Three tiers, labelled on every output (README "Drainage"):
   invert is used only where it lies 0.2–30 m under its manhole's ground, and a pipe with one good end gets the other at
   its ground slope (≥ 0.5 %); the network stats count both (`invPartial`, `invRejected`). Ends snap
   within 1.5 m; catch basins join the nearest pipe within 30 m; abandoned/proposed pipes are dropped. Sizes over 6 m are
-  treated as placeholders and filled from neighbours. Box and multi-barrel culverts become SWMM RECT_CLOSED. Inverts are
+  treated as placeholders and filled from neighbours. Box and multi-barrel culverts become SWMM RECT_CLOSED. A wide
+  arch (span over rise) becomes a closed rectangle of its rise and the same area (a half-ellipse: π/4 of the span);
+  elliptical pipes are still read as round at their rise. At a culvert between two placed endwalls, the endwalls'
+  inverts stand with as little as −0.3 m of cover, and a manhole between its two lengths with no invert of its own gets
+  one on the straight run between them (`invBridged`). A pipe head takes water only at a structure in the outfall
+  layer: Charlotte's link asks for Endwall and FES, so a culvert entrance the city types as "Culvert" stays closed
+  (§5.12.1). Inverts are
   used when plausible against the lidar, else derived (cover over the crown, ≥ 0.5 %, never rising). The network is
   oriented toward its exits.
 - **Tier 2, synthetic network** (`src/drainage.js`), when no pipes are published:
@@ -1501,6 +1507,87 @@ afresh when the project's settings have changed since it began, and set aside a 
 (commit 62fbcc0: the January 2024 rerun first resumed a combined-sewer checkpoint). The level errors above, and the
 first two studies in §6.4, are of the combined-sewer model. With separate sewers and infiltration × 0.25, June 2025
 reads 0.48 m low (it was 0.68 m), and the flow past the gauge is 53 % of USGS's volume (§6.4, third study).
+
+#### 5.12.1 Hydraulics at the gauge: Sheffield Dr, January 2024 (9–10 November 2026)
+
+After the seventh study (§6.4) the January 2024 storm's peak flow past the gauge was 93 % of USGS's and its volume
+104 %, but the level was 0.41 m low. The work below asked why the level was low with the flow about right, one
+controlled change at a time, everything else held (20 cm soil limit, the bias-corrected gauge-fit rain, separate
+sewers). Each run's record is in the experiment ledger (`tools/ledger.mjs`, §8.5).
+
+**Stage against discharge.** From the saved runs, the model's level at a given flow was too flat a curve against the
+USGS rating: 0.1–0.3 m high below 10 m³/s, right at 12–15 m³/s and 0.1–0.3 m low at 20–30 m³/s, in all three storms.
+Splitting each storm's peak error into a flow part and a level-at-that-flow part gave January −0.10 / −0.31 m, June
+−0.37 / −0.31 m and August −0.37 / −0.07 m. A run with a 5 cm soil limit read +0.41 / −0.37 m: too much flow hid a
+hydraulic deficit. Roughness moves the whole curve, not its slope. The USGS discharge comes from stage through a
+rating that has no direct measurement above 73 ft³/s (above 225 ft³/s it is extended by a culvert computation), so
+flow and level are not independent checks.
+
+**The Sheffield Dr culvert** (commit 143d18e). The USGS station description puts the gauge on the left bank at the
+downstream end of the culvert under Sheffield Drive. The city records it as two lengths of one arch culvert, 96 × 336 in
+(P_129904, P_129907), endwall to endwall, inverts 685.9 and 684.87 ft. The model had read it as an 8 ft round pipe and
+rejected its entrance invert for thin cover, so the barrel stood 3.3 m high and carried nothing, while a mis-joined
+pipe sent 8.5 m³/s north at 12.8 m/s. A wide arch is now a closed rectangle of its rise and area, and a culvert's
+inverts stand between its endwalls (§3.9, tier 1). Rerun: the culvert carries 24.4 m³/s, the peak error goes from −0.41 m to
+−0.07 m and peak flow from 93 % to 97 %. Level NSE falls from 0.83 to 0.34, because the level rose 0.3–0.5 m at every
+flow. So the peak match was partly a shift, not a fix. Narrowing the rule to endwall-to-endwall culverts changed only
+these pipes and one 60 in culvert 0.83 km away, and gave the same numbers.
+
+**The bed below the outlet.** At low flow the gauge then read a pond running from the outlet about 55 m downstream,
+held by a lidar lip near 209.3 m. The lidar "bed" at the outlet, 209.11–209.13 m, is the low-water surface, 0.36 m above
+the city's surveyed outlet invert (208.75 m; gauge datum 208.84 m). A site-design scenario, "Channel to survey", lowers
+the bed over 70–88 m below the outlet to the surveyed invert (208.75 → 208.45 m, 4 m bottom, 2:1 sides), keeping the
+ground's cover and roughness (swale `surface: 'keep'`, commit aa591de). Rerun: peak −0.26 m, peak flow 102 %, volume
+106 %, level NSE 0.81, RMSE 0.24 m. Level minus USGS at a given flow is −0.01 to +0.15 m up to 12 m³/s, 0 at 15 m³/s
+and −0.12 m at 20 m³/s. Baseflow now reads 209.00 m against 209.1–209.25 m (USGS: low flows are affected by regulation).
+The bed width and the reach's downstream end are estimates, so this is kept as a sensitivity scenario, not the default.
+A repeat run of the culvert fix landed within 0.01 m, which sets the run-to-run noise.
+
+**Downstream boundary sensitivity.** A fixed downstream level (§3.7, commit ced7672) tested whether the free outfall
+at the west edge, 116 m below the outlet, drew the gauge down. Three levels, 209.6, 210.2 and 210.8 m NAVD88 (the free
+outfall's own peak at the edge is 210.19 m), were run against the free-outfall reference, with an extended domain
+carried 600 m further west as a fourth run. At 210.8 m the edge stood 0.65 m above the free outfall's peak, but the
+rise faded upstream: +0.50 m at 90 m below the outlet, +0.20 m at 50 m, +0.09 m at 10 m, and +0.07 m at the gauge.
+Flow was unchanged (101 %). The steep drop of the water surface just below the culvert outlet (about 30 ‰ over its
+first 10 m) sets the level there, and the downstream boundary barely reaches it.
+
+The extended domain gave a much closer peak (−0.03 m against −0.26 m), but for the wrong reason. About 480 m below the
+outlet the creek enters a buried twin 84 × 84 in box culvert that runs about 300 m west, its outlet beyond even the
+extended box. Neither box head took any water in the model (4 m of water over them), so the fill over the culvert acted
+as a dam: the creek stood at 209.84 m before the storm and after it, 0.8 m above the observed baseflow, and the level
+NSE fell to −0.60. The heads take no water because the city records the entrance as `STRUCT_TYPE` "Culvert" and its
+twin as "NetJunction", and FloodSim's Charlotte setup only asks for "Endwall" and "FES" as the places where pipes meet
+the ground. The second box also has no upstream invert, and the model carried one 2 m above the ground there. The
+extended-domain run is excluded from calibration conclusions. An inlet-control estimate for the twin boxes (FHWA HDS-5)
+puts their headwater near 207.1–207.2 m at the 25 m³/s peak, about 1.3 m below the creek bed 100 m upstream, so a
+working culvert there should not back water up to Sheffield Dr. That prediction is untested.
+
+The downstream boundary is therefore not the main cause of the January stage deficit. The fixed-level option stays,
+for backwater and tidal tests.
+
+**Where the gauge is read.** The model's gauge is the median of the 9 water cells nearest the NWIS coordinates, read
+each minute. Those coordinates are whole seconds (±31 m north–south, ±25 m east–west) and plot 10 m upstream of the
+outlet endwall and 11 m to its left, on Sheffield Drive itself (0.23 m of water over it at the peak). Within that ±1 s
+box the peak stage ranges from 211.10 to 212.63 m, from the channel below the outlet to the pool above the road, so the
+coordinates cannot place the gauge. Across the outlet channel the peak water surface, a mean over the wetted width,
+falls from 211.44 m at 1 m below the outlet face to 211.29 m at 3 m, 211.20 m at 5 m and 211.15 m at 10 m. The observed
+peak, 211.36 m, falls between the first two. The scored series peaks at 211.10 m, while the median of the same kind of
+cells' own peaks is 211.34 m: either the cells peak at different times, or the scorecard reads cells further
+downstream. The run does not keep each cell's series, so this cannot yet be told apart. Where the gauge is read is
+therefore a first-order uncertainty here, as large as the remaining deficit. No reading point is adopted for matching
+the observed peak: the reading should follow the gauge's described position (left bank, downstream end of the
+culvert), and needs the per-cell series to be scored over the whole storm.
+
+| Hypothesis | Status (10 Nov 2026) |
+|---|---|
+| Sheffield Dr culvert misread | Confirmed and corrected (143d18e) |
+| Lidar bed above the surveyed invert below the outlet | Supported by the sensitivity scenario; not adopted as the default |
+| Free outfall at the west edge drawing the gauge down | Rejected as a main cause (+0.07 m at 0.6 m above the free outfall) |
+| Where the gauge is read, across a steep drawdown | Open: as large as the deficit; needs per-cell series |
+| Downstream twin box culvert | Connectivity fault found (entrance type not read); its effect at the gauge predicted small, untested |
+| Channel roughness | Deferred: it shifts the stage curve but does not change its slope |
+
+June and August have not been rerun with the culvert fix.
 
 ### 5.13 Earlier observation comparisons recorded in the README
 
