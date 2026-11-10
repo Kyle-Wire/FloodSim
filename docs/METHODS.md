@@ -185,6 +185,7 @@ shallow, rough flow. Manning's n is constant in time per cell and does not vary 
 | `outflow` (free outfall) | Ghost velocity = Manning velocity on the water-surface slope toward the edge, minus a threshold slope of 1e-4, capped at critical √(gh); zero if the surface is level or slopes inward, or if the inner neighbour is dry | **Default for every real-terrain model edge** |
 | `stage` (water level) | Ghost surface held at the observed or design level (tide/surge); velocity zero-gradient | Open-water edge cells touching a CO-OPS gauge boundary (`tidalEdgeCells`, `src/waterlevels.js`) |
 | River outlet (`stage`) | The same water-level ghost, at a downstream USGS gauge's recorded water surface carried up the river to the edge by a backwater calculation at its recorded discharge (§3.7) | The edge cells where a river leaves, on the side facing the gauge, when a downstream gauge is set and there is no tide (historic storms) |
+| Fixed downstream level (`stage`) | The same water-level ghost, held at one entered level (m NAVD88) all storm; a free outfall where the ground is above it | Open-water edge cells on the chosen side, widened over ground below the level, when a level is entered with no downstream gauge and no tide (any storm) |
 | Polygon sink | Cells outside a drawn polygon are sinks that take no rain; water entering them leaves the model and is booked as outflow (a free overfall at the polygon edge) | Polygon areas |
 
 - Where a river enters across the edge, the edge is closed across the channel plus 10 m each side. The channel is the
@@ -651,6 +652,11 @@ all n together.
 - **Baseflow warm-up**: optionally, rivers run at their start flow for set hours before the storm (not in the subgrid
   mode).
 - Inflow enters through exchange cells and is included in the mass books (§2.7).
+- **Fixed downstream level** (River leaving the area → "Or a fixed level at the edge", and the edge). With no
+  downstream gauge, the open water on the chosen edge (`tidalEdgeCells` with that side, up to the level) is held at
+  one entered level for the whole storm, on any storm. It is a boundary sensitivity test, or a pond or lake the stream
+  runs into; a constant level also ponds the channel at baseflow, so the rising and falling limbs are not a fit test.
+  The level and side are a fingerprint part (`outlet`, §8.2). Used for the Charlotte boundary test (§5.12).
 - **River outlet** (`src/outlet.js`; Storm → River leaving the area). A free outfall drains a deep river off the edge
   as if over a fall, and the river upstream draws down toward it (Manayunk, §5.8: 3.6 m at the edge). When the user
   sets a downstream USGS gauge on a historic storm, the edge facing the gauge holds a level instead:

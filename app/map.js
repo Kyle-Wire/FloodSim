@@ -1451,12 +1451,15 @@ const stageAt = (st, t) => (st?.wl ? H.levelAt(st.wl, (st.t0 ?? 0) + t * 1000) +
  */
 function outletFor(r, c, F, mask) {
   const o = r.outletReady; if (!o) return null;
-  const fine = model.fine, w = F * fine.dx, [gx, gy] = toUTM(o.g.lon, o.g.lat, fine.zone);
-  const I = (gx - fine.x0) / w, J = (fine.y1 - gy) / w, side = sideToward(c.nx, c.ny, I, J);
+  const fine = model.fine, w = F * fine.dx;
+  let side = o.side;
+  if (o.fixed == null) { const [gx, gy] = toUTM(o.g.lon, o.g.lat, fine.zone); side = sideToward(c.nx, c.ny, (gx - fine.x0) / w, (fine.y1 - gy) / w); }
   const lines = (model.osm.waterways || []).filter(l => /river|stream|canal/.test(l.kind)).map(l => toCells(fine, l.line));
   const water = waterCells(c, F, fine, model.nlcd, lines), top = Math.max(...o.level.map(p => p[1]));
   const cells = tidalEdgeCells(c, mask, water, top, { side });
-  if (!cells.length) { log(`River outlet: no open water on the ${side} edge, toward ${o.g.name}; the edges stay free outfalls`, 'warn'); return null; }
+  if (!cells.length) { log(`River outlet: no open water on the ${side} edge${o.fixed != null ? ` at or below ${o.fixed.toFixed(2)} m` : `, toward ${o.g.name}`}; the edges stay free outfalls`, 'warn'); return null; }
+  // a fixed level: the ghost cells beyond those edge cells stand at it all storm (where it is above their ground)
+  if (o.fixed != null) return { cells, series: { t: [0], v: [o.fixed], down: [o.fixed], q: [0] }, L: 0, side, g: o.g, how: o.how, fixed: o.fixed, reach: null };
   // the reach: as entered, else straight from the middle of the edge's cells to the gauge (a river that bends is longer)
   const mid = cells[cells.length >> 1], L = Number($('outLen').value) > 0 ? Number($('outLen').value) : o.reach ? o.reach.length : Math.hypot(I - (mid % c.nx + 0.5), J - (((mid / c.nx) | 0) + 0.5)) * w;
   // through the reach's lidar sections, the edge's own as the last; else the edge's section held all the way
@@ -1465,7 +1468,10 @@ function outletFor(r, c, F, mask) {
 }
 /** The downstream gauge's recorded level and discharge over the storm (a historic storm only). → { g, level: [[t, m]], flow: [[t, m³/s]], how } | null */
 async function prepareOutlet() {
-  const site = $('outGauge').value.trim(), st = currentStorm(); if (!site) return null;
+  const site = $('outGauge').value.trim(), st = currentStorm(), fixed = $('outStage').value.trim() === '' ? NaN : Number($('outStage').value);
+  // a level held at the edge all storm (a boundary test, or a pond or lake the stream runs into): no gauge needed
+  if (!site && Number.isFinite(fixed)) return { g: { name: 'a fixed level', site: null }, level: [[0, fixed]], flow: [], how: 'fixed', reach: null, fixed, side: $('outSide').value };
+  if (!site) return null;
   if (!st?.t0) { log('River outlet: needs a historic storm (the downstream gauge’s record); the edges stay free outfalls', 'warn'); return null; }
   const g = await levelGauge(site, fetcher); if (!g) throw new Error(`no USGS site ${site}`);
   const t0 = st.t0 - 36e5, t1 = st.t0 + (st.durationMin + Number($('tail').value)) * 60e3 + 36e5;
@@ -1919,7 +1925,8 @@ function ensureSolver() {
   run.outlet = stageCells ? null : outletFor(run, c, F, mask);
   if (run.outlet) {
     stageCells = run.outlet.cells; const o = run.outlet, pk = o.series.v.indexOf(Math.max(...o.series.v));
-    log(`River outlet: the ${o.side} edge (${o.cells.length} cells) holds ${o.g.name}'s level carried ${(o.L / 1000).toFixed(2)} km up the river${o.reach ? ` through ${o.reach.sections} lidar cross-sections` : o.entered ? '' : ' (straight-line distance; enter the river length if it bends)'}: ` +
+    if (o.fixed != null) log(`Downstream level: the ${o.side} edge (${o.cells.length} cells) is held at ${o.fixed.toFixed(2)} m NAVD88 all storm (a free outfall where the ground is above it)`, 'ok');
+    else log(`River outlet: the ${o.side} edge (${o.cells.length} cells) holds ${o.g.name}'s level carried ${(o.L / 1000).toFixed(2)} km up the river${o.reach ? ` through ${o.reach.sections} lidar cross-sections` : o.entered ? '' : ' (straight-line distance; enter the river length if it bends)'}: ` +
       `${o.series.v[0].toFixed(2)} m NAVD88 at the start, ${o.series.v[pk].toFixed(2)} m at its crest (gauge ${o.series.down[pk].toFixed(2)} m + ${(o.series.v[pk] - o.series.down[pk]).toFixed(2)} m at ${Math.round(o.series.q[pk]).toLocaleString()} m³/s)`, 'ok', 'USGS NWIS');
   } else if (stageCells && run.outletReady) log('River outlet: not used with a tide on the edges (the solver holds one external level)', 'warn');
   run.stageCells = stageCells?.length ?? 0;
@@ -2287,7 +2294,7 @@ function forcingRecord(r) {
     inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}), ...(e.ungauged ? { ungauged: e.ungauged } : {}) })),
     tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: st.wl.design ? true : $('tCoast').checked, ...(st.wl.design ? { design: st.wl.design } : {}), ...(st.wl.slr ? { slr: st.wl.slr } : {}), ...(st.wl.observedUntil ? { observedUntil: st.wl.observedUntil, surge: st.wl.surge } : {}), ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
     startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
-    outlet: r.outletReady ? { site: r.outletReady.g.site, length: Number($('outLen').value) || null, readings: r.outletReady.level.length, flows: r.outletReady.flow.length,
+    outlet: r.outletReady?.fixed != null ? { fixed: r.outletReady.fixed, side: r.outletReady.side } : r.outletReady ? { site: r.outletReady.g.site, length: Number($('outLen').value) || null, readings: r.outletReady.level.length, flows: r.outletReady.flow.length,
       reach: r.outletReady.reach ? { sections: r.outletReady.reach.sections.length, km: r.outletReady.reach.length / 1000, depth: r.outletReady.reach.depth } : 'prismatic' } : null,
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...($('wetness').value === 'auto' ? { start: wetnessKey(), rainBefore: stormBase()?.antecedent ? (({ mm, days, source, amc, season }) => ({ mm, days, source, amc, season }))(stormBase().antecedent) : null } : {}), ...(Number($('gwShare').value) > 0 ? { groundwater: val('gwShare', 'gwLag') } : {}), ...(emu?.se != null && Math.abs(emu.se - WETNESS[wetnessKey()]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
@@ -3738,7 +3745,7 @@ async function setupInflow() {
   }).join('');
   for (let i = 0; i < inflow.entries.length; i++) for (const id of ['inGauge', 'inFlow', 'inLag', 'inScale']) $(id + i).onchange = () => { if (model && (!run || !run.solver)) resetRun(); inflowNoteUpdate(); areaNote(i); };
   for (let i = 0; i < inflow.entries.length; i++) ungaugedWire(i);
-  for (const id of ['inExp', 'warmUp', 'outGauge', 'outLen', 'outReach', 'outDepth']) $(id).onchange =() => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
+  for (const id of ['inExp', 'warmUp', 'outGauge', 'outLen', 'outReach', 'outDepth', 'outStage', 'outSide']) $(id).onchange =() => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
   inflowNoteUpdate();
   inflow.entries.forEach((en, i) => { // the drainage area where each river enters (USGS NLDI), in the background
     const [lo, la] = ll(en.at); en.area = basinAreaKm2(lo, la, fetcher).then((a) => { en.areaKm2 = a.areaKm2; areaNote(i); return a; }).catch((e) => { en.areaErr = e.message; areaNote(i); return null; });
@@ -4305,7 +4312,11 @@ async function runFiles() {
     calibration: { settings: cal(), score: calSc && { n: calSc.n, biasM: calSc.bias, maeM: calSc.mae, rmseM: calSc.rmse, within15cm: calSc.within15, hits: calSc.hits, misses: calSc.misses, falseAlarms: calSc.falseAlarms } },
     batch: run.batchInfo ?? null, // the batch study job (src/batch.js) this run was, for the sensitivity and EAD sections
     scenario: run.scenario ?? 'Existing conditions', designHash: run.record?.designHash ?? gridHash(), forcingHash: (run.record?.forcing ?? CMP.fingerprint(forcingRecord(run))).hash,
-    startWater: run.startNote ?? null, forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), utilityData: utilityData(), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
+    startWater: run.startNote ?? null,
+    // the downstream boundary the run actually had (requested in the inputs; a level that finds no edge water is a free outfall)
+    boundary: run.outlet ? (run.outlet.fixed != null ? { kind: 'fixed', level: run.outlet.fixed, side: run.outlet.side, cells: run.outlet.cells.length }
+      : { kind: 'river outlet', site: run.outlet.g.site, side: run.outlet.side, cells: run.outlet.cells.length }) : run.stageCells ? { kind: 'tide', cells: run.stageCells } : { kind: 'free outfall' },
+    forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), utilityData: utilityData(), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
     books: run.record?.books ?? null, validation: run.record?.validation ?? null, inflow: run.record?.inflow ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...(l.endDepth ? { endDepthM: l.endDepth } : {}), ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
     infrastructureLayer: infra.layer.features.length, storageUnits: run.storage ?? [], floodBarriers: run.watch?.results() ?? [],
