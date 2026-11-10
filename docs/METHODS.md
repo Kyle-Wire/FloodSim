@@ -1541,7 +1541,8 @@ ground's cover and roughness (swale `surface: 'keep'`, commit aa591de). Rerun: p
 106 %, level NSE 0.81, RMSE 0.24 m. Level minus USGS at a given flow is −0.01 to +0.15 m up to 12 m³/s, 0 at 15 m³/s
 and −0.12 m at 20 m³/s. Baseflow now reads 209.00 m against 209.1–209.25 m (USGS: low flows are affected by regulation).
 The bed width and the reach's downstream end are estimates, so this is kept as a sensitivity scenario, not the default.
-A repeat run of the culvert fix landed within 0.01 m, which sets the run-to-run noise.
+A repeat run of the culvert fix landed within 0.01 m. A later pair of one configuration spread 0.05 m, which is taken as the
+run-to-run noise (Experiment A, below).
 
 **Downstream boundary sensitivity.** A fixed downstream level (§3.7, commit ced7672) tested whether the free outfall
 at the west edge, 116 m below the outlet, drew the gauge down. Three levels, 209.6, 210.2 and 210.8 m NAVD88 (the free
@@ -1601,11 +1602,33 @@ grid, which blends in the outfall cell, not from cells peaking at different time
 configuration scored 211.10 m. The 0.05 m difference comes from when the readings were taken, with the outfall cell
 inside the 9-cell median. It is the noise floor of the peak score here.
 
-Read against the four outcomes set before the run: no defensible reading approaches the observed peak, and the
-single-cell peaks below the outfall cell agree within 0.09 m. The deficit, about 0.2 m, is hydraulic, not an artefact
-of extraction or aggregation. The one unresolved part is local: the gauge stands where the 2 m grid has a single
-cell between the outfall cell and a uniform channel, so a stage within the first 2–3 m of the endwall cannot be
-represented at this resolution.
+**Conclusion of Experiment A.** Across all defensible stage-extraction locations represented by the 2 m model grid,
+peak stage remains about 0.2 m below the observed value. The outlet-face cell is excluded because its stage is unstable
+and does not represent channel water level. The remaining discrepancy is therefore attributed to hydraulic
+representation rather than to the choice of gauge extraction, subject to the resolution limit immediately downstream
+of the culvert. Of the four outcomes set before the run (extraction explains the deficit; single cells match but no
+defensible series does; all defensible readings stay low; readings vary widely by cell), this is the third. The
+spread across cells (under 0.1 m, same timing and shape) also argues against a placement explanation.
+
+**Reading differences between runs.** Two runs of one configuration differed by 0.05 m in gauge peak. That spread is
+used as an empirical noise floor for this gauge. These are working bands drawn from observed variability, not
+statistical confidence intervals:
+
+| Change in gauge peak | Reading |
+|---|---|
+| under 0.05 m | indistinguishable from run-to-run variation |
+| 0.05–0.10 m | possibly meaningful; repeat before relying on it |
+| over 0.10 m | worth investigating, provided the rest of the configuration is controlled |
+
+The ledger's default noise band for the gauge peak is 0.05 m to match (§8.5).
+
+**Provenance of resumed runs.** The Experiment A run's peak is usable because it fell before the 21:12 resume. Its
+series after the resume is incomplete, so it is not used for full-event validation (the NSE above is over the readings
+up to 21:12 only). Runs since 3690713 record whether they were resumed (`resume.at` in summary.json). Older runs do not
+say. The ledger flags them, and flags any gauge series with more than 30 min between readings. Of the 25 runs on disk on
+10 November 2026, only this one shows such a gap. Runs deleted that day (benchmarks/ledger/archive-2026-11-10) cannot be
+checked. Their NSE and full-hydrograph results have uncertain provenance and are not treated as equivalent to
+uninterrupted runs.
 
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
@@ -2352,7 +2375,7 @@ Opening a project rebuilds the model from the saved settings and reloads a histo
   (free outfall, fixed level, river outlet; the model box) and integrity (forcing, design hash, commit, changed code).
   Requested and applied are kept apart: the scenario the batch job asked for and the one the run had, the boundary
   in the inputs and the one the run recorded (`summary.json` `boundary`, from 10 Nov 2026), with an execution status.
-  Run pairs get one of three findings: the same record with results within a noise band (`--noise`, default 3 cm of
+  Run pairs get one of three findings: the same record with results within a noise band (`--noise`, default 5 cm of
   gauge peak, 2 % of peak flow, 0.02 of NSE) is reproducible; the same record beyond it is to investigate (something
   unrecorded differed); different inputs within it are insensitive to what differs, or compensating changes. The band
   is a working threshold, not a definition of equivalence; the largest gap the repeats measured is printed beside it.
