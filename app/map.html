@@ -686,6 +686,7 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
         <p class="note" id="wtNote"></p>
         <div class="field"><label for="startWater">Rivers, lakes and tidal water start at</label>
           <select id="startWater"><option value="gauge" selected>Gauge levels (at the storm start; latest reading for design storms)</option><option value="lidar">The lidar water surface (no extra water)</option></select></div>
+        <div class="field"><label for="startReach" title="Experimental, opt-in. How far along the water a river gauge's rise is carried at the start, in metres; 0 = the gauge's own pool only; empty = the whole connected river (the default). Lake and tide levels are not limited.">Carry a river gauge's rise (m along the water)</label><input id="startReach" type="number" min="0" step="10" placeholder="whole river" style="width:7em"></div>
         <p class="note" id="startNote"></p>
       </details>
       <details class="adv">

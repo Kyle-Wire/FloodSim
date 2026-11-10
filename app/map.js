@@ -2311,7 +2311,7 @@ function forcingRecord(r) {
     storm: st ? { ...stormMeta(st), waterLevel: undefined, depth: st.depth, t0: st.t0 ?? null } : null,
     inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}), ...(e.ungauged ? { ungauged: e.ungauged } : {}) })),
     tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: st.wl.design ? true : $('tCoast').checked, ...(st.wl.design ? { design: st.wl.design } : {}), ...(st.wl.slr ? { slr: st.wl.slr } : {}), ...(st.wl.observedUntil ? { observedUntil: st.wl.observedUntil, surge: st.wl.surge } : {}), ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
-    startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
+    startLevels: { mode: $('startWater').value, ...(Number.isFinite(startReach()) ? { reachM: startReach() } : {}), readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
     outlet: r.outletReady?.fixed != null ? { fixed: r.outletReady.fixed, side: r.outletReady.side } : r.outletReady ? { site: r.outletReady.g.site, length: Number($('outLen').value) || null, readings: r.outletReady.level.length, flows: r.outletReady.flow.length,
       reach: r.outletReady.reach ? { sections: r.outletReady.reach.sections.length, km: r.outletReady.reach.length / 1000, depth: r.outletReady.reach.depth } : 'prismatic' } : null,
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...($('wetness').value === 'auto' ? { start: wetnessKey(), rainBefore: stormBase()?.antecedent ? (({ mm, days, source, amc, season }) => ({ mm, days, source, amc, season }))(stormBase().antecedent) : null } : {}), ...(Number($('gwShare').value) > 0 ? { groundwater: val('gwShare', 'gwLag') } : {}), ...(emu?.se != null && Math.abs(emu.se - WETNESS[wetnessKey()]) > 1e-9 ? { se: emu.se } : {}) },
@@ -3623,6 +3623,7 @@ function startNoteUpdate() {
     : `${n ? n + ' USGS level gauge' + (n > 1 ? 's' : '') + ' nearby.' : 'No USGS level gauges nearby.'} A gauged river rises above the lidar water surface by the gauge's rise, a lake fills flat to its gauge, tidal water to the tide level, and the water spreads onto connected ground below that level. Ungauged water stays at the lidar surface. The lidar has no bathymetry: water below its surface is not modelled.`;
 }
 $('startWater').onchange = () => { startNoteUpdate(); if (model && (!run || !run.solver)) resetRun(); };
+$('startReach').onchange = () => { if (model && (!run || !run.solver)) resetRun(); };
 /**
  * Gauge readings for the start, fetched before the run: at the storm start (historic) or the latest (design), for the
  * level gauges nearby and the inflow gauges. Also each gauge's flow then, for the design hydrograph's base.
@@ -3722,6 +3723,8 @@ function bathyCells(c, F) {
   for (let J = 0; J < c.ny; J++) for (let I = 0; I < c.nx; I++) { let s = 0; for (let j = J * F; j < (J + 1) * F; j++) for (let i = I * F; i < (I + 1) * F; i++) s += model.bathy.dz[j * W + i]; fill[J * c.nx + I] = s / (F * F); }
   c.bathyFill = fill; c.zSurf = c.z.map((v, k) => v + fill[k]);
 }
+/** How far (m, along the water) a river gauge's rise is carried at the start: Infinity = the whole river (the default), 0 = the gauge's own pool. */
+function startReach() { const v = ($('startReach')?.value ?? '').trim(); return v === '' || !(Number(v) >= 0) ? Infinity : Number(v); }
 function startWater(c, F, stageCells) {
   if ($('startWater').value !== 'gauge') return null;
   const ls = run.levelSrc, st = currentStorm(), tide = stageAt(st, 0), sources = [...(ls?.sources ?? [])];
@@ -3731,9 +3734,9 @@ function startWater(c, F, stageCells) {
     const cells = stageCells.filter(k => water[k]); if (cells.length) sources.push({ cells, level: tide });
   }
   if (!sources.length) { $('startNote').textContent = 'No usable gauge level for this run: the water bodies start at the lidar surface.' + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : ''); return null; }
-  const s = startDepths(c, water, sources, { surfR: Math.ceil(60 / (F * model.fine.dx)) }); // decks and bank pixels within 60 m take the river under them
+  const reachM = startReach(), s = startDepths(c, water, sources, { surfR: Math.ceil(60 / (F * model.fine.dx)), reach: reachM / (F * model.fine.dx) }); // decks and bank pixels within 60 m take the river under them
   let vol = 0, wet = 0; for (let k = 0; k < s.depth.length; k++) if (s.depth[k] > 0) { vol += s.depth[k]; wet++; }
-  const A = (F * model.fine.dx) ** 2, msg = `Starting water: ${fmtVol(vol * A)} on ${(wet * A / 1e4).toFixed(2)} ha.` + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : '') + (tide != null && stageCells?.length ? ` ${run.outlet ? 'River outlet edge' : 'Tidal water'} at ${tide.toFixed(2)} m NAVD88.` : '');
+  const A = (F * model.fine.dx) ** 2, msg = `Starting water: ${fmtVol(vol * A)} on ${(wet * A / 1e4).toFixed(2)} ha.` + (Number.isFinite(reachM) ? ` A river gauge's rise is carried ${reachM ? reachM + ' m along the water' : 'over its own pool only'}.` : '') + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : '') + (tide != null && stageCells?.length ? ` ${run.outlet ? 'River outlet edge' : 'Tidal water'} at ${tide.toFixed(2)} m NAVD88.` : '');
   $('startNote').textContent = msg; log(msg, 'ok', 'USGS NWIS');
   return s;
 }

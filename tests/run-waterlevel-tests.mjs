@@ -26,6 +26,13 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   const s2 = startDepths(c, w2, [{ cells: [9 * nx + 1], rise: 0 }], { surfR: 0 });
   let far = 0; for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) if (Math.abs(i - 20) > 3) far += s2.depth[j * nx + i];
   check('a bank cell flagged as water does not flood the valley to its height', far === 0, `${far.toFixed(2)} m of depth summed away from it`);
+  // reach: how far along the water the rise is carried (cells). Unlimited by default; 0 keeps it to the source's own
+  // cells; a flat level (lake, tide) is not bounded
+  const r0 = startDepths(c, water, [{ cells: [9 * nx + 1], rise: 0.4 }], { reach: 0 }), r10 = startDepths(c, water, [{ cells: [9 * nx + 1], rise: 0.4 }], { reach: 10 });
+  const lv = startDepths(c, water, [{ cells: [9 * nx + 1], level: 10.5 }], { reach: 0 });
+  check('reach 0: only the gauge pool rises; reach 10: the river 10 cells along, not 20; unset: as before', Math.abs(r0.depth[9 * nx + 1] - 0.4) < 1e-6 && r0.depth[9 * nx + 20] === 0 && r0.depth[9 * nx + 5] === 0 && Math.abs(r10.depth[9 * nx + 10] - 0.4) < 1e-6 && r10.depth[9 * nx + 20] === 0 && Math.abs(s.depth[9 * nx + 20] - 0.4) < 1e-6,
+    `${r0.depth[9 * nx + 5].toFixed(2)} / ${r10.depth[9 * nx + 10].toFixed(2)} / ${r10.depth[9 * nx + 20].toFixed(2)}`);
+  check('reach does not bound a flat lake or tide level', lv.depth[9 * nx + 30] > 0);
 }
 { // two lakes (west, east) separated by a ridge, a low hollow beyond a ridge, and a gauge in each lake
   const nx = 30, ny = 10, z = new Float64Array(nx * ny).fill(5), water = new Uint8Array(nx * ny), mask = new Uint8Array(nx * ny).fill(1);

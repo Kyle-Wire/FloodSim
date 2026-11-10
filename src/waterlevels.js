@@ -162,9 +162,13 @@ export function components(water, nx, ny) {
  * `rise` lifts the water surface parallel to the lidar surface, `level` sets it flat. Each source claims the water
  * component(s) its cells are in; within a component the nearest source wins. The water then spreads, nearest water
  * first, onto connected land below its level; land above the level of the water nearest it stays dry and stops water
- * from further away. → { depth (Float32Array), level (Float64Array, NaN = none; dry land keeps the level it was offered) }
+ * from further away. `reach` (cells, along the water from a source's own cells; default unlimited) bounds how far a
+ * river's rise is carried: 0 keeps it to the gauge's own pool. A flat `level` (lake, tide) is not bounded. Opt-in: a
+ * rise carried along every connected water cell also reaches tributaries and culverted lines that stand well above the
+ * gauge (Edwards Branch, Charlotte, Nov 2026: a tributary 1.4 m above the gauge seeded a 63,600 m³ starting pool).
+ * → { depth (Float32Array), level (Float64Array, NaN = none; dry land keeps the level it was offered) }
  */
-export function startDepths(c, water, sources, { maxSpread = 300, surfR = 30, surfTol = 1 } = {}) {
+export function startDepths(c, water, sources, { maxSpread = 300, surfR = 30, surfTol = 1, reach = Infinity } = {}) {
   const { nx, ny, z, mask } = c, N = nx * ny, level = new Float64Array(N).fill(NaN), depth = new Float32Array(N);
   const { id } = components(water, nx, ny), owner = new Int32Array(N).fill(-1), dist = new Float32Array(N).fill(Infinity);
   // nearest source within each claimed component (breadth-first over water cells from every source's cells)
@@ -173,7 +177,9 @@ export function startDepths(c, water, sources, { maxSpread = 300, surfR = 30, su
   const step = (k, fn) => { const i = k % nx, j = (k / nx) | 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (!di && !dj) continue; const a = i + di, b = j + dj; if (a >= 0 && b >= 0 && a < nx && b < ny) fn(b * nx + a, di && dj ? Math.SQRT2 : 1); } };
   while (q.length) { const nq = []; for (const k of q) step(k, (p, w) => { if (id[p] >= 0 && id[p] === id[k] && dist[k] + w < dist[p]) { dist[p] = dist[k] + w; owner[p] = owner[k]; nq.push(p); } }); q = nq; }
   const zs = c.zSurf ?? z, base = waterBase(water, zs, nx, ny, surfR, surfTol); // a rise is above the lidar water surface (not a carved channel bed)
-  for (let k = 0; k < N; k++) if (owner[k] >= 0) { const s = sources[owner[k]]; level[k] = s.level ?? base[k] + Math.max(0, s.rise); }
+  // past the reach a river's water cells keep the lidar surface: no rise, and the spread below neither enters nor leaves them
+  const held = new Uint8Array(N);
+  for (let k = 0; k < N; k++) if (owner[k] >= 0) { const s = sources[owner[k]]; if (s.level == null && dist[k] > reach + 1e-9) { held[k] = 1; continue; } level[k] = s.level ?? base[k] + Math.max(0, s.rise); }
   // spread onto land below the level, from the nearest water outward. Each land cell takes the level of the water that
   // reaches it first, and stays dry when it stands above that level: it then holds back water from further away. (A cell
   // flagged as water up on a bank, 1.4 m above the creek beside it, used to flood the Edwards Branch valley below the
@@ -181,7 +187,7 @@ export function startDepths(c, water, sources, { maxSpread = 300, surfR = 30, su
   let front = []; for (let k = 0; k < N; k++) if (!Number.isNaN(level[k])) front.push(k);
   for (let r = 0; r < maxSpread && front.length; r++) {
     const nf = [];
-    for (const k of front) step(k, (p) => { if (mask[p] && Number.isNaN(level[p])) { level[p] = level[k]; if (z[p] < level[k]) nf.push(p); } });
+    for (const k of front) step(k, (p) => { if (mask[p] && !held[p] && Number.isNaN(level[p])) { level[p] = level[k]; if (z[p] < level[k]) nf.push(p); } });
     front = nf;
   }
   for (let k = 0; k < N; k++) if (mask[k] && level[k] > z[k]) depth[k] = level[k] - z[k];
