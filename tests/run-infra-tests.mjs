@@ -4,7 +4,7 @@
 import { GridRef, fromUTM } from '../src/geo.js';
 import { synthNetwork, toINP, returnsHere } from '../src/drainage.js';
 import { realNetwork } from '../src/network-real.js';
-import { detectPipeFields } from '../src/linked.js';
+import { detectPipeFields, pipeRecords } from '../src/linked.js';
 import { storageCapacity, ringArea, lineLength, layerInputs, networkToLayer, attachStorage, feature, parseShp, parseDbf, unzip, toLayer, summarize } from '../src/infra.js';
 import { zip, crc32 } from '../src/export.js';
 import { loadSWMM, SWMM } from '../src/swmm.js';
@@ -71,6 +71,23 @@ const fc = (features) => ({ type: 'FeatureCollection', features });
   check('a pipe head at an endwall with no grate takes water through its barrels', box.stats.culvertEntrances === 1 && at?.grates === 1 && at.crest === 0 && near(at.parts[0][1].inletArea, 3.6, 1e-6) && near(at.parts[0][1].inletPerim, 3, 1e-6), JSON.stringify(at?.parts));
   const lid = realNetwork(g, f, [{ line: [head, ll(100, 40)], h: 1.2, upInv: 8.5, dnInv: 8.2 }], sim, { realInlets: [{ lon: inl[0], lat: inl[1] }] });
   check('without an endwall the head stays a closed manhole', lid.stats.culvertEntrances === 0);
+}
+
+// ---- a culvert in two lengths under a road: surveyed only at its endwalls, with a thin cover at the entrance
+{
+  const surveyed = [20, 60, 100].map(x => ({ line: [ll(x, 170), ll(x + 30, 170)], h: 0.6, upInv: 9.5, dnInv: 9.4 })); // lets the layer's inverts be read as metres
+  const head = ll(40, 100), mid = ll(80, 100), tail = ll(120, 100), inl = ll(120, 103), gHead = 10 + 0.01 * 40 + 0.005 * 99;
+  const zUp = gHead - 0.1, zDn = 10.0, culvert = [{ line: [head, mid], h: 2.4, w: 6.7, shape: 'RECT_CLOSED', upInv: zUp, dnInv: null }, { line: [mid, tail], h: 2.4, w: 6.7, shape: 'RECT_CLOSED', upInv: null, dnInv: zDn }];
+  const net = realNetwork(g, f, [...surveyed, ...culvert], sim, { realInlets: [{ lon: inl[0], lat: inl[1] }], outfalls: [{ lon: head[0], lat: head[1] }, { lon: tail[0], lat: tail[1] }] });
+  const at = (x) => net.nodes.findIndex(n => Math.abs(n.p[0] - x) < 1.5 && Math.abs(n.p[1] - 100) < 1.5), up = net.pipes.find(p => p.real && p.from === at(40)), dn = net.pipes.find(p => p.real && p.to === at(120));
+  check("a surveyed invert at a culvert's endwall stands with under 20 cm of cover", near(net.nodes[at(40)].invert, zUp, 1e-3), `${net.nodes[at(40)].invert?.toFixed(3)} m`);
+  const pipeOnly = realNetwork(g, f, [...surveyed, ...culvert], sim, { realInlets: [{ lon: inl[0], lat: inl[1] }] }), pAt = (x) => pipeOnly.nodes.findIndex(n => Math.abs(n.p[0] - x) < 1.5 && Math.abs(n.p[1] - 100) < 1.5);
+  check('without endwalls the same two pipes are read as before', pipeOnly.stats.invBridged === 0 && !near(pipeOnly.nodes[pAt(80)].invert, (zUp + zDn) / 2, 0.05), `${pipeOnly.nodes[pAt(80)].invert?.toFixed(3)} m`);
+  check('the manhole between lies on the straight run between the surveyed ends', net.stats.invBridged === 1 && near(net.nodes[at(80)].invert, (zUp + zDn) / 2, 0.02), `${net.nodes[at(80)].invert?.toFixed(3)} m`);
+  check('the culvert runs from its entrance to its outlet, and the entrance takes water', up?.to === at(80) && dn?.from === at(80) && net.stats.culvertEntrances === 1 && near(up.inOffset, 0, 1e-6) && near(dn.inOffset, 0, 1e-6), JSON.stringify({ entrances: net.stats.culvertEntrances }));
+  const m = { size: 'H', width: 'W', shape: 'S', sizeUnits: 'in' }, rec = (S, H, W) => pipeRecords([{ kind: 'line', coords: [ll(0, 0), ll(9, 0)], props: { S, H, W } }], m)[0];
+  const arch = rec('Arch', 96, 336), round = rec('Circular', 96, 96);
+  check('a wide arch becomes a rectangle of its rise and area; a round pipe stays round', arch.shape === 'RECT_CLOSED' && near(arch.h, 2.4384, 1e-4) && near(arch.w, 8.5344 * Math.PI / 4, 1e-3) && round.shape === 'CIRCULAR' && round.w === null, JSON.stringify(arch));
 }
 
 // ---- a drawn network: manhole inverts fill pipe inverts, a placed outfall ends the network, per-pipe roughness

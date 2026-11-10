@@ -21,6 +21,8 @@
 //      the pipe keeps its drawn direction and the hump comes out
 //   9. a pipe that starts at a placed endwall or flared end, with no grate, is a culvert entrance: surface water goes in
 //      through the barrel's own opening
+//  10. a culvert in two lengths (a manhole with no invert between two pipes running out to placed endwalls) lies on the
+//      straight run between the endwalls' inverts
 import { toCells } from './ingest.js';
 import { DESIGN_DEFAULTS, addOutlets, exchangePoints } from './drainage.js';
 
@@ -174,11 +176,28 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
   // each end on its own: an invert is used when it lies 0.2–30 m under the manhole's ground (deep trunks included); one
   // missing or implausible end is carried from the other at the pipe's ground slope (≥ minSlope). A missing invert is
   // null, never 0: null × u is 0 m, which once put pipe ends 40–65 m under Portland's streets and blew SWMM's books up
-  const invAt = (v, i) => { if (!invUnits || v == null || !Number.isFinite(v) || v === 0) return null; const z = v * invUnits.u, c = nodes[i].ground - z; return c > 0.2 && c < 30 ? z : null; };
-  let invPartial = 0, invRejected = 0;
-  for (const q of raw) {
-    let up = invAt(q.r.upInv, q.a), dn = invAt(q.r.dnInv, q.b);
-    if (invUnits && (Number.isFinite(q.r.upInv) && q.r.upInv && up == null || Number.isFinite(q.r.dnInv) && q.r.dnInv && dn == null)) invRejected++;
+  const invAt = (v, i, minCover = 0.2) => { if (!invUnits || v == null || !Number.isFinite(v) || v === 0) return null; const z = v * invUnits.u, c = nodes[i].ground - z; return c > minCover && c < 30 ? z : null; };
+  let invPartial = 0, invRejected = 0, invBridged = 0;
+  const ends = raw.map(q => [invAt(q.r.upInv, q.a), invAt(q.r.dnInv, q.b)]);
+  // a culvert in two lengths: a manhole no pipe gives an invert for, between two pipes that run out to placed endwalls or
+  // flared ends. Its invert lies on the straight run between the endwalls' inverts, which stand even with under 20 cm of
+  // cover (an endwall sits in the creek, its invert at the bed or over a scour hole). The ground slope would put it near
+  // the road (Sheffield Dr, Charlotte: an 8 × 28 ft arch that then carried nothing). Every other pipe is read as before.
+  const open = nodes.map(() => []), known = new Uint8Array(nodes.length);
+  raw.forEach((q, k) => { [q.a, q.b].forEach((n, e) => { if (ends[k][e] != null) known[n] = 1; else open[n].push([k, e]); }); });
+  open.forEach((list, i) => {
+    if (known[i] || list.length < 2) return;
+    const walls = list.map(([k, e]) => { const q = raw[k], n = e === 0 ? q.b : q.a; return { k, e, z: userOut.has(n) ? invAt(e === 0 ? q.r.dnInv : q.r.upInv, n, -0.3) : null }; })
+      .filter(w => w.z != null).sort((x, y) => (raw[y.k].r.h || 0) - (raw[x.k].r.h || 0));
+    if (walls.length < 2) return;
+    const [A, B] = walls; ends[A.k][1 - A.e] = A.z; ends[B.k][1 - B.e] = B.z;
+    const z = A.z + (B.z - A.z) * raw[A.k].L / (raw[A.k].L + raw[B.k].L);
+    for (const [k, e] of list) ends[k][e] = z;
+    invBridged++;
+  });
+  raw.forEach((q, k) => {
+    let [up, dn] = ends[k];
+    if (invUnits && (Number.isFinite(q.r.upInv) && q.r.upInv && invAt(q.r.upInv, q.a) == null || Number.isFinite(q.r.dnInv) && q.r.dnInv && invAt(q.r.dnInv, q.b) == null)) invRejected++;
     if ((up == null) !== (dn == null)) {
       const S = Math.max(o.minSlope, Math.abs(nodes[q.a].ground - nodes[q.b].ground) / q.L);
       if (up == null) up = dn + S * q.L; else dn = up - S * q.L;
@@ -187,7 +206,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     const flip = up != null ? dn > up : dist[q.b] > dist[q.a] || (dist[q.b] === dist[q.a] && nodes[q.b].ground > nodes[q.a].ground);
     if (flip) { [q.a, q.b] = [q.b, q.a]; [up, dn] = [dn, up]; }
     Object.assign(q, { D: q.r.h, Wd: q.r.w, shape: q.r.shape, barrels: q.r.barrels, invUp: up, invDn: dn, given: up != null, reversed: flip && up != null });
-  }
+  });
   const into = nodes.map(() => []), outOf = nodes.map(() => []);
   raw.forEach((q, k) => { into[q.b].push(k); outOf[q.a].push(k); });
 
@@ -289,7 +308,7 @@ export function realNetwork(fine, f, pipes, sim, opts = {}) {
     stats: { junctions: outNodes.filter(n => !n.outfall).length, outfalls: outNodes.filter(n => n.outfall).length, pipes: outPipes.length,
       inlets: inlets.filter(g => g.grates > 0).length, grates: inlets.reduce((s, g) => s + g.grates, 0), lids: inlets.filter(g => !g.grates).length,
       realInlets, unconnectedGrates: unconnected, realOutfalls: 0, offsiteOutlets: outNodes.filter(n => n.offsite).length,
-      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, interiorEnds, placedOutfalls: outNodes.filter(n => n.placed).length, openEnds: outNodes.filter(n => n.openEnd).length, restoredPipes: restored.length, culvertEntrances: entrances,
+      realPipes: raw.length, tees, filledSizes: filled, inverts: invUnits ? `from layer (${invUnits.name})` : 'derived from lidar', invPartial, invRejected, invBridged, interiorEnds, placedOutfalls: outNodes.filter(n => n.placed).length, openEnds: outNodes.filter(n => n.openEnd).length, restoredPipes: restored.length, culvertEntrances: entrances,
       pipeLength: outPipes.filter(q => !q.offsite).reduce((s, q) => s + q.L, 0), minD: Math.min(...outPipes.map(q => q.D)), maxD: Math.max(...outPipes.map(q => q.D)), served: 0 },
   };
 }

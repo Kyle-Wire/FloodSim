@@ -112,7 +112,9 @@ export function pipeRecords(features, m, { datum = 0 } = {}) {
     const shp = String(m.shape ? p[m.shape] ?? '' : '');
     const box = /box|rect|square|rcb/i.test(shp) || /rcb|box/i.test(String(p.MATL ?? p.MATERIAL ?? ''));
     const barrels = /double|twin|dual/i.test(shp) ? 2 : /triple/i.test(shp) ? 3 : 1;
-    out.push({ line: f.coords, h, w: box ? (w ?? h) : null, shape: box ? 'RECT_CLOSED' : 'CIRCULAR', barrels,
+    // a wide arch (Charlotte's Sheffield Dr culvert: 8 ft rise, 28 ft span) is a closed rectangle of its rise and the same area (a half-ellipse: π/4 of the span)
+    const arch = /arch/i.test(shp) && h && w > h;
+    out.push({ line: f.coords, h, w: arch ? w * Math.PI / 4 : box ? (w ?? h) : null, shape: box || arch ? 'RECT_CLOSED' : 'CIRCULAR', barrels,
       upInv: m.upInvert ? inv(p[m.upInvert]) : null, dnInv: m.dnInvert ? inv(p[m.dnInvert]) : null, combined: m.system ? COMBINED.test(String(p[m.system] ?? '').trim()) : false });
   }
   return out;
