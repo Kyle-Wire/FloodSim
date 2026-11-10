@@ -177,7 +177,7 @@ const map = new maplibregl.Map({
 });
 const gpuReady = initGPU();
 let appCommit = 'unknown', appChanged = []; // the server's checkout: part of every run's forcing fingerprint; the code files changed from it
-fetch('/api/version', { cache: 'no-store' }).then(r => r.json()).then(v => { if (v.commit) appCommit = v.commit + (v.dirty ? '+dirty' : ''); appChanged = v.changed ?? []; }).catch(() => {}); // Build awaits it: a project opened at page load can finish building before the GPU is up
+fetch('/api/version', { cache: 'no-store' }).then(r => r.json()).then(v => { if (v.commit) appCommit = v.commit + (v.dirty ? '+dirty' + (v.diff ? '.' + v.diff : '') : ''); appChanged = v.changed ?? []; }).catch(() => {}); // Build awaits it: a project opened at page load can finish building before the GPU is up
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 map.on('moveend', () => { try { localStorage.setItem('floodsim.view', JSON.stringify({ center: map.getCenter().toArray(), zoom: map.getZoom() })); } catch { /* storage off */ } });
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');

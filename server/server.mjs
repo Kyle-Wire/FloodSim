@@ -4,7 +4,8 @@
 // (range [first, last] bytes, inclusive: one message of a large GRIB2 file).
 // Only allowlisted hosts are proxied; responses are cached in .cache/ so re-running an area is offline-fast.
 // /api/projects…: project folders on this computer (loopback only), under FLOODSIM_PROJECTS or Documents\FloodSim Projects.
-// GET /api/version → { commit, dirty, changed }: the app commit (and any code files changed from it), part of every run's record.
+// GET /api/version → { commit, dirty, changed, diff }: the app commit (and any code files changed from it, with a hash of
+// their contents), part of every run's record.
 // GET /api/bluetopo?bbox=w,s,e,n → { scheme, tiles }: NOAA BlueTopo bathymetry tiles under a box (from its tile index).
 import { createServer } from 'node:http';
 import { codeState } from '../tools/codestate.mjs';

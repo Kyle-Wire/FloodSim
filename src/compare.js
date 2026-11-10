@@ -50,11 +50,12 @@ export const FORCING_PARTS = {
   drainage: 'drainage, green infrastructure, infrastructure layer and calibration',
   drainSettings: 'inlet and pipe solver settings',
   utilityData: 'the utility data its pipe and inlet layers returned (a city republishing its layers changes it)',
+  outlet: 'downstream boundary (a river outlet held at a gauge, or a fixed level)',
   area: 'model area',
   commit: 'app commit',
 };
 /** Parts left out of the fingerprint while absent (null), so runs made before they existed keep their hashes. */
-const OPTIONAL_PARTS = new Set(['drainSettings', 'utilityData']);
+const OPTIONAL_PARTS = new Set(['drainSettings', 'utilityData', 'outlet']);
 /** The parts a settings test may differ in: two runs of the same design that differ only here compare as one. */
 export const SETTINGS_PARTS = ['drainSettings'];
 /** forcing: { storm, inflow, … } (any JSON-able values) → { hash, parts: { name: hash } } */

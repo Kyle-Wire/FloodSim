@@ -1551,7 +1551,7 @@ new 2,112 × 2,112 many-tiles case (§2.9).
 | `run-bank-tests.mjs` | Friction-angle failure, cohesion, confinement, rapid drawdown, probability vs Monte Carlo |
 | `run-design-tests.mjs` | Distance transform, grading (daylighting at 3:1 / 2:1, cut/fill vs analytic frustum within 0.3 %), FFE rules, no features → bit-identical inputs |
 | `run-stormwater-tests.mjs` | Outlet rating, stage–storage, modified Puls vs analytic drawdowns (3e-5 m), ponds, swales, GI, detention check |
-| `run-compare-tests.mjs` | Forcing fingerprint (stable, names differences, ignores design), settings tests (accepted only with the same design; old hashes kept), republished utility data refused and named, `.f32` grids, Δ maps, off-site impact, tables |
+| `run-compare-tests.mjs` | Forcing fingerprint (stable, names differences, ignores design), settings tests (accepted only with the same design; old hashes kept), republished utility data refused and named, a changed downstream boundary changes the hash and is named (none keeps old hashes), uncommitted edits told apart by content, `.f32` grids, Δ maps, off-site impact, tables |
 | `run-report-tests.mjs` | Hydrograph stats, profiles, HGL path and flags, stage–storage–discharge, gutter spread, charts |
 | `run-damage-tests.mjs` | USACE curves, water against walls (rowhouses, sheet flow, enclosed yards), EAD, BCA, area stats |
 | `run-checks-tests.mjs` | Edge distance and flooding by side, points near the edge, run against run, sensitivity, statuses, difference map |
@@ -2157,10 +2157,24 @@ Every finished run in a project is saved as `runs/<date_time>/` (`app/projects.j
   and water table; grid size and speed mode; solver settings; run length; sediment, debris and bank options; drainage,
   green infrastructure, infrastructure layer and calibration; inlet and pipe solver settings (`drainSettings`: only the
   values that differ from the defaults, and the part is left out when there are none, so runs made before it existed
-  keep their hashes); model area; and **app commit** (from `/api/version`, with
-  `+dirty` when code that can change a result differs from that commit: `app`, `src`, `server`, `vendor`, `dist`,
-  `tools` and the package files, untracked files included, Markdown not; `tools/codestate.mjs`). The changed files are
-  listed in the record as `codeChanged`. Docs and the validation suite's own score files do not make a run dirty.
+  keep their hashes); the utility data the pipe and inlet layers returned (`utilityData`, left out when none); the
+  **downstream boundary** (`outlet`: a river outlet held at a downstream gauge, with its reach, or a fixed level and
+  the edge it holds; left out for free outfalls); model area; and **app commit** (from `/api/version`, with
+  `+dirty.<hash>` when code that can change a result differs from that commit: `app`, `src`, `server`, `vendor`, `dist`,
+  `tools` and the package files, untracked files included, Markdown not; `tools/codestate.mjs`). The hash is of the
+  changed files' contents, so two runs at one commit with different uncommitted edits are different code. The changed
+  files are listed in the record as `codeChanged`. Docs and the validation suite's own score files do not make a run
+  dirty.
+- **What the two hashes cover together.** Rain and other meteorological forcing (storm); soil and infiltration
+  settings (antecedent, calibration) and the soil grids themselves (design hash); terrain and channel geometry,
+  including a site-design scenario's grading (design hash); the drainage network (its layer links and settings, the
+  data they returned, and the code that builds the network from them, through the commit); boundary conditions (tide,
+  river inflow, downstream boundary); and the solver settings. A run's scenario is recorded by name alongside.
+- **Older records encode less.** Parts are added as optional, so runs made before a part existed keep their hashes,
+  but those hashes do not tell apart what the part now covers. Before 10 Nov 2026 the downstream boundary was not in
+  the fingerprint (runs with different river outlets or fixed levels share a hash) and uncommitted code was only
+  `+dirty` (runs at one commit with different edits share a hash); before the `utilityData` part, a city republishing
+  its layers went unseen. Compare such runs by their recorded inputs (`batch.variant`, `codeChanged`), not by hash.
 - **Design hash** (`designHash`). An FNV-1a hash over the bytes of the built 1 m model layers: z, buildings and
   heights, roads, land cover, n, infiltration, soil group, pervious share, critical shear, texture, grains, bedrock,
   collapse/swell classes, Green-Ampt parameters and building ids. It therefore captures the downloaded terrain, land

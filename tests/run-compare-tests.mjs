@@ -3,9 +3,43 @@
 // building and outlet tables, control-line faces and their signs, and the CSV / summary writers.
 // Usage: node tests/run-compare-tests.mjs
 import * as C from '../src/compare.js';
+import { changedHash, codeState } from '../tools/codestate.mjs';
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
+
+// ---- the code a run was made with: uncommitted edits are told apart by their contents
+{
+  const d = mkdtempSync(join(tmpdir(), 'fs-code-')), put = (s) => writeFileSync(join(d, 'rule.js'), s);
+  put('const rule = "broad";'); const h1 = changedHash(d, ['rule.js']), h1b = changedHash(d, ['rule.js']);
+  put('const rule = "narrow";'); const h2 = changedHash(d, ['rule.js']);
+  check('one commit, two different uncommitted edits: different code hashes', h1 === h1b && h1 !== h2 && /^[0-9a-f]{8}$/.test(h1));
+  check('a deleted file still counts', changedHash(d, ['gone.js']) !== changedHash(d, []));
+  rmSync(d, { recursive: true, force: true });
+}
+// ---- codeState in a real checkout: untracked (a space in the name), staged, edited after staging, deleted, renamed
+{
+  const d = mkdtempSync(join(tmpdir(), 'fs-git-')), git = (...a) => spawnSync('git', a, { cwd: d, encoding: 'utf8' }), put = (f, s) => writeFileSync(join(d, f), s);
+  if (git('init', '-q').status === 0) {
+    git('config', 'user.email', 't@t'); git('config', 'user.name', 't'); mkdirSync(join(d, 'src'));
+    put('src/a.js', 'a1'); put('src/b.js', 'b1'); put('src/c.js', 'c1'); put('notes.md', 'm'); git('add', '.'); git('commit', '-qm', 'base');
+    const seen = [], st = () => { const s = codeState(d); seen.push(s.diff); return s; };
+    check('clean checkout: not dirty, no hash', !st().dirty && seen[0] === null);
+    put('notes.md', 'm2'); check('a Markdown edit does not make it dirty', !st().dirty);
+    put('src/new file.js', 'n1'); check('an untracked file (space in its name) is code', st().changed.includes('src/new file.js'));
+    put('src/a.js', 'a2'); git('add', 'src/a.js'); st();
+    put('src/a.js', 'a3'); st(); // staged, then edited again: the working tree is what runs
+    rmSync(join(d, 'src/b.js')); check('a deleted file is listed', st().changed.includes('src/b.js'));
+    git('mv', 'src/c.js', 'src/c2.js'); const r = st();
+    check('a rename lists both paths', r.changed.includes('src/c.js') && r.changed.includes('src/c2.js'));
+    check('each change gives a new code hash', new Set(seen.slice(2)).size === seen.length - 2, seen.join(' '));
+  } else check('git available for the codeState test', false);
+  rmSync(d, { recursive: true, force: true });
+}
 
 // ---- fingerprint
 {
@@ -28,6 +62,11 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   const pair = C.comparable({ forcing: a, designHash: 'd1' }, { forcing: s, designHash: 'd1' });
   check('same design, only the settings differ: a settings test', pair.ok && pair.kind === 'settings' && /inlet and pipe solver/.test(pair.diff[0]));
   check('same forcing: a design pair', C.comparable({ forcing: a, designHash: 'd1' }, { forcing: b, designHash: 'd2' }).kind === 'design');
+  // the downstream boundary: none keeps old hashes; two fixed levels are different forcing, and named
+  check('no downstream boundary keeps the fingerprint runs had before', C.fingerprint({ ...base, outlet: null }).hash === a.hash && !('outlet' in a.parts));
+  const o1 = C.fingerprint({ ...base, outlet: { fixed: 209.6, side: 'west' } }), o2 = C.fingerprint({ ...base, outlet: { fixed: 210.2, side: 'west' } });
+  const oc = C.comparable({ forcing: o1, designHash: 'd1' }, { forcing: o2, designHash: 'd1' });
+  check('two fixed downstream levels: different forcing, and named', o1.hash !== o2.hash && o1.hash !== a.hash && !oc.ok && /downstream boundary/.test(oc.reason));
   // the utility data the layers returned (a city republishing its pipes or inlets: same links, different data)
   check('no utility data recorded keeps the fingerprint runs had before', C.fingerprint({ ...base, utilityData: null }).hash === a.hash && !('utilityData' in a.parts));
   const u5 = C.fingerprint({ ...base, utilityData: { pipes: { n: 1738, hash: 'aa' }, inlets: { n: 1319, hash: 'bb' } } });
