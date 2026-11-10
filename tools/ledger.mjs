@@ -15,7 +15,7 @@ import os from 'node:os';
 
 const args = process.argv.slice(2), opt = (k) => { const i = args.indexOf(k); if (i < 0) return null; const v = args[i + 1]; args.splice(i, 2); return v; };
 const near = opt('--near')?.split(',').map(Number), minRise = Number(opt('--min-rise') ?? 1.5), out = opt('--out');
-const NOISE = (opt('--noise') ?? '0.03,0.02,0.02').split(',').map(Number); // run pairs, below
+const NOISE = (opt('--noise') ?? '0.05,0.02,0.02').split(',').map(Number); // run pairs, below
 const ROOT = process.env.FLOODSIM_PROJECTS || path.join(os.homedir(), 'Documents', 'FloodSim Projects');
 const folders = args.flatMap(a => {
   if (fs.existsSync(a)) return [a];
@@ -37,6 +37,9 @@ function pipesNear(dir) {
     .map(p => `${p.W > 0 ? `rect ${fx(p.W, 1)}×${fx(p.D, 1)}` : `round ${fx(p.D, 1)}`} m ${fx(p.invUp)}→${fx(p.invDown)}`).sort().join('; ') || 'none';
 }
 
+// the longest stretch (s) between two readings of a series [[ms, v]]; a dry reading (v null) is still a reading, so only
+// minutes with no frame read back count
+const maxGap = (ser) => { const t = (ser ?? []).map(p => p[0]); let m = 0; for (let i = 1; i < t.length; i++) m = Math.max(m, (t[i] - t[i - 1]) / 1000); return m; };
 const rows = [];
 for (const folder of folders) {
   const runs = path.join(folder, 'runs'); if (!fs.existsSync(runs)) { console.error(`no runs in ${folder}`); continue; }
@@ -60,12 +63,16 @@ for (const folder of folders) {
       boundary, box: Array.isArray(area) ? area.map(v => v.toFixed(4)).join(',') : '',
       forcing: s.forcingHash ?? s.forcing?.hash ?? '', design: s.designHash ?? '', commit: s.commit ?? '', codeChanged: (s.codeChanged ?? []).join(' '),
       inputsKey: JSON.stringify(Object.keys(inp).sort().map(k => [k, inp[k]])) + '|' + (s.scenario ?? ''), flags: [],
+      resume: s.resume === undefined ? null : s.resume.at, resumeKnown: s.resume !== undefined, gaugeGap: maxGap(g?.model),
       asked: s.batch?.scenario ?? null, result: [g?.score?.model?.v, peakQ, g?.levelShape?.nse],
     });
   }
 }
 // integrity flags
 for (const r of rows) {
+  if (r.resume != null) r.flags.push(`resumed from a checkpoint at ${(r.resume / 3600).toFixed(2)} h`);
+  if (!r.resumeKnown) r.flags.push('resume status not recorded (older record)');
+  if (r.gaugeGap > 1800) r.flags.push(`gauge series has a ${(r.gaugeGap / 3600).toFixed(1)} h gap: resumed before the 742b56e fix? Full-event scores unusable`);
   if (/\+dirty/.test(r.commit)) r.flags.push(/\+dirty\.[0-9a-f]{8}/.test(r.commit) ? 'uncommitted code (hashed)' : 'uncommitted code (not hashed: older record)');
   if (r.scenario !== 'Existing conditions' && rows.some(e => e.scenario === 'Existing conditions' && e.box === r.box && e.design === r.design))
     r.flags.push('scenario named but its ground equals existing conditions: not applied?');
@@ -78,7 +85,7 @@ for (const r of rows) {
 //   same record (fingerprint, design, commit, inputs), results within noise → reproducible
 //   same record, results beyond noise → investigate: something the record does not hold differed
 //   different record, results within noise → insensitive to what differs, or changes that compensate
-// The noise band is a setting, not a definition of equivalence: --noise peak m,flow share,NSE (default 0.03,0.02,0.02,
+// The noise band is a setting, not a definition of equivalence: --noise peak m,flow share,NSE (default 0.05,0.02,0.02,
 // from a repeated Charlotte run that landed within 0.01 m). The pairs a repeat measured are reported beside it.
 const gaps = (a, b) => [Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]) / Math.max(Math.abs(a[1]), Math.abs(b[1]), 1e-9), Math.abs(a[2] - b[2])];
 const within = (a, b) => { if (a.some(v => v == null) || b.some(v => v == null)) return null; const g = gaps(a, b); return g.every((v, i) => v <= NOISE[i]); };

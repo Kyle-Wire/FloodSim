@@ -4335,6 +4335,9 @@ async function runFiles() {
     // the downstream boundary the run actually had (requested in the inputs; a level that finds no edge water is a free outfall)
     boundary: run.outlet ? (run.outlet.fixed != null ? { kind: 'fixed', level: run.outlet.fixed, side: run.outlet.side, cells: run.outlet.cells.length }
       : { kind: 'river outlet', site: run.outlet.g.site, side: run.outlet.side, cells: run.outlet.cells.length }) : run.stageCells ? { kind: 'tide', cells: run.stageCells } : { kind: 'free outfall' },
+    // whether the run was resumed from a checkpoint, and at what model time (s); runs before 10 Nov 2026 do not say, and
+    // a run resumed before 742b56e stopped reading frames back at the resume (gauge series, max speeds, saved frames)
+    resume: { at: run.resumedAt ?? null },
     forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), utilityData: utilityData(), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
     books: run.record?.books ?? null, validation: run.record?.validation ?? null, inflow: run.record?.inflow ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...(l.endDepth ? { endDepthM: l.endDepth } : {}), ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
