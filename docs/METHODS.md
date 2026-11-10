@@ -1747,6 +1747,29 @@ Predictions written before the run:
 3. The level NSE improves on −0.60, because the pre-storm hours no longer sit 0.3–0.7 m high. The end-of-run level at
    Sheffield Dr stays above the observed 209.25 m, because the closed box and the crossing still hold water.
 
+**Experiment C result (run 2026-11-10_120141, commit 6ca8dbd, not resumed).** All three predictions held.
+
+1. The run started with 168 m³ on 0.05 ha, against 64,600 m³. Six minutes in, the gauge read 208.90 m, against 210.64 m
+   in the original extended run. Through the pre-storm hours it stayed at 208.89–208.90 m, the same as the standard
+   domain. Both sit about 0.2 m under the observed 209.1–209.2 m.
+2. The gauge peak was 211.35 m, against 211.33 m, so +0.02 m, under the noise floor. The peak is −0.01 m from the
+   observed and 18 min early.
+3. The level NSE rose from −0.60 to 0.19 (RMSE 0.69 to 0.49 m). The end-of-run level was 209.85 m, the same as the
+   original extended run and 0.6 m above the observed.
+
+From 10 h into the run, about 2 h before the rise, Experiment C and the original extended run read the same at the gauge
+to within 0.02 m. Along the creek their peak profiles agree to 0.02 m from Sheffield Dr to 250 m below it. The reach
+above the crossing peaks at 210.71–210.76 m instead of 210.77–210.81 m. Below the crossing the false pool's 210.89 m is
+gone: the peak there now falls from 210.69 m to 209.12 m at the edge, which is water flowing out, not sitting there.
+So the starting pool raised the pre-storm hours and the area below the crossing, and nothing else. It is not why the
+extended domain's peak at Sheffield Dr is 0.24 m above the standard domain's. That difference is made during the
+storm, by what lies downstream of the standard edge: the crossing modelled as two outfalls, and the closed box,
+already shown not to move the peak. The end-of-run level is held up by the same features.
+
+The extended domain with `startReach` 0 is now the cleaner reference, with one artefact known to remain: the crossing
+culvert. Its peak is within the noise floor of the observed. That agreement is not evidence that the model is right,
+because the reach above the crossing is held by overtopping that a working culvert would share.
+
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
 | Sheffield Dr culvert misread | Confirmed and corrected (143d18e) |
@@ -1755,7 +1778,7 @@ Predictions written before the run:
 | Where the gauge is read, across a steep drawdown | Tested (Experiment A): every defensible reading is 0.19–0.28 m low; only the pipe's outfall cell reads high, and it is not a stage. The first 2–3 m below the endwall is unresolved at 2 m |
 | Downstream twin box culvert | Tested (Experiment B, one barrel opened): +0.01 m at the gauge peak, under the noise floor; it drains the pond and improves the recession. Twin head left closed (no invert recorded) |
 | What sets the extended reach's 210.80 m peak pool | Identified (no run): a 96 in crossing 470 m below Sheffield Dr modelled as two outfalls back to back, so the creek overtops it (crest 209.5–209.75 m); below the crossing, a starting pool that is not real |
-| Start water spread from stream lines over culverts and fill (extended domain) | Found: 64,600 m³ at the start, holding Sheffield Dr 0.3–0.7 m above observed before the storm; extended runs are not a clean reference until removed |
+| Start water spread from stream lines over culverts and fill (extended domain) | Tested (Experiment C, `startReach` 0): removing it fixes the pre-storm hours (NSE −0.60 → 0.19) and moves the gauge peak +0.02 m; it is not why the extended peak is higher |
 | Downstream crossing backwater (a working 96 in culvert) | Untested; HDS-5 predicts headwater near 210.5 m at 25 m³/s |
 | Channel roughness | Deferred: it shifts the stage curve but does not change its slope |
 
