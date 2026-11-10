@@ -1770,6 +1770,58 @@ The extended domain with `startReach` 0 is now the cleaner reference, with one a
 culvert. Its peak is within the noise floor of the observed. That agreement is not evidence that the model is right,
 because the reach above the crossing is held by overtopping that a working culvert would share.
 
+**The Edwards Branch crossing: provenance and geometry (records only, no new simulation).** Taken from the city's
+StormPipes and StormStructures replies cached on 9–10 November 2026 (`.cache/`), read while the city's server refused
+requests. The crossing is one culvert, digitized east to west in three lengths, endwall to endwall, 15.6 m in all:
+
+| City record | From → to | Inverts (ft) | Source of the invert |
+|---|---|---|---|
+| P_39133 | east endwall S_16703 → S_47917 | 673.0 → 679.6 | endwall: submeter GPS, January 2014 |
+| P_11307 | S_47917 → S_15969 | 679.6 → 680.8 | catch basins: record drawing, 2015, "not verified in the field yet" |
+| P_11292 | S_15969 → west endwall S_15970 | 680.8 → 674.2 | endwall: submeter GPS, January 2014 |
+
+All three are recorded as `Elliptical`, 96 in high and 144 in wide, "Metal or Steel", "single metal culvert". The
+lengths date from 1956 and 1962.
+
+- **J603's invert, 207.51 m, is the city's own record (680.8 ft), but not the barrel's floor.** It is the invert of
+  S_15969, a double catch basin whose box "dumps directly into culvert". S_47917 (679.6 ft) likewise "enters directly
+  into culvert". Those values stand 1.5–2 ft below the 8 ft barrel's crown, which fits basins connecting near the top
+  of the culvert. They were copied onto the pipe lengths as their end inverts. The barrel's floor is known only at the
+  endwalls: 673.0 ft (205.13 m) east and 674.2 ft (205.50 m) west, both by submeter GPS. That is 0.37 m adverse over
+  15.6 m, possibly because the west part was added later.
+- **Direction: east to west.** Each length's upstream end in the city's record is the east endwall's side. That
+  matches the creek, which runs from Sheffield Dr toward the box entrance (671 ft). The model turned two lengths round,
+  because their recorded inverts rise (§3.9 rule 8). The rule that would turn them back (rule 3a) needs a main pipe
+  arriving at a dead end, and a culvert fed by surface water has none. The rule that bridges a culvert's middle
+  (rule 10) applies only to a manhole with no invert, and these have the basins'. The result is two outfalls back to
+  back.
+- **Shape and roughness are not read.** FloodSim does not recognize `Elliptical`. It built a 2.44 m circle (4.7 m²)
+  instead of a 96 × 144 in horizontal ellipse (7.0 m²), with n = 0.013 for corrugated metal.
+- **Independent evidence of the barrel's state, from the lidar.** The lowest lidar ground within 5 m of the east
+  endwall is 207.33 m: 2.2 m above the GPS invert and 0.24 m below the crown (207.57 m). By the west endwall it is
+  206.96 m, against an invert of 205.50 m. The barrel is either mostly filled with sediment or held standing water
+  when the lidar was flown. The records cannot tell these apart. It is the largest remaining uncertainty, because it
+  decides whether the culvert passes the January flow.
+
+A defensible representation, stating its assumptions: one barrel, east to west, between the two GPS endwall inverts
+(the adverse 0.37 m as recorded); a horizontal ellipse 96 × 144 in; n for corrugated metal; the two catch basins
+entering as inlets, not as points on the barrel's floor; the sediment state bracketed (clear, and filled to the
+approach lidar), because it is not known.
+
+Conditional predictions, registered before any run and holding only for that representation:
+
+- **A, hydraulics at the crossing.** HDS-5 inlet control for a clear 96 × 144 in CMP at 25 m³/s gives a headwater of
+  208.4 m (headwall) to 208.8 m (projecting). That is below the crossing's lidar crest (209.5–209.75 m), so a clear
+  barrel would pass the January peak without overtopping. The reach above it would peak well below the present
+  210.7–210.8 m. A barrel filled to the approach lidar would keep the overtopping and that reach near its present
+  level. The earlier 210.5 m estimate was for the wrong shape (a 96 in circle) and is withdrawn.
+- **B, the gauge.** The change at Sheffield Dr is measured against the corrected extended baseline, 211.35 m
+  (Experiment C). A change at the crossing need not reach the gauge at the same size. With a clear barrel the gauge
+  should fall toward the standard domain's 211.10–211.15 m. Filled, it should stay within the noise floor of 211.35 m.
+
+The corrected extended baseline's 0.01 m agreement with the observed peak is not counted as validation while the
+crossing is misrepresented.
+
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
 | Sheffield Dr culvert misread | Confirmed and corrected (143d18e) |
@@ -1779,7 +1831,8 @@ because the reach above the crossing is held by overtopping that a working culve
 | Downstream twin box culvert | Tested (Experiment B, one barrel opened): +0.01 m at the gauge peak, under the noise floor; it drains the pond and improves the recession. Twin head left closed (no invert recorded) |
 | What sets the extended reach's 210.80 m peak pool | Identified (no run): a 96 in crossing 470 m below Sheffield Dr modelled as two outfalls back to back, so the creek overtops it (crest 209.5–209.75 m); below the crossing, a starting pool that is not real |
 | Start water spread from stream lines over culverts and fill (extended domain) | Tested (Experiment C, `startReach` 0): removing it fixes the pre-storm hours (NSE −0.60 → 0.19) and moves the gauge peak +0.02 m; it is not why the extended peak is higher |
-| Downstream crossing backwater (a working 96 in culvert) | Untested; HDS-5 predicts headwater near 210.5 m at 25 m³/s |
+| Edwards Branch crossing (96 × 144 in elliptical CMP, 470 m below Sheffield Dr) | Unresolved. Records read: east-to-west culvert, GPS endwall inverts 205.13 / 205.50 m, mid inverts are catch basins, shape not read. Barrel sediment state unknown (approach lidar 0.24 m below the crown). Clear barrel predicted 208.4–208.8 m headwater, no overtopping |
+| Extended domain's +0.24 m peak over the standard domain | Not isolated: made during the storm past the standard edge; the crossing is the leading candidate |
 | Channel roughness | Deferred: it shifts the stage curve but does not change its slope |
 
 June and August have not been rerun with the culvert fix.
