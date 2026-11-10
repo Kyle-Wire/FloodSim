@@ -1684,14 +1684,57 @@ and what sets that level has not been identified. A second unread structure is o
 (§3.9) keeps 10 other end sections in the extended box closed. One of them, J475, was checked and is a storm pipe
 discharging to the creek, not a crossing (peak head 206.19 m).
 
+**What holds the extended reach at 210.80 m (diagnosis from saved runs, no new simulation).** The creek's path was
+traced over the extended run's ground grid as the route from the Sheffield Dr outlet to the west edge with the lowest
+high point. It is 803 m long, its highest ground is 209.75 m, and it follows the OSM line of Edwards Branch. Along it,
+two separate things produce the flat surface. Neither is a prescribed level or the domain edge.
+
+1. *A starting pool that is not real (450–800 m below Sheffield Dr).* Both extended runs start with 64,600 m³ of water
+   on 6.9 ha. One 6.7 ha patch around the box entrance holds 63,600 m³, with its surface at 209.9–211.9 m. The standard
+   domain starts with 238 m³. The start-water rule (§3.8, src/waterlevels.js) raises every river cell by the gauge's
+   rise above the lidar water surface, 0.36 m here, and spreads the water onto connected ground below that level. OSM
+   carries Edwards Branch across two culverts (`tunnel=culvert`) and along a reach whose lidar "water surface" is the
+   ground. The river cells there sit on fill and road, so the rise puts water up to about 1.2 m deep over 209.6–209.7 m
+   ground. Over 450–800 m the peak equals the starting level to within 0.05 m: the "peak" there is the initial
+   condition. The pool also reaches Sheffield Dr. In both extended runs the gauge jumps from 209.09 m to 210.6 m within
+   6 minutes of the start and stays 0.3–0.7 m above the observed 209.1–209.2 m all through the pre-storm hours
+   (209.77 m with the box closed, 209.38 m open). The standard domain stays at 208.9 m. The "dam at 209.84 m before the
+   storm" reported for the first extended run was this pool, not the box.
+2. *A culvert crossing modelled as two outfalls back to back (about 470 m below Sheffield Dr).* OSM maps a short
+   culvert there (way 1075557679, about 13 m). The city has a 2.44 m (96 in) pipe between two endwalls 15 m apart, at
+   −80.776858, 35.202592 (east, the upstream face) and −80.777024, 35.202558 (west). The model splits that pipe at a
+   middle junction, J603, where a 0.46 m pipe joins. J603's invert (207.51 m) is above both ends' (205.13 m east,
+   205.36 m west), so the two lengths run outward from J603. Both endwalls become outfalls (O2094 east, O475X west),
+   and the culvert carries only the 1.8 m³/s that J603's surface inlet takes. The creek cannot pass through it and
+   overtops the crossing, whose lidar crest on the traced path is 209.5–209.75 m. During the storm the reach above it,
+   250–440 m below Sheffield Dr and dry at the start, peaks at 210.77–210.85 m, the same in both runs because the
+   crossing is upstream of the box. Above 230 m the surface rises toward Sheffield Dr: 211.03 m at 225 m, 211.17 m at
+   100 m, 211.36 m at 10 m. Whether J603's invert is the city's or one the model derived could not be checked: the
+   city's GIS has refused requests from this machine since 10 November 2026.
+
+The standard domain's west edge (−80.7734) is about 340 m upstream of this crossing, so the standard domain contains
+neither artefact, and neither does it contain the crossing itself. The 0.6 m difference between the domains at that
+edge is therefore a domain-sensitivity result that mixes three things: the edge's free outfall, the starting pool, and
+a crossing that passes no creek flow. It is not an isolated boundary result.
+
+A prediction recorded before any run that represents the crossing (none has been run): HDS-5 inlet control for one
+96 in concrete pipe with a square-edged headwall puts the headwater about 5.4 m above the east invert (210.5 m) at
+25 m³/s, and near 208.1 m at 15 m³/s. A working culvert could therefore still back water toward Sheffield Dr at the
+January peak, overtopping included. The estimate is sensitive to the flow and to an invert that is not yet verified.
+
+None of the 10 other end sections the entrance rule keeps closed lies within 300 m of the creek path, except J475 (the
+crossing's west endwall above) and J36 (the box entrance).
+
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
 | Sheffield Dr culvert misread | Confirmed and corrected (143d18e) |
 | Lidar bed above the surveyed invert below the outlet | Supported by the sensitivity scenario; not adopted as the default |
-| Free outfall at the west edge drawing the gauge down | Reopened (Experiment B): fixed levels up to 210.8 m lifted the gauge +0.07 m, but the extended domain peaks at 211.15 m at that edge, beyond the range tested |
+| Free outfall at the west edge drawing the gauge down | Reopened as domain sensitivity, not isolated: the extended domain peaks 0.6 m higher at that edge, but it also holds the starting pool and the crossing artefact |
 | Where the gauge is read, across a steep drawdown | Tested (Experiment A): every defensible reading is 0.19–0.28 m low; only the pipe's outfall cell reads high, and it is not a stage. The first 2–3 m below the endwall is unresolved at 2 m |
 | Downstream twin box culvert | Tested (Experiment B, one barrel opened): +0.01 m at the gauge peak, under the noise floor; it drains the pond and improves the recession. Twin head left closed (no invert recorded) |
-| What sets the extended reach's 210.80 m peak pool near the box | Open; not the box (same open or closed) |
+| What sets the extended reach's 210.80 m peak pool | Identified (no run): a 96 in crossing 470 m below Sheffield Dr modelled as two outfalls back to back, so the creek overtops it (crest 209.5–209.75 m); below the crossing, a starting pool that is not real |
+| Start water spread from stream lines over culverts and fill (extended domain) | Found: 64,600 m³ at the start, holding Sheffield Dr 0.3–0.7 m above observed before the storm; extended runs are not a clean reference until removed |
+| Downstream crossing backwater (a working 96 in culvert) | Untested; HDS-5 predicts headwater near 210.5 m at 25 m³/s |
 | Channel roughness | Deferred: it shifts the stage curve but does not change its slope |
 
 June and August have not been rerun with the culvert fix.
