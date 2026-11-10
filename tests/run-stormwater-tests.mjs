@@ -81,6 +81,10 @@ const fc = (...features) => ({ features });
   check('swale: the centre line at the invert, its own n', near(fine.z[k], r.invertUp + (r.invertDn - r.invertUp) * (30.5 - 5) / 55, 1e-3) && near(fine.manning[k], 0.035, 1e-7));
   const side = fine.z[(30 + 1) * n + 30] - fine.z[k];
   check('swale: side slopes 3:1 beyond the bottom width', near(side, (1 - 0.3) / 3, 1e-3), side.toFixed(4));
+  // an existing channel set to a surveyed bed: the same cut, the ground's own cover, soil and roughness
+  const kept = applyDesign(f, fc(designFeature('swale', line([5, 30.5], [60, 30.5]), { depth: 0.45, bottomW: 0.6, sideSlope: 3, surface: 'keep' }, 1)));
+  check("swale with surface 'keep': the same bed, the ground's n, infiltration and class", near(kept.fine.z[k], fine.z[k], 1e-6) && kept.fine.manning[k] === f.manning[k] && kept.fine.infil[k] === f.infil[k] && kept.fine.cls[k] === f.cls[k] && kept.log.features[0].resolved.surface === 'kept',
+    `n ${kept.fine.manning[k]} vs ${f.manning[k]}`);
 }
 
 // ---- rain garden and permeable pavement, drawn GI layers

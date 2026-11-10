@@ -348,16 +348,19 @@ export function applyDesign(f, design, opts = {}) {
       const at = (x, y) => { let best = null; for (const g of seg) { const ex = g.bx - g.ax, ey = g.by - g.ay, L2 = ex * ex + ey * ey || 1e-12, t = Math.max(0, Math.min(1, ((x - g.ax) * ex + (y - g.ay) * ey) / L2)), d = Math.hypot(x - g.ax - t * ex, y - g.ay - t * ey) * dx; if (!best || d < best.d) best = { d, s: g.s0 + t * g.l }; } return best; };
       const gAt = (pt) => { const i = Math.min(nx - 1, Math.max(0, Math.floor(pt[0]))), j = Math.min(ny - 1, Math.max(0, Math.floor(pt[1]))); return z[j * nx + i]; };
       const inv0 = num(p.invertUp) ?? gAt(line[0]) - depth, inv1 = num(p.invertDn) ?? gAt(line.at(-1)) - depth;
+      // surface 'keep': only the bed moves, the cover, soil and roughness stay the ground's (an existing channel set to a
+      // surveyed bed the lidar missed, not a new grassed swale)
+      const keep = p.surface === 'keep';
       const pad = Math.ceil(half / dx) + 1, own = [];
       let i0 = Infinity, i1 = -Infinity, j0 = Infinity, j1 = -Infinity; for (const [x, y] of line) { i0 = Math.min(i0, x); i1 = Math.max(i1, x); j0 = Math.min(j0, y); j1 = Math.max(j1, y); }
       for (let j = Math.max(0, Math.floor(j0) - pad); j <= Math.min(ny - 1, Math.ceil(j1) + pad); j++) for (let i = Math.max(0, Math.floor(i0) - pad); i <= Math.min(nx - 1, Math.ceil(i1) + pad); i++) {
         const k = j * nx + i; if (R('bld')[k]) continue;
         const q = at(i + 0.5, j + 0.5); if (q.d > half) continue;
         const T = inv0 + (inv1 - inv0) * q.s / Math.max(1e-9, len) + Math.max(0, q.d - bw / 2) / sl;
-        if (q.d <= bw / 2 || T < z[k]) { setZ(k, T); own.push(k); graded[k] = 1; swaleN.set(k, num(p.n) ?? 0.035); }
+        if (q.d <= bw / 2 || T < z[k]) { setZ(k, T); own.push(k); if (!keep) { graded[k] = 1; swaleN.set(k, num(p.n) ?? 0.035); } }
       }
       if (inv1 > inv0) L.warnings.push('The invert rises downstream: water will pond in the swale');
-      L.cells = own.length; L.resolved = { invertUp: inv0, invertDn: inv1, slope: (inv0 - inv1) / Math.max(1e-9, len), length: len, bottomW: bw, depth, sideSlope: sl, n: num(p.n) ?? 0.035 };
+      L.cells = own.length; L.resolved = { invertUp: inv0, invertDn: inv1, slope: (inv0 - inv1) / Math.max(1e-9, len), length: len, bottomW: bw, depth, sideSlope: sl, n: keep ? 'the ground\'s' : num(p.n) ?? 0.035, surface: keep ? 'kept' : 'lawn' };
     }
     // this feature's own cut and fill (against the ground before it), and checks on the ground it changed
     for (const [k, zb] of zBefore) { const dz = z[k] - zb; if (dz > 0) L.fill += dz * A; else L.cut -= dz * A; }
