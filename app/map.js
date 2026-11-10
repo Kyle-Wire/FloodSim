@@ -2562,6 +2562,9 @@ async function resumeCheckpoint(r) {
   if (P.swmm && r.swmm) CK.swmmRestore(r.swmm, { memory: P['swmm:mem'], streams: P.swmm.streams, t: P.swmm.t, files: Object.fromEntries(P.swmm.files.map(f => [f, P['swmm:file:' + f]])) });
   r.wall0 = performance.now() - meta.wall * 1000; r.lastCkpt = performance.now(); r.resumedAt = meta.t;
   r.nextFrame = Math.max(r.nextFrame ?? 0, s.t);
+  // lastOut is not in the checkpoint but the last frame (out) is: without this a resumed run never reads a frame back
+  // again (wantOut needs !run.out or lastOut long ago), so the gauges, max speeds and saved frames stop at the resume
+  r.lastOut = 0;
   log(`Resumed at ${fmtClock(s.t)} of the run (checkpoint of ${new Date(meta.savedUTC).toLocaleString()})`, 'ok');
   return meta;
 }
