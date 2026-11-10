@@ -1656,13 +1656,42 @@ Predictions written before the run:
    lower. A peak more than 0.10 m above 211.15 m would contradict this and mean the downstream box matters at Sheffield
    Dr.
 
+**Experiment B result (run 2026-11-10_100745, commit 4fba432, not resumed).** The head opened: J36 took 175,000 m³,
+peaking at 25.4 m³/s. The box length below the next junction carried up to 29 m³/s.
+
+1. **Held.** With the entrance open, the pond at the entrance drained to 206.65 m by the end of the run (bed
+   206.47 m); with it closed it stayed at 209.82 m. At Sheffield Dr the end-of-run level fell from 209.85 m to 209.47 m
+   (observed 209.25 m), and the level NSE rose from −0.60 to 0.25, almost all of it from the recession.
+2. **Failed.** The peak level by the entrance was 210.9–211.2 m, not 209.7 m. In the model the box is not under inlet
+   control. Its junctions are sealed (30 m surcharge allowed), and the inverts the model derived where the city records
+   none put a 4.8 m upward step at the first junction (J1229). The flow is pressure-driven, with SWMM heads of 219–223 m
+   at J36 and J1229, which are not physical levels.
+3. **Failed, and its stated inference was wrong.** The gauge peaked at 211.34 m with the entrance open against 211.33 m
+   with it closed. That 0.01 m is under the noise floor. The comparison that isolates the box is closed against open,
+   and it shows the box does not affect the Sheffield Dr peak. What failed is the premise behind prediction 3: the box's
+   dam does not explain the extended domain's rise over the standard domain. Prediction 3's own wording ("more than
+   0.10 m above 211.15 m would mean the downstream box matters") read a domain difference as a box effect. That was a
+   mistake in how the prediction was set up, recorded here rather than corrected after the fact.
+
+Answer to the question: no. Connecting the downstream box changes the January recession, not the gauge peak.
+
+That reopens the boundary. Where the creek crosses the standard domain's west edge (−80.7734), the free-outfall run
+peaks at 210.54 m. Both extended runs peak at 211.15–211.16 m there, 0.6 m higher, and 0.35 m above the highest fixed
+level tested (210.8 m). The fixed-level tests therefore did not reach the level the extended domain produces at that
+edge, so "rejected as a main cause" went beyond what they showed. The extended domain is not yet a clean reference
+either. Further down, between −80.7755 and −80.7765, its peak sits flat at 210.80 m in both runs, open box or closed,
+and what sets that level has not been identified. A second unread structure is one candidate. The entrance rule
+(§3.9) keeps 10 other end sections in the extended box closed. One of them, J475, was checked and is a storm pipe
+discharging to the creek, not a crossing (peak head 206.19 m).
+
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
 | Sheffield Dr culvert misread | Confirmed and corrected (143d18e) |
 | Lidar bed above the surveyed invert below the outlet | Supported by the sensitivity scenario; not adopted as the default |
-| Free outfall at the west edge drawing the gauge down | Rejected as a main cause (+0.07 m at 0.6 m above the free outfall) |
+| Free outfall at the west edge drawing the gauge down | Reopened (Experiment B): fixed levels up to 210.8 m lifted the gauge +0.07 m, but the extended domain peaks at 211.15 m at that edge, beyond the range tested |
 | Where the gauge is read, across a steep drawdown | Tested (Experiment A): every defensible reading is 0.19–0.28 m low; only the pipe's outfall cell reads high, and it is not a stage. The first 2–3 m below the endwall is unresolved at 2 m |
-| Downstream twin box culvert | Connectivity fault found (entrance type not read); its effect at the gauge predicted small, untested |
+| Downstream twin box culvert | Tested (Experiment B, one barrel opened): +0.01 m at the gauge peak, under the noise floor; it drains the pond and improves the recession. Twin head left closed (no invert recorded) |
+| What sets the extended reach's 210.80 m peak pool near the box | Open; not the box (same open or closed) |
 | Channel roughness | Deferred: it shifts the stage curve but does not change its slope |
 
 June and August have not been rerun with the culvert fix.
