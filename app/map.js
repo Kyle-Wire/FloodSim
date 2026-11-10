@@ -2030,6 +2030,22 @@ function recordGauges(r, out, t) {
     gw.wse?.push(row); gw.series.push([w.t0 + t * 1000, median9(row)]);
   }
 }
+/**
+ * Every cell a level gauge watched, with its own water surface each simulated minute (null while under 10 cm), so a
+ * reading can be taken again after the run: one cell, a cross-section, a point between cells (summary.json keeps only
+ * the median the scorecard uses). Cells nearest the gauge first; `used`: in the water body the scored median reads.
+ * → { gauges: [{ site, name, lon, lat, cellM, cells: [{ k, i, j, lon, lat, x, y, distM, lidar, bed, used }], t: [ms], wse: [[m | null per cell]] }] }
+ */
+function gaugeCellsRecord(r) {
+  const w = r.gaugeWatch, { c, F } = r, fine = model.fine, s = F * fine.dx, zs = c.zSurf ?? c.z, rd = (v) => Math.round(v * 1000) / 1000;
+  return { note: 'water surface m NAVD88 per cell per simulated minute; null = under 10 cm deep', gauges: w.gauges.map(gw => {
+    const [gx, gy] = toUTM(gw.g.lon, gw.g.lat, fine.zone);
+    return { site: gw.g.site, name: gw.g.name, lon: gw.g.lon, lat: gw.g.lat, cellM: s,
+      cells: gw.cells.map((k, m) => { const i = k % c.nx, j = (k / c.nx) | 0, x = fine.x0 + (i + 0.5) * s, y = fine.y1 - (j + 0.5) * s, [lon, lat] = fromUTM(x, y, fine.zone);
+        return { k, i, j, lon: +lon.toFixed(7), lat: +lat.toFixed(7), x: rd(x), y: rd(y), distM: rd(Math.hypot(x - gx, y - gy)), lidar: rd(zs[k]), bed: rd(c.z[k]), used: gw.use ? gw.use[m] : true }; }),
+      t: gw.series.map(p => p[0]), wse: gw.wse ?? [] };
+  }) };
+}
 /** The median of the first 9 wet (non-null) of these surfaces, nearest first, or NaN. */
 function median9(row, use = null) {
   const v = []; for (let i = 0; i < row.length && v.length < 9; i++) if (row[i] != null && (!use || use[i])) v.push(row[i]);
@@ -2061,7 +2077,7 @@ async function fillGauges(r, v) {
       if (!o.series?.length) { out.why = o.why ?? 'no readings in the run window'; return; }
       const first = o.series.reduce((a, p) => (Math.abs(p[0] - w.t0) < Math.abs(a[0] - w.t0) ? p : a)), mine = new Set(gaugeWater(r.c, gw.cells, first[1]));
       if (gw.wse?.length === gw.series.length && mine.size < gw.cells.length) { // the water body its reading at the start says it reads
-        const use = gw.cells.map(q => mine.has(q)); gw.series = gw.series.map(([t], m) => [t, median9(gw.wse[m], use)]); out.model = gw.series;
+        const use = gw.cells.map(q => mine.has(q)); gw.use = use; gw.series = gw.series.map(([t], m) => [t, median9(gw.wse[m], use)]); out.model = gw.series;
         const zs = r.c.zSurf ?? r.c.z, top = Math.max(...[...mine].map(q => zs[q]));
         out.reads = `water with its lidar surface at ${(top - 1).toFixed(2)}–${top.toFixed(2)} m, ${mine.size} of the ${gw.cells.length} water cells nearest it (its reading at the start: ${first[1].toFixed(2)} m)`;
       }
@@ -4365,6 +4381,7 @@ async function runFiles() {
   if (run.inp) files.push({ path: 'network.inp', data: run.inp });
   if (run.watch) files.push({ path: 'barriers.csv', data: barrierCSV(run.watch.results()) });
   if (calSc) files.push({ path: 'calibration.csv', data: calCSV(calSc) });
+  if (run.gaugeWatch?.gauges.some(gw => gw.wse?.length)) files.push({ path: 'gauge_cells.json', data: JSON.stringify(gaugeCellsRecord(run)) });
   if (run.swmmReport) files.push({ path: 'swmm_report.rpt', data: run.swmmReport });
   if (run.record) { // the 1 m comparison grids (.f32 + ESRI header), control-line hydrographs, new buildings
     const rec = run.record, hdr = CMP.gridHeader(rec.geo);
