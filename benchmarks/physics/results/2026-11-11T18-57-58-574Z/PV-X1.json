@@ -1,0 +1,89 @@
+{
+ "id": "PV-X1",
+ "spec": "benchmarks/physics/spec/PV-X1.json",
+ "rows": [
+  {
+   "benchmark": "PV-X1",
+   "case": "X1-a rect n written ×1.25",
+   "quantity": "normal depth, worst of 29 junctions in the uniform reach",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 0.9197996940656594,
+   "sim": 1.0784650869472954,
+   "abs": 0.15866539288163595,
+   "rel": 0.17249994091682064,
+   "limit": 0.004598998470328297,
+   "criterion": {
+    "abs": 0.002,
+    "rel": 0.005
+   },
+   "status": "Failed",
+   "note": null,
+   "expected": "Failed",
+   "caught": true,
+   "newtonCheck": -4.48e-11,
+   "froude": 0.362,
+   "reachM": 2950,
+   "drawdownM": 1417,
+   "junctions": 29
+  },
+  {
+   "benchmark": "PV-X1",
+   "case": "X1-a rect n written ×1.25",
+   "quantity": "velocity, worst of 28 conduits in the uniform reach",
+   "errorType": "numerical",
+   "unit": "m/s",
+   "ref": 1.0871932296257272,
+   "sim": 0.9271449192897621,
+   "abs": -0.16004831033596512,
+   "rel": -0.14721238688274643,
+   "limit": 0.005435966148128636,
+   "criterion": {
+    "rel": 0.005
+   },
+   "status": "Failed",
+   "note": null,
+   "expected": "Failed",
+   "caught": true
+  },
+  {
+   "benchmark": "PV-X1",
+   "case": "X1-b undeclared inflow 0.001 m³/s",
+   "quantity": "volume closure, worst sample (exact: pipe full throughout)",
+   "errorType": "accounting",
+   "unit": "m³",
+   "ref": 509.8174770424681,
+   "sim": 513.2499976829852,
+   "abs": 3.4325206405170547,
+   "rel": 0.006732842232929421,
+   "limit": 0.5098174770424682,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Failed",
+   "note": null,
+   "expected": "Failed",
+   "caught": true
+  },
+  {
+   "benchmark": "PV-X1",
+   "case": "X1-b undeclared inflow 0.001 m³/s",
+   "quantity": "volume closure at rest (exact: one level everywhere)",
+   "errorType": "accounting",
+   "unit": "m³",
+   "ref": 509.8174770424681,
+   "sim": 513.2499976829852,
+   "abs": 3.4325206405170547,
+   "rel": 0.006732842232929421,
+   "limit": 0.5098174770424682,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Failed",
+   "note": null,
+   "expected": "Failed",
+   "caught": true
+  }
+ ],
+ "cases": {}
+}

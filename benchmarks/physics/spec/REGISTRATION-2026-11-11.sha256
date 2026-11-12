@@ -1,0 +1,6 @@
+# SHA-256 of the spec files at criteria registration, 2026-11-11T13:54:53-05:00, before any benchmark ran.
+# The files changed after this only by the definitionRevisions entries each records (criteria hashes unchanged).
+3dd2a50dc9f7a32b49e09ac97df6847e7574900400d14aa524eb256705a2727a *PV-C1.json
+e1f89cf43677cc110a126c86adbfe72cc20cd1b8e323e3262dadcbd1678616e8 *PV-P1.json
+b1a1a02d5f095126fcb64e9ef07e32cd525b0e97af5adf5a1b7f5365d681558b *PV-U1.json
+debe8a526b32e650e0c17e6dce84e9f1fd13275827c100fb58ebf80e8874640e *PV-X1.json

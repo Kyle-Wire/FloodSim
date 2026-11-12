@@ -1,0 +1,68 @@
+{
+ "id": "PV-U1",
+ "title": "Uniform open-channel flow",
+ "category": "solver",
+ "process": "steady uniform flow in a long prismatic open channel",
+ "module": "channels/pv-u1.mjs",
+ "executor": "node",
+ "equations": [
+  "Manning: Q = (1/n) A R^(2/3) S^(1/2), solved for normal depth y_n",
+  "critical depth: Q^2 T = g A^3",
+  "GVF (energy equation, standard and direct step) for the outfall's M2 drawdown"
+ ],
+ "definitionRevisions": [
+  { "date": "2026-11-11", "why": "after the criteria were registered, before any scored run: the velocity rows now take the conduits whose downstream end is beyond the drawdown, as the outputs field always said (the first harness took the conduit below each scored junction). Junction selection, criteria and hash unchanged. An unscored SWMM-against-GVF depth profile was added to the case data." }
+ ],
+ "initialConditions": "dry channel; inflow ramped linearly from 0 to Q over 1800 s, then held",
+ "boundaryConditions": "upstream: inflow Q at the first junction; downstream: FREE outfall (SWMM: the lesser of critical and normal depth)",
+ "geometry": "rectangular b 3 m (RECT_OPEN, 4 m deep) and trapezoidal b 2 m, side slopes 1.5:1 (TRAPEZOIDAL, 4 m deep); 50 m conduits; reach = the M2 length to within 1 mm of y_n plus 1500 m, rounded up to whole conduits",
+ "parameters": {
+  "sections": { "value": [{ "shape": "rect", "b": 3 }, { "shape": "trap", "b": 2, "z": 1.5 }], "unit": "m, H:V" },
+  "slopes": { "value": [0.001, 0.003], "unit": "m/m (drop / conduit length)" },
+  "manningN": { "value": [0.02, 0.035], "unit": "s m^-1/3" },
+  "flows": { "value": [1, 3, 6], "unit": "m^3/s" },
+  "segmentM": { "value": 50, "unit": "m" },
+  "uniformReachM": { "value": 1500, "unit": "m" },
+  "uniformTolM": { "value": 0.001, "unit": "m" },
+  "channelDepth": { "value": 4, "unit": "m" },
+  "z0": { "value": 10, "unit": "m (outfall invert)" },
+  "durationS": { "value": 21600, "unit": "s" },
+  "routingStepS": { "value": 2, "unit": "s" },
+  "variableStep": { "value": 0.75, "unit": "-" },
+  "rampS": { "value": 1800, "unit": "s" },
+  "averageS": { "value": 600, "unit": "s" },
+  "froudeMax": { "value": 0.8, "unit": "-" }
+ },
+ "solver": "SWMM 5.2.4 dynamic wave, SLOT surcharge (never reached), variable step 0.75 up to 2 s, inertial damping PARTIAL, normal flow limited BOTH",
+ "reference": {
+  "module": "references/manning.mjs, references/gvf.mjs",
+  "functions": ["normalDepthBisect", "normalDepthNewton", "criticalDepth", "froude", "directStep"],
+  "sources": "Manning (1891); Chow, Open-Channel Hydraulics (1959) ch. 6 and 10",
+  "independence": "no import from src/; normal depth by two root finders; the drawdown by the direct step, checked against the standard step",
+  "crossCheck": "refs.test.mjs: bisection = Newton to 1e-8 m; standard step = direct step to 1 mm; critical depth against (q^2/g)^(1/3)"
+ },
+ "outputs": ["normal depth at junctions in the uniform reach (worst)", "velocity in conduits in the uniform reach (worst)", "steadiness", "SWMM continuity error"],
+ "criteria": {
+  "depthAbsM": 0.002,
+  "depthRel": 0.005,
+  "velocityRel": 0.005,
+  "steadyAbsM": 0.001,
+  "continuityPct": 0.5
+ },
+ "criteriaNotes": "depth within max(2 mm, 0.5 %); velocity 0.5 %; steady: each scored depth's range over the last 600 s within 1 mm (otherwise the case is Numerically unstable, not scored); SWMM's continuity within 0.5 %.",
+ "conservation": "SWMM's continuity error, reported as its own accounting row",
+ "resolution": "50 m conduits; 2 s maximum step",
+ "assumptions": [
+  "Manning's S is the conduit drop over its length; SWMM divides the drop by the horizontal distance (link.c conduit_getSlope), a difference below 5e-6 relative at these slopes",
+  "SWMM's Manning constant is 1.486 in US units (1.4859 exact): about 5e-5 relative in Q, negligible"
+ ],
+ "limitations": [
+  "subcritical only (Froude under 0.8); steep channels are a later family",
+  "depths at junctions are SWMM's node depths, not cross-section averages along a conduit"
+ ],
+ "validRange": "prismatic rectangular and trapezoidal channels, subcritical, steady",
+ "scoring": "automated: lib/score.mjs row()",
+ "criteriaRevisions": [
+  { "revision": 1, "date": "2026-11-11", "hash": "6ce9c78165ceb3bc298d73a23fb8622a77517aac7a34d66fa2a68f211b754d4b", "why": "first registration, before the first run" }
+ ]
+}
