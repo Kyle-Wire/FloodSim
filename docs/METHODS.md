@@ -1815,12 +1815,117 @@ Conditional predictions, registered before any run and holding only for that rep
   barrel would pass the January peak without overtopping. The reach above it would peak well below the present
   210.7–210.8 m. A barrel filled to the approach lidar would keep the overtopping and that reach near its present
   level. The earlier 210.5 m estimate was for the wrong shape (a 96 in circle) and is withdrawn.
-- **B, the gauge.** The change at Sheffield Dr is measured against the corrected extended baseline, 211.35 m
-  (Experiment C). A change at the crossing need not reach the gauge at the same size. With a clear barrel the gauge
+- **B, the gauge.** The change at Sheffield Dr is measured against the corrected extended baseline: since 11 November
+  2026 the refreshed run with the corrected inlet attachment, 211.35 m (run 2026-11-11_001513, below); Experiment C
+  gave the same peak. A change at the crossing need not reach the gauge at the same size. With a clear barrel the gauge
   should fall toward the standard domain's 211.10–211.15 m. Filled, it should stay within the noise floor of 211.35 m.
 
 The corrected extended baseline's 0.01 m agreement with the observed peak is not counted as validation while the
 crossing is misrepresented.
+
+**Baseline refresh: the corrected inlet attachment (set up and predicted 10 November 2026, while the run was in
+progress and before any result was read).** The way a grate joins a pipe was corrected after Experiment C
+(`docs/specs/canonical-infrastructure.md` §7.1). An inlet within 10 m of a pipe's end now joins the *nearer* end;
+before, the upstream end was checked first, so on a pipe under 20 m long an inlet near the downstream end joined the
+upstream manhole. On the city's cached records this moves 41 of 402 grates in the regression set. The SWMM input is
+unchanged, because a grate decides only where surface water enters the network. This is a real model change, so the
+corrected extended baseline is rerun with it, one change from Experiment C: `legacyInletReuse` false (the new
+default), `barrelRuns` false (the default), `startReach` 0, box closed, no opened heads, and the same forcing,
+scenario, roughness, domain, boundary, numerics and gauge reading. Project "Edwards Branch Charlotte 2024-01 (baseline
+refresh, inlet fix)", copied from Experiment C's project with only the job label changed. The uncommitted code is
+saved with it (`config-record/`, the diff against a9a9fdc). Experiment C's project and run are not touched.
+
+Predictions:
+
+1. `network.inp` is identical to Experiment C's. Only the grate-to-node assignment differs.
+2. The grates that move are on short pipes in the street network. None is on Edwards Branch between Sheffield Dr and
+   the crossing, so the creek's peak is unchanged: the gauge peak stays within the 0.05 m noise floor of 211.35 m, with
+   the same timing (within a few minutes) and the same level NSE (0.19 ± 0.02).
+3. The total surface-to-pipe exchange changes by under 1 %. Local ponding changes only at the moved grates, by
+   centimetres, where a grate now drains the low end of its own pipe.
+4. Both mass books close as before: surface error under 0.01 %, network continuity error near −0.2 %.
+
+**Baseline refresh result (run 2026-11-11_001513, code a9a9fdc plus the uncommitted inlet fix, not resumed, 61 min).**
+The run finished and both mass checks passed. Predictions 1, 2 and 4 held. Prediction 3 held for the total, at the
+edge of its 1 % band, and locally only in part.
+
+| | Experiment C (historical) | Refresh (active) | Standard domain, channel scenario (2026-11-09_220440) |
+|---|---|---|---|
+| Gauge peak (m) / error vs observed 211.36 | 211.347 / −0.014 | 211.352 / −0.009 | 211.104 / −0.257 |
+| Time of the highest reading (observed 19:30 UTC) | 19:11 | 19:32 | 19:07 |
+| 15-min mean stage peak (m) | 211.299 from 19:02 | 211.303 from 19:04 | — |
+| Level NSE / KGE / RMSE (m) | 0.188 / 0.551 / 0.493 | 0.187 / 0.553 / 0.493 | 0.81 |
+| Pre-storm level / end of run (observed end 209.25) | 208.89–208.90 / 209.85 | 208.89–208.90 / 209.85 | — / 209.00 |
+| Peak flow, instantaneous (observed 24.95 m³/s at 19:30) | 25.99 at 19:07 | 27.10 at 19:12 | 25.39 |
+| Peak flow, 15-min mean | 24.13 | 24.13 | — |
+| Flow NSE / volume ratio | 0.937 / 1.081 | 0.938 / 1.082 | 0.939 / 1.055 |
+| Starting surface water | 168.08 m³ | 168.08 m³ | 238 m³ |
+| Surface book error (relative) | 2.6 × 10⁻⁵ | −1.6 × 10⁻⁶ | −2.1 × 10⁻⁶ |
+| SWMM continuity error / combined books | −0.183 % / −0.36 % | −0.118 % / −0.24 % | −0.042 % |
+| Surface → pipes / pipes → surface | 1,015,941 / 18,019 m³ | 1,025,062 / 19,884 m³ | 580,668 m³ (smaller domain) |
+| Surcharged nodes / flooded nodes | 348 / 0 | 343 / 0 | — |
+| Area with peak depth over 15 cm / 5 cm | 237,072 / 592,608 m² | 236,808 / 592,280 m² | — |
+
+- **Inputs.** `network.inp`, the network's nodes and pipes, the inlet and outfall records, the forcing and the starting
+  water are identical. The forcing fingerprint differs only in the pipe-records hash, because the pipe records now
+  carry the canonical `asset` field, and in the commit.
+- **Grates.** 167 of the 1,696 grates (9.8 %) join a different node: 154 a lower one (median 0.21 m lower), 1.6–10 m
+  away (median 7.7 m). That is the share the cached-records check predicted (10.2 %). 330 nodes change their grate
+  count. At 6 grates the grate's cell changes as well. The nearest moved grate is 255 m from the gauge; the nearest
+  that carries much water (J129 → J130, 6,500 → 8,400 m³) is 267 m away. The moved grates take 88,600 m³ against
+  82,400 m³.
+- **Gauge.** The peak moved +0.005 m, a tenth of the 0.05 m noise floor. The time of the highest reading moved from
+  19:11 to 19:32. That is not a timing change: both runs have two maxima on the peak plateau, about 20 min apart and
+  within 0.02 m of each other, and the higher of the two switched. The 15-min mean peak moved 2 min. The lag statistic
+  (−18 to +2 min) is therefore not robust on this plateau and should not be read as an improvement. The level score,
+  the pre-storm and the end level are unchanged. Instantaneous peak flow rose 1.1 m³/s, but the 15-min mean peak is
+  the same and the flow volume differs by 0.03 %, so it is a 10 s spike, not a larger flood.
+- **Exchange.** Surface-to-pipe exchange rose 0.9 %, and water returned from the pipes to the surface 10 % (1,865 m³).
+  Net capture rose 0.7 %. Grates that now join the lower end of their own pipe take more water.
+- **Local ponding.** 527 cells (of 2.7 million wet) change peak depth by more than 0.10 m, in 59 clusters. 330 of those
+  cells are wet in one run only: pits next to a lip that water just reaches in one run and not the other (for example
+  a pit 1.7 m deep 130 m west of the crossing, dry against 1.26 m, while its rim cells peak at the same level in both).
+  The largest change where both runs are wet is a 200-cell pond at a moved grate near −80.7550, 35.2150, 0.6 m lower
+  (0.89 → 0.29 m): there a grate moved from J1554 to J1555, and J1554's grate now sits in a different cell that takes
+  90 m³ more. Within 100 m of the gauge the peak water surface changes by 0.01 m on average. The largest local change,
+  0.13 m, is at the outfall cell, which Experiment A showed is not a stage.
+- **What is the change and what is numerical variation.** The inlet reassignment was the only intentional model
+  change; neither run was resumed, and the surface solver repeats exactly (§8.3). The resulting differences are of
+  two kinds. Direct local hydraulic effects: the moved grates, the ponds they drain, and the exchange totals. Small
+  propagated differences: the coupled solver's adaptive time-step sequence changed (675,968 steps against 675,775),
+  so the numerical trajectory changed too. That gives sub-centimetre differences in 43 % of wet cells at every
+  distance from the moved grates (over 1 cm in 29 of 154,000 cells 250–500 m away), and the shuffle of the gauge's
+  two plateau maxima. These are not physical effects of the reassignment, and they are not attributed to it cell by
+  cell. The gauge-level differences remain below the noise floor. This rests on §8.3's repeatability, not on a repeat
+  of this coupled run, and no repeat is planned: a 5 mm difference does not justify one.
+- **Two counts, not contradictory.** 41 of 402 grates is the regression set: the cached records in a 1.2 km
+  box round the crossing, on a synthetic ground, checked without a run. 167 of 1,696 is this run's extended domain. Both are about 10 %.
+
+**The inlet reassignment experiment is closed (11 November 2026).**
+
+| Question | Finding |
+|---|---|
+| Did inlet assignments change? | Yes: 167 of 1,696 grates |
+| Did local flooding change? | Yes, materially: a pond 0.6 m lower at a moved grate |
+| Did total exchange change? | Slightly: +0.9 % surface to pipes, +10 % pipes to surface |
+| Did the gauge peak change? | No: +0.005 m, within noise |
+| Did peak timing improve? | No demonstrated improvement (a switch between two plateau maxima) |
+| Did this resolve the stage discrepancy? | No |
+| New active baseline established? | Yes |
+
+A separate finding to keep: inlet connectivity can change local flood depths substantially without changing the
+peak stage downstream. The 10 % rise in water returned from the pipes to the surface is worth watching in later
+changes to connectivity.
+
+The refreshed peak, 0.009 m below the observed, is a baseline result, not a validated hydraulic solution. The level
+NSE is 0.19, the end-of-run level is 0.60 m high, the standard domain peaks 0.25 m lower, and the crossing culvert is
+still misrepresented. The gauge peak has been shown to depend on conditions outside the standard domain.
+
+**Active baseline.** Run 2026-11-11_001513 in project "Edwards Branch Charlotte 2024-01 (baseline refresh, inlet fix)"
+is the corrected extended-domain January baseline: extended west, `startReach` 0, box closed, no opened heads,
+corrected inlet attachment, `barrelRuns` off. Experiment C (2026-11-10_120141, 211.35 m) is kept unchanged as a
+historical reference. The standard-domain runs were made with the old attachment and have not been refreshed. Their
+211.10–211.15 m is a comparison across domains, not across code.
 
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
@@ -1833,6 +1938,7 @@ crossing is misrepresented.
 | Start water spread from stream lines over culverts and fill (extended domain) | Tested (Experiment C, `startReach` 0): removing it fixes the pre-storm hours (NSE −0.60 → 0.19) and moves the gauge peak +0.02 m; it is not why the extended peak is higher |
 | Edwards Branch crossing (96 × 144 in elliptical CMP, 470 m below Sheffield Dr) | Unresolved. Records read: east-to-west culvert, GPS endwall inverts 205.13 / 205.50 m, mid inverts are catch basins, shape not read. Barrel sediment state unknown (approach lidar 0.24 m below the crown). Clear barrel predicted 208.4–208.8 m headwater, no overtopping |
 | Extended domain's +0.24 m peak over the standard domain | Not isolated: made during the storm past the standard edge; the crossing is the leading candidate |
+| Short-pipe inlet attachment (fixed after Experiment C) | Tested (baseline refresh): 9.8 % of grates move; gauge peak +0.005 m, below the noise floor; local ponding changes at moved grates. The refreshed run is the active baseline. Closed |
 | Channel roughness | Deferred: it shifts the stage curve but does not change its slope |
 
 June and August have not been rerun with the culvert fix.

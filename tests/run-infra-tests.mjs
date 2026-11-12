@@ -96,6 +96,20 @@ const fc = (features) => ({ type: 'FeatureCollection', features });
   check('a wide arch becomes a rectangle of its rise and area; a round pipe stays round', arch.shape === 'RECT_CLOSED' && near(arch.h, 2.4384, 1e-4) && near(arch.w, 8.5344 * Math.PI / 4, 1e-3) && round.shape === 'CIRCULAR' && round.w === null, JSON.stringify(arch));
 }
 
+// ---- an inlet near either end of a short pipe joins the nearer end (it once joined the upstream end of any pipe under 20 m)
+{
+  const surveyed = [20, 60, 100].map(x => ({ line: [ll(x, 170), ll(x + 30, 170)], h: 0.6, upInv: 9.5, dnInv: 9.4 }));
+  const short = [{ line: [ll(40, 60), ll(55, 60)], h: 0.45, upInv: 9.6, dnInv: 9.5 }, { line: [ll(55, 60), ll(90, 60)], h: 0.45, upInv: 9.5, dnInv: 9.3 }];
+  const node = (net, x) => net.nodes.findIndex(n => Math.abs(n.p[0] - x) < 1.2 && Math.abs(n.p[1] - 60) < 1.2);
+  const grates = (net, x) => net.inlets.filter(e => e.node === node(net, x)).reduce((s, e) => s + e.grates, 0);
+  const at = (x) => { const [lon, lat] = ll(x, 61); return { lon, lat }; };
+  const dn = realNetwork(g, f, [...surveyed, ...short], sim, { realInlets: [at(49)] }), up = realNetwork(g, f, [...surveyed, ...short], sim, { realInlets: [at(46)] });
+  check('an inlet 6 m from the downstream end of a 15 m pipe (9 m from the upstream end) joins the downstream end', grates(dn, 55) === 1 && grates(dn, 40) === 0, `${grates(dn, 40)} at the upstream end, ${grates(dn, 55)} at the downstream end`);
+  check('…and one 6 m from the upstream end joins the upstream end', grates(up, 40) === 1 && grates(up, 55) === 0);
+  const old = realNetwork(g, f, [...surveyed, ...short], sim, { realInlets: [at(49)], legacyInletReuse: true });
+  check('legacyInletReuse reproduces the old attachment (for runs made before the fix)', grates(old, 40) === 1 && grates(old, 55) === 0);
+}
+
 // ---- a drawn network: manhole inverts fill pipe inverts, a placed outfall ends the network, per-pipe roughness
 {
   const pts = { a: ll(40, 100), b: ll(100, 100), c: ll(160, 100), o: ll(180, 100) };

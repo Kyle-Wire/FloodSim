@@ -24,6 +24,7 @@ import { fetchUtility, utilityFor } from '../src/utilities.js';
 import { describeSource, fetchFeatures, detectPipeFields, pipeRecords, pointRecords } from '../src/linked.js';
 import { realNetwork } from '../src/network-real.js';
 import { breachChannels, culvertLinks, culvertDiameter } from '../src/channels.js';
+import { fromOSM, detectStructureFields, structureRecords, joinStructures } from '../src/assets.js';
 import { CulvertLinks, LinkHub } from '../src/links.js';
 import { GroundwaterReturn, streamCells } from '../src/groundwater.js';
 import { attachStorage, networkToLayer } from '../src/infra.js';
@@ -440,7 +441,7 @@ function openHeads() { return ($('openHeads')?.value ?? '').split(/\n+/).map(l =
 function linkedLinks() { return { pipes: splitLinks($('linkPipes').value), inlets: splitLinks($('linkInlets').value), outfalls: splitLinks($('linkOutfalls').value) }; }
 /** Fetch every linked layer inside the box; pipes get their fields detected per layer (units overridable). */
 async function loadLinked(links, bounds) {
-  const out = { pipes: [], inlets: [], outfalls: [], notes: [], names: { pipes: [], inlets: [], outfalls: [] }, sources: [] };
+  const out = { pipes: [], inlets: [], outfalls: [], structures: [], notes: [], names: { pipes: [], inlets: [], outfalls: [] }, sources: [] };
   for (const [kind, urls] of Object.entries(links)) for (const url of urls) {
     const src = await describeSource(url, linkedFetcher);
     const feats = await fetchFeatures(src, bounds, linkedFetcher);
@@ -458,9 +459,16 @@ async function loadLinked(links, bounds) {
       const tf = kind === 'inlets' ? detectTypeField(src.fields) : null; // what each structure is (Inlet hydraulics → Inlet types)
       out[kind].push(...pointRecords(feats, tf));
       if (tf) out.notes.push(`${src.name}: inlet type from ${tf}`);
+      // structure records (id, type, invert, data source) for the pipe ends that name them: evidence only (src/assets.js)
+      const sm = detectStructureFields(src.fields);
+      if (sm.id) out.structures.push(...structureRecords(feats, sm, { datum: Number($('linkDatum').value) || 0 }));
     }
   }
   out.combined = out.pipes.length > 0 && out.combinedPipes > out.pipes.length / 2; // most of the linked pipes are combined sewers
+  if (out.pipes.length && out.structures.length) { // each pipe end gains the evidence of the structure it names; the legacy fields are unchanged
+    const j = joinStructures(out.pipes, out.structures); out.pipes = j.pipes;
+    out.notes.push(`structures: ${j.report.matched} pipe ends matched by id${j.report.conflicts ? `, ${j.report.conflicts} with conflicting inverts` : ''}`);
+  }
   return out;
 }
 $('linkCheck').onclick = async () => {
@@ -1814,7 +1822,7 @@ function resetRun() {
   if (roofEarly && c.sg) roofEarly.rainField = roof ? sgRain(c, roofEarly.rainField, (1 - green) * (1 - down) * rf / Math.max(1e-9, 1 - down * (1 - green)), net, down * (1 - green), roofEarly.roofArea)
     : sgRain(c, roofEarly.rainField, rf * (1 - green));
   const roofStages = roofHoldStages(c, net, roof, green);
-  const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
+  const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind), asset: fromOSM(cv.tags, cv.kind, { line: cv.line, id: cv.id }) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
   const sw = stormwaterLinks(c, F, net, new Set([...(net ? net.inlets.map(g => g.cell) : []), ...culv.flatMap(x => [x.a, x.b])]), gi);
   run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: [...clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, gauge: f.properties.gauge ?? null, faces: lf.perLine[l], ends: lineEnds(f.geometry.coordinates) })), ...winSegs.map((s, q) => ({ id: 'win:' + q, name: null, side: s.side, faces: lf.perLine[clines.length + q] }))], faces: lf.faces, samples: allLines.map(() => [[0, 0, 0, 0]]) },
     window: win ? { ...win, segs: winSegs } : null, culv, roof, net, cso, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };

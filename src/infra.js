@@ -17,6 +17,7 @@
 // (barriers.js turns the three barrier types into solver faces and watches them during a run)
 import { toCells } from './ingest.js';
 import { WEIR_C } from './barriers.js';
+import { fromDrawn, shapeOf } from './assets.js';
 
 export const TYPES = ['pipe', 'culvert', 'manhole', 'inlet', 'outfall', 'storage', 'wall', 'berm', 'barrier'];
 export const BARRIERS = new Set(['wall', 'berm', 'barrier']);
@@ -101,9 +102,11 @@ export function layerInputs(fc) {
   const pipes = byType('pipe').map(f => {
     const p = f.properties, line = f.geometry.coordinates;
     let up = num(p.upInv) ?? invNear(line[0]), dn = num(p.dnInv) ?? invNear(line.at(-1));
+    const stated = { upInv: up, dnInv: dn, endProv: [num(p.upInv) != null ? null : up != null ? 'manhole' : null, num(p.dnInv) != null ? null : dn != null ? 'manhole' : null] };
     if (up == null || dn == null) up = dn = null;
     const box = p.shape === 'RECT_CLOSED';
-    return { line, h: p.D > 0 ? p.D : null, w: box ? (p.W > 0 ? p.W : p.D) : null, shape: box ? 'RECT_CLOSED' : 'CIRCULAR', barrels: p.barrels || 1, upInv: up, dnInv: dn, n: p.n };
+    return { line, h: p.D > 0 ? p.D : null, w: box ? (p.W > 0 ? p.W : p.D) : null, shape: box ? 'RECT_CLOSED' : 'CIRCULAR', barrels: p.barrels || 1, upInv: up, dnInv: dn, n: p.n,
+      asset: fromDrawn({ ...p, upInv: stated.upInv, dnInv: stated.dnInv }, 'pipe', { line, id: f.id ?? null, endProv: stated.endProv, defaults: DEFAULTS.pipe }) };
   });
   const pt = (f) => ({ lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1] });
   return {
@@ -115,7 +118,8 @@ export function layerInputs(fc) {
       const p = f.properties, inv = [num(p.upInv), num(p.dnInv)].filter(v => v != null);
       // debris in the barrel: the same flow area as a smaller clear pipe (fully blocked passes nothing)
       const open = 1 - Math.min(1, Math.max(0, Number(p.blocked) || 0)), D = (p.D > 0 ? p.D : DEFAULTS.culvert.D) * Math.sqrt(open);
-      return { line: f.geometry.coordinates, kind: 'drawn', D, n: p.n ?? DEFAULTS.culvert.n, inv: inv.length ? Math.max(...inv) : null, drawn: true, blocked: 1 - open };
+      return { line: f.geometry.coordinates, kind: 'drawn', D, n: p.n ?? DEFAULTS.culvert.n, inv: inv.length ? Math.max(...inv) : null, drawn: true, blocked: 1 - open,
+        asset: fromDrawn(p, 'culvert', { line: f.geometry.coordinates, id: f.id ?? null, defaults: DEFAULTS.culvert }) };
     }).filter(c => c.D > 0), // a fully blocked culvert passes nothing
     storage: byType('storage').map(f => ({ id: f.id, ring: f.geometry.coordinates[0], ...f.properties, ...storageCapacity(f.properties, f.geometry.coordinates[0]) })),
     barriers: F.filter(f => BARRIERS.has(f.properties.type)).map(f => ({ id: f.id, line: f.geometry.coordinates, ...f.properties })),
@@ -351,8 +355,12 @@ export function toLayer(items, { as = 'auto', sizeUnits = 'auto', elevUnits = 'f
         const p = it.props, D = m.size ? Number(p[m.size]) * su : NaN, W = m.width ? Number(p[m.width]) * su : NaN;
         const shp = String(m.shape ? p[m.shape] ?? '' : ''), box = /box|rect|square|rcb/i.test(shp);
         const up = m.upInvert ? Number(p[m.upInvert]) : NaN, dn = m.dnInvert ? Number(p[m.dnInvert]) : NaN;
+        // shapes beyond round and box, their span and the material are kept on the feature for the canonical record
+        // (src/assets.js); the model inputs (layerInputs) still read only round and box from them
+        const other = box ? null : shapeOf(shp, D, W), mat = m.material ? p[m.material] : null;
         feats.push(feature(type, { type: 'LineString', coordinates: it.coords }, {
           D: D > 0 && D <= 6 ? D : null, ...(box ? { shape: 'RECT_CLOSED', W: W > 0 && W <= 12 ? W : null } : {}),
+          ...(other && other !== 'circle' ? { shapeRecorded: other, W: W > 0 && W <= 12 ? W : null } : {}), ...(mat != null && mat !== '' ? { material: String(mat) } : {}),
           upInv: up && Number.isFinite(up) ? up * eu : null, dnInv: dn && Number.isFinite(dn) ? dn * eu : null, source: name }));
       }
     } else if (want === 'point') {

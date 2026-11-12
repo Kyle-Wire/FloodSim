@@ -3,6 +3,8 @@
 // with units guessed from names and values; the guesses are shown to the user and can be overridden. An ArcGIS link can
 // carry a filter, …/MapServer/108?where=LAYER_GROUP IN ('SEWER PIPES'), for a layer that mixes mains with laterals.
 
+import { fromLinked } from './assets.js';
+
 const isArcGIS = (u) => /\/(FeatureServer|MapServer)\/\d+\/?$/i.test(u.split('?')[0]);
 
 /** What a link points to: name, geometry kind, fields, and (for ArcGIS) the record limit. Throws a readable error. */
@@ -64,6 +66,12 @@ const FIELD_PATTERNS = {
   dnInvert: /(^|_)(ds|dn|down|downstr(eam)?|end|to)_?(inv(ert)?|ie|elev)|inv(ert)?_?(dn|ds|down|end|to)|^dninv|^dsinv|^inv_?dn/i,
   status: /aband|status|active|lifecycle|in_?service/i,
   system: /^(unit_?type|system|sys_?type|sewer_?type|swr_?type|flow_?type|sewer_?use|use_?type)$/i,
+  // read into the canonical record only (src/assets.js); the network does not use them yet
+  material: /^(matl|mat|material|pipe_?mat(erial)?|matrl)$|material/i,
+  roughness: /^(n|mannings?(_?n)?|manning_?n|rough(ness)?(_?n)?)$/i,
+  id: /asset_?id$|facility_?id$|^pipe_?id$|^gis_?id$|^facilityid$/i,
+  upNode: /^(us|up|upstr(eam)?|from|frm|start)_?(asset_?id|node(_?id)?|mh(_?id)?|struct(ure)?(_?id)?)$/i,
+  dnNode: /^(ds|dn|down|downstr(eam)?|to|end)_?(asset_?id|node(_?id)?|mh(_?id)?|struct(ure)?(_?id)?)$/i,
 };
 const DEAD = /^(y|yes|true|1|abandoned|removed|inactive|retired|proposed|out of service)$/i;
 // a field that says the pipe is in use (Charlotte: Active = 1): there it is the 'no' values that drop a pipe
@@ -84,6 +92,9 @@ export function detectPipeFields(fields, sample) {
   // shape: not ArcGIS's geometry fields (Shape, Shape_Length)
   m.shape = pick(FIELD_PATTERNS.shape, [m.size, ...fields.filter(f => /^shape([._]|$)/i.test(f))]); m.status = pick(FIELD_PATTERNS.status);
   m.system = pick(FIELD_PATTERNS.system);
+  m.material = pick(FIELD_PATTERNS.material, [m.shape]); m.roughness = pick(FIELD_PATTERNS.roughness);
+  m.upNode = pick(FIELD_PATTERNS.upNode); m.dnNode = pick(FIELD_PATTERNS.dnNode, [m.upNode]);
+  m.id = pick(FIELD_PATTERNS.id, [m.upNode, m.dnNode]) ?? fields.find(f => /^objectid$/i.test(f)) ?? null;
   const vals = m.size ? sample.map(p => Number(p[m.size])).filter(v => v > 0).sort((a, b) => a - b) : [];
   const med = vals.length ? vals[vals.length >> 1] : 0;
   m.sizeUnits = /mm/i.test(m.size || '') ? 'mm' : /_in|inch/i.test(m.size || '') ? 'in' : /_ft|feet/i.test(m.size || '') ? 'ft' :
@@ -115,7 +126,9 @@ export function pipeRecords(features, m, { datum = 0 } = {}) {
     // a wide arch (Charlotte's Sheffield Dr culvert: 8 ft rise, 28 ft span) is a closed rectangle of its rise and the same area (a half-ellipse: π/4 of the span)
     const arch = /arch/i.test(shp) && h && w > h;
     out.push({ line: f.coords, h, w: arch ? w * Math.PI / 4 : box ? (w ?? h) : null, shape: box || arch ? 'RECT_CLOSED' : 'CIRCULAR', barrels,
-      upInv: m.upInvert ? inv(p[m.upInvert]) : null, dnInv: m.dnInvert ? inv(p[m.dnInvert]) : null, combined: m.system ? COMBINED.test(String(p[m.system] ?? '').trim()) : false });
+      upInv: m.upInvert ? inv(p[m.upInvert]) : null, dnInv: m.dnInvert ? inv(p[m.dnInvert]) : null, combined: m.system ? COMBINED.test(String(p[m.system] ?? '').trim()) : false,
+      // the same pipe as the source described it (geometry, material, provenance), for the report and for later use
+      asset: fromLinked(p, m, { u, datum, line: f.coords }) });
   }
   return out;
 }

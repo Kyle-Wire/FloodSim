@@ -4,3 +4,6 @@ node_modules/
 benchmarks/ea/data/
 benchmarks/ea/source/
 benchmarks/gatec/davis/hecras-run/
+
+# generated copy of the vendor SWMM source for the instrumented build (recreated by benchmarks/culvert/instrumented/build.mjs)
+benchmarks/culvert/instrumented/build/
