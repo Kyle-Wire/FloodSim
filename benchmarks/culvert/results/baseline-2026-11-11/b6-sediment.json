@@ -1,0 +1,258 @@
+{
+ "benchmark": "B6 sediment, SWMM alone",
+ "segment": 60,
+ "segments": 12,
+ "S": 0.002,
+ "probe": 6,
+ "cases": [
+  {
+   "id": "B6-1",
+   "name": "concrete pipe 1.2 m, 0.3 m of sediment (FILLED_CIRCULAR)"
+  },
+  {
+   "id": "B6-1c",
+   "name": "the same pipe clean (control)"
+  },
+  {
+   "id": "B6-2",
+   "name": "concrete box 2 × 3 m, 0.5 m (RECT_CLOSED of the open 1.5 m)"
+  },
+  {
+   "id": "B6-3",
+   "name": "h-ellipse 96 × 144 in, 1.0 m (CUSTOM, cut at the fill)"
+  },
+  {
+   "id": "B6-3c",
+   "name": "the same ellipse clean (control)"
+  }
+ ],
+ "rows": [
+  {
+   "case": "B6-1",
+   "frac": 0.3,
+   "Q": 0.3529,
+   "shape": "FILLED_CIRCULAR",
+   "writtenOffset": 0,
+   "normalDepth": 0.27,
+   "swmmDepthAboveFill": 0.2798,
+   "diff": 0.0098,
+   "tol": 0.01,
+   "pass": true,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -0.506,
+    "steadyOutflowErrPct": 0,
+    "ok": false
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.1918
+   }
+  },
+  {
+   "case": "B6-1",
+   "frac": 0.6,
+   "Q": 0.9389,
+   "shape": "FILLED_CIRCULAR",
+   "writtenOffset": 0,
+   "normalDepth": 0.54,
+   "swmmDepthAboveFill": 0.5571,
+   "diff": 0.0171,
+   "tol": 0.0162,
+   "pass": false,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -1.585,
+    "steadyOutflowErrPct": 0,
+    "ok": false
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.2889
+   }
+  },
+  {
+   "case": "B6-1c",
+   "frac": 0.3,
+   "Q": 0.3414,
+   "shape": "CIRCULAR",
+   "writtenOffset": 0,
+   "normalDepth": 0.36,
+   "swmmDepthAboveFill": 0.36,
+   "diff": 0,
+   "tol": 0.0108,
+   "pass": true,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -0.749,
+    "steadyOutflowErrPct": 0,
+    "ok": false
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.2051
+   }
+  },
+  {
+   "case": "B6-1c",
+   "frac": 0.6,
+   "Q": 1.1714,
+   "shape": "CIRCULAR",
+   "writtenOffset": 0,
+   "normalDepth": 0.72,
+   "swmmDepthAboveFill": 0.7183,
+   "diff": -0.0017,
+   "tol": 0.0216,
+   "pass": true,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -0.482,
+    "steadyOutflowErrPct": 0,
+    "ok": true
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.3332
+   }
+  },
+  {
+   "case": "B6-2",
+   "frac": 0.3,
+   "Q": 2.2896,
+   "shape": "RECT_CLOSED",
+   "writtenOffset": 0.5,
+   "normalDepth": 0.45,
+   "swmmDepthAboveFill": 0.4497,
+   "diff": -0.0003,
+   "tol": 0.0135,
+   "pass": true,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -0.613,
+    "steadyOutflowErrPct": 0,
+    "ok": false
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.3462
+   }
+  },
+  {
+   "case": "B6-2",
+   "frac": 0.6,
+   "Q": 6.3292,
+   "shape": "RECT_CLOSED",
+   "writtenOffset": 0.5,
+   "normalDepth": 0.9,
+   "swmmDepthAboveFill": 0.8922,
+   "diff": -0.0078,
+   "tol": 0.027,
+   "pass": true,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -0.427,
+    "steadyOutflowErrPct": 0,
+    "ok": true
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.5625
+   }
+  },
+  {
+   "case": "B6-3",
+   "frac": 0.3,
+   "Q": 2.6882,
+   "shape": "CUSTOM",
+   "writtenOffset": 1,
+   "normalDepth": 0.4315,
+   "swmmDepthAboveFill": 0.4313,
+   "diff": -0.0002,
+   "tol": 0.0129,
+   "pass": true,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -0.406,
+    "steadyOutflowErrPct": 0,
+    "ok": true
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.3511
+   }
+  },
+  {
+   "case": "B6-3",
+   "frac": 0.6,
+   "Q": 7.0547,
+   "shape": "CUSTOM",
+   "writtenOffset": 1,
+   "normalDepth": 0.863,
+   "swmmDepthAboveFill": 0.8529,
+   "diff": -0.0101,
+   "tol": 0.0259,
+   "pass": true,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -0.483,
+    "steadyOutflowErrPct": 0,
+    "ok": true
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.5547
+   }
+  },
+  {
+   "case": "B6-3c",
+   "frac": 0.3,
+   "Q": 3.6504,
+   "shape": "CUSTOM",
+   "writtenOffset": 0,
+   "normalDepth": 0.7315,
+   "swmmDepthAboveFill": 0.7315,
+   "diff": 0,
+   "tol": 0.0219,
+   "pass": true,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -0.485,
+    "steadyOutflowErrPct": 0,
+    "ok": true
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.4652
+   }
+  },
+  {
+   "case": "B6-3c",
+   "frac": 0.6,
+   "Q": 13.2594,
+   "shape": "CUSTOM",
+   "writtenOffset": 0,
+   "normalDepth": 1.463,
+   "swmmDepthAboveFill": 1.4474,
+   "diff": -0.0157,
+   "tol": 0.0439,
+   "pass": true,
+   "drift": 0,
+   "mass": {
+    "swmmContinuityErrPct": -0.307,
+    "steadyOutflowErrPct": 0,
+    "ok": true
+   },
+   "energy": {
+    "note": "uniform flow: the friction slope equals the bed slope; the open-section hydraulic radius at normal depth",
+    "R": 0.8232
+   }
+  }
+ ],
+ "fails": [
+  "B6-1 at 0.3: mass {\"swmmContinuityErrPct\":-0.506,\"steadyOutflowErrPct\":0,\"ok\":false}",
+  "B6-1 at 0.6: SWMM 0.557 m above the fill vs normal 0.540 m",
+  "B6-1 at 0.6: mass {\"swmmContinuityErrPct\":-1.585,\"steadyOutflowErrPct\":0,\"ok\":false}",
+  "B6-1c at 0.3: mass {\"swmmContinuityErrPct\":-0.749,\"steadyOutflowErrPct\":0,\"ok\":false}",
+  "B6-2 at 0.3: mass {\"swmmContinuityErrPct\":-0.613,\"steadyOutflowErrPct\":0,\"ok\":false}"
+ ]
+}

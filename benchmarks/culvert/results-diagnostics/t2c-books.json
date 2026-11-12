@@ -1,0 +1,1815 @@
+{
+ "written": "2026-11-11T21:32:12.648Z",
+ "runs": [
+  {
+   "section": "standard",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 390.25041666668267,
+   "outfallInflowM3": 369.6732815195584,
+   "linkOutflowM3": 369.6732815195584,
+   "storedEndM3": 41.26748263360539,
+   "linkDepth": 0.14294687444094953,
+   "ownBooksResidualM3": -20.690347486481095,
+   "ownBooksResidualPct": -5.301813041791819,
+   "swmmErrorPct": -5.301,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.039         0.390",
+    "External Outflow .........         0.037         0.370",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -5.301"
+   ],
+   "swmmExternalInflowM3": 390,
+   "swmmExternalOutflowM3": 370,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "standard",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 1800,
+   "segments": 1,
+   "appliedM3": 210.2504166666595,
+   "outfallInflowM3": 189.67329164858734,
+   "linkOutflowM3": 189.67329164858734,
+   "storedEndM3": 41.26746404584148,
+   "linkDepth": 0.14294682454615837,
+   "ownBooksResidualM3": -20.690339027769312,
+   "ownBooksResidualPct": -9.840807621595685,
+   "swmmErrorPct": -9.841,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.021         0.210",
+    "External Outflow .........         0.019         0.190",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -9.841"
+   ],
+   "swmmExternalInflowM3": 210,
+   "swmmExternalOutflowM3": 190,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "standard",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 7200,
+   "segments": 1,
+   "appliedM3": 750.2504166667643,
+   "outfallInflowM3": 729.6732815196046,
+   "linkOutflowM3": 729.6732815196046,
+   "storedEndM3": 41.267482633641286,
+   "linkDepth": 0.1429468744410459,
+   "ownBooksResidualM3": -20.690347486481635,
+   "ownBooksResidualPct": -2.7577922020230723,
+   "swmmErrorPct": -2.757,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.075         0.750",
+    "External Outflow .........         0.073         0.730",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -2.757"
+   ],
+   "swmmExternalInflowM3": 750,
+   "swmmExternalOutflowM3": 730,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "standard",
+   "Q": 0.1,
+   "rampS": 0,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 360.0500000000108,
+   "outfallInflowM3": 339.57323998277957,
+   "linkOutflowM3": 339.57323998277957,
+   "storedEndM3": 41.267482633433325,
+   "linkDepth": 0.14294687444048768,
+   "ownBooksResidualM3": -20.790722616202082,
+   "ownBooksResidualPct": -5.774398726899447,
+   "swmmErrorPct": -5.767,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.036         0.360",
+    "External Outflow .........         0.034         0.339",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -5.767"
+   ],
+   "swmmExternalInflowM3": 360,
+   "swmmExternalOutflowM3": 339,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "standard",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 4,
+   "appliedM3": 390.25041666668267,
+   "outfallInflowM3": 354.03508757732635,
+   "linkOutflowM3": 385.38884353291917,
+   "storedEndM3": 41.267497831262595,
+   "linkDepth": 0.1429469292328703,
+   "ownBooksResidualM3": -5.052168741906279,
+   "ownBooksResidualPct": -1.2945966297894804,
+   "swmmErrorPct": -1.294,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.039         0.390",
+    "External Outflow .........         0.035         0.354",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -1.294"
+   ],
+   "swmmExternalInflowM3": 390,
+   "swmmExternalOutflowM3": 354,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "standard",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 16,
+   "appliedM3": 390.25041666668267,
+   "outfallInflowM3": 350.1062900078378,
+   "linkOutflowM3": 388.99829267904784,
+   "storedEndM3": 41.267500927256286,
+   "linkDepth": 0.14294692920552468,
+   "ownBooksResidualM3": -1.1233742684114176,
+   "ownBooksResidualPct": -0.28785985111987833,
+   "swmmErrorPct": -0.287,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.039         0.390",
+    "External Outflow .........         0.035         0.350",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -0.287"
+   ],
+   "swmmExternalInflowM3": 390,
+   "swmmExternalOutflowM3": 350,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "standard",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 32,
+   "appliedM3": 390.25041666668267,
+   "outfallInflowM3": 349.4065479465932,
+   "linkOutflowM3": 389.6161324455975,
+   "storedEndM3": 41.26750144328579,
+   "linkDepth": 0.14294692920552468,
+   "ownBooksResidualM3": -0.4236327231963273,
+   "ownBooksResidualPct": -0.10855407325757113,
+   "swmmErrorPct": -0.108,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.039         0.390",
+    "External Outflow .........         0.035         0.349",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -0.108"
+   ],
+   "swmmExternalInflowM3": 390,
+   "swmmExternalOutflowM3": 349,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "standard",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 1951.2520833333333,
+   "outfallInflowM3": 1888.3984131931531,
+   "linkOutflowM3": 1888.3984131931531,
+   "storedEndM3": 120.2166907003356,
+   "linkDepth": 0.30944126491556195,
+   "ownBooksResidualM3": -57.36302056015545,
+   "ownBooksResidualPct": -2.9398057303883527,
+   "swmmErrorPct": -2.94,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.195         1.951",
+    "External Outflow .........         0.189         1.888",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.120",
+    "Continuity Error (%) .....        -2.940"
+   ],
+   "swmmExternalInflowM3": 1951,
+   "swmmExternalOutflowM3": 1888,
+   "swmmFinalStoredM3": 120
+  },
+  {
+   "section": "standard",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 1800,
+   "segments": 1,
+   "appliedM3": 1051.2520833333333,
+   "outfallInflowM3": 988.3984131931531,
+   "linkOutflowM3": 988.3984131931531,
+   "storedEndM3": 120.2166907003356,
+   "linkDepth": 0.30944126491556195,
+   "ownBooksResidualM3": -57.36302056015545,
+   "ownBooksResidualPct": -5.456637990981908,
+   "swmmErrorPct": -5.457,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.105         1.051",
+    "External Outflow .........         0.099         0.988",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.120",
+    "Continuity Error (%) .....        -5.457"
+   ],
+   "swmmExternalInflowM3": 1051,
+   "swmmExternalOutflowM3": 988,
+   "swmmFinalStoredM3": 120
+  },
+  {
+   "section": "standard",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 7200,
+   "segments": 1,
+   "appliedM3": 3751.2520833333333,
+   "outfallInflowM3": 3688.398413193153,
+   "linkOutflowM3": 3688.398413193153,
+   "storedEndM3": 120.2166907003356,
+   "linkDepth": 0.30944126491556195,
+   "ownBooksResidualM3": -57.36302056015522,
+   "ownBooksResidualPct": -1.5291699754067951,
+   "swmmErrorPct": -1.529,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.375         3.751",
+    "External Outflow .........         0.369         3.688",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.120",
+    "Continuity Error (%) .....        -1.529"
+   ],
+   "swmmExternalInflowM3": 3751,
+   "swmmExternalOutflowM3": 3688,
+   "swmmFinalStoredM3": 120
+  },
+  {
+   "section": "standard",
+   "Q": 0.5,
+   "rampS": 0,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 1800.25,
+   "outfallInflowM3": 1737.9956352372822,
+   "linkOutflowM3": 1737.9956352372822,
+   "storedEndM3": 120.2166907003356,
+   "linkDepth": 0.30944126491556195,
+   "ownBooksResidualM3": -57.96232593761776,
+   "ownBooksResidualPct": -3.219682040695335,
+   "swmmErrorPct": -3.213,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.180         1.800",
+    "External Outflow .........         0.174         1.738",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.120",
+    "Continuity Error (%) .....        -3.213"
+   ],
+   "swmmExternalInflowM3": 1800,
+   "swmmExternalOutflowM3": 1738,
+   "swmmFinalStoredM3": 120
+  },
+  {
+   "section": "standard",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 4,
+   "appliedM3": 1951.2520833333333,
+   "outfallInflowM3": 1840.691525715073,
+   "linkOutflowM3": 1936.2104750139645,
+   "storedEndM3": 120.21677386444757,
+   "linkDepth": 0.3094414540282896,
+   "ownBooksResidualM3": -9.656216246187384,
+   "ownBooksResidualPct": -0.4948728218494262,
+   "swmmErrorPct": -0.495,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.195         1.951",
+    "External Outflow .........         0.184         1.840",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.120",
+    "Continuity Error (%) .....        -0.495"
+   ],
+   "swmmExternalInflowM3": 1951,
+   "swmmExternalOutflowM3": 1840,
+   "swmmFinalStoredM3": 120
+  },
+  {
+   "section": "standard",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 16,
+   "appliedM3": 1951.2520833333333,
+   "outfallInflowM3": 1828.7534402089245,
+   "linkOutflowM3": 1947.4026087544996,
+   "storedEndM3": 120.21679076858786,
+   "linkDepth": 0.3094414540282295,
+   "ownBooksResidualM3": 2.2818523558209165,
+   "ownBooksResidualPct": 0.11694298114074617,
+   "swmmErrorPct": 0.117,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.195         1.951",
+    "External Outflow .........         0.183         1.828",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.120",
+    "Continuity Error (%) .....         0.117"
+   ],
+   "swmmExternalInflowM3": 1951,
+   "swmmExternalOutflowM3": 1828,
+   "swmmFinalStoredM3": 120
+  },
+  {
+   "section": "standard",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 32,
+   "appliedM3": 1951.2520833333333,
+   "outfallInflowM3": 1826.7358922375195,
+   "linkOutflowM3": 1949.311737496796,
+   "storedEndM3": 120.21679358594653,
+   "linkDepth": 0.30944145402824896,
+   "ownBooksResidualM3": 4.299397509867305,
+   "ownBooksResidualPct": 0.2203404443019286,
+   "swmmErrorPct": 0.221,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.195         1.951",
+    "External Outflow .........         0.183         1.826",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.120",
+    "Continuity Error (%) .....         0.221"
+   ],
+   "swmmExternalInflowM3": 1951,
+   "swmmExternalOutflowM3": 1826,
+   "swmmFinalStoredM3": 120
+  },
+  {
+   "section": "standard",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 5853.756249999999,
+   "outfallInflowM3": 5727.301292660322,
+   "linkOutflowM3": 5727.301292660322,
+   "storedEndM3": 266.76944568067165,
+   "linkDepth": 0.5235404432786048,
+   "ownBooksResidualM3": -140.31448834099456,
+   "ownBooksResidualPct": -2.396999163417414,
+   "swmmErrorPct": -2.397,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.585         5.852",
+    "External Outflow .........         0.573         5.726",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.267",
+    "Continuity Error (%) .....        -2.397"
+   ],
+   "swmmExternalInflowM3": 5852,
+   "swmmExternalOutflowM3": 5726,
+   "swmmFinalStoredM3": 267
+  },
+  {
+   "section": "standard",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 1800,
+   "segments": 1,
+   "appliedM3": 3153.75625,
+   "outfallInflowM3": 3027.3012926603087,
+   "linkOutflowM3": 3027.3012926603087,
+   "storedEndM3": 266.7694456806734,
+   "linkDepth": 0.523540443278607,
+   "ownBooksResidualM3": -140.31448834098222,
+   "ownBooksResidualPct": -4.449122798915808,
+   "swmmErrorPct": -4.45,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.315         3.153",
+    "External Outflow .........         0.303         3.026",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.267",
+    "Continuity Error (%) .....        -4.450"
+   ],
+   "swmmExternalInflowM3": 3153,
+   "swmmExternalOutflowM3": 3026,
+   "swmmFinalStoredM3": 267
+  },
+  {
+   "section": "standard",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 7200,
+   "segments": 1,
+   "appliedM3": 11253.75625,
+   "outfallInflowM3": 11127.301292660419,
+   "linkOutflowM3": 11127.301292660419,
+   "storedEndM3": 266.76944568067165,
+   "linkDepth": 0.5235404432786048,
+   "ownBooksResidualM3": -140.31448834109005,
+   "ownBooksResidualPct": -1.246823595820196,
+   "swmmErrorPct": -1.247,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         1.125        11.252",
+    "External Outflow .........         1.113        11.125",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.267",
+    "Continuity Error (%) .....        -1.247"
+   ],
+   "swmmExternalInflowM3": 11252,
+   "swmmExternalOutflowM3": 11125,
+   "swmmFinalStoredM3": 267
+  },
+  {
+   "section": "standard",
+   "Q": 1.5,
+   "rampS": 0,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 5400.749999999999,
+   "outfallInflowM3": 5275.647917120365,
+   "linkOutflowM3": 5275.647917120365,
+   "storedEndM3": 266.76944568067165,
+   "linkDepth": 0.5235404432786048,
+   "ownBooksResidualM3": -141.66736280103714,
+   "ownBooksResidualPct": -2.6231053613116173,
+   "swmmErrorPct": -2.616,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.540         5.400",
+    "External Outflow .........         0.527         5.274",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.267",
+    "Continuity Error (%) .....        -2.616"
+   ],
+   "swmmExternalInflowM3": 5400,
+   "swmmExternalOutflowM3": 5274,
+   "swmmFinalStoredM3": 267
+  },
+  {
+   "section": "standard",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 4,
+   "appliedM3": 5853.756249999999,
+   "outfallInflowM3": 5631.247450798041,
+   "linkOutflowM3": 5823.238801203442,
+   "storedEndM3": 266.7696754442693,
+   "linkDepth": 0.5235408842893579,
+   "ownBooksResidualM3": -44.26087624231127,
+   "ownBooksResidualPct": -0.756110680937753,
+   "swmmErrorPct": -0.756,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.585         5.852",
+    "External Outflow .........         0.563         5.630",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.267",
+    "Continuity Error (%) .....        -0.756"
+   ],
+   "swmmExternalInflowM3": 5852,
+   "swmmExternalOutflowM3": 5630,
+   "swmmFinalStoredM3": 267
+  },
+  {
+   "section": "standard",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 16,
+   "appliedM3": 5853.756249999999,
+   "outfallInflowM3": 5607.240902185046,
+   "linkOutflowM3": 5845.990425258698,
+   "storedEndM3": 266.7697230095023,
+   "linkDepth": 0.5235408849883243,
+   "ownBooksResidualM3": -20.254375194549084,
+   "ownBooksResidualPct": -0.34600646712184313,
+   "swmmErrorPct": -0.346,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.585         5.852",
+    "External Outflow .........         0.561         5.606",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.267",
+    "Continuity Error (%) .....        -0.346"
+   ],
+   "swmmExternalInflowM3": 5852,
+   "swmmExternalOutflowM3": 5606,
+   "swmmFinalStoredM3": 267
+  },
+  {
+   "section": "standard",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 32,
+   "appliedM3": 5853.756249999999,
+   "outfallInflowM3": 5603.225952110623,
+   "linkOutflowM3": 5849.848595354591,
+   "storedEndM3": 266.7697309385928,
+   "linkDepth": 0.5235408850114879,
+   "ownBooksResidualM3": -16.239433049216757,
+   "ownBooksResidualPct": -0.2774190170493819,
+   "swmmErrorPct": -0.277,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.585         5.852",
+    "External Outflow .........         0.560         5.602",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.267",
+    "Continuity Error (%) .....        -0.277"
+   ],
+   "swmmExternalInflowM3": 5852,
+   "swmmExternalOutflowM3": 5602,
+   "swmmFinalStoredM3": 267
+  },
+  {
+   "section": "exact",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 390.25041666668267,
+   "outfallInflowM3": 370.2527053736408,
+   "linkOutflowM3": 370.2527053736408,
+   "storedEndM3": 40.64946195569627,
+   "linkDepth": 0.13843666956922285,
+   "ownBooksResidualM3": -20.651750662654422,
+   "ownBooksResidualPct": -5.291922770781643,
+   "swmmErrorPct": -5.292,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.039         0.390",
+    "External Outflow .........         0.037         0.370",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -5.292"
+   ],
+   "swmmExternalInflowM3": 390,
+   "swmmExternalOutflowM3": 370,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "exact",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 1800,
+   "segments": 1,
+   "appliedM3": 210.2504166666595,
+   "outfallInflowM3": 190.25270688044446,
+   "linkOutflowM3": 190.25270688044446,
+   "storedEndM3": 40.64945865088202,
+   "linkDepth": 0.13843666197020982,
+   "ownBooksResidualM3": -20.651748864666978,
+   "ownBooksResidualPct": -9.822453240323036,
+   "swmmErrorPct": -9.824,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.021         0.210",
+    "External Outflow .........         0.019         0.190",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -9.824"
+   ],
+   "swmmExternalInflowM3": 210,
+   "swmmExternalOutflowM3": 190,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "exact",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 7200,
+   "segments": 1,
+   "appliedM3": 750.2504166667643,
+   "outfallInflowM3": 730.2527053737197,
+   "linkOutflowM3": 730.2527053737197,
+   "storedEndM3": 40.649461955697205,
+   "linkDepth": 0.138436669569225,
+   "ownBooksResidualM3": -20.651750662652574,
+   "ownBooksResidualPct": -2.752647676545761,
+   "swmmErrorPct": -2.753,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.075         0.750",
+    "External Outflow .........         0.073         0.730",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -2.753"
+   ],
+   "swmmExternalInflowM3": 750,
+   "swmmExternalOutflowM3": 730,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "exact",
+   "Q": 0.1,
+   "rampS": 0,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 360.0500000000108,
+   "outfallInflowM3": 340.15731677846145,
+   "linkOutflowM3": 340.15731677846145,
+   "storedEndM3": 40.6494619556892,
+   "linkDepth": 0.1384366695692066,
+   "ownBooksResidualM3": -20.756778734139836,
+   "ownBooksResidualPct": -5.764971180152537,
+   "swmmErrorPct": -5.758,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.036         0.360",
+    "External Outflow .........         0.034         0.340",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -5.758"
+   ],
+   "swmmExternalInflowM3": 360,
+   "swmmExternalOutflowM3": 340,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "exact",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 4,
+   "appliedM3": 390.25041666668267,
+   "outfallInflowM3": 355.11654937582887,
+   "linkOutflowM3": 385.54723498415495,
+   "storedEndM3": 40.64947915467247,
+   "linkDepth": 0.13843672227293183,
+   "ownBooksResidualM3": -5.51561186381867,
+   "ownBooksResidualPct": -1.4133519474316454,
+   "swmmErrorPct": -1.413,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.039         0.390",
+    "External Outflow .........         0.036         0.355",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -1.413"
+   ],
+   "swmmExternalInflowM3": 390,
+   "swmmExternalOutflowM3": 355,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "exact",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 16,
+   "appliedM3": 390.25041666668267,
+   "outfallInflowM3": 351.32811343531904,
+   "linkOutflowM3": 389.03690685752383,
+   "storedEndM3": 40.64948257835919,
+   "linkDepth": 0.13843672221239361,
+   "ownBooksResidualM3": -1.7271793469955625,
+   "ownBooksResidualPct": -0.44258231977001733,
+   "swmmErrorPct": -0.442,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.039         0.390",
+    "External Outflow .........         0.035         0.351",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -0.442"
+   ],
+   "swmmExternalInflowM3": 390,
+   "swmmExternalOutflowM3": 351,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "exact",
+   "Q": 0.1,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 32,
+   "appliedM3": 390.25041666668267,
+   "outfallInflowM3": 350.67767517203504,
+   "linkOutflowM3": 389.63564628958846,
+   "storedEndM3": 40.64948314907514,
+   "linkDepth": 0.13843672221239361,
+   "ownBooksResidualM3": -1.076741654427508,
+   "ownBooksResidualPct": -0.2759104432544822,
+   "swmmErrorPct": -0.275,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.039         0.390",
+    "External Outflow .........         0.035         0.351",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.004         0.041",
+    "Continuity Error (%) .....        -0.275"
+   ],
+   "swmmExternalInflowM3": 390,
+   "swmmExternalOutflowM3": 351,
+   "swmmFinalStoredM3": 41
+  },
+  {
+   "section": "exact",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 1951.2520833333333,
+   "outfallInflowM3": 1890.2856867750208,
+   "linkOutflowM3": 1890.2856867750208,
+   "storedEndM3": 123.10947994268928,
+   "linkDepth": 0.3014008633272081,
+   "ownBooksResidualM3": -62.14308338437682,
+   "ownBooksResidualPct": -3.184779860847989,
+   "swmmErrorPct": -3.185,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.195         1.951",
+    "External Outflow .........         0.189         1.890",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.123",
+    "Continuity Error (%) .....        -3.185"
+   ],
+   "swmmExternalInflowM3": 1951,
+   "swmmExternalOutflowM3": 1890,
+   "swmmFinalStoredM3": 123
+  },
+  {
+   "section": "exact",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 1800,
+   "segments": 1,
+   "appliedM3": 1051.2520833333333,
+   "outfallInflowM3": 990.285686775021,
+   "linkOutflowM3": 990.285686775021,
+   "storedEndM3": 123.10947994268928,
+   "linkDepth": 0.3014008633272081,
+   "ownBooksResidualM3": -62.143083384376936,
+   "ownBooksResidualPct": -5.91133985554942,
+   "swmmErrorPct": -5.912,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.105         1.051",
+    "External Outflow .........         0.099         0.990",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.123",
+    "Continuity Error (%) .....        -5.912"
+   ],
+   "swmmExternalInflowM3": 1051,
+   "swmmExternalOutflowM3": 990,
+   "swmmFinalStoredM3": 123
+  },
+  {
+   "section": "exact",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 7200,
+   "segments": 1,
+   "appliedM3": 3751.2520833333333,
+   "outfallInflowM3": 3690.2856867750206,
+   "linkOutflowM3": 3690.2856867750206,
+   "storedEndM3": 123.10947994268928,
+   "linkDepth": 0.3014008633272081,
+   "ownBooksResidualM3": -62.143083384376595,
+   "ownBooksResidualPct": -1.6565957713286157,
+   "swmmErrorPct": -1.657,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.375         3.751",
+    "External Outflow .........         0.369         3.690",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.123",
+    "Continuity Error (%) .....        -1.657"
+   ],
+   "swmmExternalInflowM3": 3751,
+   "swmmExternalOutflowM3": 3690,
+   "swmmFinalStoredM3": 123
+  },
+  {
+   "section": "exact",
+   "Q": 0.5,
+   "rampS": 0,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 1800.25,
+   "outfallInflowM3": 1739.9225668887652,
+   "linkOutflowM3": 1739.9225668887652,
+   "storedEndM3": 123.10947994268928,
+   "linkDepth": 0.3014008633272081,
+   "ownBooksResidualM3": -62.78204683145451,
+   "ownBooksResidualPct": -3.487407128535176,
+   "swmmErrorPct": -3.481,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.180         1.800",
+    "External Outflow .........         0.174         1.739",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.123",
+    "Continuity Error (%) .....        -3.481"
+   ],
+   "swmmExternalInflowM3": 1800,
+   "swmmExternalOutflowM3": 1739,
+   "swmmFinalStoredM3": 123
+  },
+  {
+   "section": "exact",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 4,
+   "appliedM3": 1951.2520833333333,
+   "outfallInflowM3": 1844.0676647175248,
+   "linkOutflowM3": 1936.6665024026477,
+   "storedEndM3": 123.10956215693977,
+   "linkDepth": 0.30140107198976607,
+   "ownBooksResidualM3": -15.92514354113132,
+   "ownBooksResidualPct": -0.8161499827293622,
+   "swmmErrorPct": -0.816,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.195         1.951",
+    "External Outflow .........         0.184         1.844",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.123",
+    "Continuity Error (%) .....        -0.816"
+   ],
+   "swmmExternalInflowM3": 1951,
+   "swmmExternalOutflowM3": 1844,
+   "swmmFinalStoredM3": 123
+  },
+  {
+   "section": "exact",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 16,
+   "appliedM3": 1951.2520833333333,
+   "outfallInflowM3": 1832.5176464731574,
+   "linkOutflowM3": 1947.5214857569342,
+   "storedEndM3": 123.10957903062982,
+   "linkDepth": 0.30140107199060473,
+   "ownBooksResidualM3": -4.37514217045387,
+   "ownBooksResidualPct": -0.22422229335841598,
+   "swmmErrorPct": -0.224,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.195         1.951",
+    "External Outflow .........         0.183         1.832",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.123",
+    "Continuity Error (%) .....        -0.224"
+   ],
+   "swmmExternalInflowM3": 1951,
+   "swmmExternalOutflowM3": 1832,
+   "swmmFinalStoredM3": 123
+  },
+  {
+   "section": "exact",
+   "Q": 0.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 32,
+   "appliedM3": 1951.2520833333333,
+   "outfallInflowM3": 1830.582476066115,
+   "linkOutflowM3": 1949.3717739044869,
+   "storedEndM3": 123.10958184291232,
+   "linkDepth": 0.30140107199069244,
+   "ownBooksResidualM3": -2.4399745756940945,
+   "ownBooksResidualPct": -0.1250466096377396,
+   "swmmErrorPct": -0.125,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.195         1.951",
+    "External Outflow .........         0.183         1.830",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.012         0.123",
+    "Continuity Error (%) .....        -0.125"
+   ],
+   "swmmExternalInflowM3": 1951,
+   "swmmExternalOutflowM3": 1830,
+   "swmmFinalStoredM3": 123
+  },
+  {
+   "section": "exact",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 5853.756249999999,
+   "outfallInflowM3": 5722.125966105328,
+   "linkOutflowM3": 5722.125966105328,
+   "storedEndM3": 265.3532243182604,
+   "linkDepth": 0.5393626447862041,
+   "ownBooksResidualM3": -133.72294042358914,
+   "ownBooksResidualPct": -2.28439543282297,
+   "swmmErrorPct": -2.285,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.585         5.852",
+    "External Outflow .........         0.572         5.721",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.265",
+    "Continuity Error (%) .....        -2.285"
+   ],
+   "swmmExternalInflowM3": 5852,
+   "swmmExternalOutflowM3": 5721,
+   "swmmFinalStoredM3": 265
+  },
+  {
+   "section": "exact",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 1800,
+   "segments": 1,
+   "appliedM3": 3153.75625,
+   "outfallInflowM3": 3022.125966105407,
+   "linkOutflowM3": 3022.125966105407,
+   "storedEndM3": 265.3532243182647,
+   "linkDepth": 0.5393626447862111,
+   "ownBooksResidualM3": -133.72294042367167,
+   "ownBooksResidualPct": -4.24011654114587,
+   "swmmErrorPct": -4.241,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.315         3.153",
+    "External Outflow .........         0.302         3.021",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.265",
+    "Continuity Error (%) .....        -4.241"
+   ],
+   "swmmExternalInflowM3": 3153,
+   "swmmExternalOutflowM3": 3021,
+   "swmmFinalStoredM3": 265
+  },
+  {
+   "section": "exact",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 7200,
+   "segments": 1,
+   "appliedM3": 11253.75625,
+   "outfallInflowM3": 11122.125966105232,
+   "linkOutflowM3": 11122.125966105232,
+   "storedEndM3": 265.3532243182604,
+   "linkDepth": 0.5393626447862041,
+   "ownBooksResidualM3": -133.72294042349182,
+   "ownBooksResidualPct": -1.1882516153083715,
+   "swmmErrorPct": -1.188,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         1.125        11.252",
+    "External Outflow .........         1.112        11.120",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.265",
+    "Continuity Error (%) .....        -1.188"
+   ],
+   "swmmExternalInflowM3": 11252,
+   "swmmExternalOutflowM3": 11120,
+   "swmmFinalStoredM3": 265
+  },
+  {
+   "section": "exact",
+   "Q": 1.5,
+   "rampS": 0,
+   "holdS": 3600,
+   "segments": 1,
+   "appliedM3": 5400.749999999999,
+   "outfallInflowM3": 5270.8242448841265,
+   "linkOutflowM3": 5270.8242448841265,
+   "storedEndM3": 265.3532243182604,
+   "linkDepth": 0.5393626447862041,
+   "ownBooksResidualM3": -135.42746920238784,
+   "ownBooksResidualPct": -2.5075678230317617,
+   "swmmErrorPct": -2.501,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.540         5.400",
+    "External Outflow .........         0.527         5.270",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.265",
+    "Continuity Error (%) .....        -2.501"
+   ],
+   "swmmExternalInflowM3": 5400,
+   "swmmExternalOutflowM3": 5270,
+   "swmmFinalStoredM3": 265
+  },
+  {
+   "section": "exact",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 4,
+   "appliedM3": 5853.756249999999,
+   "outfallInflowM3": 5622.25120131874,
+   "linkOutflowM3": 5821.909521744633,
+   "storedEndM3": 265.35343958904144,
+   "linkDepth": 0.5393632240208021,
+   "ownBooksResidualM3": -33.84839090778172,
+   "ownBooksResidualPct": -0.578233692388229,
+   "swmmErrorPct": -0.578,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.585         5.852",
+    "External Outflow .........         0.562         5.621",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.265",
+    "Continuity Error (%) .....        -0.578"
+   ],
+   "swmmExternalInflowM3": 5852,
+   "swmmExternalOutflowM3": 5621,
+   "swmmFinalStoredM3": 265
+  },
+  {
+   "section": "exact",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 16,
+   "appliedM3": 5853.756249999999,
+   "outfallInflowM3": 5597.306477243991,
+   "linkOutflowM3": 5845.661558007263,
+   "storedEndM3": 265.353486052517,
+   "linkDepth": 0.5393632278317748,
+   "ownBooksResidualM3": -8.90371329650867,
+   "ownBooksResidualPct": -0.15210256314496645,
+   "swmmErrorPct": -0.152,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.585         5.852",
+    "External Outflow .........         0.560         5.596",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.265",
+    "Continuity Error (%) .....        -0.152"
+   ],
+   "swmmExternalInflowM3": 5852,
+   "swmmExternalOutflowM3": 5596,
+   "swmmFinalStoredM3": 265
+  },
+  {
+   "section": "exact",
+   "Q": 1.5,
+   "rampS": 600,
+   "holdS": 3600,
+   "segments": 32,
+   "appliedM3": 5853.756249999999,
+   "outfallInflowM3": 5593.163768320466,
+   "linkOutflowM3": 5849.685731116992,
+   "storedEndM3": 265.35349380764023,
+   "linkDepth": 0.5393632279985038,
+   "ownBooksResidualM3": -4.7610121281070406,
+   "ownBooksResidualPct": -0.08133259952713338,
+   "swmmErrorPct": -0.081,
+   "swmmTable": [
+    "Dry Weather Inflow .......         0.000         0.000",
+    "Wet Weather Inflow .......         0.000         0.000",
+    "Groundwater Inflow .......         0.000         0.000",
+    "RDII Inflow ..............         0.000         0.000",
+    "External Inflow ..........         0.585         5.852",
+    "External Outflow .........         0.559         5.592",
+    "Flooding Loss ............         0.000         0.000",
+    "Evaporation Loss .........         0.000         0.000",
+    "Exfiltration Loss ........         0.000         0.000",
+    "Initial Stored Volume ....         0.000         0.000",
+    "Final Stored Volume ......         0.027         0.265",
+    "Continuity Error (%) .....        -0.081"
+   ],
+   "swmmExternalInflowM3": 5852,
+   "swmmExternalOutflowM3": 5592,
+   "swmmFinalStoredM3": 265
+  }
+ ],
+ "geometry": {
+  "source": "references/t2-critic/out.json depthTable (unchanged); K computed here",
+  "n": 0.013,
+  "profile": [
+   {
+    "yD": 0.05,
+    "true": {
+     "A": 0.021595935466257547,
+     "P": 0.6737234608432711,
+     "R": 0.03205459913660544,
+     "K": 0.16763147592105285
+    },
+    "dPct": {
+     "standard": {
+      "A": 17.93,
+      "P": 23.95,
+      "R": -4.86,
+      "K": 14.07
+     },
+     "exact": {
+      "A": 0.63,
+      "P": 1.19,
+      "R": -0.55,
+      "K": 0.26
+     }
+    }
+   },
+   {
+    "yD": 0.1,
+    "true": {
+     "A": 0.06012609394897293,
+     "P": 0.9420425603769896,
+     "R": 0.06382524153145637,
+     "K": 0.7386657291289095
+    },
+    "dPct": {
+     "standard": {
+      "A": 4.64,
+      "P": 9.91,
+      "R": -4.79,
+      "K": 1.28
+     },
+     "exact": {
+      "A": -0.4,
+      "P": -0.13,
+      "R": -0.28,
+      "K": -0.58
+     }
+    }
+   },
+   {
+    "yD": 0.15,
+    "true": {
+     "A": 0.10866709808866086,
+     "P": 1.1411200494466445,
+     "R": 0.09522845395745702,
+     "K": 1.7431410870509754
+    },
+    "dPct": {
+     "standard": {
+      "A": -3.5,
+      "P": 1.92,
+      "R": -5.32,
+      "K": -6.95
+     },
+     "exact": {
+      "A": -0.15,
+      "P": 0.02,
+      "R": -0.17,
+      "K": -0.26
+     }
+    }
+   },
+   {
+    "yD": 0.2,
+    "true": {
+     "A": 0.1644888802221745,
+     "P": 1.3038244536218464,
+     "R": 0.12615876298779857,
+     "K": 3.1827667065471896
+    },
+    "dPct": {
+     "standard": {
+      "A": -5.28,
+      "P": -3.46,
+      "R": -1.88,
+      "K": -6.48
+     },
+     "exact": {
+      "A": -0.22,
+      "P": -0.07,
+      "R": -0.15,
+      "K": -0.31
+     }
+    }
+   },
+   {
+    "yD": 0.25,
+    "true": {
+     "A": 0.22586107350501136,
+     "P": 1.4433542586215482,
+     "R": 0.15648346354048678,
+     "K": 5.045183914160843
+    },
+    "dPct": {
+     "standard": {
+      "A": -7.14,
+      "P": -7.8,
+      "R": 0.71,
+      "K": -6.7
+     },
+     "exact": {
+      "A": -0.14,
+      "P": 0,
+      "R": -0.14,
+      "K": -0.23
+     }
+    }
+   },
+   {
+    "yD": 0.3,
+    "true": {
+     "A": 0.2914986765657625,
+     "P": 1.5668867871909422,
+     "R": 0.1860368464069767,
+     "K": 7.307338308359977
+    },
+    "dPct": {
+     "standard": {
+      "A": -6.47,
+      "P": -7.51,
+      "R": 1.13,
+      "K": -5.76
+     },
+     "exact": {
+      "A": -0.15,
+      "P": -0.05,
+      "R": -0.1,
+      "K": -0.22
+     }
+    }
+   },
+   {
+    "yD": 0.35,
+    "true": {
+     "A": 0.36035765995550745,
+     "P": 1.6790933416545222,
+     "R": 0.2146144297138497,
+     "K": 9.936414155810914
+    },
+    "dPct": {
+     "standard": {
+      "A": -4.39,
+      "P": -6.26,
+      "R": 2,
+      "K": -3.11
+     },
+     "exact": {
+      "A": -0.12,
+      "P": -0.02,
+      "R": -0.1,
+      "K": -0.19
+     }
+    }
+   },
+   {
+    "yD": 0.4,
+    "true": {
+     "A": 0.43153665895830406,
+     "P": 1.7834441195663628,
+     "R": 0.24196814143144021,
+     "K": 12.8898085920418
+    },
+    "dPct": {
+     "standard": {
+      "A": -1.41,
+      "P": -2.99,
+      "R": 1.63,
+      "K": -0.34
+     },
+     "exact": {
+      "A": -0.12,
+      "P": -0.04,
+      "R": -0.08,
+      "K": -0.17
+     }
+    }
+   },
+   {
+    "yD": 0.45,
+    "true": {
+     "A": 0.5042210511016387,
+     "P": 1.8828007664311837,
+     "R": 0.2678037209732929,
+     "K": 16.11469261190997
+    },
+    "dPct": {
+     "standard": {
+      "A": 2.5,
+      "P": 0.36,
+      "R": 2.14,
+      "K": 3.96
+     },
+     "exact": {
+      "A": -0.11,
+      "P": -0.01,
+      "R": -0.09,
+      "K": -0.17
+     }
+    }
+   },
+   {
+    "yD": 0.5,
+    "true": {
+     "A": 0.5776465261711474,
+     "P": 1.979722734747531,
+     "R": 0.29178152881333314,
+     "K": 19.54747549159283
+    },
+    "dPct": {
+     "standard": {
+      "A": 3.74,
+      "P": 2.47,
+      "R": 1.23,
+      "K": 4.59
+     },
+     "exact": {
+      "A": -0.1,
+      "P": -0.03,
+      "R": -0.08,
+      "K": -0.15
+     }
+    }
+   },
+   {
+    "yD": 0.55,
+    "true": {
+     "A": 0.6510720012406561,
+     "P": 2.076644703063878,
+     "R": 0.31352113352855476,
+     "K": 23.113384682479033
+    },
+    "dPct": {
+     "standard": {
+      "A": 4.69,
+      "P": 3.31,
+      "R": 1.34,
+      "K": 5.63
+     },
+     "exact": {
+      "A": -0.1,
+      "P": -0.01,
+      "R": -0.09,
+      "K": -0.16
+     }
+    }
+   },
+   {
+    "yD": 0.6,
+    "true": {
+     "A": 0.7237563933839908,
+     "P": 2.176001349928699,
+     "R": 0.3326084303245979,
+     "K": 26.72624196530199
+    },
+    "dPct": {
+     "standard": {
+      "A": 6.8,
+      "P": 4.95,
+      "R": 1.76,
+      "K": 8.06
+     },
+     "exact": {
+      "A": -0.09,
+      "P": -0.01,
+      "R": -0.08,
+      "K": -0.15
+     }
+    }
+   },
+   {
+    "yD": 0.65,
+    "true": {
+     "A": 0.7949353923867873,
+     "P": 2.2803521278405396,
+     "R": 0.34860203504604337,
+     "K": 30.28831358001637
+    },
+    "dPct": {
+     "standard": {
+      "A": 7.42,
+      "P": 6.1,
+      "R": 1.25,
+      "K": 8.31
+     },
+     "exact": {
+      "A": -0.1,
+      "P": 0,
+      "R": -0.1,
+      "K": -0.16
+     }
+    }
+   },
+   {
+    "yD": 0.7,
+    "true": {
+     "A": 0.8637943757765323,
+     "P": 2.392558682304119,
+     "R": 0.3610337260128005,
+     "K": 33.68983381315747
+    },
+    "dPct": {
+     "standard": {
+      "A": 7.18,
+      "P": 5.57,
+      "R": 1.52,
+      "K": 8.26
+     },
+     "exact": {
+      "A": -0.09,
+      "P": -0.01,
+      "R": -0.08,
+      "K": -0.14
+     }
+    }
+   },
+   {
+    "yD": 0.75,
+    "true": {
+     "A": 0.9294319788372838,
+     "P": 2.516091210873514,
+     "R": 0.36939518520658554,
+     "K": 36.80739476589816
+    },
+    "dPct": {
+     "standard": {
+      "A": 6.38,
+      "P": 4.78,
+      "R": 1.52,
+      "K": 7.46
+     },
+     "exact": {
+      "A": -0.09,
+      "P": 0,
+      "R": -0.1,
+      "K": -0.16
+     }
+    }
+   },
+   {
+    "yD": 0.8,
+    "true": {
+     "A": 0.9908041721201204,
+     "P": 2.6556210158732156,
+     "R": 0.37309697663856084,
+     "K": 39.49956330370219
+    },
+    "dPct": {
+     "standard": {
+      "A": 5.23,
+      "P": 3.05,
+      "R": 2.12,
+      "K": 6.71
+     },
+     "exact": {
+      "A": -0.08,
+      "P": 0,
+      "R": -0.08,
+      "K": -0.14
+     }
+    }
+   },
+   {
+    "yD": 0.85,
+    "true": {
+     "A": 1.046625954253634,
+     "P": 2.818325420048418,
+     "R": 0.37136448005910305,
+     "K": 41.59569541879662
+    },
+    "dPct": {
+     "standard": {
+      "A": 4.49,
+      "P": 2.64,
+      "R": 1.8,
+      "K": 5.74
+     },
+     "exact": {
+      "A": -0.1,
+      "P": 0.03,
+      "R": -0.13,
+      "K": -0.19
+     }
+    }
+   },
+   {
+    "yD": 0.9,
+    "true": {
+     "A": 1.095166958393322,
+     "P": 3.017402909118072,
+     "R": 0.3629501897422833,
+     "K": 42.864885242193346
+    },
+    "dPct": {
+     "standard": {
+      "A": 3.69,
+      "P": 0.68,
+      "R": 2.98,
+      "K": 5.74
+     },
+     "exact": {
+      "A": -0.09,
+      "P": 0.01,
+      "R": -0.09,
+      "K": -0.15
+     }
+    }
+   },
+   {
+    "yD": 0.95,
+    "true": {
+     "A": 1.1336971168760372,
+     "P": 3.28572200865179,
+     "R": 0.3450374419658284,
+     "K": 42.900712671294116
+    },
+    "dPct": {
+     "standard": {
+      "A": 3.47,
+      "P": 0.47,
+      "R": 2.98,
+      "K": 5.51
+     },
+     "exact": {
+      "A": -0.12,
+      "P": 0.1,
+      "R": -0.22,
+      "K": -0.26
+     }
+    }
+   },
+   {
+    "yD": 1,
+    "true": {
+     "A": 1.1552930523422948,
+     "P": 3.9594454694950616,
+     "R": 0.2917815288133332,
+     "K": 39.09495098318566
+    },
+    "dPct": {
+     "standard": {
+      "A": 3.74,
+      "P": 2.48,
+      "R": 1.22,
+      "K": 4.58
+     },
+     "exact": {
+      "A": -0.1,
+      "P": -0.03,
+      "R": -0.08,
+      "K": -0.15
+     }
+    }
+   }
+  ]
+ }
+}

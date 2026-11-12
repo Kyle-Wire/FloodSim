@@ -1,0 +1,159 @@
+B1 inlet control, SWMM 52004 alone vs HDS-5 (S 0.02, L 20 m, free outfall)
+
+case   Q/AD^.5  Q m3/s   SWMM HW   HDS-5 HW   diff     zone          scored  E ok  mass  code-only HW  eq@pool
+B1-1  0.3       0.205    0.298     0.312  -0.013   below range   -       NO    ok   0.299        no 
+B1-1  0.5       0.342    0.353     0.412  -0.059   unsubmerged   FAIL    NO    ok   0.353        no 
+B1-1  1         0.684    0.554     0.609  -0.054   unsubmerged   FAIL    NO    ok   0.554        no 
+B1-1  1.5       1.026    0.780     0.774  +0.005   unsubmerged   PASS    yes   ok   0.780        no 
+B1-1  2         1.368    0.928     0.929  -0.001   unsubmerged   PASS    yes   ok   0.928        yes
+B1-1  2.5       1.710    1.078     1.079  -0.000   unsubmerged   PASS    yes   BAD   1.078        yes
+B1-1  3         2.052    1.223     1.228  -0.005   unsubmerged~  PASS    yes   ok   1.223        no 
+B1-1  3.5       2.394    1.389     1.380  +0.009   unsubmerged~  PASS    yes   ok   1.389        yes
+B1-1  3.75      2.565    1.473     1.468  +0.005   transition    PASS    yes   ok   1.473        yes
+B1-1  4         2.736    1.556     1.556  +0.000   submerged     PASS    yes   ok   1.556        yes
+B1-1  4.5       3.079    1.759     1.759  +0.000   submerged     PASS    yes   ok   1.759        yes
+B1-1  5         3.421    1.986     1.986  +0.000   submerged     PASS    yes   ok   1.986        yes
+B1-1  6         4.105    2.512     2.511  +0.000   submerged     PASS    yes   ok   2.512        yes
+B1-2  0.3       0.205    0.272     0.318  -0.046   below range   -       NO    ok   0.272        no 
+B1-2  0.5       0.342    0.386     0.424  -0.038   unsubmerged   FAIL    NO    ok   0.386        no 
+B1-2  1         0.684    0.569     0.638  -0.068   unsubmerged   FAIL    NO    ok   0.569        no 
+B1-2  1.5       1.026    0.828     0.823  +0.004   unsubmerged   PASS    yes   ok   0.828        yes
+B1-2  2         1.368    0.996     0.997  -0.001   unsubmerged   PASS    yes   ok   0.996        yes
+B1-2  2.5       1.710    1.178     1.166  +0.012   unsubmerged~  PASS    yes   ok   1.178        no 
+B1-2  3         2.052    1.351     1.334  +0.017   unsubmerged~  PASS    yes   ok   1.351        yes
+B1-2  3.5       2.394    1.525     1.503  +0.021   unsubmerged~  PASS    yes   ok   1.525        yes
+B1-2  3.75      2.565    1.611     1.601  +0.011   transition    PASS    yes   ok   1.611        yes
+B1-2  4         2.736    1.698     1.698  +0.000   submerged     PASS    yes   ok   1.698        yes
+B1-2  4.5       3.079    1.980     1.980  +0.000   submerged     PASS    yes   ok   1.980        yes
+B1-2  5         3.421    2.295     2.295  +0.000   submerged     PASS    yes   ok   2.295        yes
+B1-2  6         4.105    3.025     3.025  +0.000   submerged     PASS    yes   ok   3.025        yes
+B1-3  0.3       0.730    0.376     0.339  +0.036   below range   -       yes   ok   0.376        no 
+B1-3  0.5       1.217    0.533     0.485  +0.048   unsubmerged   FAIL    yes   ok   0.533        no 
+B1-3  1         2.435    0.853     0.784  +0.069   unsubmerged   FAIL    yes   ok   0.853        no 
+B1-3  1.5       3.652    1.078     1.036  +0.042   unsubmerged   FAIL    yes   ok   1.078        no 
+B1-3  2         4.869    1.311     1.262  +0.049   unsubmerged   FAIL    yes   ok   1.311        no 
+B1-3  2.5       6.087    1.524     1.470  +0.054   unsubmerged~  FAIL    yes   ok   1.524        no 
+B1-3  3         7.304    1.731     1.665  +0.066   unsubmerged~  FAIL    yes   ok   1.731        no 
+B1-3  3.5       8.521    1.938     1.850  +0.088   unsubmerged~  FAIL    yes   ok   1.938        no 
+B1-3  3.75      9.130    2.042     1.998  +0.044   transition    PASS    yes   ok   2.042        yes
+B1-3  4         9.738    2.145     2.145  +0.000   submerged     PASS    yes   ok   2.145        yes
+B1-3  4.5      10.956    2.400     2.400  +0.000   submerged     PASS    yes   ok   2.400        yes
+B1-3  5        12.173    2.685     2.685  +0.000   submerged     PASS    yes   ok   2.685        yes
+B1-3  6        14.608    3.345     3.345  +0.000   submerged     PASS    yes   ok   3.345        yes
+B1-4  0.3       0.195    0.263     0.264  -0.002   below range   -       NO    BAD   0.262        no 
+B1-4  0.5       0.325    0.330     0.352  -0.023   unsubmerged   PASS    NO    BAD   0.330        no 
+B1-4  1         0.650    0.460     0.506  -0.045   unsubmerged   FAIL    NO    ok   0.460        no 
+B1-4  1.5       0.975    0.625     0.626  -0.000   unsubmerged   PASS    yes   ok   0.625        yes
+B1-4  2         1.300    0.673     0.750  -0.077   unsubmerged   FAIL    NO    ok   0.673        no 
+B1-4  2.5       1.625    0.856     0.858  -0.002   unsubmerged   PASS    yes   ok   0.856        yes
+B1-4  3         1.950    0.969     0.971  -0.002   unsubmerged~  PASS    yes   ok   0.969        no 
+B1-4  3.5       2.276    1.110     1.092  +0.019   unsubmerged~  PASS    yes   ok   1.110        yes
+B1-4  3.75      2.438    1.181     1.172  +0.009   transition    PASS    yes   ok   1.181        yes
+B1-4  4         2.601    1.252     1.252  +0.000   submerged     PASS    yes   ok   1.252        yes
+B1-4  4.5       2.926    1.415     1.415  +0.000   submerged     PASS    yes   ok   1.415        yes
+B1-4  5         3.251    1.597     1.597  +0.000   submerged     PASS    yes   ok   1.597        yes
+B1-4  6         3.901    2.020     2.020  +0.000   submerged     PASS    yes   ok   2.020        yes
+B1-4c  0.3       0.188    0.245     0.251  -0.006   below range   -       NO    BAD   0.245        no 
+B1-4c  0.5       0.313    0.284     0.332  -0.047   unsubmerged   FAIL    NO    ok   0.284        no 
+B1-4c  1         0.627    0.492     0.490  +0.002   unsubmerged   PASS    yes   ok   0.492        yes
+B1-4c  1.5       0.940    0.628     0.623  +0.005   unsubmerged   PASS    yes   ok   0.628        no 
+B1-4c  2         1.254    0.748     0.748  +0.000   unsubmerged   PASS    yes   ok   0.748        yes
+B1-4c  2.5       1.567    0.880     0.869  +0.011   unsubmerged   PASS    yes   ok   0.880        no 
+B1-4c  3         1.880    0.985     0.990  -0.004   unsubmerged~  PASS    yes   ok   0.985        no 
+B1-4c  3.5       2.194    1.119     1.113  +0.006   unsubmerged~  PASS    yes   ok   1.119        yes
+B1-4c  3.75      2.350    1.186     1.182  +0.004   transition    PASS    yes   ok   1.186        yes
+B1-4c  4         2.507    1.253     1.252  +0.001   submerged     PASS    yes   ok   1.253        yes
+B1-4c  4.5       2.820    1.417     1.415  +0.002   submerged     PASS    yes   ok   1.417        yes
+B1-4c  5         3.134    1.599     1.597  +0.002   submerged     PASS    yes   ok   1.599        yes
+B1-4c  6         3.760    2.023     2.020  +0.003   submerged     PASS    yes   ok   2.023        yes
+B1-4b  0.3       0.203    0.258     0.264  -0.006   below range   -       NO    BAD   0.258        no 
+B1-4b  0.5       0.338    0.299     0.349  -0.050   unsubmerged   FAIL    NO    ok   0.299        no 
+B1-4b  1         0.677    0.517     0.515  +0.002   unsubmerged   PASS    yes   ok   0.517        yes
+B1-4b  1.5       1.015    0.661     0.656  +0.005   unsubmerged   PASS    yes   ok   0.661        no 
+B1-4b  2         1.354    0.787     0.787  +0.000   unsubmerged   PASS    yes   ok   0.787        yes
+B1-4b  2.5       1.692    0.926     0.914  +0.012   unsubmerged   PASS    yes   ok   0.926        no 
+B1-4b  3         2.031    1.037     1.042  -0.004   unsubmerged~  PASS    yes   ok   1.037        no 
+B1-4b  3.5       2.369    1.178     1.171  +0.007   unsubmerged~  PASS    yes   ok   1.178        yes
+B1-4b  3.75      2.538    1.248     1.244  +0.004   transition    PASS    yes   ok   1.248        yes
+B1-4b  4         2.707    1.319     1.317  +0.001   submerged     PASS    yes   ok   1.319        yes
+B1-4b  4.5       3.046    1.491     1.489  +0.002   submerged     PASS    yes   ok   1.491        yes
+B1-4b  5         3.384    1.684     1.681  +0.002   submerged     PASS    yes   ok   1.684        yes
+B1-4b  6         4.061    2.130     2.126  +0.003   submerged     PASS    yes   ok   2.130        yes
+B1-5  0.3       1.812    0.620     0.634  -0.014   below range   -       NO    BAD   0.619        no 
+B1-5  0.5       3.020    0.772     0.838  -0.065   unsubmerged   FAIL    NO    ok   0.772        no 
+B1-5  1         6.040    1.242     1.237  +0.005   unsubmerged   PASS    yes   ok   1.242        yes
+B1-5  1.5       9.060    1.587     1.575  +0.012   unsubmerged   PASS    yes   ok   1.587        no 
+B1-5  2        12.080    1.889     1.889  +0.000   unsubmerged   PASS    yes   ok   1.889        yes
+B1-5  2.5      15.100    2.222     2.195  +0.028   unsubmerged   PASS    yes   ok   2.222        no 
+B1-5  3        18.119    2.490     2.500  -0.011   unsubmerged~  PASS    yes   ok   2.490        no 
+B1-5  3.5      21.139    2.827     2.811  +0.017   unsubmerged~  PASS    yes   ok   2.827        yes
+B1-5  3.75     22.649    2.996     2.986  +0.010   transition    PASS    yes   ok   2.996        yes
+B1-5  4        24.159    3.166     3.162  +0.003   submerged     PASS    yes   ok   3.166        yes
+B1-5  4.5      27.179    3.736     3.575  +0.162   submerged     FAIL    yes   ok   3.579*       yes
+B1-5  5        30.199    4.169     4.036  +0.134   submerged     FAIL    yes   ok   4.041*       yes
+B1-5  6        36.239    5.199     5.103  +0.097   submerged     PASS    yes   ok   5.111*       yes
+B1-6  0.3       0.205    0.496     0.345  +0.151   below range   -       yes   ok   0.554        no    (HDS-5 with SWMM's −7S: 0.496)
+B1-6  0.5       0.342    0.557     0.448  +0.109   unsubmerged   FAIL    yes   BAD   0.557        no    (HDS-5 with SWMM's −7S: 0.599)
+B1-6  1         0.684    0.587     0.651  -0.064   unsubmerged   FAIL    NO    ok   0.587        no    (HDS-5 with SWMM's −7S: 0.802)
+B1-6  1.5       1.026    0.974     0.820  +0.154   unsubmerged   FAIL    yes   ok   0.974        yes   (HDS-5 with SWMM's −7S: 0.971)
+B1-6  2         1.368    1.129     0.974  +0.155   unsubmerged   FAIL    yes   ok   1.129        yes   (HDS-5 with SWMM's −7S: 1.125)
+B1-6  2.5       1.710    1.323     1.119  +0.204   unsubmerged   FAIL    yes   ok   1.323        yes   (HDS-5 with SWMM's −7S: 1.270)
+B1-6  3         2.052    1.534     1.260  +0.275   unsubmerged~  FAIL    yes   ok   1.534        yes   (HDS-5 with SWMM's −7S: 1.411)
+B1-6  3.5       2.394    1.746     1.398  +0.347   unsubmerged~  FAIL    yes   ok   1.746        yes   (HDS-5 with SWMM's −7S: 1.550)
+B1-6  3.75      2.565    1.851     1.602  +0.249   transition    FAIL    yes   ok   1.851        yes   (HDS-5 with SWMM's −7S: 1.753)
+B1-6  4         2.736    1.957     1.806  +0.151   submerged     FAIL    yes   ok   1.957        yes   (HDS-5 with SWMM's −7S: 1.957)
+B1-6  4.5       3.079    2.193     2.042  +0.151   submerged     FAIL    yes   ok   2.193        yes   (HDS-5 with SWMM's −7S: 2.193)
+B1-6  5         3.421    2.457     2.306  +0.151   submerged     FAIL    yes   ok   2.457        yes   (HDS-5 with SWMM's −7S: 2.457)
+B1-6  6         4.105    3.068     2.917  +0.151   submerged     FAIL    yes   ok   3.068        yes   (HDS-5 with SWMM's −7S: 3.068)
+
+~ HDS-5 unsubmerged HW above 0.95 D, where SWMM interpolates its own equation (still scored). * the [LOSSES] line raises the headwater above inlet control alone. eq@pool: SWMM's own equation at its reported pool head gives the discharge it passes.
+B1-1 headwater monotonic in Q: true
+B1-2 headwater monotonic in Q: true
+B1-3 headwater monotonic in Q: true
+B1-4 headwater monotonic in Q: true
+B1-4c headwater monotonic in Q: true
+B1-4b headwater monotonic in Q: true
+B1-5 headwater monotonic in Q: true
+B1-6 headwater monotonic in Q: true
+
+{"test":"conduit drawn from its low end, Q/AD^0.5 = 2","forwardHW":0.9279,"drawnBackwardsHW":0.9279,"pass":true}
+{"test":"adverse barrel (flow enters at the end the code is not on after SWMM reverses it): HW with and without the code","withCode":1.3943,"withoutCode":1.3943,"codeActive":false}
+
+37 FAILED:
+  B1-1 Q/AD^0.5 0.5 (unsubmerged): SWMM 0.353 m vs HDS-5 0.412 m
+  B1-1 Q/AD^0.5 1 (unsubmerged): SWMM 0.554 m vs HDS-5 0.609 m
+  B1-1 Q/AD^0.5 2.5: mass {"volIn":3339.3154818893186,"volOut":3327.054810066992,"storedAtNode":0,"swmmErrorPct":-0.073,"steadyFlowErrPct":-0.5849976843560424}
+  B1-2 Q/AD^0.5 0.5 (unsubmerged): SWMM 0.386 m vs HDS-5 0.424 m
+  B1-2 Q/AD^0.5 1 (unsubmerged): SWMM 0.569 m vs HDS-5 0.638 m
+  B1-3 Q/AD^0.5 0.5 (unsubmerged): SWMM 0.533 m vs HDS-5 0.485 m
+  B1-3 Q/AD^0.5 1 (unsubmerged): SWMM 0.853 m vs HDS-5 0.784 m
+  B1-3 Q/AD^0.5 1.5 (unsubmerged): SWMM 1.078 m vs HDS-5 1.036 m
+  B1-3 Q/AD^0.5 2 (unsubmerged): SWMM 1.311 m vs HDS-5 1.262 m
+  B1-3 Q/AD^0.5 2.5 (unsubmerged): SWMM 1.524 m vs HDS-5 1.470 m
+  B1-3 Q/AD^0.5 3 (unsubmerged): SWMM 1.731 m vs HDS-5 1.665 m
+  B1-3 Q/AD^0.5 3.5 (unsubmerged): SWMM 1.938 m vs HDS-5 1.850 m
+  B1-4 Q/AD^0.5 0.3: mass {"volIn":380.8237215344969,"volOut":375.8158338168405,"storedAtNode":0,"swmmErrorPct":0.494,"steadyFlowErrPct":-0.7406198000725867}
+  B1-4 Q/AD^0.5 0.5: mass {"volIn":634.7062025574877,"volOut":627.952885172514,"storedAtNode":0,"swmmErrorPct":0.332,"steadyFlowErrPct":-0.5711208763899047}
+  B1-4 Q/AD^0.5 1 (unsubmerged): SWMM 0.460 m vs HDS-5 0.506 m
+  B1-4 Q/AD^0.5 2 (unsubmerged): SWMM 0.673 m vs HDS-5 0.750 m
+  B1-4c Q/AD^0.5 0.3: mass {"volIn":367.1102569739149,"volOut":353.7453497714502,"storedAtNode":0,"swmmErrorPct":2.751,"steadyFlowErrPct":-3.355567926944265}
+  B1-4c Q/AD^0.5 0.5 (unsubmerged): SWMM 0.284 m vs HDS-5 0.332 m
+  B1-4b Q/AD^0.5 0.3: mass {"volIn":396.47071208805914,"volOut":384.2295599152566,"storedAtNode":0,"swmmErrorPct":2.199,"steadyFlowErrPct":-2.5601134013122455}
+  B1-4b Q/AD^0.5 0.5 (unsubmerged): SWMM 0.299 m vs HDS-5 0.349 m
+  B1-5 Q/AD^0.5 0.3: mass {"volIn":3537.8483677656523,"volOut":3543.7258430023444,"storedAtNode":0,"swmmErrorPct":-0.681,"steadyFlowErrPct":0.5116434973666182}
+  B1-5 Q/AD^0.5 0.5 (unsubmerged): SWMM 0.772 m vs HDS-5 0.838 m
+  B1-5 Q/AD^0.5 4.5 (submerged): SWMM 3.736 m vs HDS-5 3.575 m
+  B1-5 Q/AD^0.5 5 (submerged): SWMM 4.169 m vs HDS-5 4.036 m
+  B1-6 Q/AD^0.5 0.5 (unsubmerged): SWMM 0.557 m vs HDS-5 0.448 m
+  B1-6 Q/AD^0.5 0.5: mass {"volIn":667.8630963778892,"volOut":654.1858289644815,"storedAtNode":0,"swmmErrorPct":1.023,"steadyFlowErrPct":-5.059155865227593}
+  B1-6 Q/AD^0.5 1 (unsubmerged): SWMM 0.587 m vs HDS-5 0.651 m
+  B1-6 Q/AD^0.5 1.5 (unsubmerged): SWMM 0.974 m vs HDS-5 0.820 m
+  B1-6 Q/AD^0.5 2 (unsubmerged): SWMM 1.129 m vs HDS-5 0.974 m
+  B1-6 Q/AD^0.5 2.5 (unsubmerged): SWMM 1.323 m vs HDS-5 1.119 m
+  B1-6 Q/AD^0.5 3 (unsubmerged): SWMM 1.534 m vs HDS-5 1.260 m
+  B1-6 Q/AD^0.5 3.5 (unsubmerged): SWMM 1.746 m vs HDS-5 1.398 m
+  B1-6 Q/AD^0.5 3.75 (transition): SWMM 1.851 m vs HDS-5 1.602 m
+  B1-6 Q/AD^0.5 4 (submerged): SWMM 1.957 m vs HDS-5 1.806 m
+  B1-6 Q/AD^0.5 4.5 (submerged): SWMM 2.193 m vs HDS-5 2.042 m
+  B1-6 Q/AD^0.5 5 (submerged): SWMM 2.457 m vs HDS-5 2.306 m
+  B1-6 Q/AD^0.5 6 (submerged): SWMM 3.068 m vs HDS-5 2.917 m

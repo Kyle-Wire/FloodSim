@@ -1,0 +1,216 @@
+B2 outlet control, SWMM 52004 alone vs HDS-5 full-barrel energy (S 0.001, L 60 m, tailwater 0.5 m over the crown)
+scored: EXTRAN within max(5 mm, 1 %) of HDS-5 (SWMM's energy equation); SLOT (production) within max(10 mm, 5 %), its slot bias reported
+
+case  surcharge  dir      variant        V    Ke   Kx   Kf      SWMM drop  HDS-5 drop  diff     pass  vs physical  mass
+B2-1  EXTRAN     forward  production     0.5  0.5  1.0  0.991   0.0317     0.0317     +0.0000  PASS  +0.0000      ok
+B2-1  EXTRAN     forward  production     1.0  0.5  1.0  0.991   0.1269     0.1269     -0.0001  PASS  -0.0001      ok
+B2-1  EXTRAN     forward  production     2.0  0.5  1.0  0.991   0.5075     0.5078     -0.0003  PASS  -0.0003      ok
+B2-1  EXTRAN     forward  production     3.0  0.5  1.0  0.991   1.1419     1.1425     -0.0006  PASS  -0.0006      ok
+B2-1  EXTRAN     forward  no exit loss   0.5  0.5  0.0  0.991   0.0190     0.0190     +0.0000  PASS  -0.0128      ok
+B2-1  EXTRAN     forward  no exit loss   1.0  0.5  0.0  0.991   0.0759     0.0760     +0.0000  PASS  -0.0510      ok
+B2-1  EXTRAN     forward  no exit loss   2.0  0.5  0.0  0.991   0.3038     0.3039     -0.0001  PASS  -0.2040      ok
+B2-1  EXTRAN     forward  no exit loss   3.0  0.5  0.0  0.991   0.6835     0.6838     -0.0003  PASS  -0.4590      ok
+B2-1  EXTRAN     forward  no [LOSSES]    0.5  0.0  0.0  0.991   0.0126     0.0126     +0.0000  PASS  -0.0191      ok
+B2-1  EXTRAN     forward  no [LOSSES]    1.0  0.0  0.0  0.991   0.0505     0.0505     +0.0000  PASS  -0.0765      ok
+B2-1  EXTRAN     forward  no [LOSSES]    2.0  0.0  0.0  0.991   0.2019     0.2020     -0.0001  PASS  -0.3059      ok
+B2-1  EXTRAN     forward  no [LOSSES]    3.0  0.0  0.0  0.991   0.4543     0.4544     -0.0002  PASS  -0.6882      ok
+B2-1  EXTRAN     reverse  production     0.5  0.5  1.0  0.991   0.0317     0.0317     +0.0000  PASS  +0.0000      ok
+B2-1  EXTRAN     reverse  production     1.0  0.5  1.0  0.991   0.1269     0.1269     -0.0001  PASS  -0.0001      ok
+B2-1  EXTRAN     reverse  production     2.0  0.5  1.0  0.991   0.5075     0.5078     -0.0003  PASS  -0.0003      ok
+B2-1  EXTRAN     reverse  production     3.0  0.5  1.0  0.991   1.1419     1.1425     -0.0006  PASS  -0.0006      ok
+B2-1  EXTRAN     reverse  no exit loss   0.5  0.5  0.0  0.991   0.0190     0.0190     +0.0000  PASS  -0.0128      ok
+B2-1  EXTRAN     reverse  no exit loss   1.0  0.5  0.0  0.991   0.0759     0.0760     +0.0000  PASS  -0.0510      ok
+B2-1  EXTRAN     reverse  no exit loss   2.0  0.5  0.0  0.991   0.3038     0.3039     -0.0001  PASS  -0.2040      ok
+B2-1  EXTRAN     reverse  no exit loss   3.0  0.5  0.0  0.991   0.6835     0.6838     -0.0003  PASS  -0.4590      ok
+B2-1  EXTRAN     reverse  no [LOSSES]    0.5  0.0  0.0  0.991   0.0126     0.0126     +0.0000  PASS  -0.0191      ok
+B2-1  EXTRAN     reverse  no [LOSSES]    1.0  0.0  0.0  0.991   0.0505     0.0505     +0.0000  PASS  -0.0765      ok
+B2-1  EXTRAN     reverse  no [LOSSES]    2.0  0.0  0.0  0.991   0.2019     0.2020     -0.0001  PASS  -0.3059      ok
+B2-1  EXTRAN     reverse  no [LOSSES]    3.0  0.0  0.0  0.991   0.4543     0.4544     -0.0002  PASS  -0.6882      ok
+B2-2  EXTRAN     forward  production     0.5  0.9  1.0  3.376   0.0672     0.0672     +0.0000  PASS  +0.0000      ok
+B2-2  EXTRAN     forward  production     1.0  0.9  1.0  3.376   0.2688     0.2689     -0.0001  PASS  -0.0001      ok
+B2-2  EXTRAN     forward  production     2.0  0.9  1.0  3.376   1.0752     1.0757     -0.0005  PASS  -0.0005      ok
+B2-2  EXTRAN     forward  production     3.0  0.9  1.0  3.376   2.4192     2.4203     -0.0011  PASS  -0.0011      ok
+B2-2  EXTRAN     forward  no exit loss   0.5  0.9  0.0  3.376   0.0545     0.0545     +0.0000  PASS  -0.0128      ok
+B2-2  EXTRAN     forward  no exit loss   1.0  0.9  0.0  3.376   0.2179     0.2180     -0.0001  PASS  -0.0511      ok
+B2-2  EXTRAN     forward  no exit loss   2.0  0.9  0.0  3.376   0.8715     0.8718     -0.0004  PASS  -0.2042      ok
+B2-2  EXTRAN     forward  no exit loss   3.0  0.9  0.0  3.376   1.9608     1.9616     -0.0008  PASS  -0.4595      ok
+B2-2  EXTRAN     forward  no [LOSSES]    0.5  0.0  0.0  3.376   0.0430     0.0430     +0.0000  PASS  -0.0191      ok
+B2-2  EXTRAN     forward  no [LOSSES]    1.0  0.0  0.0  3.376   0.1720     0.1721     -0.0001  PASS  -0.0765      ok
+B2-2  EXTRAN     forward  no [LOSSES]    2.0  0.0  0.0  3.376   0.6881     0.6883     -0.0002  PASS  -0.3060      ok
+B2-2  EXTRAN     forward  no [LOSSES]    3.0  0.0  0.0  3.376   1.5483     1.5488     -0.0005  PASS  -0.6886      ok
+B2-2  EXTRAN     reverse  production     0.5  0.9  1.0  3.376   0.0672     0.0672     +0.0000  PASS  +0.0000      ok
+B2-2  EXTRAN     reverse  production     1.0  0.9  1.0  3.376   0.2688     0.2689     -0.0001  PASS  -0.0001      ok
+B2-2  EXTRAN     reverse  production     2.0  0.9  1.0  3.376   1.0752     1.0757     -0.0005  PASS  -0.0005      ok
+B2-2  EXTRAN     reverse  production     3.0  0.9  1.0  3.376   2.4192     2.4203     -0.0011  PASS  -0.0011      ok
+B2-2  EXTRAN     reverse  no exit loss   0.5  0.9  0.0  3.376   0.0545     0.0545     +0.0000  PASS  -0.0128      ok
+B2-2  EXTRAN     reverse  no exit loss   1.0  0.9  0.0  3.376   0.2179     0.2180     -0.0001  PASS  -0.0511      ok
+B2-2  EXTRAN     reverse  no exit loss   2.0  0.9  0.0  3.376   0.8715     0.8718     -0.0004  PASS  -0.2042      ok
+B2-2  EXTRAN     reverse  no exit loss   3.0  0.9  0.0  3.376   1.9608     1.9616     -0.0008  PASS  -0.4595      ok
+B2-2  EXTRAN     reverse  no [LOSSES]    0.5  0.0  0.0  3.376   0.0430     0.0430     +0.0000  PASS  -0.0191      ok
+B2-2  EXTRAN     reverse  no [LOSSES]    1.0  0.0  0.0  3.376   0.1720     0.1721     -0.0001  PASS  -0.0765      ok
+B2-2  EXTRAN     reverse  no [LOSSES]    2.0  0.0  0.0  3.376   0.6881     0.6883     -0.0002  PASS  -0.3060      ok
+B2-2  EXTRAN     reverse  no [LOSSES]    3.0  0.0  0.0  3.376   1.5483     1.5488     -0.0005  PASS  -0.6886      ok
+B2-3  EXTRAN     forward  production     0.5  0.5  1.0  0.558   0.0262     0.0262     +0.0000  PASS  +0.0000      ok
+B2-3  EXTRAN     forward  production     1.0  0.5  1.0  0.558   0.1048     0.1049     -0.0001  PASS  -0.0001      ok
+B2-3  EXTRAN     forward  production     2.0  0.5  1.0  0.558   0.4193     0.4195     -0.0002  PASS  -0.0002      ok
+B2-3  EXTRAN     forward  production     3.0  0.5  1.0  0.558   0.9434     0.9439     -0.0006  PASS  -0.0006      ok
+B2-3  EXTRAN     forward  no exit loss   0.5  0.5  0.0  0.558   0.0135     0.0135     +0.0000  PASS  -0.0127      ok
+B2-3  EXTRAN     forward  no exit loss   1.0  0.5  0.0  0.558   0.0539     0.0539     +0.0000  PASS  -0.0510      ok
+B2-3  EXTRAN     forward  no exit loss   2.0  0.5  0.0  0.558   0.2155     0.2157     -0.0001  PASS  -0.2040      ok
+B2-3  EXTRAN     forward  no exit loss   3.0  0.5  0.0  0.558   0.4850     0.4852     -0.0002  PASS  -0.4590      ok
+B2-3  EXTRAN     forward  no [LOSSES]    0.5  0.0  0.0  0.558   0.0071     0.0071     +0.0000  PASS  -0.0191      ok
+B2-3  EXTRAN     forward  no [LOSSES]    1.0  0.0  0.0  0.558   0.0284     0.0284     +0.0000  PASS  -0.0765      ok
+B2-3  EXTRAN     forward  no [LOSSES]    2.0  0.0  0.0  0.558   0.1137     0.1137     +0.0000  PASS  -0.3058      ok
+B2-3  EXTRAN     forward  no [LOSSES]    3.0  0.0  0.0  0.558   0.2558     0.2559     -0.0001  PASS  -0.6882      ok
+B2-3  EXTRAN     reverse  production     0.5  0.5  1.0  0.558   0.0262     0.0262     +0.0000  PASS  +0.0000      ok
+B2-3  EXTRAN     reverse  production     1.0  0.5  1.0  0.558   0.1048     0.1049     -0.0001  PASS  -0.0001      ok
+B2-3  EXTRAN     reverse  production     2.0  0.5  1.0  0.558   0.4193     0.4195     -0.0002  PASS  -0.0002      ok
+B2-3  EXTRAN     reverse  production     3.0  0.5  1.0  0.558   0.9434     0.9439     -0.0006  PASS  -0.0006      ok
+B2-3  EXTRAN     reverse  no exit loss   0.5  0.5  0.0  0.558   0.0135     0.0135     +0.0000  PASS  -0.0127      ok
+B2-3  EXTRAN     reverse  no exit loss   1.0  0.5  0.0  0.558   0.0539     0.0539     +0.0000  PASS  -0.0510      ok
+B2-3  EXTRAN     reverse  no exit loss   2.0  0.5  0.0  0.558   0.2155     0.2157     -0.0001  PASS  -0.2040      ok
+B2-3  EXTRAN     reverse  no exit loss   3.0  0.5  0.0  0.558   0.4850     0.4852     -0.0002  PASS  -0.4590      ok
+B2-3  EXTRAN     reverse  no [LOSSES]    0.5  0.0  0.0  0.558   0.0071     0.0071     +0.0000  PASS  -0.0191      ok
+B2-3  EXTRAN     reverse  no [LOSSES]    1.0  0.0  0.0  0.558   0.0284     0.0284     +0.0000  PASS  -0.0765      ok
+B2-3  EXTRAN     reverse  no [LOSSES]    2.0  0.0  0.0  0.558   0.1137     0.1137     +0.0000  PASS  -0.3058      ok
+B2-3  EXTRAN     reverse  no [LOSSES]    3.0  0.0  0.0  0.558   0.2558     0.2559     -0.0001  PASS  -0.6882      ok
+B2-4  EXTRAN     forward  production     0.5  0.5  1.0  1.042   0.0325     0.0324     +0.0001  PASS  +0.0001      ok
+B2-4  EXTRAN     forward  production     1.0  0.5  1.0  1.042   0.1298     0.1296     +0.0003  PASS  +0.0003      ok
+B2-4  EXTRAN     forward  production     2.0  0.5  1.0  1.042   0.5194     0.5184     +0.0010  PASS  +0.0010      ok
+B2-4  EXTRAN     forward  production     3.0  0.5  1.0  1.042   1.1686     1.1663     +0.0023  PASS  +0.0023      ok
+B2-4  EXTRAN     forward  no exit loss   0.5  0.5  0.0  1.042   0.0197     0.0197     +0.0000  PASS  -0.0127      ok
+B2-4  EXTRAN     forward  no exit loss   1.0  0.5  0.0  1.042   0.0788     0.0786     +0.0002  PASS  -0.0508      ok
+B2-4  EXTRAN     forward  no exit loss   2.0  0.5  0.0  1.042   0.3152     0.3145     +0.0007  PASS  -0.2031      ok
+B2-4  EXTRAN     forward  no exit loss   3.0  0.5  0.0  1.042   0.7092     0.7076     +0.0016  PASS  -0.4571      ok
+B2-4  EXTRAN     forward  no [LOSSES]    0.5  0.0  0.0  1.042   0.0133     0.0133     +0.0000  PASS  -0.0191      ok
+B2-4  EXTRAN     forward  no [LOSSES]    1.0  0.0  0.0  1.042   0.0533     0.0531     +0.0001  PASS  -0.0763      ok
+B2-4  EXTRAN     forward  no [LOSSES]    2.0  0.0  0.0  1.042   0.2131     0.2125     +0.0006  PASS  -0.3052      ok
+B2-4  EXTRAN     forward  no [LOSSES]    3.0  0.0  0.0  1.042   0.4795     0.4782     +0.0013  PASS  -0.6868      ok
+B2-4  EXTRAN     reverse  production     0.5  0.5  1.0  1.042   0.0325     0.0324     +0.0001  PASS  +0.0001      ok
+B2-4  EXTRAN     reverse  production     1.0  0.5  1.0  1.042   0.1298     0.1296     +0.0003  PASS  +0.0003      ok
+B2-4  EXTRAN     reverse  production     2.0  0.5  1.0  1.042   0.5194     0.5184     +0.0010  PASS  +0.0010      ok
+B2-4  EXTRAN     reverse  production     3.0  0.5  1.0  1.042   1.1686     1.1663     +0.0023  PASS  +0.0023      ok
+B2-4  EXTRAN     reverse  no exit loss   0.5  0.5  0.0  1.042   0.0197     0.0197     +0.0000  PASS  -0.0127      ok
+B2-4  EXTRAN     reverse  no exit loss   1.0  0.5  0.0  1.042   0.0788     0.0786     +0.0002  PASS  -0.0508      ok
+B2-4  EXTRAN     reverse  no exit loss   2.0  0.5  0.0  1.042   0.3152     0.3145     +0.0007  PASS  -0.2031      ok
+B2-4  EXTRAN     reverse  no exit loss   3.0  0.5  0.0  1.042   0.7092     0.7076     +0.0016  PASS  -0.4571      ok
+B2-4  EXTRAN     reverse  no [LOSSES]    0.5  0.0  0.0  1.042   0.0133     0.0133     +0.0000  PASS  -0.0191      ok
+B2-4  EXTRAN     reverse  no [LOSSES]    1.0  0.0  0.0  1.042   0.0533     0.0531     +0.0001  PASS  -0.0763      ok
+B2-4  EXTRAN     reverse  no [LOSSES]    2.0  0.0  0.0  1.042   0.2131     0.2125     +0.0006  PASS  -0.3052      ok
+B2-4  EXTRAN     reverse  no [LOSSES]    3.0  0.0  0.0  1.042   0.4795     0.4782     +0.0013  PASS  -0.6868      ok
+B2-1  SLOT       forward  production     0.5  0.5  1.0  0.991   0.0299     0.0317     -0.0018  PASS  -0.0018      ok
+B2-1  SLOT       forward  production     1.0  0.5  1.0  0.991   0.1201     0.1269     -0.0068  PASS  -0.0068      ok
+B2-1  SLOT       forward  production     2.0  0.5  1.0  0.991   0.4877     0.5078     -0.0201  PASS  -0.0201      ok
+B2-1  SLOT       forward  production     3.0  0.5  1.0  0.991   1.1085     1.1425     -0.0340  PASS  -0.0340      ok
+B2-1  SLOT       forward  no exit loss   0.5  0.5  0.0  0.991   0.0179     0.0190     -0.0011  PASS  -0.0138      ok
+B2-1  SLOT       forward  no exit loss   1.0  0.5  0.0  0.991   0.0718     0.0760     -0.0042  PASS  -0.0551      ok
+B2-1  SLOT       forward  no exit loss   2.0  0.5  0.0  0.991   0.2903     0.3039     -0.0136  PASS  -0.2174      ok
+B2-1  SLOT       forward  no exit loss   3.0  0.5  0.0  0.991   0.6640     0.6838     -0.0198  PASS  -0.4785      ok
+B2-1  SLOT       forward  no [LOSSES]    0.5  0.0  0.0  0.991   0.0119     0.0126     -0.0007  PASS  -0.0198      ok
+B2-1  SLOT       forward  no [LOSSES]    1.0  0.0  0.0  0.991   0.0477     0.0505     -0.0028  PASS  -0.0793      ok
+B2-1  SLOT       forward  no [LOSSES]    2.0  0.0  0.0  0.991   0.1918     0.2020     -0.0102  FAIL  -0.3160      ok
+B2-1  SLOT       forward  no [LOSSES]    3.0  0.0  0.0  0.991   0.4363     0.4544     -0.0181  PASS  -0.7062      ok
+B2-1  SLOT       reverse  production     0.5  0.5  1.0  0.991   0.0301     0.0317     -0.0016  PASS  -0.0016      ok
+B2-1  SLOT       reverse  production     1.0  0.5  1.0  0.991   0.1209     0.1269     -0.0061  PASS  -0.0061      ok
+B2-1  SLOT       reverse  production     2.0  0.5  1.0  0.991   0.4912     0.5078     -0.0166  PASS  -0.0166      ok
+B2-1  SLOT       reverse  production     3.0  0.5  1.0  0.991   1.1096     1.1425     -0.0329  PASS  -0.0329      ok
+B2-1  SLOT       reverse  no exit loss   0.5  0.5  0.0  0.991   0.0180     0.0190     -0.0010  PASS  -0.0137      ok
+B2-1  SLOT       reverse  no exit loss   1.0  0.5  0.0  0.991   0.0721     0.0760     -0.0039  PASS  -0.0549      ok
+B2-1  SLOT       reverse  no exit loss   2.0  0.5  0.0  0.991   0.2907     0.3039     -0.0132  PASS  -0.2171      ok
+B2-1  SLOT       reverse  no exit loss   3.0  0.5  0.0  0.991   0.6630     0.6838     -0.0208  PASS  -0.4795      ok
+B2-1  SLOT       reverse  no [LOSSES]    0.5  0.0  0.0  0.991   0.0120     0.0126     -0.0007  PASS  -0.0198      ok
+B2-1  SLOT       reverse  no [LOSSES]    1.0  0.0  0.0  0.991   0.0479     0.0505     -0.0026  PASS  -0.0790      ok
+B2-1  SLOT       reverse  no [LOSSES]    2.0  0.0  0.0  0.991   0.1928     0.2020     -0.0091  PASS  -0.3150      ok
+B2-1  SLOT       reverse  no [LOSSES]    3.0  0.0  0.0  0.991   0.4388     0.4544     -0.0156  PASS  -0.7037      ok
+B2-2  SLOT       forward  production     0.5  0.9  1.0  3.376   0.0635     0.0672     -0.0037  PASS  -0.0037      ok
+B2-2  SLOT       forward  production     1.0  0.9  1.0  3.376   0.2561     0.2689     -0.0129  PASS  -0.0129      ok
+B2-2  SLOT       forward  production     2.0  0.9  1.0  3.376   1.0484     1.0757     -0.0273  PASS  -0.0273      ok
+B2-2  SLOT       forward  production     3.0  0.9  1.0  3.376   2.3279     2.4203     -0.0924  PASS  -0.0924      ok
+B2-2  SLOT       forward  no exit loss   0.5  0.9  0.0  3.376   0.0515     0.0545     -0.0030  PASS  -0.0158      ok
+B2-2  SLOT       forward  no exit loss   1.0  0.9  0.0  3.376   0.2072     0.2180     -0.0107  PASS  -0.0617      ok
+B2-2  SLOT       forward  no exit loss   2.0  0.9  0.0  3.376   0.8515     0.8718     -0.0203  PASS  -0.2242      ok
+B2-2  SLOT       forward  no exit loss   3.0  0.9  0.0  3.376   1.8992     1.9616     -0.0624  PASS  -0.5211      ok
+B2-2  SLOT       forward  no [LOSSES]    0.5  0.0  0.0  3.376   0.0406     0.0430     -0.0024  PASS  -0.0215      ok
+B2-2  SLOT       forward  no [LOSSES]    1.0  0.0  0.0  3.376   0.1632     0.1721     -0.0089  PASS  -0.0853      ok
+B2-2  SLOT       forward  no [LOSSES]    2.0  0.0  0.0  3.376   0.6678     0.6883     -0.0205  PASS  -0.3263      ok
+B2-2  SLOT       forward  no [LOSSES]    3.0  0.0  0.0  3.376   1.5088     1.5488     -0.0400  PASS  -0.7280      ok
+B2-2  SLOT       reverse  production     0.5  0.9  1.0  3.376   0.0638     0.0672     -0.0034  PASS  -0.0034      ok
+B2-2  SLOT       reverse  production     1.0  0.9  1.0  3.376   0.2575     0.2689     -0.0114  PASS  -0.0114      ok
+B2-2  SLOT       reverse  production     2.0  0.9  1.0  3.376   1.0474     1.0757     -0.0283  PASS  -0.0283      ok
+B2-2  SLOT       reverse  production     3.0  0.9  1.0  3.376   2.3250     2.4203     -0.0953  PASS  -0.0953      ok
+B2-2  SLOT       reverse  no exit loss   0.5  0.9  0.0  3.376   0.0517     0.0545     -0.0028  PASS  -0.0156      ok
+B2-2  SLOT       reverse  no exit loss   1.0  0.9  0.0  3.376   0.2080     0.2180     -0.0100  PASS  -0.0610      ok
+B2-2  SLOT       reverse  no exit loss   2.0  0.9  0.0  3.376   0.8508     0.8718     -0.0210  PASS  -0.2249      ok
+B2-2  SLOT       reverse  no exit loss   3.0  0.9  0.0  3.376   1.8957     1.9616     -0.0659  PASS  -0.5246      ok
+B2-2  SLOT       reverse  no [LOSSES]    0.5  0.0  0.0  3.376   0.0408     0.0430     -0.0022  PASS  -0.0213      ok
+B2-2  SLOT       reverse  no [LOSSES]    1.0  0.0  0.0  3.376   0.1641     0.1721     -0.0080  PASS  -0.0845      ok
+B2-2  SLOT       reverse  no [LOSSES]    2.0  0.0  0.0  3.376   0.6712     0.6883     -0.0172  PASS  -0.3230      ok
+B2-2  SLOT       reverse  no [LOSSES]    3.0  0.0  0.0  3.376   1.5069     1.5488     -0.0418  PASS  -0.7299      ok
+B2-3  SLOT       forward  production     0.5  0.5  1.0  0.558   0.0250     0.0262     -0.0013  PASS  -0.0013      ok
+B2-3  SLOT       forward  production     1.0  0.5  1.0  0.558   0.0999     0.1049     -0.0050  PASS  -0.0050      ok
+B2-3  SLOT       forward  production     2.0  0.5  1.0  0.558   0.4018     0.4195     -0.0178  PASS  -0.0178      ok
+B2-3  SLOT       forward  production     3.0  0.5  1.0  0.558   0.9140     0.9439     -0.0300  PASS  -0.0300      ok
+B2-3  SLOT       forward  no exit loss   0.5  0.5  0.0  0.558   0.0128     0.0135     -0.0007  PASS  -0.0134      ok
+B2-3  SLOT       forward  no exit loss   1.0  0.5  0.0  0.558   0.0513     0.0539     -0.0026  PASS  -0.0536      ok
+B2-3  SLOT       forward  no exit loss   2.0  0.5  0.0  0.558   0.2059     0.2157     -0.0098  PASS  -0.2136      ok
+B2-3  SLOT       forward  no exit loss   3.0  0.5  0.0  0.558   0.4669     0.4852     -0.0183  PASS  -0.4770      ok
+B2-3  SLOT       forward  no [LOSSES]    0.5  0.0  0.0  0.558   0.0068     0.0071     -0.0003  PASS  -0.0195      ok
+B2-3  SLOT       forward  no [LOSSES]    1.0  0.0  0.0  0.558   0.0271     0.0284     -0.0014  PASS  -0.0778      ok
+B2-3  SLOT       forward  no [LOSSES]    2.0  0.0  0.0  0.558   0.1083     0.1137     -0.0054  PASS  -0.3112      ok
+B2-3  SLOT       forward  no [LOSSES]    3.0  0.0  0.0  0.558   0.2443     0.2559     -0.0116  PASS  -0.6996      ok
+B2-3  SLOT       reverse  production     0.5  0.5  1.0  0.558   0.0250     0.0262     -0.0012  PASS  -0.0012      ok
+B2-3  SLOT       reverse  production     1.0  0.5  1.0  0.558   0.1001     0.1049     -0.0048  PASS  -0.0048      ok
+B2-3  SLOT       reverse  production     2.0  0.5  1.0  0.558   0.4040     0.4195     -0.0155  PASS  -0.0155      ok
+B2-3  SLOT       reverse  production     3.0  0.5  1.0  0.558   0.9190     0.9439     -0.0249  PASS  -0.0249      ok
+B2-3  SLOT       reverse  no exit loss   0.5  0.5  0.0  0.558   0.0128     0.0135     -0.0006  PASS  -0.0134      ok
+B2-3  SLOT       reverse  no exit loss   1.0  0.5  0.0  0.558   0.0514     0.0539     -0.0025  PASS  -0.0535      ok
+B2-3  SLOT       reverse  no exit loss   2.0  0.5  0.0  0.558   0.2060     0.2157     -0.0096  PASS  -0.2135      ok
+B2-3  SLOT       reverse  no exit loss   3.0  0.5  0.0  0.558   0.4660     0.4852     -0.0193  PASS  -0.4780      ok
+B2-3  SLOT       reverse  no [LOSSES]    0.5  0.0  0.0  0.558   0.0068     0.0071     -0.0003  PASS  -0.0194      ok
+B2-3  SLOT       reverse  no [LOSSES]    1.0  0.0  0.0  0.558   0.0271     0.0284     -0.0013  PASS  -0.0778      ok
+B2-3  SLOT       reverse  no [LOSSES]    2.0  0.0  0.0  0.558   0.1085     0.1137     -0.0052  PASS  -0.3110      ok
+B2-3  SLOT       reverse  no [LOSSES]    3.0  0.0  0.0  0.558   0.2450     0.2559     -0.0109  PASS  -0.6990      ok
+B2-4  SLOT       forward  production     0.5  0.5  1.0  1.042   0.0306     0.0324     -0.0018  PASS  -0.0018      ok
+B2-4  SLOT       forward  production     1.0  0.5  1.0  1.042   0.1223     0.1296     -0.0072  PASS  -0.0072      ok
+B2-4  SLOT       forward  production     2.0  0.5  1.0  1.042   0.4884     0.5184     -0.0299  FAIL  -0.0299      ok
+B2-4  SLOT       forward  production     3.0  0.5  1.0  1.042   1.1066     1.1663     -0.0597  FAIL  -0.0597      ok
+B2-4  SLOT       forward  no exit loss   0.5  0.5  0.0  1.042   0.0186     0.0197     -0.0011  PASS  -0.0138      ok
+B2-4  SLOT       forward  no exit loss   1.0  0.5  0.0  1.042   0.0743     0.0786     -0.0043  PASS  -0.0553      ok
+B2-4  SLOT       forward  no exit loss   2.0  0.5  0.0  1.042   0.2963     0.3145     -0.0182  FAIL  -0.2221      ok
+B2-4  SLOT       forward  no exit loss   3.0  0.5  0.0  1.042   0.6676     0.7076     -0.0400  FAIL  -0.4987      ok
+B2-4  SLOT       forward  no [LOSSES]    0.5  0.0  0.0  1.042   0.0126     0.0133     -0.0007  PASS  -0.0198      ok
+B2-4  SLOT       forward  no [LOSSES]    1.0  0.0  0.0  1.042   0.0503     0.0531     -0.0029  PASS  -0.0793      ok
+B2-4  SLOT       forward  no [LOSSES]    2.0  0.0  0.0  1.042   0.2006     0.2125     -0.0120  FAIL  -0.3178      ok
+B2-4  SLOT       forward  no [LOSSES]    3.0  0.0  0.0  1.042   0.4505     0.4782     -0.0277  FAIL  -0.7158      ok
+B2-4  SLOT       reverse  production     0.5  0.5  1.0  1.042   0.0306     0.0324     -0.0018  PASS  -0.0018      ok
+B2-4  SLOT       reverse  production     1.0  0.5  1.0  1.042   0.1221     0.1296     -0.0075  PASS  -0.0075      ok
+B2-4  SLOT       reverse  production     2.0  0.5  1.0  1.042   0.4889     0.5184     -0.0295  FAIL  -0.0295      ok
+B2-4  SLOT       reverse  production     3.0  0.5  1.0  1.042   1.1123     1.1663     -0.0540  PASS  -0.0540      ok
+B2-4  SLOT       reverse  no exit loss   0.5  0.5  0.0  1.042   0.0186     0.0197     -0.0011  PASS  -0.0138      ok
+B2-4  SLOT       reverse  no exit loss   1.0  0.5  0.0  1.042   0.0742     0.0786     -0.0044  PASS  -0.0554      ok
+B2-4  SLOT       reverse  no exit loss   2.0  0.5  0.0  1.042   0.2963     0.3145     -0.0182  FAIL  -0.2220      ok
+B2-4  SLOT       reverse  no exit loss   3.0  0.5  0.0  1.042   0.6676     0.7076     -0.0400  FAIL  -0.4987      ok
+B2-4  SLOT       reverse  no [LOSSES]    0.5  0.0  0.0  1.042   0.0125     0.0133     -0.0007  PASS  -0.0198      ok
+B2-4  SLOT       reverse  no [LOSSES]    1.0  0.0  0.0  1.042   0.0502     0.0531     -0.0030  PASS  -0.0794      ok
+B2-4  SLOT       reverse  no [LOSSES]    2.0  0.0  0.0  1.042   0.2003     0.2125     -0.0122  FAIL  -0.3180      ok
+B2-4  SLOT       reverse  no [LOSSES]    3.0  0.0  0.0  1.042   0.4505     0.4782     -0.0277  FAIL  -0.7157      ok
+
+partly full outlet (reported only):
+  {"case":"B2-P","twDepth":0.6,"V":1,"swmmHW":0.908,"hds5HW":0.9558,"diff":-0.0478}
+  {"case":"B2-P","twDepth":0.6,"V":2,"swmmHW":1.4529,"hds5HW":1.4622,"diff":-0.0093}
+  {"case":"B2-P","twDepth":0.9,"V":1,"swmmHW":1.016,"hds5HW":0.9669,"diff":0.049}
+  {"case":"B2-P","twDepth":0.9,"V":2,"swmmHW":1.4771,"hds5HW":1.4622,"diff":0.0149}
+
+12 FAILED:
+  B2-1 SLOT forward no [LOSSES] V 2: SWMM drop 0.1918 vs HDS-5 0.2020 m
+  B2-4 SLOT forward production V 2: SWMM drop 0.4884 vs HDS-5 0.5184 m
+  B2-4 SLOT forward production V 3: SWMM drop 1.1066 vs HDS-5 1.1663 m
+  B2-4 SLOT forward no exit loss V 2: SWMM drop 0.2963 vs HDS-5 0.3145 m
+  B2-4 SLOT forward no exit loss V 3: SWMM drop 0.6676 vs HDS-5 0.7076 m
+  B2-4 SLOT forward no [LOSSES] V 2: SWMM drop 0.2006 vs HDS-5 0.2125 m
+  B2-4 SLOT forward no [LOSSES] V 3: SWMM drop 0.4505 vs HDS-5 0.4782 m
+  B2-4 SLOT reverse production V 2: SWMM drop 0.4889 vs HDS-5 0.5184 m
+  B2-4 SLOT reverse no exit loss V 2: SWMM drop 0.2963 vs HDS-5 0.3145 m
+  B2-4 SLOT reverse no exit loss V 3: SWMM drop 0.6676 vs HDS-5 0.7076 m
+  B2-4 SLOT reverse no [LOSSES] V 2: SWMM drop 0.2003 vs HDS-5 0.2125 m
+  B2-4 SLOT reverse no [LOSSES] V 3: SWMM drop 0.4505 vs HDS-5 0.4782 m

@@ -1,0 +1,2361 @@
+{
+ "benchmark": "B1-L loss placement, SWMM alone",
+ "settings": [
+  {
+   "id": "none",
+   "loss": {
+    "entry": 0,
+    "exit": 0,
+    "avg": 0
+   }
+  },
+  {
+   "id": "entrance only",
+   "loss": {
+    "entry": 0.5,
+    "exit": 0,
+    "avg": 0
+   }
+  },
+  {
+   "id": "exit only",
+   "loss": {
+    "entry": 0,
+    "exit": 1,
+    "avg": 0
+   }
+  },
+  {
+   "id": "both",
+   "loss": {
+    "entry": 0.5,
+    "exit": 1,
+    "avg": 0
+   }
+  }
+ ],
+ "rows": [
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 0.684,
+   "qAD": 1,
+   "hds5Inlet": 0.609,
+   "hds5Outlet": 0.456,
+   "governs": "inlet",
+   "ref": 0.609,
+   "err": {
+    "none": -0.055,
+    "entrance only": -0.055,
+    "exit only": -0.055,
+    "both": -0.055
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.162,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.164,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.167,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.167,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 1.368,
+   "qAD": 2,
+   "hds5Inlet": 0.929,
+   "hds5Outlet": 0.656,
+   "governs": "inlet",
+   "ref": 0.929,
+   "err": {
+    "none": -0.001,
+    "entrance only": -0.001,
+    "exit only": -0.001,
+    "both": -0.001
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.14,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.139,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.14,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.14,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 2.052,
+   "qAD": 3,
+   "hds5Inlet": 1.228,
+   "hds5Outlet": 0.901,
+   "governs": "inlet",
+   "ref": 1.228,
+   "err": {
+    "none": -0.005,
+    "entrance only": -0.005,
+    "exit only": -0.005,
+    "both": -0.005
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.107,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.107,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.107,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.106,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 2.736,
+   "qAD": 4,
+   "hds5Inlet": 1.556,
+   "hds5Outlet": 1.202,
+   "governs": "inlet",
+   "ref": 1.556,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.1,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.1,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.1,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.1,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 3.078,
+   "qAD": 4.5,
+   "hds5Inlet": 1.759,
+   "hds5Outlet": 1.373,
+   "governs": "inlet",
+   "ref": 1.759,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.097,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.097,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.097,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.097,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 3.421,
+   "qAD": 5,
+   "hds5Inlet": 1.986,
+   "hds5Outlet": 1.558,
+   "governs": "inlet",
+   "ref": 1.986,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.095,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.095,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.095,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.095,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 4.105,
+   "qAD": 6,
+   "hds5Inlet": 2.511,
+   "hds5Outlet": 1.969,
+   "governs": "inlet",
+   "ref": 2.511,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.094,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.094,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.094,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.094,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 1.368,
+   "qAD": 2,
+   "hds5Inlet": 0.911,
+   "hds5Outlet": 0.049,
+   "governs": "inlet",
+   "ref": 0.911,
+   "err": {
+    "none": -0.001,
+    "entrance only": -0.001,
+    "exit only": -0.001,
+    "both": -0.001
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0.012,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0.012,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0.012,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.012,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 2.052,
+   "qAD": 3,
+   "hds5Inlet": 1.21,
+   "hds5Outlet": 0.235,
+   "governs": "inlet",
+   "ref": 1.21,
+   "err": {
+    "none": -0.012,
+    "entrance only": -0.012,
+    "exit only": -0.012,
+    "both": -0.012
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.114,
+     "steadyFlowErrPct": 0.322,
+     "drift": 0.0095
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.018,
+     "steadyFlowErrPct": -0.286,
+     "drift": 0.0081
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.442,
+     "steadyFlowErrPct": 0.278,
+     "drift": 0.0068
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.198,
+     "steadyFlowErrPct": 0.126,
+     "drift": 0.0106
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 2.736,
+   "qAD": 4,
+   "hds5Inlet": 1.538,
+   "hds5Outlet": 0.495,
+   "governs": "inlet",
+   "ref": 1.538,
+   "err": {
+    "none": -0.329,
+    "entrance only": -0.338,
+    "exit only": -0.327,
+    "both": -0.319
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.696,
+     "steadyFlowErrPct": 0.642,
+     "drift": 0.0328
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -2.875,
+     "steadyFlowErrPct": 3.134,
+     "drift": 0.0007
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0.32,
+     "steadyFlowErrPct": 0.066,
+     "drift": 0.0508
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.037,
+     "steadyFlowErrPct": -0.042,
+     "drift": 0.0439
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 3.421,
+   "qAD": 5,
+   "hds5Inlet": 1.968,
+   "hds5Outlet": 0.83,
+   "governs": "inlet",
+   "ref": 1.968,
+   "err": {
+    "none": -0.757,
+    "entrance only": -0.569,
+    "exit only": -0.754,
+    "both": -0.57
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 5.169,
+     "steadyFlowErrPct": -15.935,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0.026,
+     "steadyFlowErrPct": 0.065,
+     "drift": 0.8082
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -3.579,
+     "steadyFlowErrPct": 3.84,
+     "drift": 0.0285
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.176,
+     "steadyFlowErrPct": -0.143,
+     "drift": 0
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R3 outlet, full barrel",
+   "Q": 1.131,
+   "qAD": 1.65,
+   "hds5Inlet": 0.834,
+   "hds5Outlet": 1.767,
+   "governs": "outlet",
+   "ref": 1.767,
+   "err": {
+    "none": -0.076,
+    "entrance only": -0.051,
+    "exit only": -0.026,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R3 outlet, full barrel",
+   "Q": 2.262,
+   "qAD": 3.31,
+   "hds5Inlet": 1.332,
+   "hds5Outlet": 2.148,
+   "governs": "outlet",
+   "ref": 2.148,
+   "err": {
+    "none": -0.306,
+    "entrance only": -0.204,
+    "exit only": -0.102,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0.001,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0.001,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0.001,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.001,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "pipe",
+   "regime": "R3 outlet, full barrel",
+   "Q": 3.393,
+   "qAD": 4.96,
+   "hds5Inlet": 1.978,
+   "hds5Outlet": 2.782,
+   "governs": "outlet",
+   "ref": 2.782,
+   "err": {
+    "none": -0.688,
+    "entrance only": -0.459,
+    "exit only": -0.23,
+    "both": -0.001
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 6.04,
+   "qAD": 1,
+   "hds5Inlet": 1.237,
+   "hds5Outlet": 1.331,
+   "governs": "outlet",
+   "ref": 1.331,
+   "err": {
+    "none": -0.089,
+    "entrance only": -0.089,
+    "exit only": -0.089,
+    "both": -0.089
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.119,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.117,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.119,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.119,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 12.08,
+   "qAD": 2,
+   "hds5Inlet": 1.889,
+   "hds5Outlet": 1.711,
+   "governs": "inlet",
+   "ref": 1.889,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.087,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.088,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.088,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.088,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 18.12,
+   "qAD": 3,
+   "hds5Inlet": 2.5,
+   "hds5Outlet": 2.167,
+   "governs": "inlet",
+   "ref": 2.5,
+   "err": {
+    "none": -0.011,
+    "entrance only": -0.011,
+    "exit only": -0.011,
+    "both": -0.011
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.065,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.065,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.065,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.065,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 24.159,
+   "qAD": 4,
+   "hds5Inlet": 3.162,
+   "hds5Outlet": 2.716,
+   "governs": "inlet",
+   "ref": 3.162,
+   "err": {
+    "none": 0.003,
+    "entrance only": 0.003,
+    "exit only": 0.003,
+    "both": 0.003
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.061,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.061,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.061,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.061,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 27.179,
+   "qAD": 4.5,
+   "hds5Inlet": 3.575,
+   "hds5Outlet": 3.027,
+   "governs": "inlet",
+   "ref": 3.575,
+   "err": {
+    "none": 0.004,
+    "entrance only": 0.004,
+    "exit only": 0.004,
+    "both": 0.004
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.059,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.059,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.059,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.059,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 30.199,
+   "qAD": 5,
+   "hds5Inlet": 4.036,
+   "hds5Outlet": 3.362,
+   "governs": "inlet",
+   "ref": 4.036,
+   "err": {
+    "none": 0.005,
+    "entrance only": 0.005,
+    "exit only": 0.005,
+    "both": 0.005
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.058,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.058,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.058,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.058,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 36.239,
+   "qAD": 6,
+   "hds5Inlet": 5.103,
+   "hds5Outlet": 4.102,
+   "governs": "inlet",
+   "ref": 5.103,
+   "err": {
+    "none": 0.008,
+    "entrance only": 0.008,
+    "exit only": 0.008,
+    "both": 0.008
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.055,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.055,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.055,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.055,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 12.08,
+   "qAD": 2,
+   "hds5Inlet": 1.852,
+   "hds5Outlet": 1.389,
+   "governs": "inlet",
+   "ref": 1.852,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0.031,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0.032,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0.033,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.031,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 18.12,
+   "qAD": 3,
+   "hds5Inlet": 2.463,
+   "hds5Outlet": 1.702,
+   "governs": "inlet",
+   "ref": 2.463,
+   "err": {
+    "none": -0.029,
+    "entrance only": -0.027,
+    "exit only": -0.025,
+    "both": -0.022
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -1.115,
+     "steadyFlowErrPct": 1.866,
+     "drift": 0.0156
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.456,
+     "steadyFlowErrPct": 0.217,
+     "drift": 0.0109
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.595,
+     "steadyFlowErrPct": 0.495,
+     "drift": 0.0201
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.574,
+     "steadyFlowErrPct": 0.459,
+     "drift": 0.0191
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 24.159,
+   "qAD": 4,
+   "hds5Inlet": 3.126,
+   "hds5Outlet": 2.141,
+   "governs": "inlet",
+   "ref": 3.126,
+   "err": {
+    "none": -0.671,
+    "entrance only": -0.604,
+    "exit only": -0.557,
+    "both": -0.257
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0.207,
+     "steadyFlowErrPct": 0.151,
+     "drift": 0.0324
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 1.636,
+     "steadyFlowErrPct": -1.768,
+     "drift": 0.1967
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.676,
+     "steadyFlowErrPct": 0.469,
+     "drift": 0.8377
+    },
+    "both": {
+     "swmmContinuityErrPct": 1.891,
+     "steadyFlowErrPct": -2.031,
+     "drift": 0.7886
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 30.199,
+   "qAD": 5,
+   "hds5Inlet": 3.999,
+   "hds5Outlet": 2.704,
+   "governs": "inlet",
+   "ref": 3.999,
+   "err": {
+    "none": -1.339,
+    "entrance only": -1.222,
+    "exit only": -0.726,
+    "both": -1.292
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.27,
+     "steadyFlowErrPct": 0.426,
+     "drift": 1.3393
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0.356,
+     "steadyFlowErrPct": -0.236,
+     "drift": 1.9119
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 3.996,
+     "steadyFlowErrPct": -4.321,
+     "drift": 2.3726
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.009,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R3 outlet, full barrel",
+   "Q": 7.005,
+   "qAD": 1.16,
+   "hds5Inlet": 1.372,
+   "hds5Outlet": 2.97,
+   "governs": "outlet",
+   "ref": 2.97,
+   "err": {
+    "none": -0.076,
+    "entrance only": -0.051,
+    "exit only": -0.025,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0.002,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0.001,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0.001,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.001,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R3 outlet, full barrel",
+   "Q": 14.009,
+   "qAD": 2.32,
+   "hds5Inlet": 2.108,
+   "hds5Outlet": 3.247,
+   "governs": "outlet",
+   "ref": 3.247,
+   "err": {
+    "none": -0.306,
+    "entrance only": -0.204,
+    "exit only": -0.101,
+    "both": 0.001
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "EXTRAN",
+   "barrel": "ellipse",
+   "regime": "R3 outlet, full barrel",
+   "Q": 21.014,
+   "qAD": 3.48,
+   "hds5Inlet": 2.821,
+   "hds5Outlet": 3.707,
+   "governs": "outlet",
+   "ref": 3.707,
+   "err": {
+    "none": -0.688,
+    "entrance only": -0.458,
+    "exit only": -0.228,
+    "both": 0.001
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": 0,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 0.684,
+   "qAD": 1,
+   "hds5Inlet": 0.609,
+   "hds5Outlet": 0.456,
+   "governs": "inlet",
+   "ref": 0.609,
+   "err": {
+    "none": -0.055,
+    "entrance only": -0.055,
+    "exit only": -0.055,
+    "both": -0.055
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.162,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.164,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.167,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.167,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 1.368,
+   "qAD": 2,
+   "hds5Inlet": 0.929,
+   "hds5Outlet": 0.656,
+   "governs": "inlet",
+   "ref": 0.929,
+   "err": {
+    "none": -0.001,
+    "entrance only": -0.001,
+    "exit only": -0.001,
+    "both": -0.001
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.14,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.139,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.14,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.14,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 2.052,
+   "qAD": 3,
+   "hds5Inlet": 1.228,
+   "hds5Outlet": 0.901,
+   "governs": "inlet",
+   "ref": 1.228,
+   "err": {
+    "none": -0.005,
+    "entrance only": -0.005,
+    "exit only": -0.005,
+    "both": -0.005
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.107,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.107,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.106,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.106,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 2.736,
+   "qAD": 4,
+   "hds5Inlet": 1.556,
+   "hds5Outlet": 1.202,
+   "governs": "inlet",
+   "ref": 1.556,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.074,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.074,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.073,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.073,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 3.078,
+   "qAD": 4.5,
+   "hds5Inlet": 1.759,
+   "hds5Outlet": 1.373,
+   "governs": "inlet",
+   "ref": 1.759,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.064,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.064,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.064,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.064,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 3.421,
+   "qAD": 5,
+   "hds5Inlet": 1.986,
+   "hds5Outlet": 1.558,
+   "governs": "inlet",
+   "ref": 1.986,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.059,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.059,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.059,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.059,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R1 inlet, free outfall",
+   "Q": 4.105,
+   "qAD": 6,
+   "hds5Inlet": 2.511,
+   "hds5Outlet": 1.969,
+   "governs": "inlet",
+   "ref": 2.511,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.055,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.055,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.055,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.055,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 1.368,
+   "qAD": 2,
+   "hds5Inlet": 0.911,
+   "hds5Outlet": 0.049,
+   "governs": "inlet",
+   "ref": 0.911,
+   "err": {
+    "none": -0.001,
+    "entrance only": -0.001,
+    "exit only": -0.001,
+    "both": -0.001
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.039,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.039,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.039,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.039,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 2.052,
+   "qAD": 3,
+   "hds5Inlet": 1.21,
+   "hds5Outlet": 0.235,
+   "governs": "inlet",
+   "ref": 1.21,
+   "err": {
+    "none": -0.019,
+    "entrance only": -0.019,
+    "exit only": -0.016,
+    "both": -0.019
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.219,
+     "steadyFlowErrPct": -0.033,
+     "drift": 0.019
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.206,
+     "steadyFlowErrPct": 0.166,
+     "drift": 0.0256
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.197,
+     "steadyFlowErrPct": 0.155,
+     "drift": 0.0243
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.22,
+     "steadyFlowErrPct": 0.181,
+     "drift": 0.0154
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 2.736,
+   "qAD": 4,
+   "hds5Inlet": 1.538,
+   "hds5Outlet": 0.495,
+   "governs": "inlet",
+   "ref": 1.538,
+   "err": {
+    "none": -0.3,
+    "entrance only": -0.322,
+    "exit only": -0.303,
+    "both": -0.148
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.936,
+     "steadyFlowErrPct": 0.635,
+     "drift": 0.2788
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.051,
+     "steadyFlowErrPct": -0.002,
+     "drift": 0.0493
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.52,
+     "steadyFlowErrPct": 0.459,
+     "drift": 0.1927
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.711,
+     "steadyFlowErrPct": 3.92,
+     "drift": 0
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 3.421,
+   "qAD": 5,
+   "hds5Inlet": 1.968,
+   "hds5Outlet": 0.83,
+   "governs": "inlet",
+   "ref": 1.968,
+   "err": {
+    "none": -0.666,
+    "entrance only": -0.729,
+    "exit only": -0.508,
+    "both": -0.724
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.437,
+     "steadyFlowErrPct": 0.396,
+     "drift": 0.2195
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.651,
+     "steadyFlowErrPct": 0.634,
+     "drift": 0.0288
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -1.57,
+     "steadyFlowErrPct": 1.194,
+     "drift": 0.8789
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.614,
+     "steadyFlowErrPct": 0.658,
+     "drift": 0.0702
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R3 outlet, full barrel",
+   "Q": 1.131,
+   "qAD": 1.65,
+   "hds5Inlet": 0.834,
+   "hds5Outlet": 1.767,
+   "governs": "outlet",
+   "ref": 1.767,
+   "err": {
+    "none": -0.079,
+    "entrance only": -0.055,
+    "exit only": -0.031,
+    "both": -0.007
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.082,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.078,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.075,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.072,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R3 outlet, full barrel",
+   "Q": 2.262,
+   "qAD": 3.31,
+   "hds5Inlet": 1.332,
+   "hds5Outlet": 2.148,
+   "governs": "outlet",
+   "ref": 2.148,
+   "err": {
+    "none": -0.316,
+    "entrance only": -0.217,
+    "exit only": -0.12,
+    "both": -0.02
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.031,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.025,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.019,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.014,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "pipe",
+   "regime": "R3 outlet, full barrel",
+   "Q": 3.393,
+   "qAD": 4.96,
+   "hds5Inlet": 1.978,
+   "hds5Outlet": 2.782,
+   "governs": "outlet",
+   "ref": 2.782,
+   "err": {
+    "none": -0.706,
+    "entrance only": -0.479,
+    "exit only": -0.257,
+    "both": -0.034
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.011,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.007,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.004,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.001,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 6.04,
+   "qAD": 1,
+   "hds5Inlet": 1.237,
+   "hds5Outlet": 1.331,
+   "governs": "outlet",
+   "ref": 1.331,
+   "err": {
+    "none": -0.089,
+    "entrance only": -0.089,
+    "exit only": -0.089,
+    "both": -0.089
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.119,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.117,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.119,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.119,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 12.08,
+   "qAD": 2,
+   "hds5Inlet": 1.889,
+   "hds5Outlet": 1.711,
+   "governs": "inlet",
+   "ref": 1.889,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.087,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.088,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.088,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.088,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 18.12,
+   "qAD": 3,
+   "hds5Inlet": 2.5,
+   "hds5Outlet": 2.167,
+   "governs": "inlet",
+   "ref": 2.5,
+   "err": {
+    "none": -0.011,
+    "entrance only": -0.011,
+    "exit only": -0.011,
+    "both": -0.011
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.064,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.064,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.065,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.065,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 24.159,
+   "qAD": 4,
+   "hds5Inlet": 3.162,
+   "hds5Outlet": 2.716,
+   "governs": "inlet",
+   "ref": 3.162,
+   "err": {
+    "none": 0.003,
+    "entrance only": 0.003,
+    "exit only": 0.003,
+    "both": 0.003
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.041,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.04,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.041,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.041,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 27.179,
+   "qAD": 4.5,
+   "hds5Inlet": 3.575,
+   "hds5Outlet": 3.027,
+   "governs": "inlet",
+   "ref": 3.575,
+   "err": {
+    "none": 0.004,
+    "entrance only": 0.004,
+    "exit only": 0.004,
+    "both": 0.162
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.032,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.032,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.032,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.03,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 30.199,
+   "qAD": 5,
+   "hds5Inlet": 4.036,
+   "hds5Outlet": 3.362,
+   "governs": "inlet",
+   "ref": 4.036,
+   "err": {
+    "none": 0.005,
+    "entrance only": 0.005,
+    "exit only": 0.005,
+    "both": 0.134
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.029,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.029,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.029,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.028,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R1 inlet, free outfall",
+   "Q": 36.239,
+   "qAD": 6,
+   "hds5Inlet": 5.103,
+   "hds5Outlet": 4.102,
+   "governs": "inlet",
+   "ref": 5.103,
+   "err": {
+    "none": 0.008,
+    "entrance only": 0.008,
+    "exit only": 0.008,
+    "both": 0.096
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.027,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.027,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.027,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.027,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 12.08,
+   "qAD": 2,
+   "hds5Inlet": 1.852,
+   "hds5Outlet": 1.389,
+   "governs": "inlet",
+   "ref": 1.852,
+   "err": {
+    "none": 0,
+    "entrance only": 0,
+    "exit only": 0,
+    "both": 0
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0.019,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": 0.019,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": 0.019,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.018,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 18.12,
+   "qAD": 3,
+   "hds5Inlet": 2.463,
+   "hds5Outlet": 1.702,
+   "governs": "inlet",
+   "ref": 2.463,
+   "err": {
+    "none": -0.059,
+    "entrance only": -0.036,
+    "exit only": -0.031,
+    "both": -0.028
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": 0.02,
+     "steadyFlowErrPct": -0.026,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.291,
+     "steadyFlowErrPct": 4.187,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.221,
+     "steadyFlowErrPct": 0.181,
+     "drift": 0.0332
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.221,
+     "steadyFlowErrPct": -0.241,
+     "drift": 0.0271
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 24.159,
+   "qAD": 4,
+   "hds5Inlet": 3.126,
+   "hds5Outlet": 2.141,
+   "governs": "inlet",
+   "ref": 3.126,
+   "err": {
+    "none": -0.727,
+    "entrance only": -0.596,
+    "exit only": -0.569,
+    "both": -0.595
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -2.749,
+     "steadyFlowErrPct": 3.014,
+     "drift": 0.0007
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.479,
+     "steadyFlowErrPct": 0.684,
+     "drift": 0.3223
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.322,
+     "steadyFlowErrPct": 0.558,
+     "drift": 0.3751
+    },
+    "both": {
+     "swmmContinuityErrPct": 0.186,
+     "steadyFlowErrPct": 8.585,
+     "drift": 0.0834
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R2 inlet, outlet submerged",
+   "Q": 30.199,
+   "qAD": 5,
+   "hds5Inlet": 3.999,
+   "hds5Outlet": 2.704,
+   "governs": "inlet",
+   "ref": 3.999,
+   "err": {
+    "none": -0.866,
+    "entrance only": -1.484,
+    "exit only": -1.395,
+    "both": -1.345
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -3.17,
+     "steadyFlowErrPct": 3.29,
+     "drift": 3.5009
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.834,
+     "steadyFlowErrPct": 0.804,
+     "drift": 0.151
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.606,
+     "steadyFlowErrPct": 0.714,
+     "drift": 0.4102
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.01,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": false
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R3 outlet, full barrel",
+   "Q": 7.005,
+   "qAD": 1.16,
+   "hds5Inlet": 1.372,
+   "hds5Outlet": 2.97,
+   "governs": "outlet",
+   "ref": 2.97,
+   "err": {
+    "none": -0.077,
+    "entrance only": -0.053,
+    "exit only": -0.029,
+    "both": -0.005
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.085,
+     "steadyFlowErrPct": 0,
+     "drift": 0.001
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.084,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.083,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.081,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R3 outlet, full barrel",
+   "Q": 14.009,
+   "qAD": 2.32,
+   "hds5Inlet": 2.108,
+   "hds5Outlet": 3.247,
+   "governs": "outlet",
+   "ref": 3.247,
+   "err": {
+    "none": -0.309,
+    "entrance only": -0.213,
+    "exit only": -0.117,
+    "both": -0.021
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.042,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.039,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.036,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.032,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  },
+  {
+   "surcharge": "SLOT",
+   "barrel": "ellipse",
+   "regime": "R3 outlet, full barrel",
+   "Q": 21.014,
+   "qAD": 3.48,
+   "hds5Inlet": 2.821,
+   "hds5Outlet": 3.707,
+   "governs": "outlet",
+   "ref": 3.707,
+   "err": {
+    "none": -0.696,
+    "entrance only": -0.48,
+    "exit only": -0.264,
+    "both": -0.046
+   },
+   "mass": {
+    "none": {
+     "swmmContinuityErrPct": -0.027,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "entrance only": {
+     "swmmContinuityErrPct": -0.022,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "exit only": {
+     "swmmContinuityErrPct": -0.016,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    },
+    "both": {
+     "swmmContinuityErrPct": -0.01,
+     "steadyFlowErrPct": 0,
+     "drift": 0
+    }
+   },
+   "steady": true
+  }
+ ],
+ "summary": {
+  "EXTRAN none | inlet governs": {
+   "n": 15,
+   "meanErr": -0.004,
+   "maxAbs": 0.055
+  },
+  "EXTRAN none | outlet governs": {
+   "n": 7,
+   "meanErr": -0.318,
+   "maxAbs": 0.688
+  },
+  "EXTRAN entrance only | inlet governs": {
+   "n": 15,
+   "meanErr": -0.004,
+   "maxAbs": 0.055
+  },
+  "EXTRAN entrance only | outlet governs": {
+   "n": 7,
+   "meanErr": -0.217,
+   "maxAbs": 0.459
+  },
+  "EXTRAN exit only | inlet governs": {
+   "n": 15,
+   "meanErr": -0.004,
+   "maxAbs": 0.055
+  },
+  "EXTRAN exit only | outlet governs": {
+   "n": 7,
+   "meanErr": -0.114,
+   "maxAbs": 0.23
+  },
+  "EXTRAN both | inlet governs": {
+   "n": 15,
+   "meanErr": -0.004,
+   "maxAbs": 0.055
+  },
+  "EXTRAN both | outlet governs": {
+   "n": 7,
+   "meanErr": -0.013,
+   "maxAbs": 0.089
+  },
+  "SLOT none | inlet governs": {
+   "n": 15,
+   "meanErr": -0.004,
+   "maxAbs": 0.055
+  },
+  "SLOT none | outlet governs": {
+   "n": 7,
+   "meanErr": -0.325,
+   "maxAbs": 0.706
+  },
+  "SLOT entrance only | inlet governs": {
+   "n": 15,
+   "meanErr": -0.004,
+   "maxAbs": 0.055
+  },
+  "SLOT entrance only | outlet governs": {
+   "n": 7,
+   "meanErr": -0.227,
+   "maxAbs": 0.48
+  },
+  "SLOT exit only | inlet governs": {
+   "n": 15,
+   "meanErr": -0.004,
+   "maxAbs": 0.055
+  },
+  "SLOT exit only | outlet governs": {
+   "n": 7,
+   "meanErr": -0.13,
+   "maxAbs": 0.264
+  },
+  "SLOT both | inlet governs": {
+   "n": 15,
+   "meanErr": 0.021,
+   "maxAbs": 0.162
+  },
+  "SLOT both | outlet governs": {
+   "n": 7,
+   "meanErr": -0.032,
+   "maxAbs": 0.089
+  }
+ }
+}
