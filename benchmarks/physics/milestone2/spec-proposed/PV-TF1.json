@@ -1,0 +1,137 @@
+{
+ "id": "PV-TF1",
+ "title": "Transient fill of an empty part-full conduit in a closed system, scored at rest",
+ "registrationStatus": "PROPOSED, draft 2 (12 Nov 2026, after review 5): awaiting three independent reviews (milestone2/reviews/). Not hashed, not run, not in spec/. On approval: move to spec/, hash with run.mjs --hash, enter criteriaRevisions[0], then run.",
+ "category": "conservation",
+ "process": "a dry conduit filling from one end and coming to rest: the wetting front, link storage during the transition from dry to part full, storage at intermediate junctions, closed-system volume",
+ "module": "transient/pv-tf1.mjs (to be written after approval; reuses lib/swmm-run.mjs and references/volume.mjs)",
+ "executor": "node",
+ "dependsOn": ["PV-C1"],
+ "equations": [
+  "continuity of the closed system: V(t) = V0 + integral of the declared inflow from 0 to t (no outflow: the sealing weir must never flow)",
+  "at rest (still water): one level h everywhere; V_rest = sum_i A_i h + L A_circle(h) + 0 (junctions have no plan area in the reference) for a horizontal conduit at invert 0 (references/volume.mjs equilibriumDepth)",
+  "SWMM solves the dynamic-wave Saint-Venant equations; only the at-rest state has an exact reference here"
+ ],
+ "referenceAssumptions": [
+  "R1 still water at rest: one free-surface level in both tanks, every junction and every conduit; no residual motion beyond the rest definition (criteria.rest*)",
+  "R2 the tanks are prismatic, 20 m^2, invert 0 (SWMM FUNCTIONAL 0 0 20; checked by the node-volume row)",
+  "R3 the conduit is horizontal at invert 0 end to end; its at-rest volume is L A_circle(h), exact for a level surface in a prismatic horizontal conduit",
+  "R4 junctions have zero plan area and zero volume (manholes are not modelled as storage). This matches SWMM's own definition: a junction's volume is identically 0 (node.c: fullVolume 0 at read, node_initState fullVolume = node_getVolume(fullDepth) = 0, so node_getVolume returns 0). It is checked by a scored row, not assumed silently",
+  "R5 the declared inflow series is the only source; SWMM applies it to within about 2e-4 (FINDINGS.md F1 evidence; reported row)",
+  "R6 the reference is computed from the declared inputs only (geometry, series); no SWMM output enters it"
+ ],
+ "initialConditions": "everything dry: T1, T2, every junction and every conduit at depth 0",
+ "boundaryConditions": "declared inflow into T1: a trapezoid hydrograph 0 -> 0.1 m^3/s over 60 s, held to 1800 s, 0.1 -> 0 over 60 s (integral exactly 180.0 m^3); no other inflow; the only outfall is behind a weir whose crest is above every reachable level (SWMM refuses a network with no outfall, ERROR 145; same device as PV-C1)",
+ "geometry": "T1 and T2: prismatic storage, 20 m^2 each, 3 m deep, invert 0. Conduit: circular D 1.0 m, total length 400 m, n 0.013, horizontal (both ends at invert 0, no offsets), cut into N equal segments joined by N - 1 junctions at invert 0, max depth 3 m. Sealing weir W0: T2 -> OUT, crest 2.5 m",
+ "parameters": {
+  "tankArea": { "value": 20, "unit": "m^2 (each tank)" },
+  "tankDepth": { "value": 3, "unit": "m" },
+  "pipeDiameter": { "value": 1.0, "unit": "m" },
+  "pipeLength": { "value": 400, "unit": "m (total)" },
+  "manningN": { "value": 0.013, "unit": "s m^-1/3" },
+  "segments": { "value": [1, 4, 16, 32], "unit": "- (each scored separately; N = 1 has no intermediate junction)" },
+  "inflow": { "value": [[0, 0], [60, 0.1], [1800, 0.1], [1860, 0]], "unit": "[s, m^3/s], linear between points" },
+  "inflowVolume": { "value": 180.0, "unit": "m^3 (exact integral of the series)" },
+  "referenceLevel": { "value": 0.50664, "unit": "m (equilibriumDepth, computed before any run; conduit 159.73 m^3 = 88.7 % of the system)" },
+  "sealCrest": { "value": 2.5, "unit": "m above T2's floor" },
+  "durationS": { "value": 43200, "unit": "s" },
+  "routingStepS": { "value": 1, "unit": "s (fixed; VARIABLE_STEP 0)" },
+  "sampleS": { "value": 60, "unit": "s (raw time series); the rest-window flow and flux conditions are evaluated at every routing step" },
+  "guardDepthFrac": { "value": 0.9, "unit": "- of D: any node depth at or above this, at any routing step, makes the case Invalid setup (keeps the pipe away from the crown and from finding F1)" },
+  "minSurfArea": { "value": 1.167, "unit": "m^2 (SWMM default, as lib/swmm-run.mjs; applies to every node, binds only at junctions here: the tanks' own 20 m^2 exceeds it)" }
+ },
+ "solver": "SWMM 5.2.4 production wasm (vendor/swmm-wasm) through lib/swmm-run.mjs: CMS, DYNWAVE, EXTRAN surcharge, INERTIAL_DAMPING PARTIAL, NORMAL_FLOW_LIMITED BOTH, MIN_SLOPE 0, MIN_SURFAREA 1.167, fixed 1 s step, MAX_TRIALS 8, HEAD_TOLERANCE 0.0015. Hand-written .inp, no FloodSim translation in the loop. Production routing settings are not changed",
+ "reference": {
+  "module": "references/volume.mjs",
+  "functions": ["tankVolume", "equilibriumDepth", "conduitFullVolume (guard only)"],
+  "sources": "geometry of a circular segment (references/geometry.mjs area, cross-checked by quadrature in refs.test.mjs); the declared inflow series; still-water hydrostatics",
+  "independence": "the reference uses only the declared inputs and assumptions R1-R6; no SWMM quantity enters it; the at-rest state does not depend on how the transient was solved",
+  "crossCheck": "equilibriumDepth by bisection on the exact volume function; the circle area by quadrature (refs.test.mjs, existing)"
+ },
+ "junctionStorage": {
+  "whySWMMCanStoreOrLoseWaterAtAJunction": [
+   "J1 node volume: SWMM's junction volume is identically 0 (R4). Scored row: the sum of NODE_VOLUME over the N - 1 junctions, at every sample, must be 0 (criteria.junctionVolumeAbsM3). If it is not 0, the books are reported with and without it, and R4 is falsified.",
+   "J2 minimum surface area: a junction's depth changes by dV / max(surface area, MIN_SURFAREA) (dynwave.c line 670), the surface area being half of each joined conduit's surface. While a junction's conduits are nearly dry their area is below MIN_SURFAREA, so depth moves as if 1.167 m^2 of storage were there; that storage has no volume (J1). This is not a stored volume and cannot be read from the API; it can only show as an at-rest closure error. A priori bound on its size, from geometry only: (N - 1) x 1.167 m^2 x 0.507 m = 0 (N 1), 1.8 m^3 (N 4), 8.9 m^3 (N 16), 18.3 m^3 (N 32), against a criterion of 0.18 m^3: the test can see it at every N >= 4 if it acts.",
+   "J3 link storage carried by the end nodes: SWMM keeps a conduit's storage implicitly, through half of its surface area at each end node, and the conduit's own volume is L x A(mid depth) (dwflow.c line 291). This is the mechanism of predictions P2a (all N, including N 1)."
+  ],
+  "diagnosticToSeparateJ2": "MIN_SURFAREA 0.1 m^2 (bound 1.6 m^3 at N 32): declared now, unscored"
+ },
+ "rawOutput": "every 60 s: depth and NODE_VOLUME of both tanks and of every junction; depth, flow and velocity of every conduit segment; sealing-weir flow. Every routing step: the applied inflow (NODE_LATFLOW at T1) and the sealing-weir flow, integrated; inside the rest window, every segment's flow (its maximum absolute value kept per segment). Saved unreduced in results/<run-id>/PV-TF1-raw-N<N>.json with the spec hash, git commit (plus diff hash), wasm SHA-256",
+ "outputs": [
+  "SCORED, at rest, per N: volume closure: tanks (A d) + conduit L A(h) + junction NODE_VOLUME, against V0 + 180.0 m^3",
+  "SCORED, at rest, per N: the common level against referenceLevel",
+  "SCORED, per N: junction volume, sum over junctions, largest sample (R4, J1)",
+  "SCORED, per N: boundary flux over the sealing weir: largest absolute flow at any routing step of the whole run, largest within the rest window, and its integral over the run",
+  "SCORED, per N: SWMM's node volume against A d for each tank (internal consistency, as PV-C1)",
+  "REPORTED, NOT SCORED: SWMM's flow-routing continuity error; the applied inflow (sum NODE_LATFLOW dt) against 180.0; the closure in motion at every sample (DIAGNOSTIC ONLY, see transientStatement); maximum node depth / D; each rest condition's margin; the closure's dependence on N"
+ ],
+ "transientStatement": "The closure in motion is a diagnostic only. During the transient the conduit's water surface is not level, its volume has no independent reference here (finding F4), and any in-motion closure figure uses SWMM's own depth representation. A transient discrepancy that disappears before rest does not establish that the transient was correct: the scored rows test the end state only. No statement about the transient's correctness is made from this test.",
+ "criteria": {
+  "closureRel": 0.001,
+  "equilibriumAbsM": 0.002,
+  "restWindowS": 3600,
+  "restLevelDiffM": 0.001,
+  "restLevelDriftM": 0.001,
+  "restSegmentFlowAbsM3s": 0.000005,
+  "sealFluxAbs": 0,
+  "junctionVolumeAbsM3": 1e-9,
+  "nodeVolumeRel": 0.000001
+ },
+ "criteriaNotes": "closureRel, equilibriumAbsM, restWindowS, restLevelDiffM, sealFluxAbs, nodeVolumeRel are PV-C1's, unchanged: 0.1 % of the at-rest system volume (= 0.113 % of the conduit's own volume; a component error cannot hide in a large system); known noise in these books is about 2e-4 (inflow interpolation, F1 evidence) and 1e-4 of the conduit volume (tabulated circle geometry, F4 evidence), about 5 times below the criterion. Rest (draft 2): over the last restWindowS of the run, at every sample both tank levels within restLevelDiffM of each other, each level's change over the window within restLevelDriftM, AND at every routing step every conduit segment's |Q| <= restSegmentFlowAbsM3s, AND the sealing weir's flow 0 at every step. 5e-6 m^3/s is the flow that would move 1 mm of one tank (20 m^2) in the hour of the window; held for the whole window it moves at most 0.018 m^3, a tenth of the closure criterion, so residual motion cannot decide a pass or a fail. If any rest condition fails, the at-rest rows are Insufficient reference data (not a pass, not a fail) and a longer duration would need a definition revision. junctionVolumeAbsM3 1e-9: SWMM defines the volume as identically 0 (R4), so any non-round-off value falsifies R4. The criteria were chosen before any closed-system fill was run; T2-C's open-system evidence (FINDINGS.md F3) exists and informs the predictions only.",
+ "proposedCriteriaHistory": [
+  { "draft": 1, "date": "2026-11-12", "criteria": { "closureRel": 0.001, "equilibriumAbsM": 0.002, "restWindowS": 3600, "restLevelDiffM": 0.001, "sealFluxAbs": 0, "nodeVolumeRel": 0.000001 }, "why": "first proposal (PV-C1's criteria)" },
+  { "draft": 2, "date": "2026-11-12", "criteria": "as `criteria` above", "why": "specification defects identified by review 5 (resolution-5.md items a, c, d): (1) rest was defined by tank levels only, so a conduit still exchanging water between the tanks with equal levels would have counted as at rest: added restSegmentFlowAbsM3s (every segment, every step) and made the level drift explicit (restLevelDriftM, the PV-C1 'level change within 1 mm over the last hour' rule, previously folded into restLevelDiffM); (2) the boundary flux was a largest sample at 60 s: now every routing step, the whole run and the rest window separately, plus its integral; (3) junction storage was not accounted: added the junction-volume row (junctionVolumeAbsM3). Every change adds a condition; none removes or widens one. Not hashed: hashing happens only at approval, as criteriaRevisions[0]" }
+ ],
+ "conservation": "closed system: the declared inflow is the only source, the sealing weir the only possible sink (scored zero, every step)",
+ "resolution": "N = 1, 4, 16, 32 segments (12.5 m minimum); fixed 1 s routing step; diagnostic only: 0.5 s",
+ "predictions": [
+  "P1 (open outfall): if T2-C came from its open outfall (outflow leaving before the barrel filled), the closed fill closes inside the criterion at every N.",
+  "P2a (link storage through end-node areas, J3): a fixed at-rest closure error of T2-C's sign (books above V0 + inflow), present at N = 1 and falling as N rises (T2-C's segmentation trend).",
+  "P2b (junction minimum surface area, J2): no error at N = 1 (no junction); an error that grows with N - 1, bounded by the J2 bound, and shrinking under the MIN_SURFAREA 0.1 m^2 diagnostic.",
+  "P3 (F1): no crown-cutoff loss: the guard keeps every node depth below 0.9 D.",
+  "None of P1, P2a, P2b is a pass condition; the rows are scored only against the criteria."
+ ],
+ "outcomeInterpretation": [
+  { "outcome": "closes inside the criterion at every N, at rest", "supports": "P1", "limitedTo": "the end state of this closed horizontal fill; says nothing about the transient (transientStatement), about sloped conduits (PV-TF2), about the crown (PV-TF4), or about T2-C's open-system result, which stays Failed" },
+  { "outcome": "error at N = 1, falling with N", "supports": "P2a", "limitedTo": "a fill-time storage error in SWMM's representation for this geometry; its size at other diameters, lengths and tank areas is not established; B6-C's mechanism becomes a hypothesis to test, not a conclusion" },
+  { "outcome": "no error at N = 1, error growing with N, reduced by MIN_SURFAREA 0.1", "supports": "P2b", "limitedTo": "junction minimum surface area as one cause in this configuration; production's MIN_SURFAREA is not changed and its effect on production networks is not established" },
+  { "outcome": "error at N = 1 and a non-monotone or sign-changing trend in N", "supports": "both P2a and P2b acting, possibly opposed (cf. F3's unexplained Q 0.5 sign change)", "limitedTo": "no attribution of shares; reported as observed; F3's Q 0.5 behaviour stays unexplained unless a separate registered test isolates it" },
+  { "outcome": "any rest condition fails", "supports": "nothing", "limitedTo": "Insufficient reference data; no conclusion about any prediction" },
+  { "outcome": "guard trips or the sealing weir flows", "supports": "nothing", "limitedTo": "Invalid setup; a geometry revision (not a criteria change) would be needed" },
+  { "outcome": "junction volume not 0", "supports": "R4 falsified", "limitedTo": "the books are reported both ways; the closure rows stand as computed; the reference assumption is revised by a dated revision before any re-run" }
+ ],
+ "diagnostics": [
+  "unscored, declared now: routing step 0.5 s; MIN_SURFAREA 0.1 m^2 (separates P2b); INERTIAL_DAMPING NONE (relation to finding F2); the instrumented build's conduit volume (getter 420) per segment, as a decomposition only (agreement with production shown on B1 only: an equality check of this case's node depths between the two builds precedes any use)"
+ ],
+ "failureClasses": {
+  "accounting": "at-rest closure outside the criterion; junction volume not 0; sealing weir flow not 0",
+  "numerical": "the closure or the level depends on N or on the step beyond the criterion",
+  "invalidSetup": "guard tripped (a node depth >= 0.9 D), or the sealing weir flowed",
+  "insufficientReference": "any rest condition not met by the end of the run"
+ },
+ "assumptions": [
+  "the reference assumptions R1-R6",
+  "the API reads (NODE_DEPTH, NODE_VOLUME, NODE_LATFLOW, LINK_FLOW) are SWMM's state at the end of each routing step"
+ ],
+ "limitations": [
+  "scores only the end state: a transient error that undoes itself before rest is not seen, and its absence at rest does not establish transient correctness (transientStatement)",
+  "the minimum-surface-area mechanism (J2) is not observable directly through the production API; it is inferred from the N trend and the MIN_SURFAREA diagnostic",
+  "horizontal conduit only: a sloped conduit at rest has a varying depth and SWMM represents it by one mid-depth area (that is PV-TF2)",
+  "part full only: the crown transition and finding F1 are PV-TF4",
+  "one diameter, one roughness, one inflow rate, one tank size; one SWMM build"
+ ],
+ "relationToFindings": {
+  "F1": "excluded by the guard (P3); not tested here; its SLOT question stays open",
+  "F2": "PARTIAL kept as registered; NONE only as a diagnostic; no criterion absorbs it",
+  "F3": "tested directly (P1, P2a, P2b); its registered T2-C rows stay Failed whatever the outcome; the Q 0.5 sign change stays open",
+  "F4": "not resolved: the in-motion closure is diagnostic only",
+  "F5": "addressed for this configuration: a declared net inflow into a closed system",
+  "B6-C": "a P2a or P2b outcome makes its mechanism a testable hypothesis; it is not resolved here"
+ },
+ "validRange": "a horizontal circular conduit filled from dry to at most 0.9 D under dynamic-wave routing, closed system, ends at prismatic storage",
+ "scoring": "automated, per N; status counts by error type; never a single pass percentage",
+ "criteriaRevisions": [],
+ "definitionRevisions": [
+  { "date": "2026-11-12", "draft": 2, "why": "review 5 items a-e: junction storage accounted (junctionStorage, R4, junction-volume row); every junction's depth and volume kept in the raw output; rest defined by tank levels plus a per-segment low-flow condition; boundary flux at every step, whole run and rest window; transientStatement added; predictions split into P2a/P2b with an outcome-interpretation table. Pre-registration: nothing hashed or run" }
+ ]
+}

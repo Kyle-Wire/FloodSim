@@ -235,3 +235,25 @@ These are held until this register is reviewed:
 - Milestone 2 implementation: its specs and reference inventory may be prepared.
 - Production wiring.
 - Any use of Charlotte other than as an integration test.
+
+## Review 5 resolutions (12 Nov 2026), appended; the text above is unchanged
+
+Review 5's second pass is kept in `physics/milestone2/reviews/review-5-2026-11-12.md`. With this record, **Milestone 1
+is accepted with qualifications and formally closed in that form.** The open findings below stay open; closure means
+their status is settled and recorded, not that they are resolved.
+
+| Finding | Resolution |
+|---|---|
+| F1 | **Explained, not resolved.** The evidence is EXTRAN-specific and is kept as is. Whether the loss occurs under SLOT is an open, untested question |
+| F2 | **The four PV-U1 rows remain Failed.** A versioned error-type definition revision is *prepared, not applied*: `physics/spec-revisions/PV-U1-definition-revision-1.md`. It classifies the PARTIAL inertial-damping discrepancy as physical-model, with the subtype routing-equation approximation. The registered criteria, spec and results are unchanged |
+| F3 | **Explained, with its registered T2-C failures kept.** The unexplained Q 0.5 segmentation behaviour (standard section; +0.12 % at 16 segments, +0.22 % at 32, a sign change) is kept open within F3 |
+| F4 | **Insufficient reference data,** unchanged |
+| F5 | **A documented coverage gap,** unchanged |
+| F6–F9 | Unchanged |
+| PVM2 naming | **Confirmed:** Physics Verification Milestone 2 (PVM2), prefixes TF, ST, RV, SX, NW |
+
+Still held:
+- PVM2 execution, until its independent reviews approve PV-TF1;
+- production wiring;
+- production routing settings;
+- any use of Charlotte other than as an integration test.
