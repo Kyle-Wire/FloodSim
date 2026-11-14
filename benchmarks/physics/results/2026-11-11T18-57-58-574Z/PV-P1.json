@@ -1,0 +1,968 @@
+{
+ "id": "PV-P1",
+ "spec": "benchmarks/physics/spec/PV-P1.json",
+ "rows": [
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.011",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 1.7215363593731898,
+   "sim": 1.7209563441056073,
+   "abs": -0.0005800152675825565,
+   "rel": -0.00033691723350748147,
+   "limit": 0.017215363593731898,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.011",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 1.7189637246200287,
+   "sim": 1.7209563441056073,
+   "abs": 0.001992619485578606,
+   "rel": 0.0011591981011810288,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 0.47 mm from n 0.011 (Strickler, an assumption); Re 4.48e+5, f 0.02248; Swamee–Jain gives 1.7283 m",
+   "dwSwameeJain": 1.7282923093563634,
+   "manning": 1.7215363593731898
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.011",
+   "quantity": "flow through the conduit (sign positive)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": 0.10602875205865551,
+   "sim": 0.10602875205865557,
+   "abs": 5.551115123125783e-17,
+   "rel": 5.235480957141592e-16,
+   "limit": 0.00010602875205865551,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.011",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.011 reversed",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 1.7215363593731898,
+   "sim": 1.7209563441056073,
+   "abs": -0.0005800152675825565,
+   "rel": -0.00033691723350748147,
+   "limit": 0.017215363593731898,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.011 reversed",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 1.7189637246200287,
+   "sim": 1.7209563441056073,
+   "abs": 0.001992619485578606,
+   "rel": 0.0011591981011810288,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 0.47 mm from n 0.011 (Strickler, an assumption); Re 4.48e+5, f 0.02248; Swamee–Jain gives 1.7283 m",
+   "dwSwameeJain": 1.7282923093563634,
+   "manning": 1.7215363593731898
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.011 reversed",
+   "quantity": "flow through the conduit (sign negative: uphill against the drawn direction)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": -0.10602875205865551,
+   "sim": -0.10602875205865557,
+   "abs": -5.551115123125783e-17,
+   "rel": -5.235480957141592e-16,
+   "limit": 0.00010602875205865551,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.011 reversed",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.015",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 3.201203974041056,
+   "sim": 3.200125433254282,
+   "abs": -0.0010785407867737185,
+   "rel": -0.000336917233490816,
+   "limit": 0.03201203974041056,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.015",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 2.9202350932261534,
+   "sim": 3.200125433254282,
+   "abs": 0.27989034002812874,
+   "rel": 0.09584513954967838,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 3.04 mm from n 0.015 (Strickler, an assumption); Re 4.48e+5, f 0.03820; Swamee–Jain gives 2.9268 m",
+   "dwSwameeJain": 2.926822046121201,
+   "manning": 3.201203974041056
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.015",
+   "quantity": "flow through the conduit (sign positive)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": 0.10602875205865551,
+   "sim": 0.10602875205865557,
+   "abs": 5.551115123125783e-17,
+   "rel": 5.235480957141592e-16,
+   "limit": 0.00010602875205865551,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.015",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.015 reversed",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 3.201203974041056,
+   "sim": 3.200125433254282,
+   "abs": -0.0010785407867737185,
+   "rel": -0.000336917233490816,
+   "limit": 0.03201203974041056,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.015 reversed",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 2.9202350932261534,
+   "sim": 3.200125433254282,
+   "abs": 0.27989034002812874,
+   "rel": 0.09584513954967838,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 3.04 mm from n 0.015 (Strickler, an assumption); Re 4.48e+5, f 0.03820; Swamee–Jain gives 2.9268 m",
+   "dwSwameeJain": 2.926822046121201,
+   "manning": 3.201203974041056
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.015 reversed",
+   "quantity": "flow through the conduit (sign negative: uphill against the drawn direction)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": -0.10602875205865551,
+   "sim": -0.10602875205865557,
+   "abs": -5.551115123125783e-17,
+   "rel": -5.235480957141592e-16,
+   "limit": 0.00010602875205865551,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.3 n 0.015 reversed",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.011",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 0.3978822146586489,
+   "sim": 0.39774961785634844,
+   "abs": -0.00013259680230048865,
+   "rel": -0.0003332564196523488,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.011",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 0.4396559346027002,
+   "sim": 0.39774961785634844,
+   "abs": -0.04190631674635176,
+   "rel": -0.09531616304513403,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 0.47 mm from n 0.011 (Strickler, an assumption); Re 1.34e+6, f 0.01725; Swamee–Jain gives 0.4418 m",
+   "dwSwameeJain": 0.44175848918104144,
+   "manning": 0.3978822146586489
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.011",
+   "quantity": "flow through the conduit (sign positive)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": 0.9542587685278997,
+   "sim": 0.9542587685279001,
+   "abs": 4.440892098500626e-16,
+   "rel": 4.653760850792525e-16,
+   "limit": 0.0009542587685278998,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.011",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.011 reversed",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 0.3978822146586489,
+   "sim": 0.39774961785634844,
+   "abs": -0.00013259680230048865,
+   "rel": -0.0003332564196523488,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.011 reversed",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 0.4396559346027002,
+   "sim": 0.39774961785634844,
+   "abs": -0.04190631674635176,
+   "rel": -0.09531616304513403,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 0.47 mm from n 0.011 (Strickler, an assumption); Re 1.34e+6, f 0.01725; Swamee–Jain gives 0.4418 m",
+   "dwSwameeJain": 0.44175848918104144,
+   "manning": 0.3978822146586489
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.011 reversed",
+   "quantity": "flow through the conduit (sign negative: uphill against the drawn direction)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": -0.9542587685278997,
+   "sim": -0.9542587685279001,
+   "abs": -4.440892098500626e-16,
+   "rel": -4.653760850792525e-16,
+   "limit": 0.0009542587685278998,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.011 reversed",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.015",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 0.7398636222991407,
+   "sim": 0.7396170579973802,
+   "abs": -0.00024656430176051014,
+   "rel": -0.00033325641960109723,
+   "limit": 0.0073986362229914076,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.015",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 0.6918356614383997,
+   "sim": 0.7396170579973802,
+   "abs": 0.047781396558980505,
+   "rel": 0.06906466263915612,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 3.04 mm from n 0.015 (Strickler, an assumption); Re 1.34e+6, f 0.02715; Swamee–Jain gives 0.6932 m",
+   "dwSwameeJain": 0.6931575962060731,
+   "manning": 0.7398636222991407
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.015",
+   "quantity": "flow through the conduit (sign positive)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": 0.9542587685278997,
+   "sim": 0.9542587685279001,
+   "abs": 4.440892098500626e-16,
+   "rel": 4.653760850792525e-16,
+   "limit": 0.0009542587685278998,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.015",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.015 reversed",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 0.7398636222991407,
+   "sim": 0.7396170579973678,
+   "abs": -0.00024656430177294464,
+   "rel": -0.00033325641961790367,
+   "limit": 0.0073986362229914076,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.015 reversed",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 0.6918356614383997,
+   "sim": 0.7396170579973678,
+   "abs": 0.04778139655896807,
+   "rel": 0.06906466263913814,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 3.04 mm from n 0.015 (Strickler, an assumption); Re 1.34e+6, f 0.02715; Swamee–Jain gives 0.6932 m",
+   "dwSwameeJain": 0.6931575962060731,
+   "manning": 0.7398636222991407
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.015 reversed",
+   "quantity": "flow through the conduit (sign negative: uphill against the drawn direction)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": -0.9542587685278997,
+   "sim": -0.9542587685279001,
+   "abs": -4.440892098500626e-16,
+   "rel": -4.653760850792525e-16,
+   "limit": 0.0009542587685278998,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 0.9 n 0.015 reversed",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.011",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 0.15789966152714416,
+   "sim": 0.15784740515580076,
+   "abs": -0.000052256371343401,
+   "rel": -0.00033094669638932526,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.011",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 0.18907277361878586,
+   "sim": 0.15784740515580076,
+   "abs": -0.031225368462985098,
+   "rel": -0.1651499994702707,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 0.47 mm from n 0.011 (Strickler, an assumption); Re 2.69e+6, f 0.01484; Swamee–Jain gives 0.1899 m",
+   "dwSwameeJain": 0.18994137753206508,
+   "manning": 0.15789966152714416
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.011",
+   "quantity": "flow through the conduit (sign positive)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": 3.817035074111599,
+   "sim": 3.8170350741116006,
+   "abs": 1.7763568394002505e-15,
+   "rel": 4.653760850792525e-16,
+   "limit": 0.003817035074111599,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.011",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.011 reversed",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 0.15789966152714416,
+   "sim": 0.15784740515580076,
+   "abs": -0.000052256371343401,
+   "rel": -0.00033094669638932526,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.011 reversed",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 0.18907277361878586,
+   "sim": 0.15784740515580076,
+   "abs": -0.031225368462985098,
+   "rel": -0.1651499994702707,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 0.47 mm from n 0.011 (Strickler, an assumption); Re 2.69e+6, f 0.01484; Swamee–Jain gives 0.1899 m",
+   "dwSwameeJain": 0.18994137753206508,
+   "manning": 0.15789966152714416
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.011 reversed",
+   "quantity": "flow through the conduit (sign negative: uphill against the drawn direction)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": -3.817035074111599,
+   "sim": -3.8170350741116006,
+   "abs": -1.7763568394002505e-15,
+   "rel": -4.653760850792525e-16,
+   "limit": 0.003817035074111599,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.011 reversed",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.015",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 0.2936150730876647,
+   "sim": 0.29351790214921536,
+   "abs": -0.00009717093844935354,
+   "rel": -0.0003309466963923245,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.015",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 0.2863900386872478,
+   "sim": 0.29351790214921536,
+   "abs": 0.007127863461967532,
+   "rel": 0.024888657072851313,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 3.04 mm from n 0.015 (Strickler, an assumption); Re 2.69e+6, f 0.02248; Swamee–Jain gives 0.2869 m",
+   "dwSwameeJain": 0.2868980980509272,
+   "manning": 0.2936150730876647
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.015",
+   "quantity": "flow through the conduit (sign positive)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": 3.817035074111599,
+   "sim": 3.8170350741116006,
+   "abs": 1.7763568394002505e-15,
+   "rel": 4.653760850792525e-16,
+   "limit": 0.003817035074111599,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.015",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.015 reversed",
+   "quantity": "head loss against Manning full-pipe friction",
+   "errorType": "numerical",
+   "unit": "m",
+   "ref": 0.2936150730876647,
+   "sim": 0.29351790214921536,
+   "abs": -0.00009717093844935354,
+   "rel": -0.0003309466963923245,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005,
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.015 reversed",
+   "quantity": "head loss against Darcy–Weisbach + Colebrook (k_s from Strickler)",
+   "errorType": "physical-model",
+   "unit": "m",
+   "ref": 0.2863900386872478,
+   "sim": 0.29351790214921536,
+   "abs": 0.007127863461967532,
+   "rel": 0.024888657072851313,
+   "limit": null,
+   "criterion": {},
+   "status": "Not independently validated",
+   "note": "k_s 3.04 mm from n 0.015 (Strickler, an assumption); Re 2.69e+6, f 0.02248; Swamee–Jain gives 0.2869 m",
+   "dwSwameeJain": 0.2868980980509272,
+   "manning": 0.2936150730876647
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.015 reversed",
+   "quantity": "flow through the conduit (sign negative: uphill against the drawn direction)",
+   "errorType": "accounting",
+   "unit": "m³/s",
+   "ref": -3.817035074111599,
+   "sim": -3.8170350741116006,
+   "abs": -1.7763568394002505e-15,
+   "rel": -4.653760850792525e-16,
+   "limit": 0.003817035074111599,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-P1",
+   "case": "D 1.8 n 0.015 reversed",
+   "quantity": "SWMM's reported flow-routing continuity error",
+   "errorType": "accounting",
+   "unit": "%",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": [
+  {
+   "D": 0.3,
+   "n": 0.011,
+   "reversed": false,
+   "Q": 0.10602875205865551,
+   "tw": 10.8,
+   "hf": 1.7209563441056073,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 0.3,
+   "n": 0.011,
+   "reversed": true,
+   "Q": 0.10602875205865551,
+   "tw": 10.8,
+   "hf": 1.7209563441056073,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 0.3,
+   "n": 0.015,
+   "reversed": false,
+   "Q": 0.10602875205865551,
+   "tw": 10.8,
+   "hf": 3.200125433254282,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 0.3,
+   "n": 0.015,
+   "reversed": true,
+   "Q": 0.10602875205865551,
+   "tw": 10.8,
+   "hf": 3.200125433254282,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 0.9,
+   "n": 0.011,
+   "reversed": false,
+   "Q": 0.9542587685278997,
+   "tw": 11.4,
+   "hf": 0.39774961785634844,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 0.9,
+   "n": 0.011,
+   "reversed": true,
+   "Q": 0.9542587685278997,
+   "tw": 11.4,
+   "hf": 0.39774961785634844,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 0.9,
+   "n": 0.015,
+   "reversed": false,
+   "Q": 0.9542587685278997,
+   "tw": 11.4,
+   "hf": 0.7396170579973802,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 0.9,
+   "n": 0.015,
+   "reversed": true,
+   "Q": 0.9542587685278997,
+   "tw": 11.4,
+   "hf": 0.7396170579973678,
+   "drift": 1.4210854715202004e-14,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 1.8,
+   "n": 0.011,
+   "reversed": false,
+   "Q": 3.817035074111599,
+   "tw": 12.3,
+   "hf": 0.15784740515580076,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 1.8,
+   "n": 0.011,
+   "reversed": true,
+   "Q": 3.817035074111599,
+   "tw": 12.3,
+   "hf": 0.15784740515580076,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 1.8,
+   "n": 0.015,
+   "reversed": false,
+   "Q": 3.817035074111599,
+   "tw": 12.3,
+   "hf": 0.29351790214921536,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  },
+  {
+   "D": 1.8,
+   "n": 0.015,
+   "reversed": true,
+   "Q": 3.817035074111599,
+   "tw": 12.3,
+   "hf": 0.29351790214921536,
+   "drift": 0,
+   "full": true,
+   "flowOk": true
+  }
+ ]
+}

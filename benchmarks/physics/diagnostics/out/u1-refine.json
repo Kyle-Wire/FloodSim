@@ -1,0 +1,158 @@
+{
+ "written": "2026-11-11T21:29:32.036Z",
+ "note": "diff = SWMM − GVF at x m above the outfall, mm; scoredWorstMm uses the scored junctions of that segment length",
+ "runs": [
+  {
+   "Q": 3,
+   "segL": 100,
+   "conduits": 16,
+   "seconds": 0.1,
+   "diffMmAtXm": {
+    "50": null,
+    "100": -12.36,
+    "150": null,
+    "200": -0.79,
+    "300": -0.1,
+    "400": -0.06
+   },
+   "departsAtXm": 100,
+   "gvfDrawdownM": 100,
+   "scoredWorstMm": -13.09,
+   "continuityPct": -0.124,
+   "steadinessM": 0
+  },
+  {
+   "Q": 3,
+   "segL": 50,
+   "conduits": 32,
+   "seconds": 0.1,
+   "diffMmAtXm": {
+    "50": -31.91,
+    "100": -11.22,
+    "150": -3.74,
+    "200": -1.25,
+    "300": -0.18,
+    "400": -0.07
+   },
+   "departsAtXm": 200,
+   "gvfDrawdownM": 100,
+   "scoredWorstMm": -12.13,
+   "continuityPct": -0.062,
+   "steadinessM": 5.10702591327572e-15
+  },
+  {
+   "Q": 3,
+   "segL": 25,
+   "conduits": 64,
+   "seconds": 0.2,
+   "diffMmAtXm": {
+    "50": -27.52,
+    "100": -9.51,
+    "150": -3.17,
+    "200": -1.06,
+    "300": -0.16,
+    "400": -0.07
+   },
+   "departsAtXm": 200,
+   "gvfDrawdownM": 100,
+   "scoredWorstMm": -10.48,
+   "continuityPct": -0.031,
+   "steadinessM": 3.6637359812630166e-15
+  },
+  {
+   "Q": 3,
+   "segL": 12.5,
+   "conduits": 128,
+   "seconds": 0.3,
+   "diffMmAtXm": {
+    "50": -24.75,
+    "100": -8.33,
+    "150": -2.72,
+    "200": -0.9,
+    "300": -0.14,
+    "400": -0.07
+   },
+   "departsAtXm": 187.5,
+   "gvfDrawdownM": 100,
+   "scoredWorstMm": -9.3,
+   "continuityPct": -0.013,
+   "steadinessM": 4.6629367034256575e-15
+  },
+  {
+   "Q": 6,
+   "segL": 100,
+   "conduits": 17,
+   "seconds": 0.1,
+   "diffMmAtXm": {
+    "50": null,
+    "100": -30.44,
+    "150": null,
+    "200": -6.45,
+    "300": -1.33,
+    "400": -0.32
+   },
+   "departsAtXm": 300,
+   "gvfDrawdownM": 132,
+   "scoredWorstMm": -6.56,
+   "continuityPct": -0.105,
+   "steadinessM": 0
+  },
+  {
+   "Q": 6,
+   "segL": 50,
+   "conduits": 33,
+   "seconds": 0.1,
+   "diffMmAtXm": {
+    "50": -51.13,
+    "100": -25.76,
+    "150": -12.09,
+    "200": -5.57,
+    "300": -1.2,
+    "400": -0.3
+   },
+   "departsAtXm": 300,
+   "gvfDrawdownM": 132,
+   "scoredWorstMm": -12.65,
+   "continuityPct": -0.052,
+   "steadinessM": 4.440892098500626e-15
+  },
+  {
+   "Q": 6,
+   "segL": 25,
+   "conduits": 66,
+   "seconds": 0.2,
+   "diffMmAtXm": {
+    "50": -46.22,
+    "100": -22.49,
+    "150": -10.32,
+    "200": -4.66,
+    "300": -0.98,
+    "400": -0.25
+   },
+   "departsAtXm": 275,
+   "gvfDrawdownM": 132,
+   "scoredWorstMm": -10.89,
+   "continuityPct": -0.026,
+   "steadinessM": 4.107825191113079e-15
+  },
+  {
+   "Q": 6,
+   "segL": 12.5,
+   "conduits": 131,
+   "seconds": 0.3,
+   "diffMmAtXm": {
+    "50": -43.26,
+    "100": -20.52,
+    "150": -9.24,
+    "200": -4.11,
+    "300": -0.84,
+    "400": -0.22
+   },
+   "departsAtXm": 287.5,
+   "gvfDrawdownM": 132,
+   "scoredWorstMm": -12.14,
+   "continuityPct": -0.006,
+   "steadinessM": 6.8833827526759706e-15
+  }
+ ]
+}

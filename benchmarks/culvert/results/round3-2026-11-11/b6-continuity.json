@@ -1,0 +1,368 @@
+{
+ "benchmark": "B6-C continuity of offset conduits, SWMM alone",
+ "Q": 0.8,
+ "S": 0.002,
+ "SEG": 60,
+ "rows": [
+  {
+   "segments": 6,
+   "offsetM": 0,
+   "durationS": 3600,
+   "swmmErrorPct": -0.493,
+   "swmmImbalanceM3": -14,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2591,
+    "initialStoredM3": 0,
+    "finalStoredM3": 184
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2591.99,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 170.01
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 6,
+   "offsetM": 0.1,
+   "durationS": 3600,
+   "swmmErrorPct": -0.578,
+   "swmmImbalanceM3": -17,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2594,
+    "initialStoredM3": 0,
+    "finalStoredM3": 184
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2594.35,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 167.66
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 6,
+   "offsetM": 0.3,
+   "durationS": 3600,
+   "swmmErrorPct": -0.521,
+   "swmmImbalanceM3": -15,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2592,
+    "initialStoredM3": 0,
+    "finalStoredM3": 184
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2592.77,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 169.24
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 6,
+   "offsetM": 0.6,
+   "durationS": 3600,
+   "swmmErrorPct": -0.415,
+   "swmmImbalanceM3": -12,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2589,
+    "initialStoredM3": 0,
+    "finalStoredM3": 184
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2589.85,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 172.16
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0,
+   "durationS": 3600,
+   "swmmErrorPct": -0.509,
+   "swmmImbalanceM3": -15,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2401,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2401.54,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 360.46
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0.1,
+   "durationS": 3600,
+   "swmmErrorPct": -0.424,
+   "swmmImbalanceM3": -13,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2399,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2399.19,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 362.82
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0.3,
+   "durationS": 3600,
+   "swmmErrorPct": -0.297,
+   "swmmImbalanceM3": -9,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2395,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2395.67,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 366.34
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0.6,
+   "durationS": 3600,
+   "swmmErrorPct": -0.137,
+   "swmmImbalanceM3": -5,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2391,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2391.26,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 370.74
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 24,
+   "offsetM": 0,
+   "durationS": 3600,
+   "swmmErrorPct": -0.54,
+   "swmmImbalanceM3": -15,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2020,
+    "initialStoredM3": 0,
+    "finalStoredM3": 756
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2020.5,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 741.51
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 24,
+   "offsetM": 0.1,
+   "durationS": 3600,
+   "swmmErrorPct": -0.192,
+   "swmmImbalanceM3": -5,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2010,
+    "initialStoredM3": 0,
+    "finalStoredM3": 756
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2010.9,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 751.11
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 24,
+   "offsetM": 0.3,
+   "durationS": 3600,
+   "swmmErrorPct": 0.029,
+   "swmmImbalanceM3": 1,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 2004,
+    "initialStoredM3": 0,
+    "finalStoredM3": 756
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 2004.8,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 757.21
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 24,
+   "offsetM": 0.6,
+   "durationS": 3600,
+   "swmmErrorPct": 0.333,
+   "swmmImbalanceM3": 9,
+   "swmm": {
+    "inflowM3": 2761,
+    "outflowM3": 1996,
+    "initialStoredM3": 0,
+    "finalStoredM3": 756
+   },
+   "api": {
+    "inflowM3": 2762.01,
+    "outflowM3": 1996.39,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 765.61
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0,
+   "durationS": 1800,
+   "swmmErrorPct": -1.065,
+   "swmmImbalanceM3": -15,
+   "swmm": {
+    "inflowM3": 1321,
+    "outflowM3": 961,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 1322.01,
+    "outflowM3": 961.54,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 360.46
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0.3,
+   "durationS": 1800,
+   "swmmErrorPct": -0.62,
+   "swmmImbalanceM3": -9,
+   "swmm": {
+    "inflowM3": 1321,
+    "outflowM3": 955,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 1322.01,
+    "outflowM3": 955.67,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 366.34
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0,
+   "durationS": 7200,
+   "swmmErrorPct": -0.249,
+   "swmmImbalanceM3": -15,
+   "swmm": {
+    "inflowM3": 5641,
+    "outflowM3": 5281,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 5642.01,
+    "outflowM3": 5281.54,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 360.46
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0.3,
+   "durationS": 7200,
+   "swmmErrorPct": -0.145,
+   "swmmImbalanceM3": -9,
+   "swmm": {
+    "inflowM3": 5641,
+    "outflowM3": 5275,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 5642.01,
+    "outflowM3": 5275.67,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 366.34
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0,
+   "durationS": 14400,
+   "swmmErrorPct": -0.123,
+   "swmmImbalanceM3": -15,
+   "swmm": {
+    "inflowM3": 11400,
+    "outflowM3": 11040,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 11402.01,
+    "outflowM3": 11041.54,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 360.46
+   },
+   "steadyOutflowErrPct": 0
+  },
+  {
+   "segments": 12,
+   "offsetM": 0.3,
+   "durationS": 14400,
+   "swmmErrorPct": -0.072,
+   "swmmImbalanceM3": -9,
+   "swmm": {
+    "inflowM3": 11400,
+    "outflowM3": 11034,
+    "initialStoredM3": 0,
+    "finalStoredM3": 375
+   },
+   "api": {
+    "inflowM3": 11402.01,
+    "outflowM3": 11035.67,
+    "nodeStoredM3": 0,
+    "impliedStoredM3": 366.34
+   },
+   "steadyOutflowErrPct": 0
+  }
+ ]
+}

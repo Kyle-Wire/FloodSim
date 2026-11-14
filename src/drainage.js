@@ -451,11 +451,22 @@ export function toINP(net, fine, { durationS = 7200, routingStep = 1, surcharge 
     for (const q of outlets) L.push(`${pad(q.name, 16)} ${pad(net.nodes[q.from].name, 16)} ${pad(net.nodes[q.to].name, 16)} 0          TABULAR/DEPTH   ${pad('CRV_' + q.name, 16)}            NO`);
   }
   L.push('', '[XSECTIONS]', ';;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels');
-  for (const q of conduits) L.push(`${pad(q.name, 16)} ${pad(q.shape ?? 'CIRCULAR', 12)} ${pad(+q.D.toFixed(3), 16)} ${pad(+(q.W ?? 0).toFixed(3), 10)} 0          0          ${q.barrels ?? 1}`);
+  // a conduit with a native section (realNetwork `nativeSections`, src/swmm-xsect.js) writes its own shape, geometry and
+  // HDS-5 culvert code; every other conduit writes the legacy circle or box exactly as before
+  const g = (v) => (typeof v === 'number' ? +v.toFixed(4) : v);
+  for (const q of conduits) L.push(q.xs
+    ? `${pad(q.name, 16)} ${pad(q.xs.shape, 12)} ${pad(g(q.xs.g[0]), 16)} ${pad(g(q.xs.g[1]), 10)} ${pad(g(q.xs.g[2]), 10)} ${pad(g(q.xs.g[3]), 10)} ${q.xs.barrels ?? 1}${q.xs.culvert ? `          ${q.xs.culvert}` : ''}`
+    : `${pad(q.name, 16)} ${pad(q.shape ?? 'CIRCULAR', 12)} ${pad(+q.D.toFixed(3), 16)} ${pad(+(q.W ?? 0).toFixed(3), 10)} 0          0          ${q.barrels ?? 1}`);
   for (const q of weirs) L.push(`${pad(q.name, 16)} RECT_OPEN    ${pad(+q.D.toFixed(3), 16)} ${pad(+q.W.toFixed(3), 10)} 0          0`);
-  if (outlets.length) {
+  const lossy = conduits.filter(q => q.xs?.loss), shaped = conduits.filter(q => q.xs?.curve);
+  if (lossy.length) {
+    L.push('', '[LOSSES]', ';;Link           Kentry     Kexit      Kavg       FlapGate');
+    for (const q of lossy) L.push(`${pad(q.name, 16)} ${pad(q.xs.loss.entry, 10)} ${pad(q.xs.loss.exit, 10)} ${pad(q.xs.loss.avg, 10)} NO`);
+  }
+  if (outlets.length || shaped.length) {
     L.push('', '[CURVES]', ';;Name           Type       X-Value    Y-Value');
     for (const q of outlets) q.curve.forEach(([x, y], m) => L.push(`${pad('CRV_' + q.name, 16)} ${m ? '          ' : 'Rating    '} ${pad(f3(x), 10)} ${(+y.toPrecision(5))}`));
+    for (const q of shaped) q.xs.curve.pts.forEach(([x, y], m) => L.push(`${pad(q.xs.curve.name, 16)} ${m ? '          ' : 'Shape     '} ${pad(+x.toFixed(5), 10)} ${+y.toFixed(5)}`));
   }
   if (dwf) {
     L.push('', '[DWF]', ';;Node           Constituent      Baseline   Patterns');

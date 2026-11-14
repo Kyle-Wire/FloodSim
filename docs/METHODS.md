@@ -1630,13 +1630,315 @@ say. The ledger flags them, and flags any gauge series with more than 30 min bet
 checked. Their NSE and full-hydrograph results have uncertain provenance and are not treated as equivalent to
 uninterrupted runs.
 
+**Experiment B: the downstream culvert entrance, one structure (set up and predicted 10 November 2026, before the
+run).** Question: does representing the downstream twin box culvert as a connected hydraulic structure materially
+change the January gauge stage? The entrance head J36 (city box 113894163, surveyed upstream invert 671 ft = 204.52 m)
+takes no water for two reasons. Its structure is `STRUCT_TYPE` "Culvert", which the city's own domain names
+"Endsection-Culvert", and the run's outfall query asks only for Endwall and FES. And a 0.38 m pipe drains into the same
+node, while the entrance rule (§3.9) opens a pipe head only where nothing arrives. That rule also keeps 10 other placed
+end sections in the extended box closed, among them a 2.44 m endwall between Sheffield Dr and the box. Changing the
+rule or the structure filter would open all of them at once, so neither is changed. Instead the run lists this one
+head (`openHeads`, an opt-in input entering the run fingerprint; branch `exp/culvert-entrance`). The twin head J1766
+stays as the city records it: its pipe has no upstream invert, and none is assumed. The test is therefore one barrel of
+two, with surveyed geometry only.
+
+Everything else is the extended-west run's inputs: January forcing and hydrology, the Sheffield fix, the channel
+scenario, a free outfall at the extended west edge, the same roughness and the same gauge reading.
+
+Predictions written before the run:
+
+1. Before the storm the creek above the box no longer stands at the dammed 209.84 m. It falls toward the ground at the
+   entrance (206.87 m in the model).
+2. Headwater at J36 near the 25 m³/s peak is about 209.7 m. This is HDS-5 inlet control for one 7 × 7 ft barrel (box,
+   30–75° wingwall coefficients). The 207.0–207.2 m estimate was for both barrels, and the twin stays closed here.
+3. At the gauge the peak falls from the extended run's 211.33 m back to within 0.05 m of the standard-domain 211.15 m.
+   The reasoning: a fixed level of 210.8 m at the standard west edge lifted the gauge only 0.07 m, and 209.7 m is 1.1 m
+   lower. A peak more than 0.10 m above 211.15 m would contradict this and mean the downstream box matters at Sheffield
+   Dr.
+
+**Experiment B result (run 2026-11-10_100745, commit 4fba432, not resumed).** The head opened: J36 took 175,000 m³,
+peaking at 25.4 m³/s. The box length below the next junction carried up to 29 m³/s.
+
+1. **Held.** With the entrance open, the pond at the entrance drained to 206.65 m by the end of the run (bed
+   206.47 m); with it closed it stayed at 209.82 m. At Sheffield Dr the end-of-run level fell from 209.85 m to 209.47 m
+   (observed 209.25 m), and the level NSE rose from −0.60 to 0.25, almost all of it from the recession.
+2. **Failed.** The peak level by the entrance was 210.9–211.2 m, not 209.7 m. In the model the box is not under inlet
+   control. Its junctions are sealed (30 m surcharge allowed), and the inverts the model derived where the city records
+   none put a 4.8 m upward step at the first junction (J1229). The flow is pressure-driven, with SWMM heads of 219–223 m
+   at J36 and J1229, which are not physical levels.
+3. **Failed, and its stated inference was wrong.** The gauge peaked at 211.34 m with the entrance open against 211.33 m
+   with it closed. That 0.01 m is under the noise floor. The comparison that isolates the box is closed against open,
+   and it shows the box does not affect the Sheffield Dr peak. What failed is the premise behind prediction 3: the box's
+   dam does not explain the extended domain's rise over the standard domain. Prediction 3's own wording ("more than
+   0.10 m above 211.15 m would mean the downstream box matters") read a domain difference as a box effect. That was a
+   mistake in how the prediction was set up, recorded here rather than corrected after the fact.
+
+Answer to the question: no. Connecting the downstream box changes the January recession, not the gauge peak.
+
+That reopens the boundary. Where the creek crosses the standard domain's west edge (−80.7734), the free-outfall run
+peaks at 210.54 m. Both extended runs peak at 211.15–211.16 m there, 0.6 m higher, and 0.35 m above the highest fixed
+level tested (210.8 m). The fixed-level tests therefore did not reach the level the extended domain produces at that
+edge, so "rejected as a main cause" went beyond what they showed. The extended domain is not yet a clean reference
+either. Further down, between −80.7755 and −80.7765, its peak sits flat at 210.80 m in both runs, open box or closed,
+and what sets that level has not been identified. A second unread structure is one candidate. The entrance rule
+(§3.9) keeps 10 other end sections in the extended box closed. One of them, J475, was checked and is a storm pipe
+discharging to the creek, not a crossing (peak head 206.19 m).
+
+**What holds the extended reach at 210.80 m (diagnosis from saved runs, no new simulation).** The creek's path was
+traced over the extended run's ground grid as the route from the Sheffield Dr outlet to the west edge with the lowest
+high point. It is 803 m long, its highest ground is 209.75 m, and it follows the OSM line of Edwards Branch. Along it,
+two separate things produce the flat surface. Neither is a prescribed level or the domain edge.
+
+1. *A starting pool that is not real (450–800 m below Sheffield Dr).* Both extended runs start with 64,600 m³ of water
+   on 6.9 ha. One 6.7 ha patch around the box entrance holds 63,600 m³, with its surface at 209.9–211.9 m. The standard
+   domain starts with 238 m³. The start-water rule (§3.8, src/waterlevels.js) raises every river cell by the gauge's
+   rise above the lidar water surface, 0.36 m here, and spreads the water onto connected ground below that level. OSM
+   carries Edwards Branch across two culverts (`tunnel=culvert`) and along a reach whose lidar "water surface" is the
+   ground. The river cells there sit on fill and road, so the rise puts water up to about 1.2 m deep over 209.6–209.7 m
+   ground. Over 450–800 m the peak equals the starting level to within 0.05 m: the "peak" there is the initial
+   condition. The pool also reaches Sheffield Dr. In both extended runs the gauge jumps from 209.09 m to 210.6 m within
+   6 minutes of the start and stays 0.3–0.7 m above the observed 209.1–209.2 m all through the pre-storm hours
+   (209.77 m with the box closed, 209.38 m open). The standard domain stays at 208.9 m. The "dam at 209.84 m before the
+   storm" reported for the first extended run was this pool, not the box.
+2. *A culvert crossing modelled as two outfalls back to back (about 470 m below Sheffield Dr).* OSM maps a short
+   culvert there (way 1075557679, about 13 m). The city has a 2.44 m (96 in) pipe between two endwalls 15 m apart, at
+   −80.776858, 35.202592 (east, the upstream face) and −80.777024, 35.202558 (west). The model splits that pipe at a
+   middle junction, J603, where a 0.46 m pipe joins. J603's invert (207.51 m) is above both ends' (205.13 m east,
+   205.36 m west), so the two lengths run outward from J603. Both endwalls become outfalls (O2094 east, O475X west),
+   and the culvert carries only the 1.8 m³/s that J603's surface inlet takes. The creek cannot pass through it and
+   overtops the crossing, whose lidar crest on the traced path is 209.5–209.75 m. During the storm the reach above it,
+   250–440 m below Sheffield Dr and dry at the start, peaks at 210.77–210.85 m, the same in both runs because the
+   crossing is upstream of the box. Above 230 m the surface rises toward Sheffield Dr: 211.03 m at 225 m, 211.17 m at
+   100 m, 211.36 m at 10 m. Whether J603's invert is the city's or one the model derived could not be checked: the
+   city's GIS has refused requests from this machine since 10 November 2026.
+
+The standard domain's west edge (−80.7734) is about 340 m upstream of this crossing, so the standard domain contains
+neither artefact, and neither does it contain the crossing itself. The 0.6 m difference between the domains at that
+edge is therefore a domain-sensitivity result that mixes three things: the edge's free outfall, the starting pool, and
+a crossing that passes no creek flow. It is not an isolated boundary result.
+
+A prediction recorded before any run that represents the crossing (none has been run): HDS-5 inlet control for one
+96 in concrete pipe with a square-edged headwall puts the headwater about 5.4 m above the east invert (210.5 m) at
+25 m³/s, and near 208.1 m at 15 m³/s. A working culvert could therefore still back water toward Sheffield Dr at the
+January peak, overtopping included. The estimate is sensitive to the flow and to an invert that is not yet verified.
+
+None of the 10 other end sections the entrance rule keeps closed lies within 300 m of the creek path, except J475 (the
+crossing's west endwall above) and J36 (the box entrance).
+
+**Experiment C: the starting pool removed, one change (set up and predicted 10 November 2026, before the run).**
+Question: how much of the extended domain's January stage at Sheffield Dr comes from the false starting pool?
+
+What found the seed: the cells that start exactly 0.36 m deep around 210.9 m are on an OSM stream (way 1075557681)
+joining Edwards Branch at the crossing, on 210.5 m ground, 1.4 m above the gauge's water. The rise reached it because
+it is connected water. The bridge-deck guard in `waterBase` keeps a cell's own height when its neighbours share it, as
+a pool above a dam would, and the tributary's cells share theirs. The change is an opt-in limit on how far a river
+gauge's rise is carried along the water (`startReach`, commit aa8beb3, branch `exp/start-reach`), set to 0: the gauge's
+own pool only. That is in effect what the standard domain started with (238 m³). Everything else is the original
+extended-west run: box closed, no opened heads, the same forcing, scenario, roughness, boundary and gauge reading.
+
+Predictions written before the run:
+
+1. The starting water is near the standard domain's, under 1,000 m³ against 64,600 m³, with none of it around the box
+   entrance. Six minutes in, the gauge stays near 209.0 m instead of jumping to 210.6 m. Through the pre-storm hours it
+   follows the standard domain (about 208.9 m), not 209.8 m.
+2. The gauge peak stays within 0.05 m of 211.33 m. The extended runs' pre-storm levels differed by 0.4 m with the box
+   open or closed, yet their peaks agreed within 0.01 m. The crossing, still modelled as two outfalls, still holds the
+   reach above it near 210.8 m at the peak.
+3. The level NSE improves on −0.60, because the pre-storm hours no longer sit 0.3–0.7 m high. The end-of-run level at
+   Sheffield Dr stays above the observed 209.25 m, because the closed box and the crossing still hold water.
+
+**Experiment C result (run 2026-11-10_120141, commit 6ca8dbd, not resumed).** All three predictions held.
+
+1. The run started with 168 m³ on 0.05 ha, against 64,600 m³. Six minutes in, the gauge read 208.90 m, against 210.64 m
+   in the original extended run. Through the pre-storm hours it stayed at 208.89–208.90 m, the same as the standard
+   domain. Both sit about 0.2 m under the observed 209.1–209.2 m.
+2. The gauge peak was 211.35 m, against 211.33 m, so +0.02 m, under the noise floor. The peak is −0.01 m from the
+   observed and 18 min early.
+3. The level NSE rose from −0.60 to 0.19 (RMSE 0.69 to 0.49 m). The end-of-run level was 209.85 m, the same as the
+   original extended run and 0.6 m above the observed.
+
+From 10 h into the run, about 2 h before the rise, Experiment C and the original extended run read the same at the gauge
+to within 0.02 m. Along the creek their peak profiles agree to 0.02 m from Sheffield Dr to 250 m below it. The reach
+above the crossing peaks at 210.71–210.76 m instead of 210.77–210.81 m. Below the crossing the false pool's 210.89 m is
+gone: the peak there now falls from 210.69 m to 209.12 m at the edge, which is water flowing out, not sitting there.
+So the starting pool raised the pre-storm hours and the area below the crossing, and nothing else. It is not why the
+extended domain's peak at Sheffield Dr is 0.24 m above the standard domain's. That difference is made during the
+storm, by what lies downstream of the standard edge: the crossing modelled as two outfalls, and the closed box,
+already shown not to move the peak. The end-of-run level is held up by the same features.
+
+The extended domain with `startReach` 0 is now the cleaner reference, with one artefact known to remain: the crossing
+culvert. Its peak is within the noise floor of the observed. That agreement is not evidence that the model is right,
+because the reach above the crossing is held by overtopping that a working culvert would share.
+
+**The Edwards Branch crossing: provenance and geometry (records only, no new simulation).** Taken from the city's
+StormPipes and StormStructures replies cached on 9–10 November 2026 (`.cache/`), read while the city's server refused
+requests. The crossing is one culvert, digitized east to west in three lengths, endwall to endwall, 15.6 m in all:
+
+| City record | From → to | Inverts (ft) | Source of the invert |
+|---|---|---|---|
+| P_39133 | east endwall S_16703 → S_47917 | 673.0 → 679.6 | endwall: submeter GPS, January 2014 |
+| P_11307 | S_47917 → S_15969 | 679.6 → 680.8 | catch basins: record drawing, 2015, "not verified in the field yet" |
+| P_11292 | S_15969 → west endwall S_15970 | 680.8 → 674.2 | endwall: submeter GPS, January 2014 |
+
+All three are recorded as `Elliptical`, 96 in high and 144 in wide, "Metal or Steel", "single metal culvert". The
+lengths date from 1956 and 1962.
+
+- **J603's invert, 207.51 m, is the city's own record (680.8 ft), but not the barrel's floor.** It is the invert of
+  S_15969, a double catch basin whose box "dumps directly into culvert". S_47917 (679.6 ft) likewise "enters directly
+  into culvert". Those values stand 1.5–2 ft below the 8 ft barrel's crown, which fits basins connecting near the top
+  of the culvert. They were copied onto the pipe lengths as their end inverts. The barrel's floor is known only at the
+  endwalls: 673.0 ft (205.13 m) east and 674.2 ft (205.50 m) west, both by submeter GPS. That is 0.37 m adverse over
+  15.6 m, possibly because the west part was added later.
+- **Direction: east to west.** Each length's upstream end in the city's record is the east endwall's side. That
+  matches the creek, which runs from Sheffield Dr toward the box entrance (671 ft). The model turned two lengths round,
+  because their recorded inverts rise (§3.9 rule 8). The rule that would turn them back (rule 3a) needs a main pipe
+  arriving at a dead end, and a culvert fed by surface water has none. The rule that bridges a culvert's middle
+  (rule 10) applies only to a manhole with no invert, and these have the basins'. The result is two outfalls back to
+  back.
+- **Shape and roughness are not read.** FloodSim does not recognize `Elliptical`. It built a 2.44 m circle (4.7 m²)
+  instead of a 96 × 144 in horizontal ellipse (7.0 m²), with n = 0.013 for corrugated metal.
+- **Independent evidence of the barrel's state, from the lidar.** The lowest lidar ground within 5 m of the east
+  endwall is 207.33 m: 2.2 m above the GPS invert and 0.24 m below the crown (207.57 m). By the west endwall it is
+  206.96 m, against an invert of 205.50 m. The barrel is either mostly filled with sediment or held standing water
+  when the lidar was flown. The records cannot tell these apart. It is the largest remaining uncertainty, because it
+  decides whether the culvert passes the January flow.
+
+A defensible representation, stating its assumptions: one barrel, east to west, between the two GPS endwall inverts
+(the adverse 0.37 m as recorded); a horizontal ellipse 96 × 144 in; n for corrugated metal; the two catch basins
+entering as inlets, not as points on the barrel's floor; the sediment state bracketed (clear, and filled to the
+approach lidar), because it is not known.
+
+Conditional predictions, registered before any run and holding only for that representation:
+
+- **A, hydraulics at the crossing.** HDS-5 inlet control for a clear 96 × 144 in CMP at 25 m³/s gives a headwater of
+  208.4 m (headwall) to 208.8 m (projecting). That is below the crossing's lidar crest (209.5–209.75 m), so a clear
+  barrel would pass the January peak without overtopping. The reach above it would peak well below the present
+  210.7–210.8 m. A barrel filled to the approach lidar would keep the overtopping and that reach near its present
+  level. The earlier 210.5 m estimate was for the wrong shape (a 96 in circle) and is withdrawn.
+- **B, the gauge.** The change at Sheffield Dr is measured against the corrected extended baseline: since 11 November
+  2026 the refreshed run with the corrected inlet attachment, 211.35 m (run 2026-11-11_001513, below); Experiment C
+  gave the same peak. A change at the crossing need not reach the gauge at the same size. With a clear barrel the gauge
+  should fall toward the standard domain's 211.10–211.15 m. Filled, it should stay within the noise floor of 211.35 m.
+
+The corrected extended baseline's 0.01 m agreement with the observed peak is not counted as validation while the
+crossing is misrepresented.
+
+**Baseline refresh: the corrected inlet attachment (set up and predicted 10 November 2026, while the run was in
+progress and before any result was read).** The way a grate joins a pipe was corrected after Experiment C
+(`docs/specs/canonical-infrastructure.md` §7.1). An inlet within 10 m of a pipe's end now joins the *nearer* end;
+before, the upstream end was checked first, so on a pipe under 20 m long an inlet near the downstream end joined the
+upstream manhole. On the city's cached records this moves 41 of 402 grates in the regression set. The SWMM input is
+unchanged, because a grate decides only where surface water enters the network. This is a real model change, so the
+corrected extended baseline is rerun with it, one change from Experiment C: `legacyInletReuse` false (the new
+default), `barrelRuns` false (the default), `startReach` 0, box closed, no opened heads, and the same forcing,
+scenario, roughness, domain, boundary, numerics and gauge reading. Project "Edwards Branch Charlotte 2024-01 (baseline
+refresh, inlet fix)", copied from Experiment C's project with only the job label changed. The uncommitted code is
+saved with it (`config-record/`, the diff against a9a9fdc). Experiment C's project and run are not touched.
+
+Predictions:
+
+1. `network.inp` is identical to Experiment C's. Only the grate-to-node assignment differs.
+2. The grates that move are on short pipes in the street network. None is on Edwards Branch between Sheffield Dr and
+   the crossing, so the creek's peak is unchanged: the gauge peak stays within the 0.05 m noise floor of 211.35 m, with
+   the same timing (within a few minutes) and the same level NSE (0.19 ± 0.02).
+3. The total surface-to-pipe exchange changes by under 1 %. Local ponding changes only at the moved grates, by
+   centimetres, where a grate now drains the low end of its own pipe.
+4. Both mass books close as before: surface error under 0.01 %, network continuity error near −0.2 %.
+
+**Baseline refresh result (run 2026-11-11_001513, code a9a9fdc plus the uncommitted inlet fix, not resumed, 61 min).**
+The run finished and both mass checks passed. Predictions 1, 2 and 4 held. Prediction 3 held for the total, at the
+edge of its 1 % band, and locally only in part.
+
+| | Experiment C (historical) | Refresh (active) | Standard domain, channel scenario (2026-11-09_220440) |
+|---|---|---|---|
+| Gauge peak (m) / error vs observed 211.36 | 211.347 / −0.014 | 211.352 / −0.009 | 211.104 / −0.257 |
+| Time of the highest reading (observed 19:30 UTC) | 19:11 | 19:32 | 19:07 |
+| 15-min mean stage peak (m) | 211.299 from 19:02 | 211.303 from 19:04 | — |
+| Level NSE / KGE / RMSE (m) | 0.188 / 0.551 / 0.493 | 0.187 / 0.553 / 0.493 | 0.81 |
+| Pre-storm level / end of run (observed end 209.25) | 208.89–208.90 / 209.85 | 208.89–208.90 / 209.85 | — / 209.00 |
+| Peak flow, instantaneous (observed 24.95 m³/s at 19:30) | 25.99 at 19:07 | 27.10 at 19:12 | 25.39 |
+| Peak flow, 15-min mean | 24.13 | 24.13 | — |
+| Flow NSE / volume ratio | 0.937 / 1.081 | 0.938 / 1.082 | 0.939 / 1.055 |
+| Starting surface water | 168.08 m³ | 168.08 m³ | 238 m³ |
+| Surface book error (relative) | 2.6 × 10⁻⁵ | −1.6 × 10⁻⁶ | −2.1 × 10⁻⁶ |
+| SWMM continuity error / combined books | −0.183 % / −0.36 % | −0.118 % / −0.24 % | −0.042 % |
+| Surface → pipes / pipes → surface | 1,015,941 / 18,019 m³ | 1,025,062 / 19,884 m³ | 580,668 m³ (smaller domain) |
+| Surcharged nodes / flooded nodes | 348 / 0 | 343 / 0 | — |
+| Area with peak depth over 15 cm / 5 cm | 237,072 / 592,608 m² | 236,808 / 592,280 m² | — |
+
+- **Inputs.** `network.inp`, the network's nodes and pipes, the inlet and outfall records, the forcing and the starting
+  water are identical. The forcing fingerprint differs only in the pipe-records hash, because the pipe records now
+  carry the canonical `asset` field, and in the commit.
+- **Grates.** 167 of the 1,696 grates (9.8 %) join a different node: 154 a lower one (median 0.21 m lower), 1.6–10 m
+  away (median 7.7 m). That is the share the cached-records check predicted (10.2 %). 330 nodes change their grate
+  count. At 6 grates the grate's cell changes as well. The nearest moved grate is 255 m from the gauge; the nearest
+  that carries much water (J129 → J130, 6,500 → 8,400 m³) is 267 m away. The moved grates take 88,600 m³ against
+  82,400 m³.
+- **Gauge.** The peak moved +0.005 m, a tenth of the 0.05 m noise floor. The time of the highest reading moved from
+  19:11 to 19:32. That is not a timing change: both runs have two maxima on the peak plateau, about 20 min apart and
+  within 0.02 m of each other, and the higher of the two switched. The 15-min mean peak moved 2 min. The lag statistic
+  (−18 to +2 min) is therefore not robust on this plateau and should not be read as an improvement. The level score,
+  the pre-storm and the end level are unchanged. Instantaneous peak flow rose 1.1 m³/s, but the 15-min mean peak is
+  the same and the flow volume differs by 0.03 %, so it is a 10 s spike, not a larger flood.
+- **Exchange.** Surface-to-pipe exchange rose 0.9 %, and water returned from the pipes to the surface 10 % (1,865 m³).
+  Net capture rose 0.7 %. Grates that now join the lower end of their own pipe take more water.
+- **Local ponding.** 527 cells (of 2.7 million wet) change peak depth by more than 0.10 m, in 59 clusters. 330 of those
+  cells are wet in one run only: pits next to a lip that water just reaches in one run and not the other (for example
+  a pit 1.7 m deep 130 m west of the crossing, dry against 1.26 m, while its rim cells peak at the same level in both).
+  The largest change where both runs are wet is a 200-cell pond at a moved grate near −80.7550, 35.2150, 0.6 m lower
+  (0.89 → 0.29 m): there a grate moved from J1554 to J1555, and J1554's grate now sits in a different cell that takes
+  90 m³ more. Within 100 m of the gauge the peak water surface changes by 0.01 m on average. The largest local change,
+  0.13 m, is at the outfall cell, which Experiment A showed is not a stage.
+- **What is the change and what is numerical variation.** The inlet reassignment was the only intentional model
+  change; neither run was resumed, and the surface solver repeats exactly (§8.3). The resulting differences are of
+  two kinds. Direct local hydraulic effects: the moved grates, the ponds they drain, and the exchange totals. Small
+  propagated differences: the coupled solver's adaptive time-step sequence changed (675,968 steps against 675,775),
+  so the numerical trajectory changed too. That gives sub-centimetre differences in 43 % of wet cells at every
+  distance from the moved grates (over 1 cm in 29 of 154,000 cells 250–500 m away), and the shuffle of the gauge's
+  two plateau maxima. These are not physical effects of the reassignment, and they are not attributed to it cell by
+  cell. The gauge-level differences remain below the noise floor. This rests on §8.3's repeatability, not on a repeat
+  of this coupled run, and no repeat is planned: a 5 mm difference does not justify one.
+- **Two counts, not contradictory.** 41 of 402 grates is the regression set: the cached records in a 1.2 km
+  box round the crossing, on a synthetic ground, checked without a run. 167 of 1,696 is this run's extended domain. Both are about 10 %.
+
+**The inlet reassignment experiment is closed (11 November 2026).**
+
+| Question | Finding |
+|---|---|
+| Did inlet assignments change? | Yes: 167 of 1,696 grates |
+| Did local flooding change? | Yes, materially: a pond 0.6 m lower at a moved grate |
+| Did total exchange change? | Slightly: +0.9 % surface to pipes, +10 % pipes to surface |
+| Did the gauge peak change? | No: +0.005 m, within noise |
+| Did peak timing improve? | No demonstrated improvement (a switch between two plateau maxima) |
+| Did this resolve the stage discrepancy? | No |
+| New active baseline established? | Yes |
+
+A separate finding to keep: inlet connectivity can change local flood depths substantially without changing the
+peak stage downstream. The 10 % rise in water returned from the pipes to the surface is worth watching in later
+changes to connectivity.
+
+The refreshed peak, 0.009 m below the observed, is a baseline result, not a validated hydraulic solution. The level
+NSE is 0.19, the end-of-run level is 0.60 m high, the standard domain peaks 0.25 m lower, and the crossing culvert is
+still misrepresented. The gauge peak has been shown to depend on conditions outside the standard domain.
+
+**Active baseline.** Run 2026-11-11_001513 in project "Edwards Branch Charlotte 2024-01 (baseline refresh, inlet fix)"
+is the corrected extended-domain January baseline: extended west, `startReach` 0, box closed, no opened heads,
+corrected inlet attachment, `barrelRuns` off. Experiment C (2026-11-10_120141, 211.35 m) is kept unchanged as a
+historical reference. The standard-domain runs were made with the old attachment and have not been refreshed. Their
+211.10–211.15 m is a comparison across domains, not across code.
+
 | Hypothesis | Status (10 Nov 2026) |
 |---|---|
 | Sheffield Dr culvert misread | Confirmed and corrected (143d18e) |
 | Lidar bed above the surveyed invert below the outlet | Supported by the sensitivity scenario; not adopted as the default |
-| Free outfall at the west edge drawing the gauge down | Rejected as a main cause (+0.07 m at 0.6 m above the free outfall) |
+| Free outfall at the west edge drawing the gauge down | Reopened as domain sensitivity, not isolated: the extended domain peaks 0.6 m higher at that edge, but it also holds the starting pool and the crossing artefact |
 | Where the gauge is read, across a steep drawdown | Tested (Experiment A): every defensible reading is 0.19–0.28 m low; only the pipe's outfall cell reads high, and it is not a stage. The first 2–3 m below the endwall is unresolved at 2 m |
-| Downstream twin box culvert | Connectivity fault found (entrance type not read); its effect at the gauge predicted small, untested |
+| Downstream twin box culvert | Tested (Experiment B, one barrel opened): +0.01 m at the gauge peak, under the noise floor; it drains the pond and improves the recession. Twin head left closed (no invert recorded) |
+| What sets the extended reach's 210.80 m peak pool | Identified (no run): a 96 in crossing 470 m below Sheffield Dr modelled as two outfalls back to back, so the creek overtops it (crest 209.5–209.75 m); below the crossing, a starting pool that is not real |
+| Start water spread from stream lines over culverts and fill (extended domain) | Tested (Experiment C, `startReach` 0): removing it fixes the pre-storm hours (NSE −0.60 → 0.19) and moves the gauge peak +0.02 m; it is not why the extended peak is higher |
+| Edwards Branch crossing (96 × 144 in elliptical CMP, 470 m below Sheffield Dr) | Unresolved. Records read: east-to-west culvert, GPS endwall inverts 205.13 / 205.50 m, mid inverts are catch basins, shape not read. Barrel sediment state unknown (approach lidar 0.24 m below the crown). Clear barrel predicted 208.4–208.8 m headwater, no overtopping |
+| Extended domain's +0.24 m peak over the standard domain | Not isolated: made during the storm past the standard edge; the crossing is the leading candidate |
+| Short-pipe inlet attachment (fixed after Experiment C) | Tested (baseline refresh): 9.8 % of grates move; gauge peak +0.005 m, below the noise floor; local ponding changes at moved grates. The refreshed run is the active baseline. Closed |
 | Channel roughness | Deferred: it shifts the stage curve but does not change its slope |
 
 June and August have not been rerun with the culvert fix.

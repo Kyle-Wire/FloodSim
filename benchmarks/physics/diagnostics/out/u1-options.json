@@ -1,0 +1,174 @@
+{
+ "written": "2026-11-11T21:30:11.965Z",
+ "note": "SWMM − GVF, mm, at x m above the outfall; 50 m conduits as registered; registered = PARTIAL / BOTH",
+ "runs": [
+  {
+   "Q": 3,
+   "inertialDamping": "PARTIAL",
+   "normalFlowLimited": "BOTH",
+   "diffMmAtXm": {
+    "50": -31.91,
+    "100": -11.22,
+    "150": -3.74,
+    "200": -1.25,
+    "300": -0.18
+   },
+   "scoredWorstAbsMm": 12.13,
+   "continuityPct": -0.062
+  },
+  {
+   "Q": 3,
+   "inertialDamping": "NONE",
+   "normalFlowLimited": "BOTH",
+   "diffMmAtXm": {
+    "50": 0.18,
+    "100": -0.03,
+    "150": -0.05,
+    "200": -0.06,
+    "300": -0.06
+   },
+   "scoredWorstAbsMm": 0.94,
+   "continuityPct": -0.063
+  },
+  {
+   "Q": 3,
+   "inertialDamping": "FULL",
+   "normalFlowLimited": "BOTH",
+   "diffMmAtXm": {
+    "50": -37.59,
+    "100": -17.61,
+    "150": -7.94,
+    "200": -3.57,
+    "300": -0.75
+   },
+   "scoredWorstAbsMm": 18.52,
+   "continuityPct": -0.061
+  },
+  {
+   "Q": 3,
+   "inertialDamping": "PARTIAL",
+   "normalFlowLimited": "SLOPE",
+   "diffMmAtXm": {
+    "50": -31.91,
+    "100": -11.22,
+    "150": -3.74,
+    "200": -1.25,
+    "300": -0.18
+   },
+   "scoredWorstAbsMm": 12.13,
+   "continuityPct": -0.062
+  },
+  {
+   "Q": 3,
+   "inertialDamping": "PARTIAL",
+   "normalFlowLimited": "FROUDE",
+   "diffMmAtXm": {
+    "50": -31.91,
+    "100": -11.22,
+    "150": -3.74,
+    "200": -1.25,
+    "300": -0.18
+   },
+   "scoredWorstAbsMm": 12.13,
+   "continuityPct": -0.062
+  },
+  {
+   "Q": 3,
+   "inertialDamping": "NONE",
+   "normalFlowLimited": "SLOPE",
+   "diffMmAtXm": {
+    "50": 0.18,
+    "100": -0.03,
+    "150": -0.05,
+    "200": -0.06,
+    "300": -0.06
+   },
+   "scoredWorstAbsMm": 0.94,
+   "continuityPct": -0.063
+  },
+  {
+   "Q": 6,
+   "inertialDamping": "PARTIAL",
+   "normalFlowLimited": "BOTH",
+   "diffMmAtXm": {
+    "50": -51.13,
+    "100": -25.76,
+    "150": -12.09,
+    "200": -5.57,
+    "300": -1.2
+   },
+   "scoredWorstAbsMm": 12.65,
+   "continuityPct": -0.052
+  },
+  {
+   "Q": 6,
+   "inertialDamping": "NONE",
+   "normalFlowLimited": "BOTH",
+   "diffMmAtXm": {
+    "50": -4.12,
+    "100": -1.3,
+    "150": -0.45,
+    "200": -0.19,
+    "300": -0.09
+   },
+   "scoredWorstAbsMm": 1,
+   "continuityPct": -0.053
+  },
+  {
+   "Q": 6,
+   "inertialDamping": "FULL",
+   "normalFlowLimited": "BOTH",
+   "diffMmAtXm": {
+    "50": -56.09,
+    "100": -33.45,
+    "150": -18.95,
+    "200": -10.61,
+    "300": -3.34
+   },
+   "scoredWorstAbsMm": 19.51,
+   "continuityPct": -0.052
+  },
+  {
+   "Q": 6,
+   "inertialDamping": "PARTIAL",
+   "normalFlowLimited": "SLOPE",
+   "diffMmAtXm": {
+    "50": -51.13,
+    "100": -25.76,
+    "150": -12.09,
+    "200": -5.57,
+    "300": -1.2
+   },
+   "scoredWorstAbsMm": 12.65,
+   "continuityPct": -0.052
+  },
+  {
+   "Q": 6,
+   "inertialDamping": "PARTIAL",
+   "normalFlowLimited": "FROUDE",
+   "diffMmAtXm": {
+    "50": -51.13,
+    "100": -25.76,
+    "150": -12.09,
+    "200": -5.57,
+    "300": -1.2
+   },
+   "scoredWorstAbsMm": 12.65,
+   "continuityPct": -0.052
+  },
+  {
+   "Q": 6,
+   "inertialDamping": "NONE",
+   "normalFlowLimited": "SLOPE",
+   "diffMmAtXm": {
+    "50": -4.12,
+    "100": -1.3,
+    "150": -0.45,
+    "200": -0.19,
+    "300": -0.09
+   },
+   "scoredWorstAbsMm": 1,
+   "continuityPct": -0.053
+  }
+ ]
+}

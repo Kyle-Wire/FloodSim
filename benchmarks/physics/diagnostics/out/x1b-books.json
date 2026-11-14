@@ -1,0 +1,408 @@
+{
+ "written": "2026-11-11T21:28:04.426Z",
+ "runs": [
+  {
+   "label": "unfaulted",
+   "geometry": {
+    "pipeLength": 50,
+    "pipeDiameter": 0.5,
+    "tankA": 100
+   },
+   "ghostAreaPerNode": 4.898979485566358,
+   "predictedRetainedFraction": 0.9532981206338577,
+   "observedRetainedFraction": null,
+   "series": null,
+   "declared": 0,
+   "seriesIntegral": 0,
+   "appliedRect": 0,
+   "appliedTrap": 0,
+   "inflowFirstSeenS": null,
+   "inflowLastSeenS": null,
+   "routingSteps": 43199,
+   "V0": 509.8174770424681,
+   "tanksPlusPipeEnd": 509.8174770424679,
+   "gained": -2.2737367544323206e-13,
+   "swmmStoredEnd": 509.8174770424679,
+   "swmmStoredGained": -2.2737367544323206e-13,
+   "weirVolume": 0,
+   "pipeFullThroughout": true,
+   "residualVsApplied": -2.2737367544323206e-13,
+   "residualVsDeclared": -2.2737367544323206e-13,
+   "swmmContinuity": {
+    "externalInflow": 0,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0,
+    "flooding": 0,
+    "initialStored": 0.51,
+    "finalStored": 0.51,
+    "errorPct": 0
+   }
+  },
+  {
+   "label": "registered fault (0–1 h, ramp to 0 by 1.0003 h)",
+   "geometry": {
+    "pipeLength": 50,
+    "pipeDiameter": 0.5,
+    "tankA": 100
+   },
+   "ghostAreaPerNode": 4.898979485566358,
+   "predictedRetainedFraction": 0.9532981206338577,
+   "observedRetainedFraction": 0.9531940569813223,
+   "series": [
+    [
+     0,
+     0.001
+    ],
+    [
+     1,
+     0.001
+    ],
+    [
+     1.0003,
+     0
+    ],
+    [
+     12,
+     0
+    ]
+   ],
+   "declared": 3.6,
+   "seriesIntegral": 3.60054,
+   "appliedRect": 3.6010722217336633,
+   "appliedTrap": 3.6010722217336637,
+   "inflowFirstSeenS": 1,
+   "inflowLastSeenS": 3601.9999999999995,
+   "routingSteps": 43199,
+   "V0": 509.8174770424681,
+   "tanksPlusPipeEnd": 513.2499976829852,
+   "gained": 3.4325206405170547,
+   "swmmStoredEnd": 513.2499976829852,
+   "swmmStoredGained": 3.4325206405170547,
+   "weirVolume": 0,
+   "pipeFullThroughout": true,
+   "residualVsApplied": -0.16855158121660896,
+   "residualVsDeclared": -0.16747935948294534,
+   "swmmContinuity": {
+    "externalInflow": 0.004,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0,
+    "flooding": 0,
+    "initialStored": 0.51,
+    "finalStored": 0.513,
+    "errorPct": 0.033
+   }
+  },
+  {
+   "label": "fault for 2 h (same shape)",
+   "geometry": {
+    "pipeLength": 50,
+    "pipeDiameter": 0.5,
+    "tankA": 100
+   },
+   "ghostAreaPerNode": 4.898979485566358,
+   "predictedRetainedFraction": 0.9532981206338577,
+   "observedRetainedFraction": 0.9531940569812907,
+   "series": [
+    [
+     0,
+     0.001
+    ],
+    [
+     2,
+     0.001
+    ],
+    [
+     2.0003,
+     0
+    ],
+    [
+     12,
+     0
+    ]
+   ],
+   "declared": 7.2,
+   "seriesIntegral": 7.20054,
+   "appliedRect": 7.201072222898835,
+   "appliedTrap": 7.201072222898835,
+   "inflowFirstSeenS": 1,
+   "inflowLastSeenS": 7201.999999999999,
+   "routingSteps": 43199,
+   "V0": 509.8174770424681,
+   "tanksPlusPipeEnd": 516.6814962892283,
+   "gained": 6.864019246760222,
+   "swmmStoredEnd": 516.6814962892283,
+   "swmmStoredGained": 6.864019246760222,
+   "weirVolume": 0,
+   "pipeFullThroughout": true,
+   "residualVsApplied": -0.3370529761386134,
+   "residualVsDeclared": -0.3359807532397783,
+   "swmmContinuity": {
+    "externalInflow": 0.007,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0,
+    "flooding": 0,
+    "initialStored": 0.51,
+    "finalStored": 0.517,
+    "errorPct": 0.065
+   }
+  },
+  {
+   "label": "fault 0–1 h, no ramp point (1 h → 0 at the end)",
+   "geometry": {
+    "pipeLength": 50,
+    "pipeDiameter": 0.5,
+    "tankA": 100
+   },
+   "ghostAreaPerNode": 4.898979485566358,
+   "predictedRetainedFraction": 0.9532981206338577,
+   "observedRetainedFraction": 0.9531940569810604,
+   "series": [
+    [
+     0,
+     0.001
+    ],
+    [
+     1,
+     0.001
+    ],
+    [
+     12,
+     0
+    ]
+   ],
+   "declared": null,
+   "seriesIntegral": 23.4,
+   "appliedRect": 23.40049733350586,
+   "appliedTrap": 23.400497333505857,
+   "inflowFirstSeenS": 1,
+   "inflowLastSeenS": 43189,
+   "routingSteps": 43199,
+   "V0": 509.8174770424681,
+   "tanksPlusPipeEnd": 532.122692031167,
+   "gained": 22.305214988698935,
+   "swmmStoredEnd": 532.122692031167,
+   "swmmStoredGained": 22.305214988698935,
+   "weirVolume": 0,
+   "pipeFullThroughout": true,
+   "residualVsApplied": -1.0952823448069218,
+   "residualVsDeclared": 22.305214988698935,
+   "swmmContinuity": {
+    "externalInflow": 0.023,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0,
+    "flooding": 0,
+    "initialStored": 0.51,
+    "finalStored": 0.532,
+    "errorPct": 0.205
+   }
+  },
+  {
+   "label": "fault constant all run",
+   "geometry": {
+    "pipeLength": 50,
+    "pipeDiameter": 0.5,
+    "tankA": 100
+   },
+   "ghostAreaPerNode": 4.898979485566358,
+   "predictedRetainedFraction": 0.9532981206338577,
+   "observedRetainedFraction": 0.9532161224246078,
+   "series": [
+    [
+     0,
+     0.001
+    ],
+    [
+     12,
+     0.001
+    ]
+   ],
+   "declared": 43.2,
+   "seriesIntegral": 43.2,
+   "appliedRect": 43.1989999999911,
+   "appliedTrap": 43.19849999999111,
+   "inflowFirstSeenS": 1,
+   "inflowLastSeenS": 43199,
+   "routingSteps": 43199,
+   "V0": 509.8174770424681,
+   "tanksPlusPipeEnd": 550.9949837070191,
+   "gained": 41.17750666455095,
+   "swmmStoredEnd": 550.9949837070191,
+   "swmmStoredGained": 41.17750666455095,
+   "weirVolume": 0,
+   "pipeFullThroughout": true,
+   "residualVsApplied": -2.02099333544016,
+   "residualVsDeclared": -2.022493335449056,
+   "swmmContinuity": {
+    "externalInflow": 0.043,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0,
+    "flooding": 0,
+    "initialStored": 0.51,
+    "finalStored": 0.551,
+    "errorPct": 0.366
+   }
+  },
+  {
+   "label": "registered fault, pipe 100 m long",
+   "geometry": {
+    "pipeLength": 100,
+    "pipeDiameter": 0.5,
+    "tankA": 100
+   },
+   "ghostAreaPerNode": 9.797958971132717,
+   "predictedRetainedFraction": 0.9107637422139265,
+   "observedRetainedFraction": 0.9106661361575581,
+   "series": [
+    [
+     0,
+     0.001
+    ],
+    [
+     1,
+     0.001
+    ],
+    [
+     1.0003,
+     0
+    ],
+    [
+     12,
+     0
+    ]
+   ],
+   "declared": 3.6,
+   "seriesIntegral": 3.60054,
+   "appliedRect": 3.6010722217336633,
+   "appliedTrap": 3.6010722217336637,
+   "inflowFirstSeenS": 1,
+   "inflowLastSeenS": 3601.9999999999995,
+   "routingSteps": 43199,
+   "V0": 519.6349540849362,
+   "tanksPlusPipeEnd": 522.9143286111267,
+   "gained": 3.2793745261905087,
+   "swmmStoredEnd": 522.9143286111267,
+   "swmmStoredGained": 3.2793745261905087,
+   "weirVolume": 0,
+   "pipeFullThroughout": true,
+   "residualVsApplied": -0.32169769554315497,
+   "residualVsDeclared": -0.32062547380949136,
+   "swmmContinuity": {
+    "externalInflow": 0.004,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0,
+    "flooding": 0,
+    "initialStored": 0.52,
+    "finalStored": 0.523,
+    "errorPct": 0.061
+   }
+  },
+  {
+   "label": "registered fault, pipe D 1.0 m",
+   "geometry": {
+    "pipeLength": 50,
+    "pipeDiameter": 1,
+    "tankA": 100
+   },
+   "ghostAreaPerNode": 9.797958971132717,
+   "predictedRetainedFraction": 0.9107637422139265,
+   "observedRetainedFraction": 0.9106661361568635,
+   "series": [
+    [
+     0,
+     0.001
+    ],
+    [
+     1,
+     0.001
+    ],
+    [
+     1.0003,
+     0
+    ],
+    [
+     12,
+     0
+    ]
+   ],
+   "declared": 3.6,
+   "seriesIntegral": 3.60054,
+   "appliedRect": 3.6010722217336633,
+   "appliedTrap": 3.6010722217336637,
+   "inflowFirstSeenS": 1,
+   "inflowLastSeenS": 3601.9999999999995,
+   "routingSteps": 43199,
+   "V0": 539.2699081698725,
+   "tanksPlusPipeEnd": 542.5492826960605,
+   "gained": 3.2793745261880076,
+   "swmmStoredEnd": 542.5492826960605,
+   "swmmStoredGained": 3.2793745261880076,
+   "weirVolume": 0,
+   "pipeFullThroughout": true,
+   "residualVsApplied": -0.3216976955456561,
+   "residualVsDeclared": -0.32062547381199247,
+   "swmmContinuity": {
+    "externalInflow": 0.004,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0,
+    "flooding": 0,
+    "initialStored": 0.539,
+    "finalStored": 0.542,
+    "errorPct": 0.059
+   }
+  },
+  {
+   "label": "registered fault, tanks 1000 m²",
+   "geometry": {
+    "pipeLength": 50,
+    "pipeDiameter": 0.5,
+    "tankA": 1000
+   },
+   "ghostAreaPerNode": 4.898979485566358,
+   "predictedRetainedFraction": 0.995124903512118,
+   "observedRetainedFraction": 0.9950143244297883,
+   "series": [
+    [
+     0,
+     0.001
+    ],
+    [
+     1,
+     0.001
+    ],
+    [
+     1.0003,
+     0
+    ],
+    [
+     12,
+     0
+    ]
+   ],
+   "declared": 3.6,
+   "seriesIntegral": 3.60054,
+   "appliedRect": 3.6010722217336633,
+   "appliedTrap": 3.6010722217336637,
+   "inflowFirstSeenS": 1,
+   "inflowLastSeenS": 3601.9999999999995,
+   "routingSteps": 43199,
+   "V0": 5009.817477042468,
+   "tanksPlusPipeEnd": 5013.4005954864,
+   "gained": 3.5831184439311983,
+   "swmmStoredEnd": 5013.4005954864,
+   "swmmStoredGained": 3.5831184439311983,
+   "weirVolume": 0,
+   "pipeFullThroughout": true,
+   "residualVsApplied": -0.01795377780246543,
+   "residualVsDeclared": -0.016881556068801817,
+   "swmmContinuity": {
+    "externalInflow": 0.004,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0,
+    "flooding": 0,
+    "initialStored": 5.009,
+    "finalStored": 5.013,
+    "errorPct": 0
+   }
+  }
+ ]
+}

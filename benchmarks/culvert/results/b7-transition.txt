@@ -1,0 +1,663 @@
+B7 control-regime transitions, SWMM 52004 alone. mild: S 0.01, L 40 m; steep: S 0.05, L 30 m. T: tailwater sweep at a fixed discharge; Q: discharge sweep, tailwater over the outlet crown
+
+slope  surch.  case     sweep  Q/AD^.5  TW depth  SWMM HW  HDS-5 HW  governs  diff    excurs.  range   energy res.  checks
+mild   SLOT    pipe     T      3          0.00    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          0.10    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          0.20    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          0.30    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          0.40    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          0.50    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          0.60    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          0.70    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          0.80    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          0.90    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          1.00    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          1.10    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     T      3          1.20    1.201    1.234     inlet    -0.033  0.034    0.001    +0.038      ok
+mild   SLOT    pipe     T      3          1.30    1.252    1.263     outlet   -0.010  0.010    0.000    -0.010      ok
+mild   SLOT    pipe     T      3          1.40    1.345    1.363     outlet   -0.018  0.018    0.000    -0.018      ok
+mild   SLOT    pipe     T      3          1.50    1.441    1.463     outlet   -0.021  0.021    0.000    -0.021      ok
+mild   SLOT    pipe     T      3          1.60    1.540    1.563     outlet   -0.022  0.022    0.000    -0.022      ok
+mild   SLOT    pipe     T      3          1.70    1.642    1.663     outlet   -0.021  0.021    0.000    -0.021      ok
+mild   SLOT    pipe     T      3          1.80    1.744    1.763     outlet   -0.018  0.018    0.000    -0.018      ok
+mild   SLOT    pipe     T      3          1.90    1.848    1.863     outlet   -0.015  0.015    0.000    -0.015      ok
+mild   SLOT    pipe     T      3          2.00    1.951    1.963     outlet   -0.012  0.012    0.000    -0.012      ok
+mild   SLOT    pipe     T      3          2.10    2.054    2.063     outlet   -0.009  0.009    0.000    -0.009      ok
+mild   SLOT    pipe     T      3          2.20    2.155    2.163     outlet   -0.008  0.008    0.000    -0.008      ok
+mild   SLOT    pipe     T      3          2.30    2.254    2.263     outlet   -0.008  0.008    0.000    -0.008      ok
+mild   SLOT    pipe     T      3          2.40    2.353    2.363     outlet   -0.009  0.009    0.000    -0.009      ok
+mild   SLOT    pipe     T      3          2.50    2.453    2.463     outlet   -0.010  0.010    0.000    -0.010      ok
+mild   SLOT    pipe     T      3          2.60    2.552    2.563     outlet   -0.011  0.011    0.000    -0.011      ok
+mild   SLOT    pipe     T      3          2.70    2.651    2.663     outlet   -0.011  0.011    0.000    -0.011      ok
+mild   SLOT    pipe     Q      0.5        1.50    1.109    1.110     outlet   -0.001  0.001    0.000      -         ok
+mild   SLOT    pipe     Q      0.75       1.50    1.121    1.123     outlet   -0.002  0.002    0.000      -         ok
+mild   SLOT    pipe     Q      1          1.50    1.137    1.140     outlet   -0.003  0.003    0.000      -         ok
+mild   SLOT    pipe     Q      1.25       1.50    1.158    1.163     outlet   -0.005  0.005    0.000      -         ok
+mild   SLOT    pipe     Q      1.5        1.50    1.184    1.191     outlet   -0.006  0.006    0.000      -         ok
+mild   SLOT    pipe     Q      1.75       1.50    1.218    1.223     outlet   -0.006  0.006    0.000    -0.006      ok
+mild   SLOT    pipe     Q      2          1.50    1.253    1.261     outlet   -0.008  0.008    0.000    -0.008      ok
+mild   SLOT    pipe     Q      2.25       1.50    1.293    1.304     outlet   -0.011  0.011    0.000    -0.011      ok
+mild   SLOT    pipe     Q      2.5        1.50    1.338    1.352     outlet   -0.014  0.014    0.000    -0.014      ok
+mild   SLOT    pipe     Q      2.75       1.50    1.387    1.405     outlet   -0.017  0.017    0.000    -0.017      ok
+mild   SLOT    pipe     Q      3          1.50    1.441    1.463     outlet   -0.021  0.021    0.000    -0.021      ok
+mild   SLOT    pipe     Q      3.25       1.50    1.500    1.526     outlet   -0.026  0.026    0.000    -0.026      ok
+mild   SLOT    pipe     Q      3.5        1.50    1.563    1.593     outlet   -0.030  0.030    0.000    -0.030      ENERGY
+mild   SLOT    pipe     Q      3.75       1.50    1.632    1.667     outlet   -0.034  0.034    0.000    -0.034      ENERGY
+mild   SLOT    pipe     Q      4          1.50    1.706    1.745     outlet   -0.038  0.038    0.000    -0.038      ENERGY
+mild   SLOT    pipe     Q      4.25       1.50    1.786    1.828     outlet   -0.042  0.042    0.000    -0.042      ENERGY
+mild   SLOT    pipe     Q      4.5        1.50    1.871    1.916     outlet   -0.045  0.045    0.000    -0.045      ENERGY
+mild   SLOT    pipe     Q      4.75       1.50    1.961    2.009     outlet   -0.048  0.048    0.000    -0.048      ENERGY
+mild   SLOT    pipe     Q      5          1.50    2.058    2.107     outlet   -0.050  0.050    0.000    -0.050      ENERGY
+mild   SLOT    pipe     Q      5.25       1.50    2.159    2.211     outlet   -0.051  0.051    0.000    -0.051      ENERGY
+mild   SLOT    pipe     Q      5.5        1.50    2.266    2.319     outlet   -0.052  0.052    0.000    -0.052      ENERGY
+mild   SLOT    pipe     Q      5.75       1.50    2.379    2.432     outlet   -0.053  0.053    0.000    -0.053      ENERGY
+mild   SLOT    pipe     Q      6          1.50    2.497    2.550     outlet   -0.054  0.054    0.000    -0.054      ENERGY
+mild   SLOT    ellipse  T      3          0.00    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          0.15    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          0.29    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          0.44    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          0.58    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          0.73    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          0.88    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          1.02    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          1.17    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          1.31    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          1.46    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          1.60    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          1.75    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          1.90    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          2.04    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          2.19    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   SLOT    ellipse  T      3          2.33    2.535    2.515     outlet   +0.020  0.020    0.000      -         ok
+mild   SLOT    ellipse  T      3          2.48    2.650    2.661     outlet   -0.011  0.011    0.000    -0.011      ok
+mild   SLOT    ellipse  T      3          2.63    2.785    2.807     outlet   -0.022  0.022    0.000    -0.022      ok
+mild   SLOT    ellipse  T      3          2.77    2.924    2.953     outlet   -0.029  0.029    0.000    -0.029      ok
+mild   SLOT    ellipse  T      3          2.92    3.066    3.098     outlet   -0.033  0.033    0.000    -0.033      ENERGY
+mild   SLOT    ellipse  T      3          3.06    3.210    3.244     outlet   -0.034  0.034    0.000    -0.034      ENERGY
+mild   SLOT    ellipse  T      3          3.21    3.357    3.390     outlet   -0.034  0.034    0.000    -0.034      ENERGY
+mild   SLOT    ellipse  T      3          3.35    3.504    3.536     outlet   -0.032  0.032    0.000    -0.032      ENERGY
+mild   SLOT    ellipse  T      3          3.50    3.653    3.682     outlet   -0.029  0.029    0.000    -0.029      ok
+mild   SLOT    ellipse  T      3          3.65    3.803    3.828     outlet   -0.025  0.025    0.000    -0.025      ok
+mild   SLOT    ellipse  T      3          3.79    3.952    3.974     outlet   -0.021  0.021    0.000    -0.021      ok
+mild   SLOT    ellipse  T      3          3.94    4.102    4.120     outlet   -0.018  0.018    0.000    -0.018      ok
+mild   SLOT    ellipse  Q      0.5        2.74    2.354    2.354     outlet   -0.001  0.001    0.000      -         ok
+mild   SLOT    ellipse  Q      0.75       2.74    2.373    2.375     outlet   -0.002  0.002    0.000      -         ok
+mild   SLOT    ellipse  Q      1          2.74    2.400    2.403     outlet   -0.003  0.003    0.000      -         ok
+mild   SLOT    ellipse  Q      1.25       2.74    2.434    2.439     outlet   -0.005  0.005    0.000      -         ok
+mild   SLOT    ellipse  Q      1.5        2.74    2.479    2.484     outlet   -0.004  0.004    0.000    -0.004      ok
+mild   SLOT    ellipse  Q      1.75       2.74    2.530    2.536     outlet   -0.006  0.006    0.000    -0.006      ok
+mild   SLOT    ellipse  Q      2          2.74    2.587    2.597     outlet   -0.009  0.009    0.000    -0.009      ok
+mild   SLOT    ellipse  Q      2.25       2.74    2.653    2.665     outlet   -0.013  0.013    0.000    -0.013      ok
+mild   SLOT    ellipse  Q      2.5        2.74    2.725    2.742     outlet   -0.017  0.017    0.000    -0.017      ok
+mild   SLOT    ellipse  Q      2.75       2.74    2.805    2.827     outlet   -0.022  0.022    0.000    -0.022      ok
+mild   SLOT    ellipse  Q      3          2.74    2.892    2.920     outlet   -0.028  0.028    0.000    -0.028      ok
+mild   SLOT    ellipse  Q      3.25       2.74    2.986    3.020     outlet   -0.034  0.034    0.000    -0.034      ENERGY
+mild   SLOT    ellipse  Q      3.5        2.74    3.089    3.129     outlet   -0.041  0.041    0.000    -0.041      ENERGY
+mild   SLOT    ellipse  Q      3.75       2.74    3.199    3.246     outlet   -0.048  0.048    0.000    -0.048      ENERGY
+mild   SLOT    ellipse  Q      4          2.74    3.316    3.372     outlet   -0.055  0.055    0.000    -0.055      ENERGY
+mild   SLOT    ellipse  Q      4.25       2.74    3.442    3.505     outlet   -0.062  0.062    0.000    -0.062      ENERGY
+mild   SLOT    ellipse  Q      4.5        2.74    3.577    3.646     outlet   -0.069  0.069    0.000    -0.069      ENERGY
+mild   SLOT    ellipse  Q      4.75       2.74    3.720    3.811     inlet    -0.091  0.091    0.000    -0.075      ENERGY
+mild   SLOT    ellipse  Q      5          2.74    3.872    4.048     inlet    -0.176  0.176    0.000    -0.081      ENERGY
+mild   SLOT    ellipse  Q      5.25       2.74    4.033    4.296     inlet    -0.264  0.264    0.000    -0.085      ERR EXC ENERGY
+mild   SLOT    ellipse  Q      5.5        2.74    4.203    4.557     inlet    -0.355  0.355    0.000    -0.089      ERR EXC ENERGY
+mild   SLOT    ellipse  Q      5.75       2.74    4.381    4.830     inlet    -0.449  0.449    0.000    -0.092      ERR EXC ENERGY
+mild   SLOT    ellipse  Q      6          2.74    4.567    5.115     inlet    -0.548  0.548    0.000    -0.096      ERR EXC ENERGY
+mild   EXTRAN  pipe     T      3          0.00    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          0.10    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          0.20    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          0.30    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          0.40    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          0.50    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          0.60    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          0.70    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          0.80    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          0.90    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          1.00    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          1.10    1.229    1.234     inlet    -0.005  0.005    0.000      -         ok
+mild   EXTRAN  pipe     T      3          1.20    1.202    1.234     inlet    -0.032  0.034    0.004    +0.039      ok
+mild   EXTRAN  pipe     T      3          1.30    1.262    1.263     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          1.40    1.362    1.363     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          1.50    1.462    1.463     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          1.60    1.562    1.563     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          1.70    1.662    1.663     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          1.80    1.762    1.763     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          1.90    1.862    1.863     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          2.00    1.962    1.963     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          2.10    2.062    2.063     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          2.20    2.162    2.163     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          2.30    2.262    2.263     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          2.40    2.362    2.363     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          2.50    2.462    2.463     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          2.60    2.562    2.563     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     T      3          2.70    2.662    2.663     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      0.5        1.50    1.109    1.110     outlet   -0.001  0.001    0.000      -         ok
+mild   EXTRAN  pipe     Q      0.75       1.50    1.121    1.123     outlet   -0.001  0.001    0.000      -         ok
+mild   EXTRAN  pipe     Q      1          1.50    1.139    1.140     outlet   -0.002  0.002    0.000      -         ok
+mild   EXTRAN  pipe     Q      1.25       1.50    1.161    1.163     outlet   -0.002  0.002    0.000      -         ok
+mild   EXTRAN  pipe     Q      1.5        1.50    1.190    1.191     outlet   -0.001  0.001    0.000      -         ok
+mild   EXTRAN  pipe     Q      1.75       1.50    1.223    1.223     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      2          1.50    1.261    1.261     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      2.25       1.50    1.304    1.304     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      2.5        1.50    1.352    1.352     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      2.75       1.50    1.405    1.405     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      3          1.50    1.462    1.463     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      3.25       1.50    1.525    1.526     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      3.5        1.50    1.593    1.593     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      3.75       1.50    1.666    1.667     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      4          1.50    1.744    1.745     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      4.25       1.50    1.827    1.828     outlet   -0.000  0.000    0.000    -0.000      ok
+mild   EXTRAN  pipe     Q      4.5        1.50    1.915    1.916     outlet   -0.001  0.001    0.000    -0.001      ok
+mild   EXTRAN  pipe     Q      4.75       1.50    2.009    2.009     outlet   -0.001  0.001    0.000    -0.001      ok
+mild   EXTRAN  pipe     Q      5          1.50    2.107    2.107     outlet   -0.001  0.001    0.000    -0.001      ok
+mild   EXTRAN  pipe     Q      5.25       1.50    2.210    2.211     outlet   -0.001  0.001    0.000    -0.001      ok
+mild   EXTRAN  pipe     Q      5.5        1.50    2.318    2.319     outlet   -0.001  0.001    0.000    -0.001      ok
+mild   EXTRAN  pipe     Q      5.75       1.50    2.431    2.432     outlet   -0.001  0.001    0.000    -0.001      ok
+mild   EXTRAN  pipe     Q      6          1.50    2.550    2.550     outlet   -0.001  0.001    0.000    -0.001      ok
+mild   EXTRAN  ellipse  T      3          0.00    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          0.15    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          0.29    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          0.44    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          0.58    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          0.73    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          0.88    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          1.02    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          1.17    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          1.31    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          1.46    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          1.60    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          1.75    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          1.90    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          2.04    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          2.19    2.503    2.512     inlet    -0.009  0.009    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          2.33    2.525    2.515     outlet   +0.010  0.010    0.000      -         ok
+mild   EXTRAN  ellipse  T      3          2.48    2.662    2.661     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          2.63    2.808    2.807     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          2.77    2.954    2.953     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          2.92    3.099    3.098     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          3.06    3.245    3.244     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          3.21    3.391    3.390     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          3.35    3.537    3.536     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          3.50    3.683    3.682     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          3.65    3.829    3.828     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          3.79    3.974    3.974     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  T      3          3.94    4.120    4.120     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  Q      0.5        2.74    2.354    2.354     outlet   -0.000  0.000    0.000      -         ok
+mild   EXTRAN  ellipse  Q      0.75       2.74    2.374    2.375     outlet   -0.001  0.001    0.000      -         ok
+mild   EXTRAN  ellipse  Q      1          2.74    2.403    2.403     outlet   -0.000  0.000    0.000      -         ok
+mild   EXTRAN  ellipse  Q      1.25       2.74    2.439    2.439     outlet   +0.000  0.000    0.000    +0.000      ok
+mild   EXTRAN  ellipse  Q      1.5        2.74    2.484    2.484     outlet   +0.000  0.000    0.000    +0.000      ok
+mild   EXTRAN  ellipse  Q      1.75       2.74    2.536    2.536     outlet   +0.000  0.000    0.000    +0.000      ok
+mild   EXTRAN  ellipse  Q      2          2.74    2.597    2.597     outlet   +0.000  0.000    0.000    +0.000      ok
+mild   EXTRAN  ellipse  Q      2.25       2.74    2.666    2.665     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  Q      2.5        2.74    2.743    2.742     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  Q      2.75       2.74    2.827    2.827     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  Q      3          2.74    2.920    2.920     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  Q      3.25       2.74    3.022    3.020     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  Q      3.5        2.74    3.131    3.129     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  Q      3.75       2.74    3.248    3.246     outlet   +0.001  0.001    0.000    +0.001      ok
+mild   EXTRAN  ellipse  Q      4          2.74    3.373    3.372     outlet   +0.002  0.002    0.000    +0.002      ok
+mild   EXTRAN  ellipse  Q      4.25       2.74    3.506    3.505     outlet   +0.002  0.002    0.000    +0.002      ok
+mild   EXTRAN  ellipse  Q      4.5        2.74    3.648    3.646     outlet   +0.002  0.002    0.000    +0.002      ok
+mild   EXTRAN  ellipse  Q      4.75       2.74    3.797    3.811     inlet    -0.014  0.014    0.000    +0.002      ok
+mild   EXTRAN  ellipse  Q      5          2.74    3.955    4.048     inlet    -0.093  0.093    0.000    +0.003      ok
+mild   EXTRAN  ellipse  Q      5.25       2.74    4.121    4.296     inlet    -0.176  0.176    0.000    +0.003      ok
+mild   EXTRAN  ellipse  Q      5.5        2.74    4.295    4.557     inlet    -0.263  0.263    0.000    +0.003      ERR EXC
+mild   EXTRAN  ellipse  Q      5.75       2.74    4.476    4.830     inlet    -0.354  0.354    0.000    +0.003      ERR EXC
+mild   EXTRAN  ellipse  Q      6          2.74    4.666    5.115     inlet    -0.449  0.449    0.000    +0.004      ERR EXC
+steep  SLOT    pipe     T      4          0.00    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    pipe     T      4          0.14    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    pipe     T      4          0.27    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    pipe     T      4          0.41    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    pipe     T      4          0.55    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    pipe     T      4          0.69    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    pipe     T      4          0.82    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    pipe     T      4          0.96    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    pipe     T      4          1.10    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    pipe     T      4          1.23    1.243    1.538     inlet    -0.295  0.351    0.162    +0.914      ERR EXC OSC STEP
+steep  SLOT    pipe     T      4          1.37    1.232    1.538     inlet    -0.307  0.350    0.094    +0.766      ERR EXC OSC MASS
+steep  SLOT    pipe     T      4          1.51    1.215    1.538     inlet    -0.323  0.363    0.125    +0.612      ERR EXC OSC MASS
+steep  SLOT    pipe     T      4          1.64    1.269    1.538     inlet    -0.269  0.319    0.095    +0.529      ERR EXC OSC STEP
+steep  SLOT    pipe     T      4          1.78    1.255    1.538     inlet    -0.283  0.350    0.177    +0.378      ERR EXC OSC MASS
+steep  SLOT    pipe     T      4          1.92    1.228    1.538     inlet    -0.311  0.333    0.052    +0.214      ERR EXC OSC
+steep  SLOT    pipe     T      4          2.06    1.315    1.538     inlet    -0.224  0.351    0.362    +0.164      ERR EXC OSC STEP
+steep  SLOT    pipe     T      4          2.19    1.263    1.538     inlet    -0.275  0.275    0.000    -0.025      ERR EXC STEP
+steep  SLOT    pipe     T      4          2.33    1.402    1.538     inlet    -0.136  0.136    0.000    -0.023      ERR EXC STEP
+steep  SLOT    pipe     T      4          2.47    1.542    1.562     outlet   -0.020  0.020    0.000    -0.020      STEP
+steep  SLOT    pipe     T      4          2.60    1.683    1.699     outlet   -0.016  0.016    0.000    -0.016      ok
+steep  SLOT    pipe     T      4          2.74    1.819    1.836     outlet   -0.017  0.017    0.000    -0.017      ok
+steep  SLOT    pipe     T      4          2.88    1.956    1.973     outlet   -0.017  0.017    0.000    -0.017      ok
+steep  SLOT    pipe     T      4          3.02    2.092    2.110     outlet   -0.018  0.018    0.000    -0.018      ok
+steep  SLOT    pipe     T      4          3.15    2.228    2.247     outlet   -0.019  0.019    0.000    -0.019      ok
+steep  SLOT    pipe     T      4          3.29    2.363    2.384     outlet   -0.021  0.021    0.000    -0.021      ok
+steep  SLOT    pipe     T      4          3.43    2.499    2.521     outlet   -0.023  0.023    0.000    -0.023      ok
+steep  SLOT    pipe     T      4          3.56    2.634    2.658     outlet   -0.024  0.024    0.000    -0.024      ok
+steep  SLOT    pipe     T      4          3.70    2.769    2.795     outlet   -0.026  0.026    0.000    -0.026      ok
+steep  SLOT    pipe     Q      0.5        1.40    0.345    0.394     inlet    -0.049  0.049    0.000      -         ok
+steep  SLOT    pipe     Q      0.75       1.40    0.461    0.498     inlet    -0.038  0.038    0.000      -         ok
+steep  SLOT    pipe     Q      1          1.40    0.564    0.591     inlet    -0.026  0.026    0.000      -         ok
+steep  SLOT    pipe     Q      1.25       1.40    0.679    0.676     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    pipe     Q      1.5        1.40    0.717    0.756     inlet    -0.040  0.040    0.001      -         MASS
+steep  SLOT    pipe     Q      1.75       1.40    0.842    0.834     inlet    +0.008  0.008    0.000      -         ok
+steep  SLOT    pipe     Q      2          1.40    0.910    0.911     inlet    -0.001  0.001    0.000      -         ok
+steep  SLOT    pipe     Q      2.25       1.40    0.994    0.986     inlet    +0.008  0.008    0.000      -         ok
+steep  SLOT    pipe     Q      2.5        1.40    1.062    1.060     inlet    +0.001  0.002    0.002      -         ok
+steep  SLOT    pipe     Q      2.75       1.40    1.125    1.135     inlet    -0.010  0.010    0.000      -         ok
+steep  SLOT    pipe     Q      3          1.40    1.191    1.210     inlet    -0.019  0.027    0.015      -         OSC
+steep  SLOT    pipe     Q      3.25       1.40    1.200    1.286     inlet    -0.085  0.092    0.020    +0.907      ERR EXC OSC MASS
+steep  SLOT    pipe     Q      3.5        1.40    1.209    1.362     inlet    -0.153  0.173    0.056    +0.853      ERR EXC OSC MASS
+steep  SLOT    pipe     Q      3.75       1.40    1.226    1.450     inlet    -0.225  0.235    0.029    +0.802      ERR EXC OSC MASS
+steep  SLOT    pipe     Q      4          1.40    1.390    1.538     inlet    -0.148  0.148    0.000    +0.895      ERR EXC MASS
+steep  SLOT    pipe     Q      4.25       1.40    1.275    1.637     inlet    -0.361  0.459    0.381    +0.703      ERR EXC OSC MASS
+steep  SLOT    pipe     Q      4.5        1.40    1.238    1.741     inlet    -0.503  0.503    0.000    +0.584      ERR EXC MASS
+steep  SLOT    pipe     Q      4.75       1.40    1.220    1.852     inlet    -0.632  0.670    0.073    +0.480      ERR EXC OSC MASS
+steep  SLOT    pipe     Q      5          1.40    1.244    1.968     inlet    -0.724  0.760    0.070    +0.413      ERR EXC OSC MASS
+steep  SLOT    pipe     Q      5.25       1.40    1.446    2.090     inlet    -0.645  0.876    0.549    +0.520      ERR EXC OSC MASS
+steep  SLOT    pipe     Q      5.5        1.40    1.334    2.219     inlet    -0.884  1.042    0.823    +0.309      ERR EXC OSC MASS
+steep  SLOT    pipe     Q      5.75       1.40    1.306    2.353     inlet    -1.047  1.145    0.234    +0.176      ERR EXC OSC
+steep  SLOT    pipe     Q      6          1.40    1.369    2.493     inlet    -1.125  1.275    0.276    +0.129      ERR EXC OSC
+steep  SLOT    ellipse  T      4          0.00    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          0.18    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          0.37    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          0.55    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          0.73    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          0.92    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          1.10    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          1.28    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          1.46    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          1.65    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          1.83    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          2.01    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          2.19    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          2.38    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  SLOT    ellipse  T      4          2.56    2.778    3.126     inlet    -0.348  0.348    0.000    +0.715      ERR EXC MASS STEP
+steep  SLOT    ellipse  T      4          2.74    2.488    3.126     inlet    -0.638  0.690    0.140    +0.242      ERR EXC OSC MASS STEP
+steep  SLOT    ellipse  T      4          2.93    2.619    3.126     inlet    -0.506  0.687    0.635    +0.191      ERR EXC OSC STEP
+steep  SLOT    ellipse  T      4          3.11    2.563    3.126     inlet    -0.563  0.563    0.000    -0.049      ERR EXC ENERGY STEP
+steep  SLOT    ellipse  T      4          3.29    2.739    3.126     inlet    -0.387  0.387    0.000    -0.056      ERR EXC ENERGY STEP
+steep  SLOT    ellipse  T      4          3.48    2.921    3.126     inlet    -0.205  0.205    0.000    -0.057      ERR EXC ENERGY STEP
+steep  SLOT    ellipse  T      4          3.66    3.107    3.160     outlet   -0.053  0.053    0.000    -0.053      ENERGY STEP
+steep  SLOT    ellipse  T      4          3.84    3.296    3.343     outlet   -0.047  0.047    0.000    -0.047      ENERGY
+steep  SLOT    ellipse  T      4          4.02    3.486    3.526     outlet   -0.040  0.040    0.000    -0.040      ENERGY
+steep  SLOT    ellipse  T      4          4.21    3.677    3.709     outlet   -0.032  0.032    0.000    -0.032      ENERGY
+steep  SLOT    ellipse  T      4          4.39    3.866    3.892     outlet   -0.025  0.025    0.000    -0.025      ok
+steep  SLOT    ellipse  T      4          4.57    4.054    4.075     outlet   -0.021  0.021    0.000    -0.021      ok
+steep  SLOT    ellipse  T      4          4.75    4.237    4.258     outlet   -0.021  0.021    0.000    -0.021      ok
+steep  SLOT    ellipse  T      4          4.94    4.419    4.441     outlet   -0.022  0.022    0.000    -0.022      ok
+steep  SLOT    ellipse  Q      0.5        2.64    1.145    1.154     outlet   -0.009  0.009    0.000      -         ok
+steep  SLOT    ellipse  Q      0.75       2.64    1.154    1.174     outlet   -0.020  0.020    0.000      -         ok
+steep  SLOT    ellipse  Q      1          2.64    1.205    1.201     outlet   +0.004  0.004    0.000      -         ok
+steep  SLOT    ellipse  Q      1.25       2.64    1.378    1.374     inlet    +0.004  0.005    0.002      -         ok
+steep  SLOT    ellipse  Q      1.5        2.64    1.550    1.538     inlet    +0.012  0.012    0.000      -         ok
+steep  SLOT    ellipse  Q      1.75       2.64    1.714    1.697     inlet    +0.017  0.017    0.000      -         ok
+steep  SLOT    ellipse  Q      2          2.64    1.852    1.852     inlet    +0.000  0.000    0.000      -         ok
+steep  SLOT    ellipse  Q      2.25       2.64    2.004    2.006     inlet    -0.001  0.001    0.000      -         ok
+steep  SLOT    ellipse  Q      2.5        2.64    2.185    2.158     inlet    +0.027  0.027    0.000      -         ok
+steep  SLOT    ellipse  Q      2.75       2.64    2.290    2.310     inlet    -0.020  0.020    0.000      -         ok
+steep  SLOT    ellipse  Q      3          2.64    2.435    2.463     inlet    -0.028  0.044    0.027      -         OSC
+steep  SLOT    ellipse  Q      3.25       2.64    2.409    2.618     inlet    -0.209  0.209    0.000      -         ERR EXC MASS
+steep  SLOT    ellipse  Q      3.5        2.64    2.471    2.774     inlet    -0.303  0.303    0.000    +0.565      ERR EXC
+steep  SLOT    ellipse  Q      3.75       2.64    2.527    2.950     inlet    -0.423  0.542    0.258    +0.508      ERR EXC OSC
+steep  SLOT    ellipse  Q      4          2.64    2.531    3.126     inlet    -0.595  0.637    0.083    +0.390      ERR EXC OSC MASS
+steep  SLOT    ellipse  Q      4.25       2.64    2.534    3.326     inlet    -0.792  0.835    0.083    +0.264      ERR EXC OSC
+steep  SLOT    ellipse  Q      4.5        2.64    2.706    3.538     inlet    -0.832  1.086    0.894    +0.299      ERR EXC OSC
+steep  SLOT    ellipse  Q      4.75       2.64    2.517    3.762     inlet    -1.245  1.245    0.000    -0.034      ERR EXC
+steep  SLOT    ellipse  Q      5          2.64    2.654    3.999     inlet    -1.345  1.345    0.000    -0.051      ERR EXC ENERGY
+steep  SLOT    ellipse  Q      5.25       2.64    2.798    4.248     inlet    -1.450  1.450    0.000    -0.067      ERR EXC ENERGY
+steep  SLOT    ellipse  Q      5.5        2.64    2.950    4.508     inlet    -1.558  1.558    0.000    -0.083      ERR EXC ENERGY
+steep  SLOT    ellipse  Q      5.75       2.64    3.112    4.781     inlet    -1.670  1.670    0.000    -0.098      ERR EXC ENERGY
+steep  SLOT    ellipse  Q      6          2.64    3.283    5.066     inlet    -1.784  1.784    0.000    -0.111      ERR EXC ENERGY
+steep  EXTRAN  pipe     T      4          0.00    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  pipe     T      4          0.14    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  pipe     T      4          0.27    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  pipe     T      4          0.41    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  pipe     T      4          0.55    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  pipe     T      4          0.69    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  pipe     T      4          0.82    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  pipe     T      4          0.96    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  pipe     T      4          1.10    1.538    1.538     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  pipe     T      4          1.23    1.204    1.538     inlet    -0.334  0.338    0.013    +0.875      ERR EXC OSC MASS STEP
+steep  EXTRAN  pipe     T      4          1.37    1.218    1.538     inlet    -0.320  0.321    0.002    +0.752      ERR EXC
+steep  EXTRAN  pipe     T      4          1.51    1.214    1.538     inlet    -0.324  0.328    0.007    +0.611      ERR EXC MASS
+steep  EXTRAN  pipe     T      4          1.64    1.298    1.538     inlet    -0.240  0.338    0.469    +0.558      ERR EXC OSC MASS STEP
+steep  EXTRAN  pipe     T      4          1.78    1.239    1.538     inlet    -0.299  0.338    0.187    +0.362      ERR EXC OSC MASS STEP
+steep  EXTRAN  pipe     T      4          1.92    1.297    1.538     inlet    -0.241  0.498    0.837    +0.283      ERR EXC OSC STEP
+steep  EXTRAN  pipe     T      4          2.06    1.296    1.538     inlet    -0.243  0.695    1.033    +0.145      ERR EXC OSC MASS
+steep  EXTRAN  pipe     T      4          2.19    1.288    1.538     inlet    -0.251  0.251    0.000    -0.000      ERR EXC
+steep  EXTRAN  pipe     T      4          2.33    1.425    1.538     inlet    -0.114  0.114    0.000    -0.000      ERR EXC STEP
+steep  EXTRAN  pipe     T      4          2.47    1.562    1.562     outlet   -0.000  0.000    0.000    -0.000      STEP
+steep  EXTRAN  pipe     T      4          2.60    1.699    1.699     outlet   -0.000  0.000    0.000    -0.000      ok
+steep  EXTRAN  pipe     T      4          2.74    1.836    1.836     outlet   -0.000  0.000    0.000    -0.000      ok
+steep  EXTRAN  pipe     T      4          2.88    1.973    1.973     outlet   -0.000  0.000    0.000    -0.000      ok
+steep  EXTRAN  pipe     T      4          3.02    2.110    2.110     outlet   -0.000  0.000    0.000    -0.000      ok
+steep  EXTRAN  pipe     T      4          3.15    2.247    2.247     outlet   -0.000  0.000    0.000    -0.000      ok
+steep  EXTRAN  pipe     T      4          3.29    2.384    2.384     outlet   -0.000  0.000    0.000    -0.000      ok
+steep  EXTRAN  pipe     T      4          3.43    2.521    2.521     outlet   -0.000  0.000    0.000    -0.000      ok
+steep  EXTRAN  pipe     T      4          3.56    2.658    2.658     outlet   -0.000  0.000    0.000    -0.000      ok
+steep  EXTRAN  pipe     T      4          3.70    2.795    2.795     outlet   -0.000  0.000    0.000    -0.000      ok
+steep  EXTRAN  pipe     Q      0.5        1.40    0.345    0.394     inlet    -0.049  0.049    0.000      -         ok
+steep  EXTRAN  pipe     Q      0.75       1.40    0.461    0.498     inlet    -0.038  0.038    0.000      -         ok
+steep  EXTRAN  pipe     Q      1          1.40    0.564    0.591     inlet    -0.026  0.026    0.000      -         ok
+steep  EXTRAN  pipe     Q      1.25       1.40    0.679    0.676     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  pipe     Q      1.5        1.40    0.718    0.756     inlet    -0.038  0.040    0.003      -         ok
+steep  EXTRAN  pipe     Q      1.75       1.40    0.842    0.834     inlet    +0.008  0.008    0.000      -         ok
+steep  EXTRAN  pipe     Q      2          1.40    0.910    0.911     inlet    -0.001  0.001    0.000      -         ok
+steep  EXTRAN  pipe     Q      2.25       1.40    0.994    0.986     inlet    +0.008  0.008    0.000      -         ok
+steep  EXTRAN  pipe     Q      2.5        1.40    1.062    1.060     inlet    +0.001  0.001    0.000      -         MASS
+steep  EXTRAN  pipe     Q      2.75       1.40    1.125    1.135     inlet    -0.010  0.010    0.000      -         ok
+steep  EXTRAN  pipe     Q      3          1.40    1.198    1.210     inlet    -0.012  0.017    0.011      -         OSC
+steep  EXTRAN  pipe     Q      3.25       1.40    1.202    1.286     inlet    -0.084  0.090    0.057    +0.909      ERR EXC OSC MASS
+steep  EXTRAN  pipe     Q      3.5        1.40    1.200    1.362     inlet    -0.163  0.163    0.001      -         ERR EXC MASS
+steep  EXTRAN  pipe     Q      3.75       1.40    1.211    1.450     inlet    -0.239  0.250    0.033    +0.788      ERR EXC OSC
+steep  EXTRAN  pipe     Q      4          1.40    1.219    1.538     inlet    -0.319  0.338    0.044    +0.724      ERR EXC OSC
+steep  EXTRAN  pipe     Q      4.25       1.40    1.265    1.637     inlet    -0.372  0.437    0.344    +0.693      ERR EXC OSC MASS
+steep  EXTRAN  pipe     Q      4.5        1.40    1.274    1.741     inlet    -0.467  0.475    0.017    +0.621      ERR EXC OSC MASS
+steep  EXTRAN  pipe     Q      4.75       1.40    1.242    1.852     inlet    -0.610  0.610    0.000    +0.502      ERR EXC MASS
+steep  EXTRAN  pipe     Q      5          1.40    1.398    1.968     inlet    -0.570  0.570    0.000    +0.568      ERR EXC
+steep  EXTRAN  pipe     Q      5.25       1.40    1.521    2.090     inlet    -0.569  0.933    1.823    +0.596      ERR EXC OSC
+steep  EXTRAN  pipe     Q      5.5        1.40    1.226    2.219     inlet    -0.993  1.019    0.063    +0.200      ERR EXC OSC MASS
+steep  EXTRAN  pipe     Q      5.75       1.40    2.268    2.353     inlet    -0.085  1.435    2.527    +1.138      EXC OSC MASS STEP
+steep  EXTRAN  pipe     Q      6          1.40    1.239    2.493     inlet    -1.255  1.255    0.000    -0.001      ERR EXC STEP
+steep  EXTRAN  ellipse  T      4          0.00    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          0.18    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          0.37    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          0.55    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          0.73    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          0.92    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          1.10    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          1.28    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          1.46    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          1.65    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          1.83    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          2.01    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          2.19    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          2.38    3.129    3.126     inlet    +0.003  0.003    0.000      -         ok
+steep  EXTRAN  ellipse  T      4          2.56    2.752    3.126     inlet    -0.373  0.662    0.779    +0.689      ERR EXC OSC MASS STEP
+steep  EXTRAN  ellipse  T      4          2.74    2.632    3.126     inlet    -0.494  0.551    0.114    +0.386      ERR EXC OSC MASS STEP
+steep  EXTRAN  ellipse  T      4          2.93    2.509    3.126     inlet    -0.617  0.617    0.000    +0.080      ERR EXC MASS STEP
+steep  EXTRAN  ellipse  T      4          3.11    2.613    3.126     inlet    -0.512  0.512    0.000    +0.002      ERR EXC STEP
+steep  EXTRAN  ellipse  T      4          3.29    2.796    3.126     inlet    -0.330  0.330    0.000    +0.002      ERR EXC STEP
+steep  EXTRAN  ellipse  T      4          3.48    2.979    3.126     inlet    -0.147  0.147    0.000    +0.002      STEP
+steep  EXTRAN  ellipse  T      4          3.66    3.162    3.160     outlet   +0.002  0.002    0.000    +0.002      STEP
+steep  EXTRAN  ellipse  T      4          3.84    3.345    3.343     outlet   +0.002  0.002    0.000    +0.002      ok
+steep  EXTRAN  ellipse  T      4          4.02    3.528    3.526     outlet   +0.002  0.002    0.000    +0.002      ok
+steep  EXTRAN  ellipse  T      4          4.21    3.711    3.709     outlet   +0.002  0.002    0.000    +0.002      ok
+steep  EXTRAN  ellipse  T      4          4.39    3.893    3.892     outlet   +0.002  0.002    0.000    +0.002      ok
+steep  EXTRAN  ellipse  T      4          4.57    4.076    4.075     outlet   +0.002  0.002    0.000    +0.002      ok
+steep  EXTRAN  ellipse  T      4          4.75    4.259    4.258     outlet   +0.002  0.002    0.000    +0.002      ok
+steep  EXTRAN  ellipse  T      4          4.94    4.442    4.441     outlet   +0.002  0.002    0.000    +0.002      ok
+steep  EXTRAN  ellipse  Q      0.5        2.64    1.144    1.154     outlet   -0.010  0.010    0.000      -         ok
+steep  EXTRAN  ellipse  Q      0.75       2.64    1.152    1.174     outlet   -0.022  0.022    0.000      -         ok
+steep  EXTRAN  ellipse  Q      1          2.64    1.205    1.201     outlet   +0.004  0.004    0.000      -         ok
+steep  EXTRAN  ellipse  Q      1.25       2.64    1.378    1.374     inlet    +0.004  0.005    0.002      -         ok
+steep  EXTRAN  ellipse  Q      1.5        2.64    1.550    1.538     inlet    +0.012  0.012    0.000      -         ok
+steep  EXTRAN  ellipse  Q      1.75       2.64    1.714    1.697     inlet    +0.017  0.017    0.000      -         ok
+steep  EXTRAN  ellipse  Q      2          2.64    1.852    1.852     inlet    +0.000  0.000    0.000      -         ok
+steep  EXTRAN  ellipse  Q      2.25       2.64    2.004    2.006     inlet    -0.001  0.001    0.000      -         ok
+steep  EXTRAN  ellipse  Q      2.5        2.64    2.185    2.158     inlet    +0.027  0.027    0.000      -         ok
+steep  EXTRAN  ellipse  Q      2.75       2.64    2.290    2.310     inlet    -0.020  0.020    0.000      -         ok
+steep  EXTRAN  ellipse  Q      3          2.64    2.441    2.463     inlet    -0.022  0.029    0.019    +0.739      OSC MASS
+steep  EXTRAN  ellipse  Q      3.25       2.64    2.452    2.618     inlet    -0.166  0.180    0.038    +0.652      ERR EXC OSC
+steep  EXTRAN  ellipse  Q      3.5        2.64    2.467    2.774     inlet    -0.307  0.309    0.003    +0.561      ERR EXC
+steep  EXTRAN  ellipse  Q      3.75       2.64    2.599    2.950     inlet    -0.351  0.511    0.637    +0.580      ERR EXC OSC MASS
+steep  EXTRAN  ellipse  Q      4          2.64    2.868    3.126     inlet    -0.257  0.553    0.789    +0.728      ERR EXC OSC MASS
+steep  EXTRAN  ellipse  Q      4.25       2.64    2.630    3.326     inlet    -0.696  0.881    1.559    +0.360      ERR EXC OSC
+steep  EXTRAN  ellipse  Q      4.5        2.64    2.483    3.538     inlet    -1.055  1.055    0.000    +0.077      ERR EXC MASS
+steep  EXTRAN  ellipse  Q      4.75       2.64    2.554    3.762     inlet    -1.209  1.209    0.000    +0.002      ERR EXC
+steep  EXTRAN  ellipse  Q      5          2.64    2.707    3.999     inlet    -1.292  1.292    0.000    +0.002      ERR EXC
+steep  EXTRAN  ellipse  Q      5.25       2.64    2.867    4.248     inlet    -1.380  1.380    0.000    +0.003      ERR EXC
+steep  EXTRAN  ellipse  Q      5.5        2.64    3.036    4.508     inlet    -1.472  1.472    0.000    +0.003      ERR EXC
+steep  EXTRAN  ellipse  Q      5.75       2.64    3.212    4.781     inlet    -1.569  1.569    0.000    +0.003      ERR EXC
+steep  EXTRAN  ellipse  Q      6          2.64    3.397    5.066     inlet    -1.670  1.670    0.000    +0.003      ERR EXC
+
+regime thresholds (T sweeps): tailwater depth at which
+slope  surch.  case      HDS-5 hands to outlet  SWMM leaves inlet  SWMM both ends full  (sweep increment)
+mild   SLOT    pipe             1.3                   -              1.2          0.1
+mild   SLOT    ellipse        2.334                   -             2.48          0.146
+mild   EXTRAN  pipe             1.3                   -              1.2          0.1
+mild   EXTRAN  ellipse        2.334                   -             2.48          0.146
+steep  SLOT    pipe           2.467               1.233            1.233          0.137   EARLY
+steep  SLOT    ellipse        3.658               2.561            2.561          0.183   EARLY
+steep  EXTRAN  pipe           2.467               1.233            1.233          0.137   EARLY
+steep  EXTRAN  ellipse        3.658               2.561            2.561          0.183   EARLY
+
+239 FAILED:
+  mild SLOT pipe Q (Q/AD^0.5 3.5, TW 1.5 m): full barrel dissipates 0.4635 m, less than its losses 0.4935 m
+  mild SLOT pipe Q (Q/AD^0.5 3.75, TW 1.5 m): full barrel dissipates 0.5322 m, less than its losses 0.5666 m
+  mild SLOT pipe Q (Q/AD^0.5 4, TW 1.5 m): full barrel dissipates 0.6062 m, less than its losses 0.6446 m
+  mild SLOT pipe Q (Q/AD^0.5 4.25, TW 1.5 m): full barrel dissipates 0.6855 m, less than its losses 0.7277 m
+  mild SLOT pipe Q (Q/AD^0.5 4.5, TW 1.5 m): full barrel dissipates 0.7705 m, less than its losses 0.8158 m
+  mild SLOT pipe Q (Q/AD^0.5 4.75, TW 1.5 m): full barrel dissipates 0.8611 m, less than its losses 0.909 m
+  mild SLOT pipe Q (Q/AD^0.5 5, TW 1.5 m): full barrel dissipates 0.9576 m, less than its losses 1.0072 m
+  mild SLOT pipe Q (Q/AD^0.5 5.25, TW 1.5 m): full barrel dissipates 1.0595 m, less than its losses 1.1105 m
+  mild SLOT pipe Q (Q/AD^0.5 5.5, TW 1.5 m): full barrel dissipates 1.1662 m, less than its losses 1.2187 m
+  mild SLOT pipe Q (Q/AD^0.5 5.75, TW 1.5 m): full barrel dissipates 1.2786 m, less than its losses 1.332 m
+  mild SLOT pipe Q (Q/AD^0.5 6, TW 1.5 m): full barrel dissipates 1.3966 m, less than its losses 1.4504 m
+  mild SLOT ellipse T (Q/AD^0.5 3, TW 2.917 m): full barrel dissipates 0.5483 m, less than its losses 0.5811 m
+  mild SLOT ellipse T (Q/AD^0.5 3, TW 3.063 m): full barrel dissipates 0.5469 m, less than its losses 0.5811 m
+  mild SLOT ellipse T (Q/AD^0.5 3, TW 3.209 m): full barrel dissipates 0.5474 m, less than its losses 0.5811 m
+  mild SLOT ellipse T (Q/AD^0.5 3, TW 3.355 m): full barrel dissipates 0.5494 m, less than its losses 0.5811 m
+  mild SLOT ellipse Q (Q/AD^0.5 3.25, TW 2.738 m): full barrel dissipates 0.6481 m, less than its losses 0.682 m
+  mild SLOT ellipse Q (Q/AD^0.5 3.5, TW 2.738 m): full barrel dissipates 0.7503 m, less than its losses 0.791 m
+  mild SLOT ellipse Q (Q/AD^0.5 3.75, TW 2.738 m): full barrel dissipates 0.8602 m, less than its losses 0.908 m
+  mild SLOT ellipse Q (Q/AD^0.5 4, TW 2.738 m): full barrel dissipates 0.978 m, less than its losses 1.0331 m
+  mild SLOT ellipse Q (Q/AD^0.5 4.25, TW 2.738 m): full barrel dissipates 1.104 m, less than its losses 1.1663 m
+  mild SLOT ellipse Q (Q/AD^0.5 4.5, TW 2.738 m): full barrel dissipates 1.2385 m, less than its losses 1.3075 m
+  mild SLOT ellipse Q (Q/AD^0.5 4.75, TW 2.738 m): full barrel dissipates 1.3815 m, less than its losses 1.4568 m
+  mild SLOT ellipse Q (Q/AD^0.5 5, TW 2.738 m): full barrel dissipates 1.5334 m, less than its losses 1.6142 m
+  mild SLOT ellipse Q (Q/AD^0.5 5.25, TW 2.738 m): headwater 4.0327 m vs HDS-5 4.2964 m (inlet control), off by -0.2637 m
+  mild SLOT ellipse Q (Q/AD^0.5 5.25, TW 2.738 m): full barrel dissipates 1.6943 m, less than its losses 1.7797 m
+  mild SLOT ellipse Q (Q/AD^0.5 5.5, TW 2.738 m): headwater 4.2027 m vs HDS-5 4.5572 m (inlet control), off by -0.3546 m
+  mild SLOT ellipse Q (Q/AD^0.5 5.5, TW 2.738 m): full barrel dissipates 1.8643 m, less than its losses 1.9532 m
+  mild SLOT ellipse Q (Q/AD^0.5 5.75, TW 2.738 m): headwater 4.3813 m vs HDS-5 4.8302 m (inlet control), off by -0.4489 m
+  mild SLOT ellipse Q (Q/AD^0.5 5.75, TW 2.738 m): full barrel dissipates 2.0429 m, less than its losses 2.1348 m
+  mild SLOT ellipse Q (Q/AD^0.5 6, TW 2.738 m): headwater 4.567 m vs HDS-5 5.1153 m (inlet control), off by -0.5482 m
+  mild SLOT ellipse Q (Q/AD^0.5 6, TW 2.738 m): full barrel dissipates 2.2286 m, less than its losses 2.3244 m
+  mild EXTRAN ellipse Q (Q/AD^0.5 5.5, TW 2.738 m): headwater 4.2946 m vs HDS-5 4.5572 m (inlet control), off by -0.2627 m
+  mild EXTRAN ellipse Q (Q/AD^0.5 5.75, TW 2.738 m): headwater 4.4765 m vs HDS-5 4.8302 m (inlet control), off by -0.3537 m
+  mild EXTRAN ellipse Q (Q/AD^0.5 6, TW 2.738 m): headwater 4.6664 m vs HDS-5 5.1153 m (inlet control), off by -0.4488 m
+  steep SLOT pipe T: step between points 8 and 9: SWMM -0.295 m vs HDS-5 +0.000 m
+  steep SLOT pipe T: step between points 11 and 12: SWMM +0.054 m vs HDS-5 +0.000 m
+  steep SLOT pipe T: step between points 14 and 15: SWMM +0.087 m vs HDS-5 +0.000 m
+  steep SLOT pipe T: step between points 15 and 16: SWMM -0.052 m vs HDS-5 +0.000 m
+  steep SLOT pipe T: step between points 16 and 17: SWMM +0.139 m vs HDS-5 +0.000 m
+  steep SLOT pipe T: step between points 17 and 18: SWMM +0.141 m vs HDS-5 +0.024 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.233 m): headwater 1.243 m vs HDS-5 1.5382 m (inlet control), off by -0.2951 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.233 m): headwater oscillates over 0.1623 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.37 m): headwater 1.2316 m vs HDS-5 1.5382 m (inlet control), off by -0.3066 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.37 m): headwater oscillates over 0.0941 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.37 m): mass {"swmmContinuityErrPct":-0.7,"steadyFlowErrPct":0.715,"ok":false}
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.507 m): headwater 1.2148 m vs HDS-5 1.5382 m (inlet control), off by -0.3233 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.507 m): headwater oscillates over 0.1253 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.507 m): mass {"swmmContinuityErrPct":-1.043,"steadyFlowErrPct":1.01,"ok":false}
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.644 m): headwater 1.2691 m vs HDS-5 1.5382 m (inlet control), off by -0.2691 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.644 m): headwater oscillates over 0.0946 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.781 m): headwater 1.2551 m vs HDS-5 1.5382 m (inlet control), off by -0.283 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.781 m): headwater oscillates over 0.1773 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.781 m): mass {"swmmContinuityErrPct":-0.585,"steadyFlowErrPct":0.663,"ok":false}
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.919 m): headwater 1.2275 m vs HDS-5 1.5382 m (inlet control), off by -0.3106 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 1.919 m): headwater oscillates over 0.0517 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 2.056 m): headwater 1.3147 m vs HDS-5 1.5382 m (inlet control), off by -0.2235 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 2.056 m): headwater oscillates over 0.3617 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 2.193 m): headwater 1.2631 m vs HDS-5 1.5382 m (inlet control), off by -0.2751 m
+  steep SLOT pipe T (Q/AD^0.5 4, TW 2.33 m): headwater 1.4018 m vs HDS-5 1.5382 m (inlet control), off by -0.1364 m
+  steep SLOT pipe T: SWMM leaves inlet control at TW 1.233 m; HDS-5 hands over at 2.467
+  steep SLOT pipe Q (Q/AD^0.5 1.5, TW 1.4 m): mass {"swmmContinuityErrPct":-0.747,"steadyFlowErrPct":0.802,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 3, TW 1.4 m): headwater oscillates over 0.0154 m
+  steep SLOT pipe Q (Q/AD^0.5 3.25, TW 1.4 m): headwater 1.2004 m vs HDS-5 1.2858 m (inlet control), off by -0.0853 m
+  steep SLOT pipe Q (Q/AD^0.5 3.25, TW 1.4 m): headwater oscillates over 0.0199 m
+  steep SLOT pipe Q (Q/AD^0.5 3.25, TW 1.4 m): mass {"swmmContinuityErrPct":0.624,"steadyFlowErrPct":-0.484,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 3.5, TW 1.4 m): headwater 1.2089 m vs HDS-5 1.3623 m (inlet control), off by -0.1534 m
+  steep SLOT pipe Q (Q/AD^0.5 3.5, TW 1.4 m): headwater oscillates over 0.0562 m
+  steep SLOT pipe Q (Q/AD^0.5 3.5, TW 1.4 m): mass {"swmmContinuityErrPct":0.442,"steadyFlowErrPct":-0.794,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 3.75, TW 1.4 m): headwater 1.2256 m vs HDS-5 1.4502 m (inlet control), off by -0.2246 m
+  steep SLOT pipe Q (Q/AD^0.5 3.75, TW 1.4 m): headwater oscillates over 0.0291 m
+  steep SLOT pipe Q (Q/AD^0.5 3.75, TW 1.4 m): mass {"swmmContinuityErrPct":0.793,"steadyFlowErrPct":-0.9,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 4, TW 1.4 m): headwater 1.3903 m vs HDS-5 1.5382 m (inlet control), off by -0.1478 m
+  steep SLOT pipe Q (Q/AD^0.5 4, TW 1.4 m): mass {"swmmContinuityErrPct":-0.711,"steadyFlowErrPct":3.92,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 4.25, TW 1.4 m): headwater 1.2752 m vs HDS-5 1.6367 m (inlet control), off by -0.3615 m
+  steep SLOT pipe Q (Q/AD^0.5 4.25, TW 1.4 m): headwater oscillates over 0.3805 m
+  steep SLOT pipe Q (Q/AD^0.5 4.25, TW 1.4 m): mass {"swmmContinuityErrPct":-0.371,"steadyFlowErrPct":-0.513,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 4.5, TW 1.4 m): headwater 1.2379 m vs HDS-5 1.7411 m (inlet control), off by -0.5033 m
+  steep SLOT pipe Q (Q/AD^0.5 4.5, TW 1.4 m): mass {"swmmContinuityErrPct":-0.365,"steadyFlowErrPct":3.154,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 4.75, TW 1.4 m): headwater 1.2197 m vs HDS-5 1.8516 m (inlet control), off by -0.6319 m
+  steep SLOT pipe Q (Q/AD^0.5 4.75, TW 1.4 m): headwater oscillates over 0.0728 m
+  steep SLOT pipe Q (Q/AD^0.5 4.75, TW 1.4 m): mass {"swmmContinuityErrPct":-0.824,"steadyFlowErrPct":0.847,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 5, TW 1.4 m): headwater 1.2436 m vs HDS-5 1.968 m (inlet control), off by -0.7244 m
+  steep SLOT pipe Q (Q/AD^0.5 5, TW 1.4 m): headwater oscillates over 0.0702 m
+  steep SLOT pipe Q (Q/AD^0.5 5, TW 1.4 m): mass {"swmmContinuityErrPct":-0.614,"steadyFlowErrPct":0.658,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 5.25, TW 1.4 m): headwater 1.4456 m vs HDS-5 2.0904 m (inlet control), off by -0.6448 m
+  steep SLOT pipe Q (Q/AD^0.5 5.25, TW 1.4 m): headwater oscillates over 0.5487 m
+  steep SLOT pipe Q (Q/AD^0.5 5.25, TW 1.4 m): mass {"swmmContinuityErrPct":-0.965,"steadyFlowErrPct":3.178,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 5.5, TW 1.4 m): headwater 1.3342 m vs HDS-5 2.2187 m (inlet control), off by -0.8845 m
+  steep SLOT pipe Q (Q/AD^0.5 5.5, TW 1.4 m): headwater oscillates over 0.8233 m
+  steep SLOT pipe Q (Q/AD^0.5 5.5, TW 1.4 m): mass {"swmmContinuityErrPct":-0.659,"steadyFlowErrPct":0.483,"ok":false}
+  steep SLOT pipe Q (Q/AD^0.5 5.75, TW 1.4 m): headwater 1.3058 m vs HDS-5 2.3531 m (inlet control), off by -1.0472 m
+  steep SLOT pipe Q (Q/AD^0.5 5.75, TW 1.4 m): headwater oscillates over 0.2335 m
+  steep SLOT pipe Q (Q/AD^0.5 6, TW 1.4 m): headwater 1.3686 m vs HDS-5 2.4934 m (inlet control), off by -1.1248 m
+  steep SLOT pipe Q (Q/AD^0.5 6, TW 1.4 m): headwater oscillates over 0.2763 m
+  steep SLOT ellipse T: step between points 13 and 14: SWMM -0.351 m vs HDS-5 +0.000 m
+  steep SLOT ellipse T: step between points 14 and 15: SWMM -0.290 m vs HDS-5 +0.000 m
+  steep SLOT ellipse T: step between points 15 and 16: SWMM +0.132 m vs HDS-5 +0.000 m
+  steep SLOT ellipse T: step between points 16 and 17: SWMM -0.056 m vs HDS-5 +0.000 m
+  steep SLOT ellipse T: step between points 17 and 18: SWMM +0.176 m vs HDS-5 +0.000 m
+  steep SLOT ellipse T: step between points 18 and 19: SWMM +0.182 m vs HDS-5 +0.000 m
+  steep SLOT ellipse T: step between points 19 and 20: SWMM +0.186 m vs HDS-5 +0.035 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 2.561 m): headwater 2.7776 m vs HDS-5 3.1255 m (inlet control), off by -0.3479 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 2.561 m): mass {"swmmContinuityErrPct":0.14,"steadyFlowErrPct":-5.571,"ok":false}
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 2.744 m): headwater 2.4877 m vs HDS-5 3.1255 m (inlet control), off by -0.6378 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 2.744 m): headwater oscillates over 0.1397 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 2.744 m): mass {"swmmContinuityErrPct":-0.564,"steadyFlowErrPct":0.639,"ok":false}
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 2.926 m): headwater 2.6194 m vs HDS-5 3.1255 m (inlet control), off by -0.5061 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 2.926 m): headwater oscillates over 0.6349 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 3.109 m): headwater 2.563 m vs HDS-5 3.1255 m (inlet control), off by -0.5625 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 3.109 m): full barrel dissipates 0.9536 m, less than its losses 1.0022 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 3.292 m): headwater 2.7389 m vs HDS-5 3.1255 m (inlet control), off by -0.3867 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 3.292 m): full barrel dissipates 0.9466 m, less than its losses 1.0022 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 3.475 m): headwater 2.9207 m vs HDS-5 3.1255 m (inlet control), off by -0.2048 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 3.475 m): full barrel dissipates 0.9456 m, less than its losses 1.0022 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 3.658 m): full barrel dissipates 0.9488 m, less than its losses 1.0022 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 3.841 m): full barrel dissipates 0.9549 m, less than its losses 1.0022 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 4.024 m): full barrel dissipates 0.9623 m, less than its losses 1.0022 m
+  steep SLOT ellipse T (Q/AD^0.5 4, TW 4.207 m): full barrel dissipates 0.9701 m, less than its losses 1.0022 m
+  steep SLOT ellipse T: SWMM leaves inlet control at TW 2.561 m; HDS-5 hands over at 3.658
+  steep SLOT ellipse Q (Q/AD^0.5 3, TW 2.638 m): headwater oscillates over 0.0271 m
+  steep SLOT ellipse Q (Q/AD^0.5 3.25, TW 2.638 m): headwater 2.4087 m vs HDS-5 2.6179 m (inlet control), off by -0.2092 m
+  steep SLOT ellipse Q (Q/AD^0.5 3.25, TW 2.638 m): mass {"swmmContinuityErrPct":-0.585,"steadyFlowErrPct":3.201,"ok":false}
+  steep SLOT ellipse Q (Q/AD^0.5 3.5, TW 2.638 m): headwater 2.4708 m vs HDS-5 2.7742 m (inlet control), off by -0.3034 m
+  steep SLOT ellipse Q (Q/AD^0.5 3.75, TW 2.638 m): headwater 2.5272 m vs HDS-5 2.9499 m (inlet control), off by -0.4227 m
+  steep SLOT ellipse Q (Q/AD^0.5 3.75, TW 2.638 m): headwater oscillates over 0.2575 m
+  steep SLOT ellipse Q (Q/AD^0.5 4, TW 2.638 m): headwater 2.5306 m vs HDS-5 3.1255 m (inlet control), off by -0.595 m
+  steep SLOT ellipse Q (Q/AD^0.5 4, TW 2.638 m): headwater oscillates over 0.0834 m
+  steep SLOT ellipse Q (Q/AD^0.5 4, TW 2.638 m): mass {"swmmContinuityErrPct":0.186,"steadyFlowErrPct":8.585,"ok":false}
+  steep SLOT ellipse Q (Q/AD^0.5 4.25, TW 2.638 m): headwater 2.5336 m vs HDS-5 3.3257 m (inlet control), off by -0.7921 m
+  steep SLOT ellipse Q (Q/AD^0.5 4.25, TW 2.638 m): headwater oscillates over 0.0826 m
+  steep SLOT ellipse Q (Q/AD^0.5 4.5, TW 2.638 m): headwater 2.7062 m vs HDS-5 3.538 m (inlet control), off by -0.8318 m
+  steep SLOT ellipse Q (Q/AD^0.5 4.5, TW 2.638 m): headwater oscillates over 0.894 m
+  steep SLOT ellipse Q (Q/AD^0.5 4.75, TW 2.638 m): headwater 2.5173 m vs HDS-5 3.7624 m (inlet control), off by -1.2452 m
+  steep SLOT ellipse Q (Q/AD^0.5 5, TW 2.638 m): headwater 2.6536 m vs HDS-5 3.999 m (inlet control), off by -1.3454 m
+  steep SLOT ellipse Q (Q/AD^0.5 5, TW 2.638 m): full barrel dissipates 1.5152 m, less than its losses 1.5659 m
+  steep SLOT ellipse Q (Q/AD^0.5 5.25, TW 2.638 m): headwater 2.7977 m vs HDS-5 4.2477 m (inlet control), off by -1.4499 m
+  steep SLOT ellipse Q (Q/AD^0.5 5.25, TW 2.638 m): full barrel dissipates 1.6593 m, less than its losses 1.7264 m
+  steep SLOT ellipse Q (Q/AD^0.5 5.5, TW 2.638 m): headwater 2.9502 m vs HDS-5 4.5085 m (inlet control), off by -1.5583 m
+  steep SLOT ellipse Q (Q/AD^0.5 5.5, TW 2.638 m): full barrel dissipates 1.8118 m, less than its losses 1.8947 m
+  steep SLOT ellipse Q (Q/AD^0.5 5.75, TW 2.638 m): headwater 3.1117 m vs HDS-5 4.7814 m (inlet control), off by -1.6697 m
+  steep SLOT ellipse Q (Q/AD^0.5 5.75, TW 2.638 m): full barrel dissipates 1.9733 m, less than its losses 2.0709 m
+  steep SLOT ellipse Q (Q/AD^0.5 6, TW 2.638 m): headwater 3.2827 m vs HDS-5 5.0665 m (inlet control), off by -1.7838 m
+  steep SLOT ellipse Q (Q/AD^0.5 6, TW 2.638 m): full barrel dissipates 2.1443 m, less than its losses 2.2549 m
+  steep EXTRAN pipe T: step between points 8 and 9: SWMM -0.334 m vs HDS-5 +0.000 m
+  steep EXTRAN pipe T: step between points 11 and 12: SWMM +0.084 m vs HDS-5 +0.000 m
+  steep EXTRAN pipe T: step between points 12 and 13: SWMM -0.059 m vs HDS-5 +0.000 m
+  steep EXTRAN pipe T: step between points 13 and 14: SWMM +0.058 m vs HDS-5 +0.000 m
+  steep EXTRAN pipe T: step between points 16 and 17: SWMM +0.137 m vs HDS-5 +0.000 m
+  steep EXTRAN pipe T: step between points 17 and 18: SWMM +0.137 m vs HDS-5 +0.024 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.233 m): headwater 1.2039 m vs HDS-5 1.5382 m (inlet control), off by -0.3343 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.233 m): headwater oscillates over 0.0128 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.233 m): mass {"swmmContinuityErrPct":2.45,"steadyFlowErrPct":-2.484,"ok":false}
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.37 m): headwater 1.2181 m vs HDS-5 1.5382 m (inlet control), off by -0.3201 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.507 m): headwater 1.2139 m vs HDS-5 1.5382 m (inlet control), off by -0.3242 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.507 m): mass {"swmmContinuityErrPct":-1.097,"steadyFlowErrPct":1.184,"ok":false}
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.644 m): headwater 1.2979 m vs HDS-5 1.5382 m (inlet control), off by -0.2402 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.644 m): headwater oscillates over 0.4695 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.644 m): mass {"swmmContinuityErrPct":2.449,"steadyFlowErrPct":-2.646,"ok":false}
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.781 m): headwater 1.2388 m vs HDS-5 1.5382 m (inlet control), off by -0.2994 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.781 m): headwater oscillates over 0.1874 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.781 m): mass {"swmmContinuityErrPct":0.534,"steadyFlowErrPct":-0.663,"ok":false}
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.919 m): headwater 1.297 m vs HDS-5 1.5382 m (inlet control), off by -0.2412 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 1.919 m): headwater oscillates over 0.8367 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 2.056 m): headwater 1.2956 m vs HDS-5 1.5382 m (inlet control), off by -0.2426 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 2.056 m): headwater oscillates over 1.0329 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 2.056 m): mass {"swmmContinuityErrPct":-0.813,"steadyFlowErrPct":0.915,"ok":false}
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 2.193 m): headwater 1.2876 m vs HDS-5 1.5382 m (inlet control), off by -0.2506 m
+  steep EXTRAN pipe T (Q/AD^0.5 4, TW 2.33 m): headwater 1.4246 m vs HDS-5 1.5382 m (inlet control), off by -0.1135 m
+  steep EXTRAN pipe T: SWMM leaves inlet control at TW 1.233 m; HDS-5 hands over at 2.467
+  steep EXTRAN pipe Q: step between points 20 and 21: SWMM +1.043 m vs HDS-5 +0.134 m
+  steep EXTRAN pipe Q: step between points 21 and 22: SWMM -1.030 m vs HDS-5 +0.140 m
+  steep EXTRAN pipe Q (Q/AD^0.5 2.5, TW 1.4 m): mass {"swmmContinuityErrPct":0.041,"steadyFlowErrPct":0.624,"ok":false}
+  steep EXTRAN pipe Q (Q/AD^0.5 3, TW 1.4 m): headwater oscillates over 0.0106 m
+  steep EXTRAN pipe Q (Q/AD^0.5 3.25, TW 1.4 m): headwater 1.2016 m vs HDS-5 1.2858 m (inlet control), off by -0.0842 m
+  steep EXTRAN pipe Q (Q/AD^0.5 3.25, TW 1.4 m): headwater oscillates over 0.0573 m
+  steep EXTRAN pipe Q (Q/AD^0.5 3.25, TW 1.4 m): mass {"swmmContinuityErrPct":-0.971,"steadyFlowErrPct":0.434,"ok":false}
+  steep EXTRAN pipe Q (Q/AD^0.5 3.5, TW 1.4 m): headwater 1.1998 m vs HDS-5 1.3623 m (inlet control), off by -0.1625 m
+  steep EXTRAN pipe Q (Q/AD^0.5 3.5, TW 1.4 m): mass {"swmmContinuityErrPct":-2.471,"steadyFlowErrPct":2.666,"ok":false}
+  steep EXTRAN pipe Q (Q/AD^0.5 3.75, TW 1.4 m): headwater 1.2114 m vs HDS-5 1.4502 m (inlet control), off by -0.2389 m
+  steep EXTRAN pipe Q (Q/AD^0.5 3.75, TW 1.4 m): headwater oscillates over 0.0327 m
+  steep EXTRAN pipe Q (Q/AD^0.5 4, TW 1.4 m): headwater 1.2192 m vs HDS-5 1.5382 m (inlet control), off by -0.319 m
+  steep EXTRAN pipe Q (Q/AD^0.5 4, TW 1.4 m): headwater oscillates over 0.0439 m
+  steep EXTRAN pipe Q (Q/AD^0.5 4.25, TW 1.4 m): headwater 1.2646 m vs HDS-5 1.6367 m (inlet control), off by -0.372 m
+  steep EXTRAN pipe Q (Q/AD^0.5 4.25, TW 1.4 m): headwater oscillates over 0.3435 m
+  steep EXTRAN pipe Q (Q/AD^0.5 4.25, TW 1.4 m): mass {"swmmContinuityErrPct":0.7,"steadyFlowErrPct":-0.945,"ok":false}
+  steep EXTRAN pipe Q (Q/AD^0.5 4.5, TW 1.4 m): headwater 1.2745 m vs HDS-5 1.7411 m (inlet control), off by -0.4666 m
+  steep EXTRAN pipe Q (Q/AD^0.5 4.5, TW 1.4 m): headwater oscillates over 0.0166 m
+  steep EXTRAN pipe Q (Q/AD^0.5 4.5, TW 1.4 m): mass {"swmmContinuityErrPct":-0.471,"steadyFlowErrPct":3.385,"ok":false}
+  steep EXTRAN pipe Q (Q/AD^0.5 4.75, TW 1.4 m): headwater 1.2417 m vs HDS-5 1.8516 m (inlet control), off by -0.6099 m
+  steep EXTRAN pipe Q (Q/AD^0.5 4.75, TW 1.4 m): mass {"swmmContinuityErrPct":-0.955,"steadyFlowErrPct":-3.5,"ok":false}
+  steep EXTRAN pipe Q (Q/AD^0.5 5, TW 1.4 m): headwater 1.3982 m vs HDS-5 1.968 m (inlet control), off by -0.5698 m
+  steep EXTRAN pipe Q (Q/AD^0.5 5.25, TW 1.4 m): headwater 1.5214 m vs HDS-5 2.0904 m (inlet control), off by -0.569 m
+  steep EXTRAN pipe Q (Q/AD^0.5 5.25, TW 1.4 m): headwater oscillates over 1.8231 m
+  steep EXTRAN pipe Q (Q/AD^0.5 5.5, TW 1.4 m): headwater 1.2258 m vs HDS-5 2.2187 m (inlet control), off by -0.993 m
+  steep EXTRAN pipe Q (Q/AD^0.5 5.5, TW 1.4 m): headwater oscillates over 0.0626 m
+  steep EXTRAN pipe Q (Q/AD^0.5 5.5, TW 1.4 m): mass {"swmmContinuityErrPct":-2.068,"steadyFlowErrPct":2.232,"ok":false}
+  steep EXTRAN pipe Q (Q/AD^0.5 5.75, TW 1.4 m): mean within the band but the headwater swings 1.4351 m from HDS-5
+  steep EXTRAN pipe Q (Q/AD^0.5 5.75, TW 1.4 m): headwater oscillates over 2.5268 m
+  steep EXTRAN pipe Q (Q/AD^0.5 5.75, TW 1.4 m): mass {"swmmContinuityErrPct":5.837,"steadyFlowErrPct":-6.359,"ok":false}
+  steep EXTRAN pipe Q (Q/AD^0.5 6, TW 1.4 m): headwater 1.2387 m vs HDS-5 2.4934 m (inlet control), off by -1.2546 m
+  steep EXTRAN ellipse T: step between points 13 and 14: SWMM -0.377 m vs HDS-5 +0.000 m
+  steep EXTRAN ellipse T: step between points 14 and 15: SWMM -0.120 m vs HDS-5 +0.000 m
+  steep EXTRAN ellipse T: step between points 15 and 16: SWMM -0.123 m vs HDS-5 +0.000 m
+  steep EXTRAN ellipse T: step between points 16 and 17: SWMM +0.104 m vs HDS-5 +0.000 m
+  steep EXTRAN ellipse T: step between points 17 and 18: SWMM +0.183 m vs HDS-5 +0.000 m
+  steep EXTRAN ellipse T: step between points 18 and 19: SWMM +0.183 m vs HDS-5 +0.000 m
+  steep EXTRAN ellipse T: step between points 19 and 20: SWMM +0.183 m vs HDS-5 +0.035 m
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 2.561 m): headwater 2.752 m vs HDS-5 3.1255 m (inlet control), off by -0.3735 m
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 2.561 m): headwater oscillates over 0.779 m
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 2.561 m): mass {"swmmContinuityErrPct":0.756,"steadyFlowErrPct":0.392,"ok":false}
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 2.744 m): headwater 2.6318 m vs HDS-5 3.1255 m (inlet control), off by -0.4937 m
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 2.744 m): headwater oscillates over 0.1141 m
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 2.744 m): mass {"swmmContinuityErrPct":-1.165,"steadyFlowErrPct":-0.495,"ok":false}
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 2.926 m): headwater 2.5089 m vs HDS-5 3.1255 m (inlet control), off by -0.6166 m
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 2.926 m): mass {"swmmContinuityErrPct":-0.691,"steadyFlowErrPct":0.522,"ok":false}
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 3.109 m): headwater 2.613 m vs HDS-5 3.1255 m (inlet control), off by -0.5125 m
+  steep EXTRAN ellipse T (Q/AD^0.5 4, TW 3.292 m): headwater 2.796 m vs HDS-5 3.1255 m (inlet control), off by -0.3296 m
+  steep EXTRAN ellipse T: SWMM leaves inlet control at TW 2.561 m; HDS-5 hands over at 3.658
+  steep EXTRAN ellipse Q (Q/AD^0.5 3, TW 2.638 m): headwater oscillates over 0.0191 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 3, TW 2.638 m): mass {"swmmContinuityErrPct":-0.574,"steadyFlowErrPct":0.459,"ok":false}
+  steep EXTRAN ellipse Q (Q/AD^0.5 3.25, TW 2.638 m): headwater 2.4521 m vs HDS-5 2.6179 m (inlet control), off by -0.1657 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 3.25, TW 2.638 m): headwater oscillates over 0.0378 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 3.5, TW 2.638 m): headwater 2.4668 m vs HDS-5 2.7742 m (inlet control), off by -0.3073 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 3.75, TW 2.638 m): headwater 2.5989 m vs HDS-5 2.9499 m (inlet control), off by -0.351 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 3.75, TW 2.638 m): headwater oscillates over 0.6372 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 3.75, TW 2.638 m): mass {"swmmContinuityErrPct":1.631,"steadyFlowErrPct":-1.809,"ok":false}
+  steep EXTRAN ellipse Q (Q/AD^0.5 4, TW 2.638 m): headwater 2.8684 m vs HDS-5 3.1255 m (inlet control), off by -0.2571 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 4, TW 2.638 m): headwater oscillates over 0.7886 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 4, TW 2.638 m): mass {"swmmContinuityErrPct":1.891,"steadyFlowErrPct":-2.031,"ok":false}
+  steep EXTRAN ellipse Q (Q/AD^0.5 4.25, TW 2.638 m): headwater 2.63 m vs HDS-5 3.3257 m (inlet control), off by -0.6957 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 4.25, TW 2.638 m): headwater oscillates over 1.559 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 4.5, TW 2.638 m): headwater 2.4834 m vs HDS-5 3.538 m (inlet control), off by -1.0546 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 4.5, TW 2.638 m): mass {"swmmContinuityErrPct":-2.583,"steadyFlowErrPct":2.838,"ok":false}
+  steep EXTRAN ellipse Q (Q/AD^0.5 4.75, TW 2.638 m): headwater 2.5538 m vs HDS-5 3.7624 m (inlet control), off by -1.2087 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 5, TW 2.638 m): headwater 2.7067 m vs HDS-5 3.999 m (inlet control), off by -1.2923 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 5.25, TW 2.638 m): headwater 2.8674 m vs HDS-5 4.2477 m (inlet control), off by -1.3803 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 5.5, TW 2.638 m): headwater 3.036 m vs HDS-5 4.5085 m (inlet control), off by -1.4725 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 5.75, TW 2.638 m): headwater 3.2124 m vs HDS-5 4.7814 m (inlet control), off by -1.569 m
+  steep EXTRAN ellipse Q (Q/AD^0.5 6, TW 2.638 m): headwater 3.3967 m vs HDS-5 5.0665 m (inlet control), off by -1.6698 m

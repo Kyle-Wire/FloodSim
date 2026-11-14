@@ -1,0 +1,69 @@
+B1-LF unsubmerged inlet control at low discharge, SWMM alone (S 0.02, L 20 m unless stated)
+
+case  Q/AD^.5  variant                          SWMM HW  HDS-5 HW  diff     pool − Ec  eq@pool/Q  continuity
+pipe  0.5      baseline (production routing)    0.353    0.412     -0.059   -0.068     0.753      -0.225 %
+pipe  0.5      fixed step 1 s                   0.353    0.412     -0.059   -0.068     0.753      -0.225 %
+pipe  0.5      fixed step 0.25 s                0.353    0.412     -0.059   -0.068     0.753      -0.239 %
+pipe  0.5      fixed step 0.05 s                0.353    0.412     -0.059   -0.068     0.753      -0.393 %
+pipe  0.5      outfall NORMAL                   0.353    0.412     -0.059   -0.068     0.753      -0.225 %
+pipe  0.5      outfall fixed at 0.5 D           0.353    0.412     -0.059   -0.068     0.753      -0.009 %
+pipe  0.5      outfall fixed at 0.9 D           0.686    0.412     +0.274   +0.265     2.456      0.075 %
+pipe  0.5      inertial damping FULL            0.353    0.412     -0.059   -0.068     0.753      -0.225 %
+pipe  0.5      inertial damping NONE            0.353    0.412     -0.059   -0.068     0.753      -0.235 %
+pipe  0.5      normal flow limited SLOPE        0.353    0.412     -0.059   -0.068     0.753      -0.225 %
+pipe  0.5      barrel 100 m (same slope)        0.353    0.412     -0.059   -0.068     0.753      -1.262 %
+pipe  1        baseline (production routing)    0.554    0.609     -0.054   -0.055     0.849      -0.197 %
+pipe  1        fixed step 1 s                   0.554    0.609     -0.054   -0.055     0.849      -0.199 %
+pipe  1        fixed step 0.25 s                0.554    0.609     -0.054   -0.055     0.849      -0.197 %
+pipe  1        fixed step 0.05 s                0.554    0.609     -0.054   -0.055     0.849      -0.318 %
+pipe  1        outfall NORMAL                   0.554    0.609     -0.054   -0.055     0.849      -0.198 %
+pipe  1        outfall fixed at 0.5 D           0.554    0.609     -0.054   -0.055     0.849      0 %
+pipe  1        outfall fixed at 0.9 D           0.707    0.609     +0.098   +0.098     1.290      0.037 %
+pipe  1        inertial damping FULL            0.554    0.609     -0.054   -0.055     0.849      -0.197 %
+pipe  1        inertial damping NONE            0.554    0.609     -0.054   -0.055     0.849      -0.203 %
+pipe  1        normal flow limited SLOPE        0.554    0.609     -0.054   -0.055     0.849      -0.197 %
+pipe  1        barrel 100 m (same slope)        0.554    0.609     -0.054   -0.055     0.849      -1.031 %
+pipe  1.5      baseline (production routing)    0.780    0.774     +0.005   +0.020     1.012      -0.178 %
+pipe  1.5      fixed step 1 s                   0.780    0.774     +0.005   +0.020     1.012      -0.179 %
+pipe  1.5      fixed step 0.25 s                0.780    0.774     +0.005   +0.020     1.012      -0.175 %
+pipe  1.5      fixed step 0.05 s                0.780    0.774     +0.005   +0.020     1.012      -0.279 %
+pipe  1.5      outfall NORMAL                   0.780    0.774     +0.005   +0.020     1.012      -0.178 %
+pipe  1.5      outfall fixed at 0.5 D           0.780    0.774     +0.005   +0.020     1.012      -0.01 %
+pipe  1.5      outfall fixed at 0.9 D           0.780    0.774     +0.005   +0.020     1.012      0.021 %
+pipe  1.5      inertial damping FULL            0.780    0.774     +0.005   +0.020     1.012      -0.179 %
+pipe  1.5      inertial damping NONE            0.780    0.774     +0.005   +0.020     1.012      -0.176 %
+pipe  1.5      normal flow limited SLOPE        0.780    0.774     +0.005   +0.020     1.012      -0.178 %
+pipe  1.5      barrel 100 m (same slope)        0.780    0.774     +0.005   +0.020     1.012      -0.898 %
+box   1        baseline (production routing)    0.853    0.784     +0.069   +0.146     1.131      -0.164 %
+box   1        fixed step 1 s                   0.853    0.784     +0.069   +0.146     1.131      -0.164 %
+box   1        fixed step 0.25 s                0.853    0.784     +0.069   +0.146     1.131      -0.158 %
+box   1        fixed step 0.05 s                0.853    0.784     +0.069   +0.146     1.131      -0.245 %
+box   1        outfall NORMAL                   0.853    0.784     +0.069   +0.146     1.131      -0.164 %
+box   1        outfall fixed at 0.5 D           0.853    0.784     +0.069   +0.146     1.131      -0.005 %
+box   1        outfall fixed at 0.9 D           0.987    0.784     +0.203   +0.280     1.398      0 %
+box   1        inertial damping FULL            0.853    0.784     +0.069   +0.146     1.131      -0.164 %
+box   1        inertial damping NONE            0.853    0.784     +0.069   +0.146     1.131      -0.164 %
+box   1        normal flow limited SLOPE        0.853    0.784     +0.069   +0.146     1.131      -0.164 %
+box   1        barrel 100 m (same slope)        0.853    0.784     +0.069   +0.146     1.131      -0.788 %
+box   1.5      baseline (production routing)    1.078    1.036     +0.042   +0.151     1.060      -0.143 %
+box   1.5      fixed step 1 s                   1.078    1.036     +0.042   +0.151     1.060      -0.143 %
+box   1.5      fixed step 0.25 s                1.078    1.036     +0.042   +0.151     1.060      -0.136 %
+box   1.5      fixed step 0.05 s                1.078    1.036     +0.042   +0.151     1.060      -0.212 %
+box   1.5      outfall NORMAL                   1.078    1.036     +0.042   +0.151     1.060      -0.143 %
+box   1.5      outfall fixed at 0.5 D           1.078    1.036     +0.042   +0.151     1.060      -0.006 %
+box   1.5      outfall fixed at 0.9 D           1.078    1.036     +0.042   +0.151     1.060      0 %
+box   1.5      inertial damping FULL            1.078    1.036     +0.042   +0.151     1.060      -0.143 %
+box   1.5      inertial damping NONE            1.078    1.036     +0.042   +0.151     1.060      -0.143 %
+box   1.5      normal flow limited SLOPE        1.078    1.036     +0.042   +0.151     1.060      -0.143 %
+box   1.5      barrel 100 m (same slope)        1.078    1.036     +0.042   +0.151     1.060      -0.684 %
+box   2        baseline (production routing)    1.311    1.262     +0.049   +0.188     1.058      -0.132 %
+box   2        fixed step 1 s                   1.311    1.262     +0.049   +0.188     1.058      -0.132 %
+box   2        fixed step 0.25 s                1.311    1.262     +0.049   +0.188     1.058      -0.124 %
+box   2        fixed step 0.05 s                1.311    1.262     +0.049   +0.188     1.058      -0.193 %
+box   2        outfall NORMAL                   1.311    1.262     +0.049   +0.188     1.058      -0.132 %
+box   2        outfall fixed at 0.5 D           1.311    1.262     +0.049   +0.188     1.058      -0.008 %
+box   2        outfall fixed at 0.9 D           1.311    1.262     +0.049   +0.188     1.058      -0.003 %
+box   2        inertial damping FULL            1.311    1.262     +0.049   +0.188     1.058      -0.132 %
+box   2        inertial damping NONE            1.311    1.262     +0.049   +0.188     1.058      -0.132 %
+box   2        normal flow limited SLOPE        1.311    1.262     +0.049   +0.188     1.058      -0.132 %
+box   2        barrel 100 m (same slope)        1.311    1.262     +0.049   +0.188     1.058      -0.622 %

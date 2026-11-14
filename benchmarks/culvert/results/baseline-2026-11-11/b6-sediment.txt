@@ -1,0 +1,19 @@
+B6 silted barrels, SWMM 52004 alone: depth above the fill half way along a 720 m barrel vs the Manning normal depth of the open section (S 0.002, n 0.013)
+
+B6-1   0.3  Q   0.353  FILLED_CIRCULAR  offset 0    normal 0.270  SWMM 0.280  +0.010  PASS  mass BAD (continuity -0.506 %, outflow 0 %)
+B6-1   0.6  Q   0.939  FILLED_CIRCULAR  offset 0    normal 0.540  SWMM 0.557  +0.017  FAIL  mass BAD (continuity -1.585 %, outflow 0 %)
+B6-1c  0.3  Q   0.341  CIRCULAR         offset 0    normal 0.360  SWMM 0.360  +0.000  PASS  mass BAD (continuity -0.749 %, outflow 0 %)
+B6-1c  0.6  Q   1.171  CIRCULAR         offset 0    normal 0.720  SWMM 0.718  -0.002  PASS  mass ok (continuity -0.482 %, outflow 0 %)
+B6-2   0.3  Q   2.290  RECT_CLOSED      offset 0.5  normal 0.450  SWMM 0.450  -0.000  PASS  mass BAD (continuity -0.613 %, outflow 0 %)
+B6-2   0.6  Q   6.329  RECT_CLOSED      offset 0.5  normal 0.900  SWMM 0.892  -0.008  PASS  mass ok (continuity -0.427 %, outflow 0 %)
+B6-3   0.3  Q   2.688  CUSTOM           offset 1    normal 0.431  SWMM 0.431  -0.000  PASS  mass ok (continuity -0.406 %, outflow 0 %)
+B6-3   0.6  Q   7.055  CUSTOM           offset 1    normal 0.863  SWMM 0.853  -0.010  PASS  mass ok (continuity -0.483 %, outflow 0 %)
+B6-3c  0.3  Q   3.650  CUSTOM           offset 0    normal 0.732  SWMM 0.732  +0.000  PASS  mass ok (continuity -0.485 %, outflow 0 %)
+B6-3c  0.6  Q  13.259  CUSTOM           offset 0    normal 1.463  SWMM 1.447  -0.016  PASS  mass ok (continuity -0.307 %, outflow 0 %)
+
+5 FAILED:
+  B6-1 at 0.3: mass {"swmmContinuityErrPct":-0.506,"steadyOutflowErrPct":0,"ok":false}
+  B6-1 at 0.6: SWMM 0.557 m above the fill vs normal 0.540 m
+  B6-1 at 0.6: mass {"swmmContinuityErrPct":-1.585,"steadyOutflowErrPct":0,"ok":false}
+  B6-1c at 0.3: mass {"swmmContinuityErrPct":-0.749,"steadyOutflowErrPct":0,"ok":false}
+  B6-2 at 0.3: mass {"swmmContinuityErrPct":-0.613,"steadyOutflowErrPct":0,"ok":false}

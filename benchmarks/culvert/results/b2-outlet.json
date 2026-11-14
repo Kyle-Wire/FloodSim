@@ -1,0 +1,5816 @@
+{
+ "benchmark": "B2 outlet control, SWMM alone",
+ "swmm": 52004,
+ "slope": 0.001,
+ "length": 60,
+ "rows": [
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0317,
+   "hds5HeadDrop": 0.0317,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0,
+   "energy": {
+    "swmmLossOverHv": 2.489,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1269,
+   "hds5HeadDrop": 0.1269,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0001,
+   "energy": {
+    "swmmLossOverHv": 2.489,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.5075,
+   "hds5HeadDrop": 0.5078,
+   "diff": -0.0003,
+   "tol": 0.0051,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0003,
+   "energy": {
+    "swmmLossOverHv": 2.489,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.1419,
+   "hds5HeadDrop": 1.1425,
+   "diff": -0.0006,
+   "tol": 0.0114,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0006,
+   "energy": {
+    "swmmLossOverHv": 2.489,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.019,
+   "hds5HeadDrop": 0.019,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0128,
+   "energy": {
+    "swmmLossOverHv": 1.49,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0759,
+   "hds5HeadDrop": 0.076,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.051,
+   "energy": {
+    "swmmLossOverHv": 1.49,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.3038,
+   "hds5HeadDrop": 0.3039,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.204,
+   "energy": {
+    "swmmLossOverHv": 1.49,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.6835,
+   "hds5HeadDrop": 0.6838,
+   "diff": -0.0003,
+   "tol": 0.0068,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.459,
+   "energy": {
+    "swmmLossOverHv": 1.49,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0126,
+   "hds5HeadDrop": 0.0126,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0191,
+   "energy": {
+    "swmmLossOverHv": 0.99,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0505,
+   "hds5HeadDrop": 0.0505,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0765,
+   "energy": {
+    "swmmLossOverHv": 0.99,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2019,
+   "hds5HeadDrop": 0.202,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.3059,
+   "energy": {
+    "swmmLossOverHv": 0.99,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.4543,
+   "hds5HeadDrop": 0.4544,
+   "diff": -0.0002,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.6882,
+   "energy": {
+    "swmmLossOverHv": 0.99,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0317,
+   "hds5HeadDrop": 0.0317,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0,
+   "energy": {
+    "swmmLossOverHv": 2.489,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1269,
+   "hds5HeadDrop": 0.1269,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0001,
+   "energy": {
+    "swmmLossOverHv": 2.489,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.5075,
+   "hds5HeadDrop": 0.5078,
+   "diff": -0.0003,
+   "tol": 0.0051,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0003,
+   "energy": {
+    "swmmLossOverHv": 2.489,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.1419,
+   "hds5HeadDrop": 1.1425,
+   "diff": -0.0006,
+   "tol": 0.0114,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0006,
+   "energy": {
+    "swmmLossOverHv": 2.489,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.019,
+   "hds5HeadDrop": 0.019,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0128,
+   "energy": {
+    "swmmLossOverHv": 1.49,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0759,
+   "hds5HeadDrop": 0.076,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.051,
+   "energy": {
+    "swmmLossOverHv": 1.49,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.3038,
+   "hds5HeadDrop": 0.3039,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.204,
+   "energy": {
+    "swmmLossOverHv": 1.49,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.6835,
+   "hds5HeadDrop": 0.6838,
+   "diff": -0.0003,
+   "tol": 0.0068,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.459,
+   "energy": {
+    "swmmLossOverHv": 1.49,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0126,
+   "hds5HeadDrop": 0.0126,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0191,
+   "energy": {
+    "swmmLossOverHv": 0.99,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0505,
+   "hds5HeadDrop": 0.0505,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0765,
+   "energy": {
+    "swmmLossOverHv": 0.99,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2019,
+   "hds5HeadDrop": 0.202,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.3059,
+   "energy": {
+    "swmmLossOverHv": 0.99,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.4543,
+   "hds5HeadDrop": 0.4544,
+   "diff": -0.0002,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.6882,
+   "energy": {
+    "swmmLossOverHv": 0.99,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0672,
+   "hds5HeadDrop": 0.0672,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0,
+   "energy": {
+    "swmmLossOverHv": 5.274,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.2688,
+   "hds5HeadDrop": 0.2689,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0001,
+   "energy": {
+    "swmmLossOverHv": 5.274,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 1.0752,
+   "hds5HeadDrop": 1.0757,
+   "diff": -0.0005,
+   "tol": 0.0108,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0005,
+   "energy": {
+    "swmmLossOverHv": 5.274,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 2.4192,
+   "hds5HeadDrop": 2.4203,
+   "diff": -0.0011,
+   "tol": 0.0242,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0011,
+   "energy": {
+    "swmmLossOverHv": 5.274,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0545,
+   "hds5HeadDrop": 0.0545,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0128,
+   "energy": {
+    "swmmLossOverHv": 4.275,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.2179,
+   "hds5HeadDrop": 0.218,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0511,
+   "energy": {
+    "swmmLossOverHv": 4.275,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.8715,
+   "hds5HeadDrop": 0.8718,
+   "diff": -0.0004,
+   "tol": 0.0087,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2042,
+   "energy": {
+    "swmmLossOverHv": 4.275,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.9608,
+   "hds5HeadDrop": 1.9616,
+   "diff": -0.0008,
+   "tol": 0.0196,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.4595,
+   "energy": {
+    "swmmLossOverHv": 4.275,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.043,
+   "hds5HeadDrop": 0.043,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0191,
+   "energy": {
+    "swmmLossOverHv": 3.375,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.172,
+   "hds5HeadDrop": 0.1721,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0765,
+   "energy": {
+    "swmmLossOverHv": 3.375,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.6881,
+   "hds5HeadDrop": 0.6883,
+   "diff": -0.0002,
+   "tol": 0.0069,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.306,
+   "energy": {
+    "swmmLossOverHv": 3.375,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.5483,
+   "hds5HeadDrop": 1.5488,
+   "diff": -0.0005,
+   "tol": 0.0155,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.6886,
+   "energy": {
+    "swmmLossOverHv": 3.375,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0672,
+   "hds5HeadDrop": 0.0672,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0,
+   "energy": {
+    "swmmLossOverHv": 5.274,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.2688,
+   "hds5HeadDrop": 0.2689,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0001,
+   "energy": {
+    "swmmLossOverHv": 5.274,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 1.0752,
+   "hds5HeadDrop": 1.0757,
+   "diff": -0.0005,
+   "tol": 0.0108,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0005,
+   "energy": {
+    "swmmLossOverHv": 5.274,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 2.4192,
+   "hds5HeadDrop": 2.4203,
+   "diff": -0.0011,
+   "tol": 0.0242,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0011,
+   "energy": {
+    "swmmLossOverHv": 5.274,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0545,
+   "hds5HeadDrop": 0.0545,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0128,
+   "energy": {
+    "swmmLossOverHv": 4.275,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.2179,
+   "hds5HeadDrop": 0.218,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0511,
+   "energy": {
+    "swmmLossOverHv": 4.275,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.8715,
+   "hds5HeadDrop": 0.8718,
+   "diff": -0.0004,
+   "tol": 0.0087,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2042,
+   "energy": {
+    "swmmLossOverHv": 4.275,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.9608,
+   "hds5HeadDrop": 1.9616,
+   "diff": -0.0008,
+   "tol": 0.0196,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.4595,
+   "energy": {
+    "swmmLossOverHv": 4.275,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.043,
+   "hds5HeadDrop": 0.043,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0191,
+   "energy": {
+    "swmmLossOverHv": 3.375,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.172,
+   "hds5HeadDrop": 0.1721,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0765,
+   "energy": {
+    "swmmLossOverHv": 3.375,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.6881,
+   "hds5HeadDrop": 0.6883,
+   "diff": -0.0002,
+   "tol": 0.0069,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.306,
+   "energy": {
+    "swmmLossOverHv": 3.375,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.5483,
+   "hds5HeadDrop": 1.5488,
+   "diff": -0.0005,
+   "tol": 0.0155,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.6886,
+   "energy": {
+    "swmmLossOverHv": 3.375,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0262,
+   "hds5HeadDrop": 0.0262,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0,
+   "energy": {
+    "swmmLossOverHv": 2.057,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.002,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1048,
+   "hds5HeadDrop": 0.1049,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0001,
+   "energy": {
+    "swmmLossOverHv": 2.057,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.4193,
+   "hds5HeadDrop": 0.4195,
+   "diff": -0.0002,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0002,
+   "energy": {
+    "swmmLossOverHv": 2.057,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.9434,
+   "hds5HeadDrop": 0.9439,
+   "diff": -0.0006,
+   "tol": 0.0094,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0006,
+   "energy": {
+    "swmmLossOverHv": 2.057,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0135,
+   "hds5HeadDrop": 0.0135,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0127,
+   "energy": {
+    "swmmLossOverHv": 1.057,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.002,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0539,
+   "hds5HeadDrop": 0.0539,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.051,
+   "energy": {
+    "swmmLossOverHv": 1.057,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2155,
+   "hds5HeadDrop": 0.2157,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.204,
+   "energy": {
+    "swmmLossOverHv": 1.057,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.485,
+   "hds5HeadDrop": 0.4852,
+   "diff": -0.0002,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.459,
+   "energy": {
+    "swmmLossOverHv": 1.057,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0071,
+   "hds5HeadDrop": 0.0071,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0191,
+   "energy": {
+    "swmmLossOverHv": 0.558,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.002,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0284,
+   "hds5HeadDrop": 0.0284,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0765,
+   "energy": {
+    "swmmLossOverHv": 0.558,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.1137,
+   "hds5HeadDrop": 0.1137,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.3058,
+   "energy": {
+    "swmmLossOverHv": 0.558,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.2558,
+   "hds5HeadDrop": 0.2559,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.6882,
+   "energy": {
+    "swmmLossOverHv": 0.558,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0262,
+   "hds5HeadDrop": 0.0262,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0,
+   "energy": {
+    "swmmLossOverHv": 2.057,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.002,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1048,
+   "hds5HeadDrop": 0.1049,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0001,
+   "energy": {
+    "swmmLossOverHv": 2.057,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.4193,
+   "hds5HeadDrop": 0.4195,
+   "diff": -0.0002,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0002,
+   "energy": {
+    "swmmLossOverHv": 2.057,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.9434,
+   "hds5HeadDrop": 0.9439,
+   "diff": -0.0006,
+   "tol": 0.0094,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0006,
+   "energy": {
+    "swmmLossOverHv": 2.057,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0135,
+   "hds5HeadDrop": 0.0135,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0127,
+   "energy": {
+    "swmmLossOverHv": 1.057,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.002,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0539,
+   "hds5HeadDrop": 0.0539,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.051,
+   "energy": {
+    "swmmLossOverHv": 1.057,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2155,
+   "hds5HeadDrop": 0.2157,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.204,
+   "energy": {
+    "swmmLossOverHv": 1.057,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.485,
+   "hds5HeadDrop": 0.4852,
+   "diff": -0.0002,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.459,
+   "energy": {
+    "swmmLossOverHv": 1.057,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0071,
+   "hds5HeadDrop": 0.0071,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0191,
+   "energy": {
+    "swmmLossOverHv": 0.558,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.002,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0284,
+   "hds5HeadDrop": 0.0284,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0765,
+   "energy": {
+    "swmmLossOverHv": 0.558,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.1137,
+   "hds5HeadDrop": 0.1137,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.3058,
+   "energy": {
+    "swmmLossOverHv": 0.558,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.2558,
+   "hds5HeadDrop": 0.2559,
+   "diff": -0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.6882,
+   "energy": {
+    "swmmLossOverHv": 0.558,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0325,
+   "hds5HeadDrop": 0.0324,
+   "diff": 0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0.0001,
+   "energy": {
+    "swmmLossOverHv": 2.547,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.003,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1298,
+   "hds5HeadDrop": 0.1296,
+   "diff": 0.0003,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0.0003,
+   "energy": {
+    "swmmLossOverHv": 2.547,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.5194,
+   "hds5HeadDrop": 0.5184,
+   "diff": 0.001,
+   "tol": 0.0052,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0.001,
+   "energy": {
+    "swmmLossOverHv": 2.547,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "production",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.1686,
+   "hds5HeadDrop": 1.1663,
+   "diff": 0.0023,
+   "tol": 0.0117,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0.0023,
+   "energy": {
+    "swmmLossOverHv": 2.547,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0197,
+   "hds5HeadDrop": 0.0197,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0127,
+   "energy": {
+    "swmmLossOverHv": 1.546,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.003,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0788,
+   "hds5HeadDrop": 0.0786,
+   "diff": 0.0002,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0508,
+   "energy": {
+    "swmmLossOverHv": 1.546,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.3152,
+   "hds5HeadDrop": 0.3145,
+   "diff": 0.0007,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2031,
+   "energy": {
+    "swmmLossOverHv": 1.546,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.7092,
+   "hds5HeadDrop": 0.7076,
+   "diff": 0.0016,
+   "tol": 0.0071,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.4571,
+   "energy": {
+    "swmmLossOverHv": 1.546,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0133,
+   "hds5HeadDrop": 0.0133,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0191,
+   "energy": {
+    "swmmLossOverHv": 1.045,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.003,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0533,
+   "hds5HeadDrop": 0.0531,
+   "diff": 0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0763,
+   "energy": {
+    "swmmLossOverHv": 1.045,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2131,
+   "hds5HeadDrop": 0.2125,
+   "diff": 0.0006,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.3052,
+   "energy": {
+    "swmmLossOverHv": 1.045,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.4795,
+   "hds5HeadDrop": 0.4782,
+   "diff": 0.0013,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.6868,
+   "energy": {
+    "swmmLossOverHv": 1.045,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0325,
+   "hds5HeadDrop": 0.0324,
+   "diff": 0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0.0001,
+   "energy": {
+    "swmmLossOverHv": 2.547,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.005,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1298,
+   "hds5HeadDrop": 0.1296,
+   "diff": 0.0003,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0.0003,
+   "energy": {
+    "swmmLossOverHv": 2.547,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.5194,
+   "hds5HeadDrop": 0.5184,
+   "diff": 0.001,
+   "tol": 0.0052,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0.001,
+   "energy": {
+    "swmmLossOverHv": 2.547,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.1686,
+   "hds5HeadDrop": 1.1663,
+   "diff": 0.0023,
+   "tol": 0.0117,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": 0.0023,
+   "energy": {
+    "swmmLossOverHv": 2.547,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0197,
+   "hds5HeadDrop": 0.0197,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0127,
+   "energy": {
+    "swmmLossOverHv": 1.546,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.006,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0788,
+   "hds5HeadDrop": 0.0786,
+   "diff": 0.0002,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0508,
+   "energy": {
+    "swmmLossOverHv": 1.546,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.3152,
+   "hds5HeadDrop": 0.3145,
+   "diff": 0.0007,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2031,
+   "energy": {
+    "swmmLossOverHv": 1.546,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.7092,
+   "hds5HeadDrop": 0.7076,
+   "diff": 0.0016,
+   "tol": 0.0071,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.4571,
+   "energy": {
+    "swmmLossOverHv": 1.546,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0133,
+   "hds5HeadDrop": 0.0133,
+   "diff": 0,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0191,
+   "energy": {
+    "swmmLossOverHv": 1.045,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.006,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0533,
+   "hds5HeadDrop": 0.0531,
+   "diff": 0.0001,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0763,
+   "energy": {
+    "swmmLossOverHv": 1.045,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2131,
+   "hds5HeadDrop": 0.2125,
+   "diff": 0.0006,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.3052,
+   "energy": {
+    "swmmLossOverHv": 1.045,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.001,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "EXTRAN",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.4795,
+   "hds5HeadDrop": 0.4782,
+   "diff": 0.0013,
+   "tol": 0.005,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.6868,
+   "energy": {
+    "swmmLossOverHv": 1.045,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0299,
+   "hds5HeadDrop": 0.0317,
+   "diff": -0.0018,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0018,
+   "energy": {
+    "swmmLossOverHv": 2.35,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.191,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1201,
+   "hds5HeadDrop": 0.1269,
+   "diff": -0.0068,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0068,
+   "energy": {
+    "swmmLossOverHv": 2.357,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.084,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.4877,
+   "hds5HeadDrop": 0.5078,
+   "diff": -0.0201,
+   "tol": 0.0254,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0201,
+   "energy": {
+    "swmmLossOverHv": 2.392,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.016,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.1085,
+   "hds5HeadDrop": 1.1425,
+   "diff": -0.034,
+   "tol": 0.0571,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.034,
+   "energy": {
+    "swmmLossOverHv": 2.416,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.002,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0179,
+   "hds5HeadDrop": 0.019,
+   "diff": -0.0011,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0138,
+   "energy": {
+    "swmmLossOverHv": 1.406,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.195,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.00001,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0718,
+   "hds5HeadDrop": 0.076,
+   "diff": -0.0042,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0551,
+   "energy": {
+    "swmmLossOverHv": 1.409,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.092,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2903,
+   "hds5HeadDrop": 0.3039,
+   "diff": -0.0136,
+   "tol": 0.0152,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2174,
+   "energy": {
+    "swmmLossOverHv": 1.424,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.03,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.664,
+   "hds5HeadDrop": 0.6838,
+   "diff": -0.0198,
+   "tol": 0.0342,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.4785,
+   "energy": {
+    "swmmLossOverHv": 1.447,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.008,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0119,
+   "hds5HeadDrop": 0.0126,
+   "diff": -0.0007,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0198,
+   "energy": {
+    "swmmLossOverHv": 0.934,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.197,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.0001,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0477,
+   "hds5HeadDrop": 0.0505,
+   "diff": -0.0028,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0793,
+   "energy": {
+    "swmmLossOverHv": 0.936,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.096,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.1918,
+   "hds5HeadDrop": 0.202,
+   "diff": -0.0102,
+   "tol": 0.0101,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.316,
+   "energy": {
+    "swmmLossOverHv": 0.941,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.037,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.4363,
+   "hds5HeadDrop": 0.4544,
+   "diff": -0.0181,
+   "tol": 0.0227,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.7062,
+   "energy": {
+    "swmmLossOverHv": 0.951,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.013,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0301,
+   "hds5HeadDrop": 0.0317,
+   "diff": -0.0016,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0016,
+   "energy": {
+    "swmmLossOverHv": 2.362,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.177,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1209,
+   "hds5HeadDrop": 0.1269,
+   "diff": -0.0061,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0061,
+   "energy": {
+    "swmmLossOverHv": 2.372,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.078,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.4912,
+   "hds5HeadDrop": 0.5078,
+   "diff": -0.0166,
+   "tol": 0.0254,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0166,
+   "energy": {
+    "swmmLossOverHv": 2.409,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.019,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.1096,
+   "hds5HeadDrop": 1.1425,
+   "diff": -0.0329,
+   "tol": 0.0571,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0329,
+   "energy": {
+    "swmmLossOverHv": 2.419,
+    "hds5LossOverHv": 2.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.004,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.018,
+   "hds5HeadDrop": 0.019,
+   "diff": -0.001,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0137,
+   "energy": {
+    "swmmLossOverHv": 1.412,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.18,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.00001,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0721,
+   "hds5HeadDrop": 0.076,
+   "diff": -0.0039,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0549,
+   "energy": {
+    "swmmLossOverHv": 1.414,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.085,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2907,
+   "hds5HeadDrop": 0.3039,
+   "diff": -0.0132,
+   "tol": 0.0152,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2171,
+   "energy": {
+    "swmmLossOverHv": 1.426,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.027,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.663,
+   "hds5HeadDrop": 0.6838,
+   "diff": -0.0208,
+   "tol": 0.0342,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.4795,
+   "energy": {
+    "swmmLossOverHv": 1.445,
+    "hds5LossOverHv": 1.491
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.011,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.012,
+   "hds5HeadDrop": 0.0126,
+   "diff": -0.0007,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0198,
+   "energy": {
+    "swmmLossOverHv": 0.938,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.182,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.00012,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0479,
+   "hds5HeadDrop": 0.0505,
+   "diff": -0.0026,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.079,
+   "energy": {
+    "swmmLossOverHv": 0.94,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.089,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.1928,
+   "hds5HeadDrop": 0.202,
+   "diff": -0.0091,
+   "tol": 0.0101,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.315,
+   "energy": {
+    "swmmLossOverHv": 0.946,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.034,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-1",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.9906,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.4388,
+   "hds5HeadDrop": 0.4544,
+   "diff": -0.0156,
+   "tol": 0.0227,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.7037,
+   "energy": {
+    "swmmLossOverHv": 0.957,
+    "hds5LossOverHv": 0.991
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.014,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0635,
+   "hds5HeadDrop": 0.0672,
+   "diff": -0.0037,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0037,
+   "energy": {
+    "swmmLossOverHv": 4.985,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.18,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.2561,
+   "hds5HeadDrop": 0.2689,
+   "diff": -0.0129,
+   "tol": 0.0134,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0129,
+   "energy": {
+    "swmmLossOverHv": 5.024,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.063,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 1.0484,
+   "hds5HeadDrop": 1.0757,
+   "diff": -0.0273,
+   "tol": 0.0538,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0273,
+   "energy": {
+    "swmmLossOverHv": 5.143,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.004,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 2.3279,
+   "hds5HeadDrop": 2.4203,
+   "diff": -0.0924,
+   "tol": 0.121,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0924,
+   "energy": {
+    "swmmLossOverHv": 5.075,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.016,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0515,
+   "hds5HeadDrop": 0.0545,
+   "diff": -0.003,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0158,
+   "energy": {
+    "swmmLossOverHv": 4.039,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.184,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.2072,
+   "hds5HeadDrop": 0.218,
+   "diff": -0.0107,
+   "tol": 0.0109,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0617,
+   "energy": {
+    "swmmLossOverHv": 4.066,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.071,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.8515,
+   "hds5HeadDrop": 0.8718,
+   "diff": -0.0203,
+   "tol": 0.0436,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2242,
+   "energy": {
+    "swmmLossOverHv": 4.177,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.008,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.8992,
+   "hds5HeadDrop": 1.9616,
+   "diff": -0.0624,
+   "tol": 0.0981,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.5211,
+   "energy": {
+    "swmmLossOverHv": 4.14,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.01,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0406,
+   "hds5HeadDrop": 0.043,
+   "diff": -0.0024,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0215,
+   "energy": {
+    "swmmLossOverHv": 3.188,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.188,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1632,
+   "hds5HeadDrop": 0.1721,
+   "diff": -0.0089,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0853,
+   "energy": {
+    "swmmLossOverHv": 3.202,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.077,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.6678,
+   "hds5HeadDrop": 0.6883,
+   "diff": -0.0205,
+   "tol": 0.0344,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.3263,
+   "energy": {
+    "swmmLossOverHv": 3.276,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.012,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.5088,
+   "hds5HeadDrop": 1.5488,
+   "diff": -0.04,
+   "tol": 0.0774,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.728,
+   "energy": {
+    "swmmLossOverHv": 3.289,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.004,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0638,
+   "hds5HeadDrop": 0.0672,
+   "diff": -0.0034,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0034,
+   "energy": {
+    "swmmLossOverHv": 5.009,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.166,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.2575,
+   "hds5HeadDrop": 0.2689,
+   "diff": -0.0114,
+   "tol": 0.0134,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0114,
+   "energy": {
+    "swmmLossOverHv": 5.053,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.058,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 1.0474,
+   "hds5HeadDrop": 1.0757,
+   "diff": -0.0283,
+   "tol": 0.0538,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0283,
+   "energy": {
+    "swmmLossOverHv": 5.137,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.007,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 1,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 2.325,
+   "hds5HeadDrop": 2.4203,
+   "diff": -0.0953,
+   "tol": 0.121,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0953,
+   "energy": {
+    "swmmLossOverHv": 5.069,
+    "hds5LossOverHv": 5.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.014,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0517,
+   "hds5HeadDrop": 0.0545,
+   "diff": -0.0028,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0156,
+   "energy": {
+    "swmmLossOverHv": 4.055,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.17,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.208,
+   "hds5HeadDrop": 0.218,
+   "diff": -0.01,
+   "tol": 0.0109,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.061,
+   "energy": {
+    "swmmLossOverHv": 4.08,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.065,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.8508,
+   "hds5HeadDrop": 0.8718,
+   "diff": -0.021,
+   "tol": 0.0436,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2249,
+   "energy": {
+    "swmmLossOverHv": 4.173,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.012,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0.9,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.8957,
+   "hds5HeadDrop": 1.9616,
+   "diff": -0.0659,
+   "tol": 0.0981,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.5246,
+   "energy": {
+    "swmmLossOverHv": 4.133,
+    "hds5LossOverHv": 4.276
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.008,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 0.5655,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0408,
+   "hds5HeadDrop": 0.043,
+   "diff": -0.0022,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0213,
+   "energy": {
+    "swmmLossOverHv": 3.202,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.173,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 1.131,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1641,
+   "hds5HeadDrop": 0.1721,
+   "diff": -0.008,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0845,
+   "energy": {
+    "swmmLossOverHv": 3.219,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.071,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 2.2619,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.6712,
+   "hds5HeadDrop": 0.6883,
+   "diff": -0.0172,
+   "tol": 0.0344,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.323,
+   "energy": {
+    "swmmLossOverHv": 3.292,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.015,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-2",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 3.3929,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 3.3763,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.5069,
+   "hds5HeadDrop": 1.5488,
+   "diff": -0.0418,
+   "tol": 0.0774,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.7299,
+   "energy": {
+    "swmmLossOverHv": 3.285,
+    "hds5LossOverHv": 3.376
+   },
+   "mass": {
+    "swmmContinuityErrPct": 0.002,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.025,
+   "hds5HeadDrop": 0.0262,
+   "diff": -0.0013,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0013,
+   "energy": {
+    "swmmLossOverHv": 1.959,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.163,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0999,
+   "hds5HeadDrop": 0.1049,
+   "diff": -0.005,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.005,
+   "energy": {
+    "swmmLossOverHv": 1.96,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.077,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.4018,
+   "hds5HeadDrop": 0.4195,
+   "diff": -0.0178,
+   "tol": 0.021,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0178,
+   "energy": {
+    "swmmLossOverHv": 1.971,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.023,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.914,
+   "hds5HeadDrop": 0.9439,
+   "diff": -0.03,
+   "tol": 0.0472,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.03,
+   "energy": {
+    "swmmLossOverHv": 1.992,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.006,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0128,
+   "hds5HeadDrop": 0.0135,
+   "diff": -0.0007,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0134,
+   "energy": {
+    "swmmLossOverHv": 1.007,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.165,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.00008,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0513,
+   "hds5HeadDrop": 0.0539,
+   "diff": -0.0026,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0536,
+   "energy": {
+    "swmmLossOverHv": 1.007,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.082,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2059,
+   "hds5HeadDrop": 0.2157,
+   "diff": -0.0098,
+   "tol": 0.0108,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2136,
+   "energy": {
+    "swmmLossOverHv": 1.01,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.033,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.4669,
+   "hds5HeadDrop": 0.4852,
+   "diff": -0.0183,
+   "tol": 0.0243,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.477,
+   "energy": {
+    "swmmLossOverHv": 1.018,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.013,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0068,
+   "hds5HeadDrop": 0.0071,
+   "diff": -0.0003,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0195,
+   "energy": {
+    "swmmLossOverHv": 0.53,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.166,
+    "steadyFlowErrPct": -0.0008,
+    "hwDriftM": 0.00128,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0271,
+   "hds5HeadDrop": 0.0284,
+   "diff": -0.0014,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0778,
+   "energy": {
+    "swmmLossOverHv": 0.531,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.084,
+    "steadyFlowErrPct": -0.0001,
+    "hwDriftM": 0.00014,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.1083,
+   "hds5HeadDrop": 0.1137,
+   "diff": -0.0054,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.3112,
+   "energy": {
+    "swmmLossOverHv": 0.531,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.039,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.2443,
+   "hds5HeadDrop": 0.2559,
+   "diff": -0.0116,
+   "tol": 0.0128,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.6996,
+   "energy": {
+    "swmmLossOverHv": 0.533,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.021,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.025,
+   "hds5HeadDrop": 0.0262,
+   "diff": -0.0012,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0012,
+   "energy": {
+    "swmmLossOverHv": 1.961,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.159,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1001,
+   "hds5HeadDrop": 0.1049,
+   "diff": -0.0048,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0048,
+   "energy": {
+    "swmmLossOverHv": 1.965,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.074,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.404,
+   "hds5HeadDrop": 0.4195,
+   "diff": -0.0155,
+   "tol": 0.021,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0155,
+   "energy": {
+    "swmmLossOverHv": 1.982,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.023,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.919,
+   "hds5HeadDrop": 0.9439,
+   "diff": -0.0249,
+   "tol": 0.0472,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0249,
+   "energy": {
+    "swmmLossOverHv": 2.003,
+    "hds5LossOverHv": 2.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.009,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0128,
+   "hds5HeadDrop": 0.0135,
+   "diff": -0.0006,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0134,
+   "energy": {
+    "swmmLossOverHv": 1.008,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.161,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.00006,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0514,
+   "hds5HeadDrop": 0.0539,
+   "diff": -0.0025,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0535,
+   "energy": {
+    "swmmLossOverHv": 1.008,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.079,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.206,
+   "hds5HeadDrop": 0.2157,
+   "diff": -0.0096,
+   "tol": 0.0108,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2135,
+   "energy": {
+    "swmmLossOverHv": 1.011,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.032,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.466,
+   "hds5HeadDrop": 0.4852,
+   "diff": -0.0193,
+   "tol": 0.0243,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.478,
+   "energy": {
+    "swmmLossOverHv": 1.016,
+    "hds5LossOverHv": 1.058
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.014,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 1.8,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0068,
+   "hds5HeadDrop": 0.0071,
+   "diff": -0.0003,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0194,
+   "energy": {
+    "swmmLossOverHv": 0.531,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.162,
+    "steadyFlowErrPct": -0.0001,
+    "hwDriftM": 0.00074,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 3.6,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0271,
+   "hds5HeadDrop": 0.0284,
+   "diff": -0.0013,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0778,
+   "energy": {
+    "swmmLossOverHv": 0.532,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.082,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.00012,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 7.2,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.1085,
+   "hds5HeadDrop": 0.1137,
+   "diff": -0.0052,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.311,
+   "energy": {
+    "swmmLossOverHv": 0.532,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.037,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-3",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 10.8,
+   "n": 0.013,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 0.5578,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.245,
+   "hds5HeadDrop": 0.2559,
+   "diff": -0.0109,
+   "tol": 0.0128,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.699,
+   "energy": {
+    "swmmLossOverHv": 0.534,
+    "hds5LossOverHv": 0.558
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.02,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0306,
+   "hds5HeadDrop": 0.0324,
+   "diff": -0.0018,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0018,
+   "energy": {
+    "swmmLossOverHv": 2.404,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.192,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1223,
+   "hds5HeadDrop": 0.1296,
+   "diff": -0.0072,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0072,
+   "energy": {
+    "swmmLossOverHv": 2.4,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.093,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.4884,
+   "hds5HeadDrop": 0.5184,
+   "diff": -0.0299,
+   "tol": 0.0259,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0299,
+   "energy": {
+    "swmmLossOverHv": 2.396,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.032,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "production",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.1066,
+   "hds5HeadDrop": 1.1663,
+   "diff": -0.0597,
+   "tol": 0.0583,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0597,
+   "energy": {
+    "swmmLossOverHv": 2.412,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.003,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0186,
+   "hds5HeadDrop": 0.0197,
+   "diff": -0.0011,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0138,
+   "energy": {
+    "swmmLossOverHv": 1.46,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.193,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.00001,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0743,
+   "hds5HeadDrop": 0.0786,
+   "diff": -0.0043,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0553,
+   "energy": {
+    "swmmLossOverHv": 1.458,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.096,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2963,
+   "hds5HeadDrop": 0.3145,
+   "diff": -0.0182,
+   "tol": 0.0157,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.2221,
+   "energy": {
+    "swmmLossOverHv": 1.453,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.04,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.6676,
+   "hds5HeadDrop": 0.7076,
+   "diff": -0.04,
+   "tol": 0.0354,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.4987,
+   "energy": {
+    "swmmLossOverHv": 1.455,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.016,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0126,
+   "hds5HeadDrop": 0.0133,
+   "diff": -0.0007,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0198,
+   "energy": {
+    "swmmLossOverHv": 0.987,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.194,
+    "steadyFlowErrPct": -0.0001,
+    "hwDriftM": 0.00012,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0503,
+   "hds5HeadDrop": 0.0531,
+   "diff": -0.0029,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0793,
+   "energy": {
+    "swmmLossOverHv": 0.986,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.098,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2006,
+   "hds5HeadDrop": 0.2125,
+   "diff": -0.012,
+   "tol": 0.0106,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.3178,
+   "energy": {
+    "swmmLossOverHv": 0.984,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.044,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "forward",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.4505,
+   "hds5HeadDrop": 0.4782,
+   "diff": -0.0277,
+   "tol": 0.0239,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.7158,
+   "energy": {
+    "swmmLossOverHv": 0.982,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.022,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0306,
+   "hds5HeadDrop": 0.0324,
+   "diff": -0.0018,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0018,
+   "energy": {
+    "swmmLossOverHv": 2.399,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.2,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.1221,
+   "hds5HeadDrop": 0.1296,
+   "diff": -0.0075,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0075,
+   "energy": {
+    "swmmLossOverHv": 2.396,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.096,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.4889,
+   "hds5HeadDrop": 0.5184,
+   "diff": -0.0295,
+   "tol": 0.0259,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0295,
+   "energy": {
+    "swmmLossOverHv": 2.398,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.032,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "production",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 1,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 1.1123,
+   "hds5HeadDrop": 1.1663,
+   "diff": -0.054,
+   "tol": 0.0583,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.054,
+   "energy": {
+    "swmmLossOverHv": 2.425,
+    "hds5LossOverHv": 2.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.005,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0186,
+   "hds5HeadDrop": 0.0197,
+   "diff": -0.0011,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0138,
+   "energy": {
+    "swmmLossOverHv": 1.457,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.202,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.00001,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0742,
+   "hds5HeadDrop": 0.0786,
+   "diff": -0.0044,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0554,
+   "energy": {
+    "swmmLossOverHv": 1.456,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.1,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2963,
+   "hds5HeadDrop": 0.3145,
+   "diff": -0.0182,
+   "tol": 0.0157,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.222,
+   "energy": {
+    "swmmLossOverHv": 1.453,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.041,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no exit loss",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0.5,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.6676,
+   "hds5HeadDrop": 0.7076,
+   "diff": -0.04,
+   "tol": 0.0354,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.4987,
+   "energy": {
+    "swmmLossOverHv": 1.455,
+    "hds5LossOverHv": 1.543
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.016,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 0.5,
+   "Q": 3.5024,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.0127,
+   "swmmHeadDrop": 0.0125,
+   "hds5HeadDrop": 0.0133,
+   "diff": -0.0007,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0198,
+   "energy": {
+    "swmmLossOverHv": 0.985,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.202,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0.0001,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 1,
+   "Q": 7.0047,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.051,
+   "swmmHeadDrop": 0.0502,
+   "hds5HeadDrop": 0.0531,
+   "diff": -0.003,
+   "tol": 0.01,
+   "pass": true,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.0794,
+   "energy": {
+    "swmmLossOverHv": 0.984,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.102,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 2,
+   "Q": 14.0094,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.2039,
+   "swmmHeadDrop": 0.2003,
+   "hds5HeadDrop": 0.2125,
+   "diff": -0.0122,
+   "tol": 0.0106,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.318,
+   "energy": {
+    "swmmLossOverHv": 0.983,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.046,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  },
+  {
+   "case": "B2-4",
+   "surcharge": "SLOT",
+   "direction": "reverse",
+   "variant": "no [LOSSES]",
+   "V": 3,
+   "Q": 21.0142,
+   "n": 0.024,
+   "Ke": 0,
+   "Kx": 0,
+   "Kf": 1.0425,
+   "hv": 0.4587,
+   "swmmHeadDrop": 0.4505,
+   "hds5HeadDrop": 0.4782,
+   "diff": -0.0277,
+   "tol": 0.0239,
+   "pass": false,
+   "barrelFull": true,
+   "vsHDS5Physical": -0.7157,
+   "energy": {
+    "swmmLossOverHv": 0.982,
+    "hds5LossOverHv": 1.043
+   },
+   "mass": {
+    "swmmContinuityErrPct": -0.023,
+    "steadyFlowErrPct": 0,
+    "hwDriftM": 0,
+    "ok": true
+   }
+  }
+ ],
+ "partlyFull": [
+  {
+   "case": "B2-P",
+   "twDepth": 0.6,
+   "V": 1,
+   "swmmHW": 0.908,
+   "hds5HW": 0.9558,
+   "diff": -0.0478
+  },
+  {
+   "case": "B2-P",
+   "twDepth": 0.6,
+   "V": 2,
+   "swmmHW": 1.4529,
+   "hds5HW": 1.4622,
+   "diff": -0.0093
+  },
+  {
+   "case": "B2-P",
+   "twDepth": 0.9,
+   "V": 1,
+   "swmmHW": 1.016,
+   "hds5HW": 0.9669,
+   "diff": 0.049
+  },
+  {
+   "case": "B2-P",
+   "twDepth": 0.9,
+   "V": 2,
+   "swmmHW": 1.4771,
+   "hds5HW": 1.4622,
+   "diff": 0.0149
+  }
+ ],
+ "fails": [
+  "B2-1 SLOT forward no [LOSSES] V 2: SWMM drop 0.1918 vs HDS-5 0.2020 m",
+  "B2-4 SLOT forward production V 2: SWMM drop 0.4884 vs HDS-5 0.5184 m",
+  "B2-4 SLOT forward production V 3: SWMM drop 1.1066 vs HDS-5 1.1663 m",
+  "B2-4 SLOT forward no exit loss V 2: SWMM drop 0.2963 vs HDS-5 0.3145 m",
+  "B2-4 SLOT forward no exit loss V 3: SWMM drop 0.6676 vs HDS-5 0.7076 m",
+  "B2-4 SLOT forward no [LOSSES] V 2: SWMM drop 0.2006 vs HDS-5 0.2125 m",
+  "B2-4 SLOT forward no [LOSSES] V 3: SWMM drop 0.4505 vs HDS-5 0.4782 m",
+  "B2-4 SLOT reverse production V 2: SWMM drop 0.4889 vs HDS-5 0.5184 m",
+  "B2-4 SLOT reverse no exit loss V 2: SWMM drop 0.2963 vs HDS-5 0.3145 m",
+  "B2-4 SLOT reverse no exit loss V 3: SWMM drop 0.6676 vs HDS-5 0.7076 m",
+  "B2-4 SLOT reverse no [LOSSES] V 2: SWMM drop 0.2003 vs HDS-5 0.2125 m",
+  "B2-4 SLOT reverse no [LOSSES] V 3: SWMM drop 0.4505 vs HDS-5 0.4782 m"
+ ]
+}

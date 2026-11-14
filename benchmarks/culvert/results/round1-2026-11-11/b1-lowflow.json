@@ -1,0 +1,1195 @@
+{
+ "benchmark": "B1-LF low-flow inlet control, SWMM alone",
+ "S": 0.02,
+ "L": 20,
+ "rows": [
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "baseline (production routing)",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -0.225,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "fixed step 1 s",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -0.225,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "fixed step 0.25 s",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -0.239,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "fixed step 0.05 s",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -0.393,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "outfall NORMAL",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -0.225,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "outfall fixed at 0.5 D",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -0.009,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "outfall fixed at 0.9 D",
+   "swmmHW": 0.6864,
+   "hds5HW": 0.4122,
+   "diff": 0.2742,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": 0.2652,
+   "eqAtPoolOverQ": 2.456,
+   "mass": {
+    "swmmContinuityErrPct": 0.075,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "inertial damping FULL",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -0.225,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "inertial damping NONE",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -0.235,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "normal flow limited SLOPE",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -0.225,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 0.5,
+   "Q": 0.3421,
+   "variant": "barrel 100 m (same slope)",
+   "swmmHW": 0.3528,
+   "hds5HW": 0.4122,
+   "diff": -0.0593,
+   "criticalDepth": 0.3107,
+   "criticalEnergy": 0.4212,
+   "poolOverCriticalEnergy": -0.0684,
+   "eqAtPoolOverQ": 0.753,
+   "mass": {
+    "swmmContinuityErrPct": -1.262,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "baseline (production routing)",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": -0.197,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "fixed step 1 s",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": -0.199,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "fixed step 0.25 s",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": -0.197,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "fixed step 0.05 s",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": -0.318,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "outfall NORMAL",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": -0.198,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "outfall fixed at 0.5 D",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "outfall fixed at 0.9 D",
+   "swmmHW": 0.7066,
+   "hds5HW": 0.6086,
+   "diff": 0.0981,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": 0.0978,
+   "eqAtPoolOverQ": 1.29,
+   "mass": {
+    "swmmContinuityErrPct": 0.037,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "inertial damping FULL",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": -0.197,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "inertial damping NONE",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": -0.203,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "normal flow limited SLOPE",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": -0.197,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1,
+   "Q": 0.6841,
+   "variant": "barrel 100 m (same slope)",
+   "swmmHW": 0.5541,
+   "hds5HW": 0.6086,
+   "diff": -0.0545,
+   "criticalDepth": 0.4445,
+   "criticalEnergy": 0.6088,
+   "poolOverCriticalEnergy": -0.0548,
+   "eqAtPoolOverQ": 0.849,
+   "mass": {
+    "swmmContinuityErrPct": -1.031,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "baseline (production routing)",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.178,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "fixed step 1 s",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.179,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "fixed step 0.25 s",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.175,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "fixed step 0.05 s",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.279,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "outfall NORMAL",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.178,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "outfall fixed at 0.5 D",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.01,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "outfall fixed at 0.9 D",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": 0.021,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "inertial damping FULL",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.179,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "inertial damping NONE",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.176,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "normal flow limited SLOPE",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.178,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "pipe",
+   "qAD": 1.5,
+   "Q": 1.0262,
+   "variant": "barrel 100 m (same slope)",
+   "swmmHW": 0.7799,
+   "hds5HW": 0.7744,
+   "diff": 0.0054,
+   "criticalDepth": 0.5491,
+   "criticalEnergy": 0.76,
+   "poolOverCriticalEnergy": 0.0199,
+   "eqAtPoolOverQ": 1.012,
+   "mass": {
+    "swmmContinuityErrPct": -0.898,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "baseline (production routing)",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.164,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "fixed step 1 s",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.164,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "fixed step 0.25 s",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.158,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "fixed step 0.05 s",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.245,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "outfall NORMAL",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.164,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "outfall fixed at 0.5 D",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.005,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "outfall fixed at 0.9 D",
+   "swmmHW": 0.9872,
+   "hds5HW": 0.7839,
+   "diff": 0.2033,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.2798,
+   "eqAtPoolOverQ": 1.398,
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "inertial damping FULL",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.164,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "inertial damping NONE",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.164,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "normal flow limited SLOPE",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.164,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1,
+   "Q": 2.4346,
+   "variant": "barrel 100 m (same slope)",
+   "swmmHW": 0.8532,
+   "hds5HW": 0.7839,
+   "diff": 0.0693,
+   "criticalDepth": 0.4716,
+   "criticalEnergy": 0.7074,
+   "poolOverCriticalEnergy": 0.1458,
+   "eqAtPoolOverQ": 1.131,
+   "mass": {
+    "swmmContinuityErrPct": -0.788,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "baseline (production routing)",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.143,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "fixed step 1 s",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.143,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "fixed step 0.25 s",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.136,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "fixed step 0.05 s",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.212,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "outfall NORMAL",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.143,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "outfall fixed at 0.5 D",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.006,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "outfall fixed at 0.9 D",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": 0,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "inertial damping FULL",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.143,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "inertial damping NONE",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.143,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "normal flow limited SLOPE",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.143,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 1.5,
+   "Q": 3.6519,
+   "variant": "barrel 100 m (same slope)",
+   "swmmHW": 1.0779,
+   "hds5HW": 1.036,
+   "diff": 0.0419,
+   "criticalDepth": 0.618,
+   "criticalEnergy": 0.927,
+   "poolOverCriticalEnergy": 0.1509,
+   "eqAtPoolOverQ": 1.06,
+   "mass": {
+    "swmmContinuityErrPct": -0.684,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "baseline (production routing)",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.132,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "fixed step 1 s",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.132,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "fixed step 0.25 s",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.124,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "fixed step 0.05 s",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.193,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "outfall NORMAL",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.132,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "outfall fixed at 0.5 D",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.008,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "outfall fixed at 0.9 D",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.003,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "inertial damping FULL",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.132,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "inertial damping NONE",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.132,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "normal flow limited SLOPE",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.132,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  },
+  {
+   "case": "box",
+   "qAD": 2,
+   "Q": 4.8692,
+   "variant": "barrel 100 m (same slope)",
+   "swmmHW": 1.3112,
+   "hds5HW": 1.2619,
+   "diff": 0.0494,
+   "criticalDepth": 0.7486,
+   "criticalEnergy": 1.123,
+   "poolOverCriticalEnergy": 0.1882,
+   "eqAtPoolOverQ": 1.058,
+   "mass": {
+    "swmmContinuityErrPct": -0.622,
+    "steadyFlowErrPct": 0,
+    "drift": 0
+   }
+  }
+ ]
+}

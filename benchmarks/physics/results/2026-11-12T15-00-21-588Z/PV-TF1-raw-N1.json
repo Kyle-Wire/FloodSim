@@ -1,0 +1,85 @@
+{
+ "benchmark": "PV-TF1",
+ "case": "N1",
+ "format": "little-endian Float64, row-major, one row per routing step (state at the end of the step), gzip",
+ "columns": [
+  "t",
+  "dt",
+  "T1.depth",
+  "T1.head",
+  "T1.volume",
+  "T1.latflow",
+  "T2.depth",
+  "T2.head",
+  "T2.volume",
+  "T2.latflow",
+  "OUT.depth",
+  "OUT.head",
+  "OUT.volume",
+  "OUT.latflow",
+  "C1.depth",
+  "C1.flow",
+  "C1.velocity",
+  "W0.depth",
+  "W0.flow",
+  "W0.velocity"
+ ],
+ "units": {
+  "t": "s (end of step)",
+  "dt": "s",
+  "depth": "m",
+  "head": "m (SWMM datum)",
+  "volume": "m³",
+  "latflow": "m³/s",
+  "flow": "m³/s",
+  "velocity": "m/s",
+  "volume420": "m³ (instrumented build only)"
+ },
+ "rows": 43200,
+ "bytesUncompressed": 6912000,
+ "gzSha256": "cf3d37afe8f321be8a52c39642b7749d9d3968e300b7e0f8fda7f02959761c24",
+ "specFile": "benchmarks/physics/spec/PV-TF1.json",
+ "specSha256": "320a92b1b4e19598911cd92dfca7d8541d6c48c3559afe1a07427260c3eff2fc",
+ "swmmVersion": 52004,
+ "wasm": {
+  "file": "vendor/swmm-wasm/swmm.wasm",
+  "sha256": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ },
+ "network": {
+  "nodes": [
+   {
+    "id": "T1",
+    "i": 0,
+    "elev": 0
+   },
+   {
+    "id": "T2",
+    "i": 1,
+    "elev": 0
+   },
+   {
+    "id": "OUT",
+    "i": 2,
+    "elev": 0
+   }
+  ],
+  "conduits": [
+   {
+    "id": "C1",
+    "i": 0,
+    "node1": "T1",
+    "node2": "T2",
+    "length": 400,
+    "slope": 7.620000000002214e-7,
+    "fullDepth": 0.9999999999999999
+   }
+  ],
+  "weir": {
+   "id": "W0",
+   "i": 1,
+   "node1": "T2",
+   "node2": "OUT"
+  }
+ },
+ "inp": "[OPTIONS]\nFLOW_UNITS CMS\nFLOW_ROUTING DYNWAVE\nLINK_OFFSETS DEPTH\nALLOW_PONDING NO\nSKIP_STEADY_STATE NO\nSTART_DATE 01/01/2000\nSTART_TIME 00:00:00\nREPORT_START_DATE 01/01/2000\nREPORT_START_TIME 00:00:00\nEND_DATE 01/01/2000\nEND_TIME 12:00:00\nREPORT_STEP 00:15:00\nWET_STEP 00:01:00\nDRY_STEP 00:01:00\nROUTING_STEP 1\nVARIABLE_STEP 0\nLENGTHENING_STEP 0\nMIN_SURFAREA 1.167\nNORMAL_FLOW_LIMITED BOTH\nINERTIAL_DAMPING PARTIAL\nSURCHARGE_METHOD EXTRAN\nMIN_SLOPE 0\nMAX_TRIALS 8\nHEAD_TOLERANCE 0.0015\nTHREADS 1\n\n[STORAGE]\nT1 0 3 0 FUNCTIONAL 0 0 20 0 0\nT2 0 3 0 FUNCTIONAL 0 0 20 0 0\n\n[OUTFALLS]\nOUT 0 FREE NO\n\n[CONDUITS]\nC1 T1 T2 400 0.013 0 0 0 0\n\n[WEIRS]\nW0 T2 OUT TRANSVERSE 2.5 1.84 NO 0 0\n\n[XSECTIONS]\nC1 CIRCULAR 1 0 0 0 1\nW0 RECT_OPEN 0.3 1 0 0\n\n[TIMESERIES]\nINF 00:00:00 0\nINF 00:01:00 0.1\nINF 00:30:00 0.1\nINF 00:31:00 0\n\n[INFLOWS]\nT1 FLOW INF FLOW 1.0 1.0\n"
+}

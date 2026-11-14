@@ -1,0 +1,75 @@
+{
+ "written": "2026-11-11T14:08:04.238Z",
+ "node": "v24.16.0",
+ "inputs": {
+  "benchmarks/culvert/b1-inlet.mjs": "2a951bec3b6fe31cb0ad91bffde6756cd632d6eb4afaee9ec7e7e1038128cc80",
+  "benchmarks/culvert/b1-losses.mjs": "52e8a668c0b951aedd864a88d3a80279dd01bd3eb6324fad4a109591d145af91",
+  "benchmarks/culvert/b1-lowflow.mjs": "958b333d5888ec5f385357183d99c3f3ac710a3ec895a9bf18809c6169c28e3b",
+  "benchmarks/culvert/b2-outlet.mjs": "b17860eb7781fbded6ff5e97f86612417f75ad464a1032b84d8ee1651d7e6c69",
+  "benchmarks/culvert/b6-sediment.mjs": "d491b22540bbc63ad492881ec8c0ea187efbaebeb62f52152ddb178c8804409a",
+  "benchmarks/culvert/b7-transition.mjs": "a1ff72802fef272cbf140dd198f8c0ce3629c4cb6b482448e622094973fc6e22",
+  "benchmarks/culvert/hds5.mjs": "fdf02fea0c3e39d19084705ef8151dfda724ee2f863a1a2f3518c348a14013d5",
+  "benchmarks/culvert/model.mjs": "0a3b6bf8bf014aceabe007570c96e630a75882a02c78b6028ca4fc313f9903c5",
+  "benchmarks/culvert/run-all.mjs": "2cafe7fd38615f6798f525bebac61475e4abca749ce480419f4ec567b39024be",
+  "benchmarks/culvert/swmm-replica.mjs": "baa7ebe9cf1bf775902ce2b4e244e12f80293b7d2b8bf50783332f000d22a817",
+  "src/assets.js": "4547d184b329785084f6059e2ee66f8138f9fc5eab6e1a378887dd0c25959130",
+  "src/cso.js": "f59ca007f08c9ca80558bed349a34199634205aaeaf2b738b9b22d0805eebb11",
+  "src/drainage.js": "5671c30536393d44beda0319266944a3166351595cb7da7b3f374a04ec1abbde",
+  "src/geo.js": "da5e8e92f70ee2c7d40afd5172c683a7f620d869391ce6c55da39fc30de6efaa",
+  "src/ingest.js": "fff943b37f4421cb57dc8194b1a25a928b066027785e78af3abb99619f372f79",
+  "src/network-real.js": "7a116dd31f7e9b666798bf2e5a402add53ed0eae0ef10963a5260122ebc3821c",
+  "src/scour.js": "fbd8271bef7aa7aa72aa4d48f3758484e7e7d8c8f756c18950e235862d36f70f",
+  "src/sediment.js": "73daa12e6bd0bff4c7c3522f08c832f435e2b400328150ce4ee87c49a960dab3",
+  "src/soil.js": "04d7c2428048959073a523215d48793c51bf6050107155a1eb0ba59327c1c179",
+  "src/storm.js": "090ac0beebc5bb5d957f739b967027bd8bfc8ca2f1b0600fd27ca8015b835668",
+  "src/swmm-xsect.js": "d016c5c80e41a14c4f3f748084548301e6732c5aa4adba5d38ce868951092ab8",
+  "src/swmm.js": "55aff82fad357802b064d1bf66f7760097e2d9d6a3e0c13912cc319246f30c4a",
+  "src/terrain.js": "3cd0c0f310eeab5414a36567bc0774e7a79933734d2ab374a15df175b3938e8c",
+  "vendor/swmm-wasm/swmm.mjs": "91dc0e872abda2fbf28196077cbc04ef0800242491e0a97005dd5f5fba3ceb96",
+  "vendor/swmm-wasm/swmm.wasm": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ },
+ "results": {
+  "b1-inlet": {
+   "exit": 1,
+   "failed": 25,
+   "seconds": 1.6,
+   "json": "222b1a254a0a4a336337961b88ca33815d705170371e43b49c1331b4ed2c8054",
+   "txt": "69f1177d4d8be870ca007d4d6fc132f32ead31b1463d5fb4c33b27d9fb77300a"
+  },
+  "b1-losses": {
+   "exit": 0,
+   "failed": 0,
+   "seconds": 1.3,
+   "json": "87ab381756f2b373a7df8f818983987319d9abec20380d51f2b73cd9bda22027",
+   "txt": "e1104671f46e8adee1ac3aa2add418866eb89f71d4c6b7bc1951097b8dcccc93"
+  },
+  "b1-lowflow": {
+   "exit": 0,
+   "failed": 0,
+   "seconds": 0.7,
+   "json": "9074061986da11d8f8dc2582fb1face45321a7655d8ea39a67f6b92c1d32f15f",
+   "txt": "1e48effb1ed32fc3042693135869f7c40451d5802de9038d1e28f1a4da51d5d2"
+  },
+  "b2-outlet": {
+   "exit": 1,
+   "failed": 12,
+   "seconds": 0.6,
+   "json": "421e2998ce33522b61a338ff7f7fbfeaa687fc0dc5c6a3ab32933c6ac1aa93cf",
+   "txt": "5c9f57375a6939c6262ac141f7169ff4e0bde784ee885d4b5a6288f71dc9955d"
+  },
+  "b6-sediment": {
+   "exit": 1,
+   "failed": 7,
+   "seconds": 4.2,
+   "json": "4382412f9310e397a0c1d0b5fda51241bfed079363fa94050e0899e5204eb7ba",
+   "txt": "776a2eadb9290fdb641f74ff8e68bda7ea9d3f25b697560d264ccb3aa638555e"
+  },
+  "b7-transition": {
+   "exit": 1,
+   "failed": 74,
+   "seconds": 3.2,
+   "json": "d6b4c39a45a2708842688a00d8862b5300d9885b3ba5541787d00da3624ea438",
+   "txt": "7352c126893b146aaea882054f815f2e9f8ace6a5ee636f66e9ea8384bf7cecc"
+  }
+ }
+}

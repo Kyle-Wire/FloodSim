@@ -1,0 +1,120 @@
+{
+ "runId": "2026-11-11T18-57-58-574Z",
+ "written": "2026-11-11T18:57:58.619Z",
+ "node": "v24.16.0",
+ "platform": "win32 x64",
+ "git": {
+  "commit": "a9a9fdc3da449a47593df8b0f6d4d7df236fb487",
+  "dirty": true,
+  "diffSha256": "e06c35ee67f78db6bb60ba97f89e67531ee13874ac6f6b5b50ee3b7d314a7597",
+  "statusSha256": "2c71c121e9c3ba927fa7e0bc71777ca4fd9eab044e600f70ec438a9b25475198"
+ },
+ "swmm": {
+  "version": 52004,
+  "wasmSha256": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ },
+ "specs": {
+  "PV-C1": {
+   "file": "benchmarks/physics/spec/PV-C1.json",
+   "sha256": "2cf39969b808a83a13cf46913c45da50522e725d52ae9f723fbcba34fef2abb4",
+   "criteriaSha256": "5070c9826ee3f4f8cc9112927f0ff0e996332e65b501dfefe1d2eaf766a80d24",
+   "criteriaRevision": 1
+  },
+  "PV-P1": {
+   "file": "benchmarks/physics/spec/PV-P1.json",
+   "sha256": "e1f89cf43677cc110a126c86adbfe72cc20cd1b8e323e3262dadcbd1678616e8",
+   "criteriaSha256": "787c7b2afdcb17fdee576eb8d1ca5627687e3c7a9714de34b25479e26a25408f",
+   "criteriaRevision": 1
+  },
+  "PV-U1": {
+   "file": "benchmarks/physics/spec/PV-U1.json",
+   "sha256": "6ac17ecf2f80b1c42030f4f89c7a8f47d0c3f2e0ea56f490be7b349c9b1c57e0",
+   "criteriaSha256": "6ce9c78165ceb3bc298d73a23fb8622a77517aac7a34d66fa2a68f211b754d4b",
+   "criteriaRevision": 1
+  },
+  "PV-X1": {
+   "file": "benchmarks/physics/spec/PV-X1.json",
+   "sha256": "debe8a526b32e650e0c17e6dce84e9f1fd13275827c100fb58ebf80e8874640e",
+   "criteriaSha256": "c14a52c09d17a2bd0a05931cc5ef73d7c5eacc91441c8c8454ffa6bc0427ed0f",
+   "criteriaRevision": 1
+  }
+ },
+ "references": {
+  "selfTests": 70,
+  "observations": [
+   {
+    "D": 0.3,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030934485647501217,
+    "swameeJain": 0.031031161868034007,
+    "relDiff": 0.003125192435213466
+   },
+   {
+    "D": 0.3,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.03682107586552344,
+    "swameeJain": 0.037474663408566845,
+    "relDiff": 0.01775036518298417
+   },
+   {
+    "D": 0.9,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030900141599101403,
+    "swameeJain": 0.030991807114608003,
+    "relDiff": 0.002966507943422049
+   },
+   {
+    "D": 0.9,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.0330191741448169,
+    "swameeJain": 0.03337204342638299,
+    "relDiff": 0.010686799131270196
+   },
+   {
+    "D": 1.8,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030891547580919776,
+    "swameeJain": 0.03098195459902438,
+    "relDiff": 0.0029265940098269915
+   },
+   {
+    "D": 1.8,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.03197484501515128,
+    "swameeJain": 0.032210276341372274,
+    "relDiff": 0.007363016962535292
+   }
+  ]
+ },
+ "inputs": {
+  "benchmarks/physics/channels/pv-u1.mjs": "de10f609b83b43a75eb28964f4a9f5a73b03adef145a777fd6efd3e34c69ad85",
+  "benchmarks/physics/conservation/pv-c1.mjs": "d082e5e9ccfe13a88041faa2ae93d576f92253f3e791892bcaf57a3fb2c3d8fe",
+  "benchmarks/physics/lib/score.mjs": "06171fb1c33260a6ec103f0cd8f9d268e81f5598c4cd3bfed2605cc57512d3e1",
+  "benchmarks/physics/lib/swmm-run.mjs": "370bd6ca55adfda46d4c67289f2dd431f4d05df865a333bda06dfd3e5cdc3b7e",
+  "benchmarks/physics/pipes/pv-p1.mjs": "6219e8203c1a9ac6ac1185c24c42701c1792cd828eff4a98187082333722fd64",
+  "benchmarks/physics/references/geometry.mjs": "dd2d0bf7481b4f3425c60d457962410c534b601d088425a694eb0f795e6b6884",
+  "benchmarks/physics/references/gvf.mjs": "f6d843bb420d5eddaa038fe435e2f50e82fecece0c65560ca4fce03fba2c3d40",
+  "benchmarks/physics/references/manning.mjs": "151c9511a74af29a26564b68e18df7ca7c9f75c5bea74bb57002e114e5f84079",
+  "benchmarks/physics/references/pipe.mjs": "dc9385d146e0c80c3074f0c5df13205e8389f69526f4acbf19ca0283d0cb0cfa",
+  "benchmarks/physics/references/refs.test.mjs": "a733186a72522542fb9bc638a8dfd423b74521b0c2f2b64364b10e69785cd393",
+  "benchmarks/physics/references/volume.mjs": "2ccd04bbd6ac06d7f22cd1a169e8ea5dc569f79061460c24a515231e1bb49692",
+  "benchmarks/physics/references/weir.mjs": "07978a58eb34643e20114f2f03cf73e3e81390134c08fa4bd72654d3b5f5b501",
+  "benchmarks/physics/run.mjs": "0c484a8e5e2c1973467535fa4b065e1920217807b491c6b18563dcb24bfd720b",
+  "benchmarks/physics/selftest/pv-x1.mjs": "b7ab440321b76093067843ca2597222644a46be0a18682fb7192f9c2bef03733",
+  "src/barriers.js": "11b392a608521110e18b8f884e0c629868a1959c717da8470d1995df9b8d43f2",
+  "src/geo.js": "da5e8e92f70ee2c7d40afd5172c683a7f620d869391ce6c55da39fc30de6efaa",
+  "src/hazard.js": "fdc79a6650cf477a4d949544680f9a4968c3d189c38d1fe0fb9049e8147bc6c4",
+  "src/ingest.js": "fff943b37f4421cb57dc8194b1a25a928b066027785e78af3abb99619f372f79",
+  "src/soil.js": "04d7c2428048959073a523215d48793c51bf6050107155a1eb0ba59327c1c179",
+  "src/solver-cpu.js": "b6ff0cfc63549cef7454e82d1e37fbf4821c340333ecb0df6daf8b0eeb167571",
+  "src/swmm.js": "55aff82fad357802b064d1bf66f7760097e2d9d6a3e0c13912cc319246f30c4a",
+  "vendor/swmm-wasm/swmm.mjs": "91dc0e872abda2fbf28196077cbc04ef0800242491e0a97005dd5f5fba3ceb96",
+  "vendor/swmm-wasm/swmm.wasm": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ }
+}

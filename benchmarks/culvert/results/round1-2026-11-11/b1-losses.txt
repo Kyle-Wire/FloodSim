@@ -1,0 +1,79 @@
+B1-L loss placement on a coded culvert, SWMM alone (EXTRAN and SLOT): SWMM headwater − HDS-5 controlling headwater (m)
+
+surch.  barrel   regime                       Q/AD^.5  Q        HDS-5 inlet  outlet  governs   none     entrance  exit     both
+EXTRAN  pipe     R1 inlet, free outfall       1          0.68   0.609        0.456   inlet    -0.055   -0.055   -0.055   -0.055  
+EXTRAN  pipe     R1 inlet, free outfall       2          1.37   0.929        0.656   inlet    -0.001   -0.001   -0.001   -0.001  
+EXTRAN  pipe     R1 inlet, free outfall       3          2.05   1.228        0.901   inlet    -0.005   -0.005   -0.005   -0.005  
+EXTRAN  pipe     R1 inlet, free outfall       4          2.74   1.556        1.202   inlet    +0.000   +0.000   +0.000   +0.000  
+EXTRAN  pipe     R1 inlet, free outfall       4.5        3.08   1.759        1.373   inlet    +0.000   +0.000   +0.000   +0.000  
+EXTRAN  pipe     R1 inlet, free outfall       5          3.42   1.986        1.558   inlet    +0.000   +0.000   +0.000   +0.000  
+EXTRAN  pipe     R1 inlet, free outfall       6          4.11   2.511        1.969   inlet    +0.000   +0.000   +0.000   +0.000  
+EXTRAN  pipe     R2 inlet, outlet submerged   2          1.37   0.911        0.049   inlet    -0.001   -0.001   -0.001   -0.001  
+EXTRAN  pipe     R2 inlet, outlet submerged   3          2.05   1.210        0.235   inlet    -0.012   -0.012   -0.012   -0.012    NOT STEADY (headwater oscillates)
+EXTRAN  pipe     R2 inlet, outlet submerged   4          2.74   1.538        0.495   inlet    -0.329   -0.338   -0.327   -0.319    NOT STEADY (headwater oscillates)
+EXTRAN  pipe     R2 inlet, outlet submerged   5          3.42   1.968        0.830   inlet    -0.757   -0.569   -0.754   -0.570    NOT STEADY (headwater oscillates)
+EXTRAN  pipe     R3 outlet, full barrel       1.65       1.13   0.834        1.767   outlet   -0.076   -0.051   -0.026   +0.000  
+EXTRAN  pipe     R3 outlet, full barrel       3.31       2.26   1.332        2.148   outlet   -0.306   -0.204   -0.102   +0.000  
+EXTRAN  pipe     R3 outlet, full barrel       4.96       3.39   1.978        2.782   outlet   -0.688   -0.459   -0.230   -0.001  
+EXTRAN  ellipse  R1 inlet, free outfall       1          6.04   1.237        1.331   outlet   -0.089   -0.089   -0.089   -0.089  
+EXTRAN  ellipse  R1 inlet, free outfall       2         12.08   1.889        1.711   inlet    +0.000   +0.000   +0.000   +0.000  
+EXTRAN  ellipse  R1 inlet, free outfall       3         18.12   2.500        2.167   inlet    -0.011   -0.011   -0.011   -0.011  
+EXTRAN  ellipse  R1 inlet, free outfall       4         24.16   3.162        2.716   inlet    +0.003   +0.003   +0.003   +0.003  
+EXTRAN  ellipse  R1 inlet, free outfall       4.5       27.18   3.575        3.027   inlet    +0.004   +0.004   +0.004   +0.004  
+EXTRAN  ellipse  R1 inlet, free outfall       5         30.20   4.036        3.362   inlet    +0.005   +0.005   +0.005   +0.005  
+EXTRAN  ellipse  R1 inlet, free outfall       6         36.24   5.103        4.102   inlet    +0.008   +0.008   +0.008   +0.008  
+EXTRAN  ellipse  R2 inlet, outlet submerged   2         12.08   1.852        1.389   inlet    +0.000   +0.000   +0.000   +0.000  
+EXTRAN  ellipse  R2 inlet, outlet submerged   3         18.12   2.463        1.702   inlet    -0.029   -0.027   -0.025   -0.022    NOT STEADY (headwater oscillates)
+EXTRAN  ellipse  R2 inlet, outlet submerged   4         24.16   3.126        2.141   inlet    -0.671   -0.604   -0.557   -0.257    NOT STEADY (headwater oscillates)
+EXTRAN  ellipse  R2 inlet, outlet submerged   5         30.20   3.999        2.704   inlet    -1.339   -1.222   -0.726   -1.292    NOT STEADY (headwater oscillates)
+EXTRAN  ellipse  R3 outlet, full barrel       1.16       7.00   1.372        2.970   outlet   -0.076   -0.051   -0.025   +0.000  
+EXTRAN  ellipse  R3 outlet, full barrel       2.32      14.01   2.108        3.247   outlet   -0.306   -0.204   -0.101   +0.001  
+EXTRAN  ellipse  R3 outlet, full barrel       3.48      21.01   2.821        3.707   outlet   -0.688   -0.458   -0.228   +0.001  
+SLOT    pipe     R1 inlet, free outfall       1          0.68   0.609        0.456   inlet    -0.055   -0.055   -0.055   -0.055  
+SLOT    pipe     R1 inlet, free outfall       2          1.37   0.929        0.656   inlet    -0.001   -0.001   -0.001   -0.001  
+SLOT    pipe     R1 inlet, free outfall       3          2.05   1.228        0.901   inlet    -0.005   -0.005   -0.005   -0.005  
+SLOT    pipe     R1 inlet, free outfall       4          2.74   1.556        1.202   inlet    +0.000   +0.000   +0.000   +0.000  
+SLOT    pipe     R1 inlet, free outfall       4.5        3.08   1.759        1.373   inlet    +0.000   +0.000   +0.000   +0.000  
+SLOT    pipe     R1 inlet, free outfall       5          3.42   1.986        1.558   inlet    +0.000   +0.000   +0.000   +0.000  
+SLOT    pipe     R1 inlet, free outfall       6          4.11   2.511        1.969   inlet    +0.000   +0.000   +0.000   +0.000  
+SLOT    pipe     R2 inlet, outlet submerged   2          1.37   0.911        0.049   inlet    -0.001   -0.001   -0.001   -0.001  
+SLOT    pipe     R2 inlet, outlet submerged   3          2.05   1.210        0.235   inlet    -0.019   -0.019   -0.016   -0.019    NOT STEADY (headwater oscillates)
+SLOT    pipe     R2 inlet, outlet submerged   4          2.74   1.538        0.495   inlet    -0.300   -0.322   -0.303   -0.148    NOT STEADY (headwater oscillates)
+SLOT    pipe     R2 inlet, outlet submerged   5          3.42   1.968        0.830   inlet    -0.666   -0.729   -0.508   -0.724    NOT STEADY (headwater oscillates)
+SLOT    pipe     R3 outlet, full barrel       1.65       1.13   0.834        1.767   outlet   -0.079   -0.055   -0.031   -0.007  
+SLOT    pipe     R3 outlet, full barrel       3.31       2.26   1.332        2.148   outlet   -0.316   -0.217   -0.120   -0.020  
+SLOT    pipe     R3 outlet, full barrel       4.96       3.39   1.978        2.782   outlet   -0.706   -0.479   -0.257   -0.034  
+SLOT    ellipse  R1 inlet, free outfall       1          6.04   1.237        1.331   outlet   -0.089   -0.089   -0.089   -0.089  
+SLOT    ellipse  R1 inlet, free outfall       2         12.08   1.889        1.711   inlet    +0.000   +0.000   +0.000   +0.000  
+SLOT    ellipse  R1 inlet, free outfall       3         18.12   2.500        2.167   inlet    -0.011   -0.011   -0.011   -0.011  
+SLOT    ellipse  R1 inlet, free outfall       4         24.16   3.162        2.716   inlet    +0.003   +0.003   +0.003   +0.003  
+SLOT    ellipse  R1 inlet, free outfall       4.5       27.18   3.575        3.027   inlet    +0.004   +0.004   +0.004   +0.162  
+SLOT    ellipse  R1 inlet, free outfall       5         30.20   4.036        3.362   inlet    +0.005   +0.005   +0.005   +0.134  
+SLOT    ellipse  R1 inlet, free outfall       6         36.24   5.103        4.102   inlet    +0.008   +0.008   +0.008   +0.096  
+SLOT    ellipse  R2 inlet, outlet submerged   2         12.08   1.852        1.389   inlet    +0.000   +0.000   +0.000   +0.000  
+SLOT    ellipse  R2 inlet, outlet submerged   3         18.12   2.463        1.702   inlet    -0.059   -0.036   -0.031   -0.028    NOT STEADY (headwater oscillates)
+SLOT    ellipse  R2 inlet, outlet submerged   4         24.16   3.126        2.141   inlet    -0.727   -0.596   -0.569   -0.595    NOT STEADY (headwater oscillates)
+SLOT    ellipse  R2 inlet, outlet submerged   5         30.20   3.999        2.704   inlet    -0.866   -1.484   -1.395   -1.345    NOT STEADY (headwater oscillates)
+SLOT    ellipse  R3 outlet, full barrel       1.16       7.00   1.372        2.970   outlet   -0.077   -0.053   -0.029   -0.005  
+SLOT    ellipse  R3 outlet, full barrel       2.32      14.01   2.108        3.247   outlet   -0.309   -0.213   -0.117   -0.021  
+SLOT    ellipse  R3 outlet, full barrel       3.48      21.01   2.821        3.707   outlet   -0.696   -0.480   -0.264   -0.046  
+
+summary (mean error, max |error|, m):
+  EXTRAN none | inlet governs              n 15  mean -0.004  max 0.055
+  EXTRAN none | outlet governs             n 7  mean -0.318  max 0.688
+  EXTRAN entrance only | inlet governs     n 15  mean -0.004  max 0.055
+  EXTRAN entrance only | outlet governs    n 7  mean -0.217  max 0.459
+  EXTRAN exit only | inlet governs         n 15  mean -0.004  max 0.055
+  EXTRAN exit only | outlet governs        n 7  mean -0.114  max 0.230
+  EXTRAN both | inlet governs              n 15  mean -0.004  max 0.055
+  EXTRAN both | outlet governs             n 7  mean -0.013  max 0.089
+  SLOT none | inlet governs                n 15  mean -0.004  max 0.055
+  SLOT none | outlet governs               n 7  mean -0.325  max 0.706
+  SLOT entrance only | inlet governs       n 15  mean -0.004  max 0.055
+  SLOT entrance only | outlet governs      n 7  mean -0.227  max 0.480
+  SLOT exit only | inlet governs           n 15  mean -0.004  max 0.055
+  SLOT exit only | outlet governs          n 7  mean -0.130  max 0.264
+  SLOT both | inlet governs                n 15  mean +0.021  max 0.162
+  SLOT both | outlet governs               n 7  mean -0.032  max 0.089
+
+mass: worst SWMM continuity over the steady runs (the oscillating R2 rows are in the JSON) 0.167 %

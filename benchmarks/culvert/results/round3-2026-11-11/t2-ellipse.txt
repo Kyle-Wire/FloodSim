@@ -1,0 +1,26 @@
+T2 standard vs exact ellipse, SWMM 52004: 38 × 60 in, L 400 m, S 0.004, n 0.013, no code, no losses
+
+standard: C1               HORIZ_ELLIPSE 0.9652           1.524      9          0          1
+  summary ["C1","HORIZ_ELLIPSE","0.97","1.20","0.30","1.52","1","2.59"]
+  Q 0.1: HW 0.14295 y 0.14295 V 0.96929 A 0.10317 R 0.08893 P 1.16011 drift 0
+  Q 0.25: HW 0.22167 y 0.22167 V 1.33745 A 0.18692 R 0.14414 P 1.29681 drift 0
+  Q 0.5: HW 0.30944 y 0.30944 V 1.66366 A 0.30054 R 0.19997 P 1.50292 drift 0
+  Q 1: HW 0.423 y 0.423 V 2.02322 A 0.49426 R 0.26819 P 1.84298 drift 0
+  Q 1.5: HW 0.52354 y 0.52354 V 2.24913 A 0.66692 R 0.31434 P 2.1217 drift 0
+  Q 2: HW 0.61255 y 0.61255 V 2.40917 A 0.83016 R 0.34847 P 2.38227 drift 0
+  Q 2.5: HW 0.72339 y 0.72339 V 2.52987 A 0.98819 R 0.37499 P 2.63527 drift 0
+  full Q 1: head loss 0.23921 R(implied) 0.29485
+  full Q 2: head loss 0.95684 R(implied) 0.29485
+  full Q 3: head loss 2.15288 R(implied) 0.29485
+exact: C1               CUSTOM       0.9652           SH_C1      0          0          1
+  summary ["C1","SH_C1","0.97","1.15","0.29","1.52","1","2.47"]
+  Q 0.1: HW 0.13844 y 0.13844 V 0.98402 A 0.10162 R 0.09097 P 1.11716 drift 0
+  Q 0.25: HW 0.21456 y 0.21456 V 1.3093 A 0.19094 R 0.13961 P 1.36765 drift 0
+  Q 0.5: HW 0.3014 y 0.3014 V 1.62457 A 0.30777 R 0.19296 P 1.59497 drift 0
+  Q 1: HW 0.4303 y 0.4303 V 2.00963 A 0.4976 R 0.26549 P 1.87431 drift 0
+  Q 1.5: HW 0.53936 y 0.53936 V 2.26114 A 0.66338 R 0.31685 P 2.09365 drift 0
+  Q 2: HW 0.64659 y 0.64659 V 2.43315 A 0.82198 R 0.35369 P 2.32402 drift 0
+  Q 2.5: HW 0.77377 y 0.8678 V 2.28623 A 1.0935 R 0.32214 P 3.39445 drift 0
+  full Q 1: head loss 0.26243 R(implied) 0.29319
+  full Q 2: head loss 1.04973 R(implied) 0.29319
+  full Q 3: head loss 2.36189 R(implied) 0.29319

@@ -1,0 +1,26 @@
+B7 regime flag over windows (persistence ≥ 50 %); single step equals regime-flag.json: true
+window      flagged&err  flagged&ok  unflagged&err  unflagged&ok
+step                 79           7              4           318
+30                   81           6              2           319
+60                   81           6              2           319
+300                  80           6              3           319
+adaptive             81           6              2           319
+
+out of band, missed by the single-step flag (4):
+  steep SLOT pipe T Q 2.736 tw 1.37: diff -0.3066 (band 0.077), HDS-5 inlet; full false; shares step:0 30:0.5 60:0.5 300:0.5 adaptive:0.5 (W 60 s)
+  steep SLOT pipe Q Q 2.223 tw 1.40: diff -0.0853 (band 0.064), HDS-5 inlet; full false; shares step:0 30:0.5 60:0.5 300:0.433 adaptive:0.5 (W 60 s)
+  steep SLOT pipe Q Q 3.25 tw 1.40: diff -0.6319 (band 0.093), HDS-5 inlet; full false; shares step:0 30:0.833 60:0.833 300:0.833 adaptive:0.833 (W 60 s)
+  steep SLOT ellipse Q Q 19.629 tw 2.64: diff -0.2092 (band 0.131), HDS-5 inlet; full false; shares step:0 30:0 60:0 300:0 adaptive:0 (W 60 s)
+
+in band, flagged by the single-step flag (7):
+  mild SLOT pipe T Q 2.052 tw 1.20: diff -0.0331 (band 0.062), HDS-5 inlet; full true, inlet 1.235 vs outlet 1.163; shares step:1 30:1 60:1 300:1 adaptive:1 (W 60 s)
+  mild EXTRAN pipe T Q 2.052 tw 1.20: diff -0.0324 (band 0.062), HDS-5 inlet; full true, inlet 1.239 vs outlet 1.166; shares step:1 30:1 60:1 300:1 adaptive:1 (W 60 s)
+  mild EXTRAN ellipse Q Q 31.709 tw 2.74: diff -0.1756 (band 0.215), HDS-5 inlet; full true, inlet 4.296 vs outlet 4.118; shares step:1 30:1 60:1 300:1 adaptive:1 (W 60 s)
+  steep SLOT ellipse Q Q 18.12 tw 2.64: diff -0.028 (band 0.123), HDS-5 inlet; full true, inlet 2.462 vs outlet 1.701; shares step:1 30:0.333 60:0.333 300:0.333 adaptive:0.333 (W 60 s)
+  steep EXTRAN pipe Q Q 3.934 tw 1.40: diff -0.0847 (band 0.118), HDS-5 inlet; full true, inlet 2.406 vs outlet 1.172; shares step:1 30:1 60:1 300:1 adaptive:1 (W 60 s)
+  steep EXTRAN ellipse T Q 24.159 tw 3.48: diff -0.1467 (band 0.156), HDS-5 inlet; full true, inlet 3.126 vs outlet 2.977; shares step:1 30:1 60:1 300:1 adaptive:1 (W 60 s)
+  steep EXTRAN ellipse Q Q 18.12 tw 2.64: diff -0.0221 (band 0.123), HDS-5 inlet; full true, inlet 2.545 vs outlet 1.753; shares step:1 30:0.667 60:0.667 300:0.717 adaptive:0.667 (W 60 s)
+
+uncoded controls (B7-S):
+  {"surcharge":"SLOT","step":"variable (production)","rate":0.5,"steps":7205,"flagged":0,"conditionHoldsIgnoringCode":955}
+  {"surcharge":"EXTRAN","step":"variable (production)","rate":0.5,"steps":7220,"flagged":0,"conditionHoldsIgnoringCode":1033}

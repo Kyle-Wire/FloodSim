@@ -24,6 +24,7 @@ import { fetchUtility, utilityFor } from '../src/utilities.js';
 import { describeSource, fetchFeatures, detectPipeFields, pipeRecords, pointRecords } from '../src/linked.js';
 import { realNetwork } from '../src/network-real.js';
 import { breachChannels, culvertLinks, culvertDiameter } from '../src/channels.js';
+import { fromOSM, detectStructureFields, structureRecords, joinStructures } from '../src/assets.js';
 import { CulvertLinks, LinkHub } from '../src/links.js';
 import { GroundwaterReturn, streamCells } from '../src/groundwater.js';
 import { attachStorage, networkToLayer } from '../src/infra.js';
@@ -422,7 +423,7 @@ try { $('linkDatum').value = localStorage.getItem('floodsim.linkDatum') ?? '0'; 
 for (const id of [...linkFields, 'linkUnits', 'linkDatum']) $(id).addEventListener('change', () => { try { localStorage.setItem('floodsim.' + id, $(id).value); } catch { /* storage off */ } });
 const splitLinks = (s) => s.split(/[\s,]+/).map(x => x.trim()).filter(Boolean);
 /** The linked layers and their datum for the run's fingerprint: present only when set, so runs without them keep their hashes. */
-function linkedPart() { const l = linkedLinks(), d = Number($('linkDatum').value) || 0; return { ...(l.pipes.length || l.inlets.length || l.outfalls.length ? { linked: CMP.hashOf(l) } : {}), ...(d ? { linkDatum: d } : {}) }; }
+function linkedPart() { const l = linkedLinks(), d = Number($('linkDatum').value) || 0, h = openHeads(); return { ...(h.length ? { openHeads: h } : {}), ...(l.pipes.length || l.inlets.length || l.outfalls.length ? { linked: CMP.hashOf(l) } : {}), ...(d ? { linkDatum: d } : {}) }; }
 /**
  * What the utility layers returned, as counts and hashes: the linked pipes, inlets and outfalls, and the built-in
  * utility's inlets and outfalls. The links alone (linkedPart) do not change when a city republishes its data; this does,
@@ -435,10 +436,12 @@ function utilityData() {
   for (const [k, a] of [['pipes', L?.pipes], ['inlets', L?.inlets], ['outfalls', L?.outfalls], ['utilityInlets', u?.inlets], ['utilityOutfalls', u?.outfalls]]) { const p = part(a); if (p) o[k] = p; }
   return (model.utilityData = Object.keys(o).length ? o : null);
 }
+/** Pipe heads to open as culvert entrances (Drainage → linked pipes): one lon,lat per line. → [{ lon, lat }] */
+function openHeads() { return ($('openHeads')?.value ?? '').split(/\n+/).map(l => l.split(/[\s,;]+/).filter(Boolean).map(Number)).filter(a => a.length === 2 && a.every(Number.isFinite)).map(([lon, lat]) => ({ lon, lat })); }
 function linkedLinks() { return { pipes: splitLinks($('linkPipes').value), inlets: splitLinks($('linkInlets').value), outfalls: splitLinks($('linkOutfalls').value) }; }
 /** Fetch every linked layer inside the box; pipes get their fields detected per layer (units overridable). */
 async function loadLinked(links, bounds) {
-  const out = { pipes: [], inlets: [], outfalls: [], notes: [], names: { pipes: [], inlets: [], outfalls: [] }, sources: [] };
+  const out = { pipes: [], inlets: [], outfalls: [], structures: [], notes: [], names: { pipes: [], inlets: [], outfalls: [] }, sources: [] };
   for (const [kind, urls] of Object.entries(links)) for (const url of urls) {
     const src = await describeSource(url, linkedFetcher);
     const feats = await fetchFeatures(src, bounds, linkedFetcher);
@@ -456,9 +459,16 @@ async function loadLinked(links, bounds) {
       const tf = kind === 'inlets' ? detectTypeField(src.fields) : null; // what each structure is (Inlet hydraulics → Inlet types)
       out[kind].push(...pointRecords(feats, tf));
       if (tf) out.notes.push(`${src.name}: inlet type from ${tf}`);
+      // structure records (id, type, invert, data source) for the pipe ends that name them: evidence only (src/assets.js)
+      const sm = detectStructureFields(src.fields);
+      if (sm.id) out.structures.push(...structureRecords(feats, sm, { datum: Number($('linkDatum').value) || 0 }));
     }
   }
   out.combined = out.pipes.length > 0 && out.combinedPipes > out.pipes.length / 2; // most of the linked pipes are combined sewers
+  if (out.pipes.length && out.structures.length) { // each pipe end gains the evidence of the structure it names; the legacy fields are unchanged
+    const j = joinStructures(out.pipes, out.structures); out.pipes = j.pipes;
+    out.notes.push(`structures: ${j.report.matched} pipe ends matched by id${j.report.conflicts ? `, ${j.report.conflicts} with conflicting inverts` : ''}`);
+  }
   return out;
 }
 $('linkCheck').onclick = async () => {
@@ -1662,11 +1672,11 @@ function makeNetwork(c, F, { ignoreLayer = false } = {}) {
   const combined = $('csoOn').checked; // combined sewer: interior pipe ends no outfall claims leave the model (src/network-real.js)
   const withQ = (net) => { if (net) for (const p of net.pipes) p.Qfull = 0.3117 / (p.n ?? net.opts.n) * p.D ** (8 / 3) * Math.sqrt(p.S); return net; };
   if (lay?.pipes.length) { // tier 1: pipes the user drew or imported
-    const net = realNetwork(model.fine, model.f, lay.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined });
+    const net = realNetwork(model.fine, model.f, lay.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined, openHeads: openHeads() });
     if (net) { net.drawn = true; return withQ(net); }
   }
   if (L?.pipes.length) { // tier 1: the user's linked pipes
-    const net = realNetwork(model.fine, model.f, L.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined });
+    const net = realNetwork(model.fine, model.f, L.pipes, { ...c, F }, { realInlets: inlets, outfalls, combined, openHeads: openHeads() });
     if (net) return withQ(net);
   }
   return withQ(synthNetwork(model.fine, model.f, model.osm, model.atlas14, { ...c, F }, { designARI: Number($('designAri').value), spacing: Number($('spacing').value),
@@ -1812,7 +1822,7 @@ function resetRun() {
   if (roofEarly && c.sg) roofEarly.rainField = roof ? sgRain(c, roofEarly.rainField, (1 - green) * (1 - down) * rf / Math.max(1e-9, 1 - down * (1 - green)), net, down * (1 - green), roofEarly.roofArea)
     : sgRain(c, roofEarly.rainField, rf * (1 - green));
   const roofStages = roofHoldStages(c, net, roof, green);
-  const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
+  const culv = culvertLinks(model.fine, c, F, [...model.osm.culverts.map(cv => ({ ...cv, D: culvertDiameter(cv.tags, cv.kind), asset: fromOSM(cv.tags, cv.kind, { line: cv.line, id: cv.id }) })), ...lay.culverts], new Set(net ? net.inlets.map(g => g.cell) : []));
   const sw = stormwaterLinks(c, F, net, new Set([...(net ? net.inlets.map(g => g.cell) : []), ...culv.flatMap(x => [x.a, x.b])]), gi);
   run = { ga: ga ? { psiD: ga.psiD, fmax: ga.fmax, perv: ga.perv } : null, scour, sed, debris, banks: banks?.count ? banks.banks : null, bars, gi, tanks, storage, green, roofEarly, roofStages, stage: 0, scenario: model.design?.name ?? null, sw, lines: { defs: [...clines.map((f, l) => ({ id: f.id, name: f.properties.name ?? null, gauge: f.properties.gauge ?? null, faces: lf.perLine[l], ends: lineEnds(f.geometry.coordinates) })), ...winSegs.map((s, q) => ({ id: 'win:' + q, name: null, side: s.side, faces: lf.perLine[clines.length + q] }))], faces: lf.faces, samples: allLines.map(() => [[0, 0, 0, 0]]) },
     window: win ? { ...win, segs: winSegs } : null, culv, roof, net, cso, F, c, solver: null, playing: false, t: 0, out: null, hmax: null, smax: null, view: null, storm: null, frames: [], nextFrame: 0, K: 8, rtf: 0, mass: null, lastRead: 0, gen: ++runGen };
@@ -2309,7 +2319,7 @@ function forcingRecord(r) {
     storm: st ? { ...stormMeta(st), waterLevel: undefined, depth: st.depth, t0: st.t0 ?? null } : null,
     inflow: (r.inflowReady ?? []).map(e => ({ label: e.label, site: e.site ?? null, at: e.at, flow: typeof e.flow === 'function' ? sample(e.flow) : e.flow, ...(e.scale != null && e.scale !== 1 ? { scale: e.scale } : {}), ...(e.ungauged ? { ungauged: e.ungauged } : {}) })),
     tide: st?.wl ? { station: st.wl.station, t: st.wl.t, v: st.wl.v, edges: st.wl.design ? true : $('tCoast').checked, ...(st.wl.design ? { design: st.wl.design } : {}), ...(st.wl.slr ? { slr: st.wl.slr } : {}), ...(st.wl.observedUntil ? { observedUntil: st.wl.observedUntil, surge: st.wl.surge } : {}), ...(emu?.tide ? { offset: emu.tide } : {}) } : null,
-    startLevels: { mode: $('startWater').value, readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
+    startLevels: { mode: $('startWater').value, ...(Number.isFinite(startReach()) ? { reachM: startReach() } : {}), readings: r.levelsReady ? [...r.levelsReady.lv].map(([site, v]) => [site, v]) : null },
     outlet: r.outletReady?.fixed != null ? { fixed: r.outletReady.fixed, side: r.outletReady.side } : r.outletReady ? { site: r.outletReady.g.site, length: Number($('outLen').value) || null, readings: r.outletReady.level.length, flows: r.outletReady.flow.length,
       reach: r.outletReady.reach ? { sections: r.outletReady.reach.sections.length, km: r.outletReady.reach.length / 1000, depth: r.outletReady.reach.depth } : 'prismatic' } : null,
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...($('wetness').value === 'auto' ? { start: wetnessKey(), rainBefore: stormBase()?.antecedent ? (({ mm, days, source, amc, season }) => ({ mm, days, source, amc, season }))(stormBase().antecedent) : null } : {}), ...(Number($('gwShare').value) > 0 ? { groundwater: val('gwShare', 'gwLag') } : {}), ...(emu?.se != null && Math.abs(emu.se - WETNESS[wetnessKey()]) > 1e-9 ? { se: emu.se } : {}) },
@@ -3621,6 +3631,7 @@ function startNoteUpdate() {
     : `${n ? n + ' USGS level gauge' + (n > 1 ? 's' : '') + ' nearby.' : 'No USGS level gauges nearby.'} A gauged river rises above the lidar water surface by the gauge's rise, a lake fills flat to its gauge, tidal water to the tide level, and the water spreads onto connected ground below that level. Ungauged water stays at the lidar surface. The lidar has no bathymetry: water below its surface is not modelled.`;
 }
 $('startWater').onchange = () => { startNoteUpdate(); if (model && (!run || !run.solver)) resetRun(); };
+$('startReach').onchange = () => { if (model && (!run || !run.solver)) resetRun(); };
 /**
  * Gauge readings for the start, fetched before the run: at the storm start (historic) or the latest (design), for the
  * level gauges nearby and the inflow gauges. Also each gauge's flow then, for the design hydrograph's base.
@@ -3720,6 +3731,8 @@ function bathyCells(c, F) {
   for (let J = 0; J < c.ny; J++) for (let I = 0; I < c.nx; I++) { let s = 0; for (let j = J * F; j < (J + 1) * F; j++) for (let i = I * F; i < (I + 1) * F; i++) s += model.bathy.dz[j * W + i]; fill[J * c.nx + I] = s / (F * F); }
   c.bathyFill = fill; c.zSurf = c.z.map((v, k) => v + fill[k]);
 }
+/** How far (m, along the water) a river gauge's rise is carried at the start: Infinity = the whole river (the default), 0 = the gauge's own pool. */
+function startReach() { const v = ($('startReach')?.value ?? '').trim(); return v === '' || !(Number(v) >= 0) ? Infinity : Number(v); }
 function startWater(c, F, stageCells) {
   if ($('startWater').value !== 'gauge') return null;
   const ls = run.levelSrc, st = currentStorm(), tide = stageAt(st, 0), sources = [...(ls?.sources ?? [])];
@@ -3729,9 +3742,9 @@ function startWater(c, F, stageCells) {
     const cells = stageCells.filter(k => water[k]); if (cells.length) sources.push({ cells, level: tide });
   }
   if (!sources.length) { $('startNote').textContent = 'No usable gauge level for this run: the water bodies start at the lidar surface.' + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : ''); return null; }
-  const s = startDepths(c, water, sources, { surfR: Math.ceil(60 / (F * model.fine.dx)) }); // decks and bank pixels within 60 m take the river under them
+  const reachM = startReach(), s = startDepths(c, water, sources, { surfR: Math.ceil(60 / (F * model.fine.dx)), reach: reachM / (F * model.fine.dx) }); // decks and bank pixels within 60 m take the river under them
   let vol = 0, wet = 0; for (let k = 0; k < s.depth.length; k++) if (s.depth[k] > 0) { vol += s.depth[k]; wet++; }
-  const A = (F * model.fine.dx) ** 2, msg = `Starting water: ${fmtVol(vol * A)} on ${(wet * A / 1e4).toFixed(2)} ha.` + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : '') + (tide != null && stageCells?.length ? ` ${run.outlet ? 'River outlet edge' : 'Tidal water'} at ${tide.toFixed(2)} m NAVD88.` : '');
+  const A = (F * model.fine.dx) ** 2, msg = `Starting water: ${fmtVol(vol * A)} on ${(wet * A / 1e4).toFixed(2)} ha.` + (Number.isFinite(reachM) ? ` A river gauge's rise is carried ${reachM ? reachM + ' m along the water' : 'over its own pool only'}.` : '') + (ls?.notes.length ? ' ' + ls.notes.join('; ') + '.' : '') + (tide != null && stageCells?.length ? ` ${run.outlet ? 'River outlet edge' : 'Tidal water'} at ${tide.toFixed(2)} m NAVD88.` : '');
   $('startNote').textContent = msg; log(msg, 'ok', 'USGS NWIS');
   return s;
 }

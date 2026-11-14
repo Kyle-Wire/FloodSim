@@ -1,0 +1,512 @@
+{
+ "experiment": "T2 standard vs exact ellipse, no inlet control",
+ "inputs": {
+  "L": 400,
+  "S": 0.004,
+  "n": 0.013,
+  "rise": 0.9652,
+  "span": 1.524,
+  "z0": 10,
+  "riseIn": 38,
+  "spanIn": 60
+ },
+ "sections": {
+  "standard": {
+   "written": {
+    "shape": "HORIZ_ELLIPSE",
+    "g": [
+     0.9652,
+     1.524,
+     9,
+     0
+    ],
+    "curve": null,
+    "xsectLine": "C1               HORIZ_ELLIPSE 0.9652           1.524      9          0          1"
+   },
+   "summary": {
+    "cols": [
+     "link",
+     "shape",
+     "fullDepth",
+     "fullArea",
+     "hydRad",
+     "maxWidth",
+     "barrels",
+     "fullFlow"
+    ],
+    "row": [
+     "C1",
+     "HORIZ_ELLIPSE",
+     "0.97",
+     "1.20",
+     "0.30",
+     "1.52",
+     "1",
+     "2.59"
+    ]
+   },
+   "partFull": [
+    {
+     "Q": 0.1,
+     "swmmFlow": 0.1,
+     "headwaterDepth": 0.14295,
+     "outfallDepth": 0.14295,
+     "linkDepth": 0.14295,
+     "velocity": 0.96929,
+     "impliedArea": 0.10317,
+     "impliedHydRadius": 0.08893,
+     "impliedPerimeter": 1.16011,
+     "drift": 0,
+     "continuityErrPct": -5.301
+    },
+    {
+     "Q": 0.25,
+     "swmmFlow": 0.25,
+     "headwaterDepth": 0.22167,
+     "outfallDepth": 0.22167,
+     "linkDepth": 0.22167,
+     "velocity": 1.33745,
+     "impliedArea": 0.18692,
+     "impliedHydRadius": 0.14414,
+     "impliedPerimeter": 1.29681,
+     "drift": 0,
+     "continuityErrPct": -3.648
+    },
+    {
+     "Q": 0.5,
+     "swmmFlow": 0.5,
+     "headwaterDepth": 0.30944,
+     "outfallDepth": 0.30944,
+     "linkDepth": 0.30944,
+     "velocity": 1.66366,
+     "impliedArea": 0.30054,
+     "impliedHydRadius": 0.19997,
+     "impliedPerimeter": 1.50292,
+     "drift": 0,
+     "continuityErrPct": -2.94
+    },
+    {
+     "Q": 1,
+     "swmmFlow": 1,
+     "headwaterDepth": 0.423,
+     "outfallDepth": 0.423,
+     "linkDepth": 0.423,
+     "velocity": 2.02322,
+     "impliedArea": 0.49426,
+     "impliedHydRadius": 0.26819,
+     "impliedPerimeter": 1.84298,
+     "drift": 0,
+     "continuityErrPct": -2.604
+    },
+    {
+     "Q": 1.5,
+     "swmmFlow": 1.5,
+     "headwaterDepth": 0.52354,
+     "outfallDepth": 0.52354,
+     "linkDepth": 0.52354,
+     "velocity": 2.24913,
+     "impliedArea": 0.66692,
+     "impliedHydRadius": 0.31434,
+     "impliedPerimeter": 2.1217,
+     "drift": 0,
+     "continuityErrPct": -2.397
+    },
+    {
+     "Q": 2,
+     "swmmFlow": 2,
+     "headwaterDepth": 0.61255,
+     "outfallDepth": 0.61255,
+     "linkDepth": 0.61255,
+     "velocity": 2.40917,
+     "impliedArea": 0.83016,
+     "impliedHydRadius": 0.34847,
+     "impliedPerimeter": 2.38227,
+     "drift": 0,
+     "continuityErrPct": -2.295
+    },
+    {
+     "Q": 2.5,
+     "swmmFlow": 2.5,
+     "headwaterDepth": 0.72339,
+     "outfallDepth": 0.72339,
+     "linkDepth": 0.72339,
+     "velocity": 2.52987,
+     "impliedArea": 0.98819,
+     "impliedHydRadius": 0.37499,
+     "impliedPerimeter": 2.63527,
+     "drift": 0,
+     "continuityErrPct": -2.164
+    }
+   ],
+   "full": [
+    {
+     "Q": 1,
+     "tailwater": 11.4652,
+     "headwater": 11.70441,
+     "headLoss": 0.23921,
+     "swmmFlow": 1,
+     "velocityLink": 0.83432,
+     "impliedHydRadiusFromSwmmFullArea": 0.29485,
+     "note": "head loss includes no entrance or exit loss (none written); the velocity head at the pool is not counted by SWMM",
+     "continuityErrPct": 0,
+     "drift": 0
+    },
+    {
+     "Q": 2,
+     "tailwater": 11.4652,
+     "headwater": 12.42204,
+     "headLoss": 0.95684,
+     "swmmFlow": 2,
+     "velocityLink": 1.66864,
+     "impliedHydRadiusFromSwmmFullArea": 0.29485,
+     "note": "head loss includes no entrance or exit loss (none written); the velocity head at the pool is not counted by SWMM",
+     "continuityErrPct": 0,
+     "drift": 0
+    },
+    {
+     "Q": 3,
+     "tailwater": 11.4652,
+     "headwater": 13.61808,
+     "headLoss": 2.15288,
+     "swmmFlow": 3,
+     "velocityLink": 2.50296,
+     "impliedHydRadiusFromSwmmFullArea": 0.29485,
+     "note": "head loss includes no entrance or exit loss (none written); the velocity head at the pool is not counted by SWMM",
+     "continuityErrPct": 0.002,
+     "drift": 0
+    }
+   ]
+  },
+  "exact": {
+   "written": {
+    "shape": "CUSTOM",
+    "g": [
+     0.9652,
+     "SH_C1",
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0
+     ],
+     [
+      0.001541333133436018,
+      0.12388278272817602
+     ],
+     [
+      0.006155829702431115,
+      0.24700178690562752
+     ],
+     [
+      0.013815039801161721,
+      0.3685979429303772
+     ],
+     [
+      0.024471741852423234,
+      0.4879215700657067
+     ],
+     [
+      0.03806023374435663,
+      0.6042369984711946
+     ],
+     [
+      0.05449673790581605,
+      0.7168271048519157
+     ],
+     [
+      0.07367991782295386,
+      0.8249977337620246
+     ],
+     [
+      0.09549150281252627,
+      0.928081977303905
+     ],
+     [
+      0.11979701719998453,
+      1.025444286837132
+     ],
+     [
+      0.1464466094067262,
+      1.1164843913471802
+     ],
+     [
+      0.17527597583490812,
+      1.2006409983158384
+     ],
+     [
+      0.20610737385376343,
+      1.277395254276233
+     ],
+     [
+      0.23875071764202555,
+      1.3462739437169877
+     ],
+     [
+      0.27300475013022657,
+      1.4068524066132124
+     ],
+     [
+      0.3086582838174551,
+      1.4587571565967687
+     ],
+     [
+      0.3454915028125263,
+      1.5016681836239267
+     ],
+     [
+      0.38327731807204724,
+      1.5353209269437
+     ],
+     [
+      0.4217827674798845,
+      1.559507906202849
+     ],
+     [
+      0.4607704521360775,
+      1.5740800006312547
+     ],
+     [
+      0.49999999999999994,
+      1.5789473684210527
+     ],
+     [
+      0.5392295478639224,
+      1.5740800006312547
+     ],
+     [
+      0.5782172325201153,
+      1.5595079062028492
+     ],
+     [
+      0.6167226819279527,
+      1.5353209269437
+     ],
+     [
+      0.6545084971874737,
+      1.5016681836239267
+     ],
+     [
+      0.6913417161825448,
+      1.458757156596769
+     ],
+     [
+      0.7269952498697734,
+      1.4068524066132126
+     ],
+     [
+      0.7612492823579744,
+      1.346273943716988
+     ],
+     [
+      0.7938926261462365,
+      1.2773952542762332
+     ],
+     [
+      0.8247240241650917,
+      1.2006409983158386
+     ],
+     [
+      0.8535533905932737,
+      1.1164843913471805
+     ],
+     [
+      0.8802029828000154,
+      1.0254442868371323
+     ],
+     [
+      0.9045084971874737,
+      0.928081977303905
+     ],
+     [
+      0.9263200821770461,
+      0.8249977337620247
+     ],
+     [
+      0.9455032620941839,
+      0.7168271048519163
+     ],
+     [
+      0.9619397662556434,
+      0.6042369984711946
+     ],
+     [
+      0.9755282581475768,
+      0.4879215700657062
+     ],
+     [
+      0.9861849601988383,
+      0.3685979429303772
+     ],
+     [
+      0.9938441702975689,
+      0.24700178690562752
+     ],
+     [
+      0.998458666866564,
+      0.12388278272817378
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "xsectLine": "C1               CUSTOM       0.9652           SH_C1      0          0          1"
+   },
+   "summary": {
+    "cols": [
+     "link",
+     "shape",
+     "fullDepth",
+     "fullArea",
+     "hydRad",
+     "maxWidth",
+     "barrels",
+     "fullFlow"
+    ],
+    "row": [
+     "C1",
+     "SH_C1",
+     "0.97",
+     "1.15",
+     "0.29",
+     "1.52",
+     "1",
+     "2.47"
+    ]
+   },
+   "partFull": [
+    {
+     "Q": 0.1,
+     "swmmFlow": 0.1,
+     "headwaterDepth": 0.13844,
+     "outfallDepth": 0.13844,
+     "linkDepth": 0.13844,
+     "velocity": 0.98402,
+     "impliedArea": 0.10162,
+     "impliedHydRadius": 0.09097,
+     "impliedPerimeter": 1.11716,
+     "drift": 0,
+     "continuityErrPct": -5.292
+    },
+    {
+     "Q": 0.25,
+     "swmmFlow": 0.25,
+     "headwaterDepth": 0.21456,
+     "outfallDepth": 0.21456,
+     "linkDepth": 0.21456,
+     "velocity": 1.3093,
+     "impliedArea": 0.19094,
+     "impliedHydRadius": 0.13961,
+     "impliedPerimeter": 1.36765,
+     "drift": 0,
+     "continuityErrPct": -3.958
+    },
+    {
+     "Q": 0.5,
+     "swmmFlow": 0.5,
+     "headwaterDepth": 0.3014,
+     "outfallDepth": 0.3014,
+     "linkDepth": 0.3014,
+     "velocity": 1.62457,
+     "impliedArea": 0.30777,
+     "impliedHydRadius": 0.19296,
+     "impliedPerimeter": 1.59497,
+     "drift": 0,
+     "continuityErrPct": -3.185
+    },
+    {
+     "Q": 1,
+     "swmmFlow": 1,
+     "headwaterDepth": 0.4303,
+     "outfallDepth": 0.4303,
+     "linkDepth": 0.4303,
+     "velocity": 2.00963,
+     "impliedArea": 0.4976,
+     "impliedHydRadius": 0.26549,
+     "impliedPerimeter": 1.87431,
+     "drift": 0,
+     "continuityErrPct": -2.572
+    },
+    {
+     "Q": 1.5,
+     "swmmFlow": 1.5,
+     "headwaterDepth": 0.53936,
+     "outfallDepth": 0.53936,
+     "linkDepth": 0.53936,
+     "velocity": 2.26114,
+     "impliedArea": 0.66338,
+     "impliedHydRadius": 0.31685,
+     "impliedPerimeter": 2.09365,
+     "drift": 0,
+     "continuityErrPct": -2.285
+    },
+    {
+     "Q": 2,
+     "swmmFlow": 2,
+     "headwaterDepth": 0.64659,
+     "outfallDepth": 0.64659,
+     "linkDepth": 0.64659,
+     "velocity": 2.43315,
+     "impliedArea": 0.82198,
+     "impliedHydRadius": 0.35369,
+     "impliedPerimeter": 2.32402,
+     "drift": 0,
+     "continuityErrPct": -2.121
+    },
+    {
+     "Q": 2.5,
+     "swmmFlow": 2.5,
+     "headwaterDepth": 0.77377,
+     "outfallDepth": 0.96183,
+     "linkDepth": 0.8678,
+     "velocity": 2.28623,
+     "impliedArea": 1.0935,
+     "impliedHydRadius": 0.32214,
+     "impliedPerimeter": 3.39445,
+     "drift": 0,
+     "continuityErrPct": -2.373
+    }
+   ],
+   "full": [
+    {
+     "Q": 1,
+     "tailwater": 11.4652,
+     "headwater": 11.72763,
+     "headLoss": 0.26243,
+     "swmmFlow": 1,
+     "velocityLink": 0.86638,
+     "impliedHydRadiusFromSwmmFullArea": 0.29319,
+     "note": "head loss includes no entrance or exit loss (none written); the velocity head at the pool is not counted by SWMM",
+     "continuityErrPct": 0,
+     "drift": 0
+    },
+    {
+     "Q": 2,
+     "tailwater": 11.4652,
+     "headwater": 12.51493,
+     "headLoss": 1.04973,
+     "swmmFlow": 2,
+     "velocityLink": 1.73276,
+     "impliedHydRadiusFromSwmmFullArea": 0.29319,
+     "note": "head loss includes no entrance or exit loss (none written); the velocity head at the pool is not counted by SWMM",
+     "continuityErrPct": 0,
+     "drift": 0
+    },
+    {
+     "Q": 3,
+     "tailwater": 11.4652,
+     "headwater": 13.82709,
+     "headLoss": 2.36189,
+     "swmmFlow": 3,
+     "velocityLink": 2.59913,
+     "impliedHydRadiusFromSwmmFullArea": 0.29319,
+     "note": "head loss includes no entrance or exit loss (none written); the velocity head at the pool is not counted by SWMM",
+     "continuityErrPct": 0.003,
+     "drift": 0
+    }
+   ]
+  }
+ }
+}

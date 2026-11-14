@@ -1,0 +1,29 @@
+B6 silted barrels, SWMM 52004 alone: depth above the fill half way along a 1440 m barrel vs the Manning normal depth of the open section (S 0.002, n 0.013)
+
+B6-1   0.3  Q   0.353  FILLED_CIRCULAR  offset 0    normal 0.270  SWMM 0.280  +0.010  PASS  conveyance +5.56 %  mass ok (continuity 0.424 %, outflow 0 %)
+B6-1   0.6  Q   0.939  FILLED_CIRCULAR  offset 0    normal 0.540  SWMM 0.558  +0.018  FAIL  conveyance +4.14 %  mass BAD (continuity -0.846 %, outflow 0 %)
+B6-1   0.8  Q   1.264  FILLED_CIRCULAR  offset 0    normal 0.720  SWMM 0.751  +0.031  FAIL  conveyance +3.00 %  mass BAD (continuity -1.159 %, outflow 0 %)
+B6-1x  0.3  Q   0.353  CUSTOM           offset 0.3  normal 0.270  SWMM 0.270  +0.000  PASS  conveyance +0.01 %  mass ok (continuity 0.341 %, outflow 0 %)
+B6-1x  0.6  Q   0.939  CUSTOM           offset 0.3  normal 0.540  SWMM 0.540  +0.000  PASS  conveyance +0.02 %  mass BAD (continuity -0.88 %, outflow 0 %)
+B6-1x  0.8  Q   1.264  CUSTOM           offset 0.3  normal 0.720  SWMM 0.719  -0.001  PASS  conveyance -0.14 %  mass BAD (continuity -1.256 %, outflow 0 %)
+B6-1c  0.3  Q   0.341  CIRCULAR         offset 0    normal 0.360  SWMM 0.360  +0.000  PASS  conveyance -0.02 %  mass ok (continuity -0.473 %, outflow 0 %)
+B6-1c  0.6  Q   1.171  CIRCULAR         offset 0    normal 0.720  SWMM 0.720  +0.000  PASS  conveyance +0.02 %  mass ok (continuity -0.287 %, outflow 0 %)
+B6-1c  0.8  Q   1.704  CIRCULAR         offset 0    normal 0.960  SWMM 0.958  -0.003  PASS  conveyance -0.26 %  mass ok (continuity -0.247 %, outflow 0 %)
+B6-2   0.3  Q   2.290  RECT_CLOSED      offset 0.5  normal 0.450  SWMM 0.450  -0.000  PASS  conveyance -0.02 %  mass ok (continuity -0.11 %, outflow 0 %)
+B6-2   0.6  Q   6.329  RECT_CLOSED      offset 0.5  normal 0.900  SWMM 0.899  -0.001  PASS  conveyance -0.09 %  mass ok (continuity -0.089 %, outflow 0 %)
+B6-2   0.8  Q   9.451  RECT_CLOSED      offset 0.5  normal 1.200  SWMM 1.197  -0.003  PASS  conveyance -0.31 %  mass ok (continuity -0.188 %, outflow 0 %)
+B6-3   0.3  Q   2.688  CUSTOM           offset 1    normal 0.431  SWMM 0.431  +0.000  PASS  conveyance +0.00 %  mass ok (continuity -0.162 %, outflow 0 %)
+B6-3   0.6  Q   7.055  CUSTOM           offset 1    normal 0.863  SWMM 0.862  -0.001  PASS  conveyance -0.08 %  mass ok (continuity -0.193 %, outflow 0 %)
+B6-3   0.8  Q   9.356  CUSTOM           offset 1    normal 1.151  SWMM 1.136  -0.015  PASS  conveyance -0.92 %  mass BAD (continuity -0.738 %, outflow 0 %)
+B6-3c  0.3  Q   3.650  CUSTOM           offset 0    normal 0.732  SWMM 0.732  +0.001  PASS  conveyance +0.20 %  mass ok (continuity -0.302 %, outflow 0 %)
+B6-3c  0.6  Q  13.259  CUSTOM           offset 0    normal 1.463  SWMM 1.462  -0.002  PASS  conveyance -0.16 %  mass ok (continuity -0.183 %, outflow 0 %)
+B6-3c  0.8  Q  19.564  CUSTOM           offset 0    normal 1.951  SWMM 1.921  -0.029  PASS  conveyance -1.53 %  mass ok (continuity -0.154 %, outflow 0 %)
+
+7 FAILED:
+  B6-1 at 0.6: SWMM 0.558 m above the fill vs normal 0.540 m
+  B6-1 at 0.6: mass {"swmmContinuityErrPct":-0.846,"steadyOutflowErrPct":0,"ok":false}
+  B6-1 at 0.8: SWMM 0.751 m above the fill vs normal 0.720 m
+  B6-1 at 0.8: mass {"swmmContinuityErrPct":-1.159,"steadyOutflowErrPct":0,"ok":false}
+  B6-1x at 0.6: mass {"swmmContinuityErrPct":-0.88,"steadyOutflowErrPct":0,"ok":false}
+  B6-1x at 0.8: mass {"swmmContinuityErrPct":-1.256,"steadyOutflowErrPct":0,"ok":false}
+  B6-3 at 0.8: mass {"swmmContinuityErrPct":-0.738,"steadyOutflowErrPct":0,"ok":false}

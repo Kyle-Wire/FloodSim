@@ -1,0 +1,60 @@
+{
+ "id": "PV-P1",
+ "title": "Pressurised pipe flow",
+ "category": "solver",
+ "process": "steady full-pipe flow under a held tailwater, forward and reversed",
+ "module": "pipes/pv-p1.mjs",
+ "executor": "node",
+ "equations": [
+  "Manning full-pipe friction: h_f = L (Q n / (A R^(2/3)))^2, A = pi D^2 / 4, R = D / 4 (SWMM's law for gravity conduits, full or not)",
+  "Darcy-Weisbach: h_f = f (L/D) V^2 / (2g), f by Colebrook-White (Swamee-Jain alongside)",
+  "Strickler equivalence (assumption): n = k_s^(1/6) / (8.1 sqrt(g))"
+ ],
+ "initialConditions": "the junction at the tailwater level (so the pipe starts full); inflow ramped 0 to Q over 600 s",
+ "boundaryConditions": "inflow Q at the junction; FIXED outfall stage 0.5 m above the inlet crown (the pipe falls 0.4 m, so it is full end to end). Reversed: the outfall (pool) at the high end, the inflow at the low end: flow uphill against the drawn direction.",
+ "geometry": "one circular conduit, L 200 m, slope 0.002; no entrance or exit loss written",
+ "parameters": {
+  "diameters": { "value": [0.3, 0.9, 1.8], "unit": "m" },
+  "manningN": { "value": [0.011, 0.015], "unit": "s m^-1/3" },
+  "velocity": { "value": 1.5, "unit": "m/s (Q = V A)" },
+  "L": { "value": 200, "unit": "m" },
+  "slope": { "value": 0.002, "unit": "m/m" },
+  "z0": { "value": 10, "unit": "m (high-end invert)" },
+  "twOverCrownM": { "value": 0.5, "unit": "m" },
+  "durationS": { "value": 3600, "unit": "s" },
+  "routingStepS": { "value": 1, "unit": "s" },
+  "rampS": { "value": 600, "unit": "s" },
+  "averageS": { "value": 600, "unit": "s" }
+ },
+ "solver": "SWMM 5.2.4 dynamic wave, EXTRAN surcharge, fixed 1 s step",
+ "reference": {
+  "module": "references/manning.mjs, references/pipe.mjs",
+  "functions": ["manningFullPipeLoss", "dwLoss", "colebrook", "swameeJain", "ksFromManning"],
+  "sources": "Manning (1891); Colebrook (1939); Swamee and Jain (1976); Henderson, Open Channel Flow (1966) 4.4 for Strickler",
+  "independence": "no import from src/",
+  "crossCheck": "refs.test.mjs: Colebrook against Swamee-Jain (1.5 %, Re >= 1e5) and Colebrook's residual"
+ },
+ "outputs": ["head loss against Manning (numerical)", "head loss against Darcy-Weisbach (physical-model, not independently validated)", "flow and its sign", "SWMM continuity error"],
+ "criteria": {
+  "headLossAbsM": 0.005,
+  "headLossRel": 0.01,
+  "steadyAbsM": 0.001,
+  "flowRel": 0.001,
+  "continuityPct": 0.5
+ },
+ "criteriaNotes": "Manning head loss within max(5 mm, 1 %). The Darcy-Weisbach row has no criterion: it shows the model-form difference of Manning's law, under an assumed roughness equivalence, and is Not independently validated. Steady: head range over the last 600 s within 1 mm, else Numerically unstable. A pipe not full at every sample is an Invalid setup.",
+ "conservation": "flow through the conduit equals the inflow (0.1 %); SWMM's continuity error reported",
+ "resolution": "one conduit; 1 s step",
+ "assumptions": [
+  "steady full flow: no inertia; the velocity heads at the two ends cancel (one section)",
+  "the Strickler coefficient 8.1 (an assumption, stated)"
+ ],
+ "limitations": [
+  "SWMM applies Darcy-Weisbach only to force mains; a gravity conduit uses Manning when full, so the Darcy-Weisbach row is model-form, not a test of SWMM's implementation"
+ ],
+ "validRange": "circular pipes full end to end, steady, Re 3e5 to 3e6",
+ "scoring": "automated: lib/score.mjs row()",
+ "criteriaRevisions": [
+  { "revision": 1, "date": "2026-11-11", "hash": "787c7b2afdcb17fdee576eb8d1ca5627687e3c7a9714de34b25479e26a25408f", "why": "first registration, before the first run" }
+ ]
+}

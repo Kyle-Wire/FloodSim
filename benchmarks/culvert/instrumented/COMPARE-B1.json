@@ -1,0 +1,21 @@
+{
+ "written": "2026-11-11T19:03:48.993Z",
+ "exit": {
+  "instrumented": 1,
+  "production": 1
+ },
+ "swmmVersion": {
+  "instrumented": 52004,
+  "production": 52004
+ },
+ "numbersCompared": 1683,
+ "differing": 0,
+ "maxAbsDiff": 0,
+ "diffs": [],
+ "getter": {
+  "linkVolumeFullPipe": 63.62433575936789,
+  "expected": 63.617251235193315,
+  "relErr": 0.0001113616831444261
+ },
+ "scope": "behavioural agreement on B1 only; not evidence that the builds are identical, nor of agreement on any other benchmark"
+}
