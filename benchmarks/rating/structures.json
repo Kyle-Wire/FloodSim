@@ -1,0 +1,2516 @@
+{
+ "made": "2026-11-14T19:55:32.720Z",
+ "sites": [
+  {
+   "id": "USGS-05470500",
+   "name": "Ioway Creek at Ames, IA",
+   "comid": 6979014,
+   "lineKm": [
+    -1.22,
+    5.1
+   ],
+   "found": [
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "proposed",
+     "s": -606
+    },
+    {
+     "kind": "bridge",
+     "name": "South 4th Street",
+     "what": "secondary",
+     "s": -599
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": -590
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -450
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": -357
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 0
+    },
+    {
+     "kind": "joins",
+     "name": "Worrell Creek",
+     "what": "stream",
+     "s": 1273
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 1281
+    },
+    {
+     "kind": "bridge",
+     "name": "South Grand Avenue",
+     "what": "tertiary",
+     "s": 1288
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 1294
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 2453
+    },
+    {
+     "kind": "bridge",
+     "name": "South Duff Avenue",
+     "what": "primary",
+     "s": 2459
+    },
+    {
+     "kind": "bridge",
+     "name": "South Duff Avenue",
+     "what": "primary",
+     "s": 2482
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 2487
+    },
+    {
+     "kind": "joins",
+     "name": "Ioway Creek",
+     "what": "stream",
+     "s": 3724
+    }
+   ]
+  },
+  {
+   "id": "USGS-05485640",
+   "name": "Fourmile Creek at Des Moines, IA",
+   "comid": 22248913,
+   "lineKm": [
+    -1.3,
+    1.3
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "Fourmile Creek",
+     "what": "river",
+     "s": -1299
+    },
+    {
+     "kind": "joins",
+     "name": "Fourmile Creek",
+     "what": "river",
+     "s": -1299
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -590
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": -43
+    },
+    {
+     "kind": "bridge",
+     "name": "Easton Boulevard",
+     "what": "secondary",
+     "s": -38
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -29
+    }
+   ]
+  },
+  {
+   "id": "USGS-05470000",
+   "name": "South Skunk River near Ames, IA",
+   "comid": 6978934,
+   "lineKm": [
+    -3.47,
+    5.36
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -3466
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -661
+    },
+    {
+     "kind": "bridge",
+     "name": "West Riverside Road",
+     "what": "secondary",
+     "s": -19
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 2650
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 4800
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 5293
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 5300
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 5357
+    }
+   ]
+  },
+  {
+   "id": "USGS-05486000",
+   "name": "North River near Norwalk, IA",
+   "comid": 22250473,
+   "lineKm": [
+    -1.94,
+    4.77
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -1207
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 2666
+    },
+    {
+     "kind": "joins",
+     "name": "North River",
+     "what": "river",
+     "s": 3149
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 4774
+    },
+    {
+     "kind": "joins",
+     "name": "North River",
+     "what": "river",
+     "s": 4774
+    }
+   ]
+  },
+  {
+   "id": "USGS-06710605",
+   "name": "BEAR CREEK ABOVE BEAR CREEK LAKE NEAR MORRISON, CO",
+   "comid": 188633,
+   "lineKm": [
+    -1.65,
+    1.65
+   ],
+   "found": [
+    {
+     "kind": "bridge",
+     "name": "Bear Creek Trail",
+     "what": "cycleway",
+     "s": -1654
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": -1237
+    },
+    {
+     "kind": "culvert",
+     "name": "Ward Ditch",
+     "what": "",
+     "s": -1081
+    },
+    {
+     "kind": "bridge",
+     "name": "Soda Lakes Road",
+     "what": "residential",
+     "s": -964
+    },
+    {
+     "kind": "bridge",
+     "name": "Bear Creek",
+     "what": "",
+     "s": -724
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "motorway_link",
+     "s": -720
+    },
+    {
+     "kind": "bridge",
+     "name": "Morrison Road / CO-8",
+     "what": "",
+     "s": -674
+    },
+    {
+     "kind": "bridge",
+     "name": "Bear Creek",
+     "what": "",
+     "s": -639
+    },
+    {
+     "kind": "bridge",
+     "name": "Morrison Road / CO-8",
+     "what": "",
+     "s": -636
+    },
+    {
+     "kind": "bridge",
+     "name": "C-470 & Bear Creek Trail",
+     "what": "cycleway",
+     "s": -395
+    }
+   ]
+  },
+  {
+   "id": "USGS-05471200",
+   "name": "Indian Creek near Mingo, IA",
+   "comid": 6981152,
+   "lineKm": [
+    -2.79,
+    0.65
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "Wolf Creek",
+     "what": "stream",
+     "s": -1276
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "trunk",
+     "s": -379
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "trunk",
+     "s": -345
+    },
+    {
+     "kind": "bridge",
+     "name": "State Highway 117",
+     "what": "primary",
+     "s": -23
+    }
+   ]
+  },
+  {
+   "id": "USGS-05485605",
+   "name": "Fourmile Creek near Ankeny, IA DS1",
+   "comid": 22248777,
+   "lineKm": [
+    -5.2,
+    5.2
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "Fourmile Creek",
+     "what": "stream",
+     "s": -5201
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -5201
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -3526
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -3288
+    },
+    {
+     "kind": "bridge",
+     "name": "Northeast 78th Avenue",
+     "what": "secondary",
+     "s": -2757
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -2666
+    },
+    {
+     "kind": "bridge",
+     "name": "Southeast Four Mile Drive",
+     "what": "secondary",
+     "s": -2321
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -1676
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -1102
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -448
+    },
+    {
+     "kind": "joins",
+     "name": "Fourmile Creek",
+     "what": "stream",
+     "s": -87
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -87
+    },
+    {
+     "kind": "bridge",
+     "name": "Northeast 86th Avenue",
+     "what": "unclassified",
+     "s": -14
+    }
+   ]
+  },
+  {
+   "id": "USGS-06709530",
+   "name": "PLUM CREEK AT TITAN ROAD NEAR LOUVIERS, CO",
+   "comid": 188691,
+   "lineKm": [
+    -0.57,
+    4.12
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -273
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 1140
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 1176
+    },
+    {
+     "kind": "culvert",
+     "name": "Plum Creek",
+     "what": "",
+     "s": 3494
+    }
+   ]
+  },
+  {
+   "id": "USGS-05484800",
+   "name": "Walnut Creek at Des Moines, IA",
+   "comid": 6609844,
+   "lineKm": [
+    -2.29,
+    3.72
+   ],
+   "found": [
+    {
+     "kind": "bridge",
+     "name": "Clive Greenbelt Trail",
+     "what": "cycleway",
+     "s": -2287
+    },
+    {
+     "kind": "joins",
+     "name": "Walnut Creek",
+     "what": "stream",
+     "s": -2287
+    },
+    {
+     "kind": "joins",
+     "name": "North Walnut Creek",
+     "what": "stream",
+     "s": -2287
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -2251
+    },
+    {
+     "kind": "bridge",
+     "name": "73rd Street",
+     "what": "secondary",
+     "s": -2245
+    },
+    {
+     "kind": "bridge",
+     "name": "73rd Street",
+     "what": "secondary",
+     "s": -2245
+    },
+    {
+     "kind": "bridge",
+     "name": "73rd Street",
+     "what": "secondary",
+     "s": -2233
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -2146
+    },
+    {
+     "kind": "bridge",
+     "name": "Buffalo Road",
+     "what": "residential",
+     "s": -2138
+    },
+    {
+     "kind": "joins",
+     "name": "Blue Creek",
+     "what": "stream",
+     "s": -1863
+    },
+    {
+     "kind": "bridge",
+     "name": "John MacVicar Freeway",
+     "what": "motorway",
+     "s": -1471
+    },
+    {
+     "kind": "bridge",
+     "name": "63rd Street",
+     "what": "primary",
+     "s": -297
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -186
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": -168
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 218
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "rail",
+     "s": 527
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 604
+    },
+    {
+     "kind": "bridge",
+     "name": "Grand Avenue",
+     "what": "secondary",
+     "s": 617
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 628
+    },
+    {
+     "kind": "bridge",
+     "name": "North Valley Drive",
+     "what": "residential",
+     "s": 1687
+    },
+    {
+     "kind": "bridge",
+     "name": "Levee Trail",
+     "what": "cycleway",
+     "s": 1693
+    },
+    {
+     "kind": "bridge",
+     "name": "Iowa Interstate Railroad",
+     "what": "rail",
+     "s": 3407
+    }
+   ]
+  },
+  {
+   "id": "USGS-01467081",
+   "name": "South Branch Pennsauken Creek at Cherry Hill NJ",
+   "comid": 4495672,
+   "lineKm": [
+    -11.27,
+    6.59
+   ],
+   "found": [
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": -9827
+    },
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": -9680
+    },
+    {
+     "kind": "joins",
+     "name": "Cropwell Branch",
+     "what": "stream",
+     "s": -9140
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -8511
+    },
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": -8372
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -7509
+    },
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": -6381
+    },
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": -6279
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -5328
+    },
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": -5183
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -4110
+    },
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": -3727
+    },
+    {
+     "kind": "bridge",
+     "name": "Church Road",
+     "what": "primary",
+     "s": -3663
+    },
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": -3651
+    },
+    {
+     "kind": "bridge",
+     "name": "Old Kings Highway",
+     "what": "tertiary",
+     "s": -1929
+    },
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": -1856
+    },
+    {
+     "kind": "bridge",
+     "name": "Kaighns Avenue",
+     "what": "trunk",
+     "s": -117
+    },
+    {
+     "kind": "bridge",
+     "name": "Kaighns Avenue",
+     "what": "trunk",
+     "s": -111
+    },
+    {
+     "kind": "bridge",
+     "name": "West Mill Road",
+     "what": "tertiary",
+     "s": 0
+    },
+    {
+     "kind": "culvert",
+     "name": "",
+     "what": "",
+     "s": 546
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 795
+    },
+    {
+     "kind": "bridge",
+     "name": "South Coles Avenue",
+     "what": "tertiary",
+     "s": 1207
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 1606
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 2009
+    },
+    {
+     "kind": "culvert",
+     "name": "South Branch Pennsauken Creek",
+     "what": "",
+     "s": 2676
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 2935
+    },
+    {
+     "kind": "bridge",
+     "name": "Pemberton Industrial Track",
+     "what": "rail",
+     "s": 2955
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 2971
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 3962
+    },
+    {
+     "kind": "bridge",
+     "name": "Park Avenu",
+     "what": "tertiary",
+     "s": 4415
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 4487
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 5012
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 5683
+    },
+    {
+     "kind": "bridge",
+     "name": "Betsy Ross Bridge",
+     "what": "motorway",
+     "s": 5905
+    },
+    {
+     "kind": "bridge",
+     "name": "Betsy Ross Bridge",
+     "what": "motorway",
+     "s": 5917
+    },
+    {
+     "kind": "bridge",
+     "name": "Palmyra Bridge Boulevard",
+     "what": "trunk",
+     "s": 6287
+    },
+    {
+     "kind": "bridge",
+     "name": "Palmyra Bridge Boulevard",
+     "what": "trunk",
+     "s": 6298
+    }
+   ]
+  },
+  {
+   "id": "USGS-05481950",
+   "name": "Beaver Creek near Grimes, IA",
+   "comid": 6597300,
+   "lineKm": [
+    -6.31,
+    5.74
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -3367
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "track",
+     "s": -1201
+    },
+    {
+     "kind": "joins",
+     "name": "Little Beaver Creek",
+     "what": "stream",
+     "s": -819
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -434
+    },
+    {
+     "kind": "culvert",
+     "name": "",
+     "what": "",
+     "s": -54
+    },
+    {
+     "kind": "bridge",
+     "name": "Northwest 70th Avenue",
+     "what": "secondary",
+     "s": 776
+    },
+    {
+     "kind": "bridge",
+     "name": "Northwest 70th Avenue",
+     "what": "secondary",
+     "s": 788
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 795
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 991
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 2138
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 3496
+    },
+    {
+     "kind": "bridge",
+     "name": "Northwest 62nd Avenue",
+     "what": "tertiary",
+     "s": 3506
+    },
+    {
+     "kind": "bridge",
+     "name": "Northwest 62nd Avenue",
+     "what": "tertiary",
+     "s": 3524
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 3533
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 3580
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 3929
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 4270
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 4494
+    },
+    {
+     "kind": "joins",
+     "name": "Beaver Creek",
+     "what": "stream",
+     "s": 4530
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 4550
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "drain",
+     "s": 5270
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 5728
+    }
+   ]
+  },
+  {
+   "id": "USGS-01481000",
+   "name": "Brandywine Creek at Chadds Ford, PA",
+   "comid": 4652046,
+   "lineKm": [
+    -2.41,
+    5.71
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "Brandywine Creek",
+     "what": "river",
+     "s": -2177
+    },
+    {
+     "kind": "joins",
+     "name": "Millrace",
+     "what": "canal",
+     "s": -1549
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -1549
+    },
+    {
+     "kind": "bridge",
+     "name": "Wilmington and Northern Branch",
+     "what": "rail",
+     "s": -428
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": -419
+    },
+    {
+     "kind": "bridge",
+     "name": "Baltimore Pike",
+     "what": "trunk",
+     "s": -402
+    },
+    {
+     "kind": "bridge",
+     "name": "Baltimore Pike",
+     "what": "trunk",
+     "s": -393
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "disused",
+     "s": -18
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "disused",
+     "s": -18
+    },
+    {
+     "kind": "joins",
+     "name": "Harvey Run",
+     "what": "stream",
+     "s": 26
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 1370
+    },
+    {
+     "kind": "joins",
+     "name": "Clarks Mill Run",
+     "what": "stream",
+     "s": 1769
+    },
+    {
+     "kind": "bridge",
+     "name": "Creek Road",
+     "what": "secondary",
+     "s": 2273
+    },
+    {
+     "kind": "bridge",
+     "name": "Creek Road",
+     "what": "secondary",
+     "s": 2273
+    },
+    {
+     "kind": "joins",
+     "name": "Dilworth Run",
+     "what": "stream",
+     "s": 4420
+    }
+   ]
+  },
+  {
+   "id": "USGS-08183978",
+   "name": "Cibolo Ck at Specht Rd nr Bulverde, TX",
+   "comid": 7850609,
+   "lineKm": [
+    -6.38,
+    5.8
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "Pleasant Valley Creek",
+     "what": "river",
+     "s": -6375
+    },
+    {
+     "kind": "joins",
+     "name": "Cibolo Creek",
+     "what": "river",
+     "s": -2317
+    },
+    {
+     "kind": "culvert",
+     "name": "Cibolo Creek",
+     "what": "",
+     "s": -2317
+    },
+    {
+     "kind": "joins",
+     "name": "Kelly Creek",
+     "what": "river",
+     "s": -646
+    },
+    {
+     "kind": "bridge",
+     "name": "Ludwig Trail",
+     "what": "service",
+     "s": -537
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "service",
+     "s": -503
+    },
+    {
+     "kind": "bridge",
+     "name": "Specht Road",
+     "what": "tertiary",
+     "s": 99
+    },
+    {
+     "kind": "joins",
+     "name": "Meusebach Creek",
+     "what": "river",
+     "s": 1082
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "service",
+     "s": 1305
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "service",
+     "s": 2542
+    }
+   ]
+  },
+  {
+   "id": "USGS-06719505",
+   "name": "CLEAR CREEK AT GOLDEN, CO",
+   "comid": 2885178,
+   "lineKm": [
+    -1.48,
+    4.03
+   ],
+   "found": [
+    {
+     "kind": "bridge",
+     "name": "Clear Creek Trail",
+     "what": "cycleway",
+     "s": -1445
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": -1425
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1395
+    },
+    {
+     "kind": "bridge",
+     "name": "Ford Street",
+     "what": "secondary",
+     "s": -1387
+    },
+    {
+     "kind": "bridge",
+     "name": "Ford Street",
+     "what": "secondary",
+     "s": -1387
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1376
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -1234
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -1217
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": -1171
+    },
+    {
+     "kind": "bridge",
+     "name": "Washington Avenue",
+     "what": "tertiary",
+     "s": -1162
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": -1152
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -1082
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -990
+    },
+    {
+     "kind": "bridge",
+     "name": "Clear Creek Trail",
+     "what": "cycleway",
+     "s": -813
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -651
+    },
+    {
+     "kind": "culvert",
+     "name": "",
+     "what": "",
+     "s": -556
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -549
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -506
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -448
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -425
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -404
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": -382
+    },
+    {
+     "kind": "rapids",
+     "name": "",
+     "what": "",
+     "s": 0
+    },
+    {
+     "kind": "bridge",
+     "name": "US 6 Trail",
+     "what": "cycleway",
+     "s": 0
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 1498
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 1499
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 1520
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 1522
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 1523
+    },
+    {
+     "kind": "joins",
+     "name": "Tucker Gulch",
+     "what": "stream",
+     "s": 1536
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 1568
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 1577
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 1583
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 1698
+    },
+    {
+     "kind": "bridge",
+     "name": "North Service Road",
+     "what": "unclassified",
+     "s": 1742
+    },
+    {
+     "kind": "bridge",
+     "name": "North Service Road",
+     "what": "unclassified",
+     "s": 1746
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 1855
+    },
+    {
+     "kind": "joins",
+     "name": "Clear Creek",
+     "what": "river",
+     "s": 1934
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "path",
+     "s": 2205
+    },
+    {
+     "kind": "bridge",
+     "name": "Miller-Coors Rail",
+     "what": "rail",
+     "s": 2324
+    },
+    {
+     "kind": "culvert",
+     "name": "Farmers Highline Canal",
+     "what": "",
+     "s": 2340
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 2718
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "unclassified",
+     "s": 3041
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 3481
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 3482
+    },
+    {
+     "kind": "joins",
+     "name": "Croke Canal",
+     "what": "canal",
+     "s": 4034
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": 4034
+    },
+    {
+     "kind": "joins",
+     "name": "Clear Creek",
+     "what": "river",
+     "s": 4034
+    }
+   ]
+  },
+  {
+   "id": "USGS-01467150",
+   "name": "Cooper River at Haddonfield NJ",
+   "comid": 4495892,
+   "lineKm": [
+    -4.51,
+    6.12
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "Cooper River",
+     "what": "stream",
+     "s": -4506
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -4506
+    },
+    {
+     "kind": "bridge",
+     "name": "Melrose Avenue",
+     "what": "tertiary",
+     "s": -4204
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "motorway_link",
+     "s": -4119
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "motorway_link",
+     "s": -4119
+    },
+    {
+     "kind": "culvert",
+     "name": "Cooper River",
+     "what": "",
+     "s": -3847
+    },
+    {
+     "kind": "culvert",
+     "name": "Cooper River",
+     "what": "",
+     "s": -3833
+    },
+    {
+     "kind": "culvert",
+     "name": "Cooper River",
+     "what": "",
+     "s": -3654
+    },
+    {
+     "kind": "culvert",
+     "name": "Cooper River",
+     "what": "",
+     "s": -3541
+    },
+    {
+     "kind": "culvert",
+     "name": "",
+     "what": "",
+     "s": -1838
+    },
+    {
+     "kind": "culvert",
+     "name": "Cooper River",
+     "what": "",
+     "s": -1077
+    },
+    {
+     "kind": "joins",
+     "name": "Cooper River",
+     "what": "stream",
+     "s": -573
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -272
+    },
+    {
+     "kind": "weir",
+     "name": "Evans Pond Dam",
+     "what": "",
+     "s": -261
+    },
+    {
+     "kind": "NID dam",
+     "name": "Evans Pond Dam (NJ00394, Cooper River, 7 ft, Recreation, 9 m off)",
+     "what": "",
+     "s": -256
+    },
+    {
+     "kind": "bridge",
+     "name": "Bortons Mill Road",
+     "what": "pedestrian",
+     "s": -248
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -163
+    },
+    {
+     "kind": "weir",
+     "name": "Wallworth Lake Dam",
+     "what": "",
+     "s": 451
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 481
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 494
+    },
+    {
+     "kind": "bridge",
+     "name": "Kings Highway South",
+     "what": "primary",
+     "s": 501
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 508
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 524
+    },
+    {
+     "kind": "culvert",
+     "name": "",
+     "what": "",
+     "s": 755
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "path",
+     "s": 756
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 962
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 977
+    },
+    {
+     "kind": "NID dam",
+     "name": "Hopkins Lake Dam (NJ00648, Cooper River, 25 ft, Recreation, 128 m off)",
+     "what": "",
+     "s": 991
+    },
+    {
+     "kind": "bridge",
+     "name": "Maria Barnaby Greenwald Trail",
+     "what": "footway",
+     "s": 1026
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 1326
+    },
+    {
+     "kind": "joins",
+     "name": "North Branch Cooper River",
+     "what": "stream",
+     "s": 1346
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 1471
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 2221
+    },
+    {
+     "kind": "bridge",
+     "name": "Cooper River Trail",
+     "what": "footway",
+     "s": 2526
+    },
+    {
+     "kind": "bridge",
+     "name": "Grove Street",
+     "what": "primary",
+     "s": 2529
+    },
+    {
+     "kind": "bridge",
+     "name": "Grove Street",
+     "what": "primary",
+     "s": 2539
+    },
+    {
+     "kind": "bridge",
+     "name": "Cooper River Trail",
+     "what": "footway",
+     "s": 2543
+    },
+    {
+     "kind": "joins",
+     "name": "Cooper River",
+     "what": "stream",
+     "s": 3111
+    },
+    {
+     "kind": "bridge",
+     "name": "Atlantic City Line",
+     "what": "rail",
+     "s": 3254
+    },
+    {
+     "kind": "bridge",
+     "name": "Atlantic City Line",
+     "what": "rail",
+     "s": 3257
+    },
+    {
+     "kind": "bridge",
+     "name": "Cooper River Trail - North",
+     "what": "cycleway",
+     "s": 3267
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 3308
+    },
+    {
+     "kind": "bridge",
+     "name": "Cuthbert Boulevard",
+     "what": "secondary",
+     "s": 4584
+    },
+    {
+     "kind": "bridge",
+     "name": "Cuthbert Boulevard",
+     "what": "secondary",
+     "s": 4595
+    },
+    {
+     "kind": "bridge",
+     "name": "Cooper River Trail",
+     "what": "cycleway",
+     "s": 4599
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 4921
+    }
+   ]
+  },
+  {
+   "id": "USGS-06730200",
+   "name": "BOULDER CREEK AT NORTH 75TH ST. NEAR BOULDER, CO",
+   "comid": 2889214,
+   "lineKm": [
+    -2.74,
+    0.79
+   ],
+   "found": [
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "service",
+     "s": -1294
+    },
+    {
+     "kind": "joins",
+     "name": "Boulder Feeder Ditch",
+     "what": "canal",
+     "s": -777
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "path",
+     "s": -517
+    },
+    {
+     "kind": "joins",
+     "name": "Boulder Creek",
+     "what": "river",
+     "s": -472
+    },
+    {
+     "kind": "joins",
+     "name": "Boulder Creek",
+     "what": "stream",
+     "s": -472
+    }
+   ]
+  },
+  {
+   "id": "USGS-06724970",
+   "name": "LEFT HAND CREEK AT HOVER ROAD NEAR LONGMONT, CO",
+   "comid": 2888948,
+   "lineKm": [
+    -1.22,
+    1.22
+   ],
+   "found": [
+    {
+     "kind": "bridge",
+     "name": "South Hover Street",
+     "what": "primary",
+     "s": 0
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 0
+    }
+   ]
+  },
+  {
+   "id": "USGS-0214645022",
+   "name": "BRIAR CR ABOVE COLONY RD AT CHARLOTTE, NC",
+   "comid": 9731484,
+   "lineKm": [
+    -3.18,
+    3.18
+   ],
+   "found": [
+    {
+     "kind": "bridge",
+     "name": "Little Sugar Creek Greenway",
+     "what": "cycleway",
+     "s": -3175
+    },
+    {
+     "kind": "bridge",
+     "name": "Briar Creek Greenway",
+     "what": "cycleway",
+     "s": -3069
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -2926
+    },
+    {
+     "kind": "bridge",
+     "name": "Park Road",
+     "what": "secondary",
+     "s": -2922
+    },
+    {
+     "kind": "bridge",
+     "name": "Park Road",
+     "what": "secondary",
+     "s": -2911
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -2907
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -2898
+    },
+    {
+     "kind": "bridge",
+     "name": "Briar Creek Greenway",
+     "what": "cycleway",
+     "s": -2897
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "proposed",
+     "s": -2501
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "proposed",
+     "s": -2098
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "proposed",
+     "s": -1867
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -1838
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -1652
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "proposed",
+     "s": -1639
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1307
+    },
+    {
+     "kind": "bridge",
+     "name": "Michael Baker Place",
+     "what": "residential",
+     "s": -1305
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1301
+    },
+    {
+     "kind": "culvert",
+     "name": "Briar Creek",
+     "what": "",
+     "s": -1144
+    },
+    {
+     "kind": "bridge",
+     "name": "Briar Creek Greenway",
+     "what": "cycleway",
+     "s": -992
+    },
+    {
+     "kind": "culvert",
+     "name": "Briar Creek",
+     "what": "",
+     "s": -324
+    },
+    {
+     "kind": "joins",
+     "name": "Briar Creek",
+     "what": "stream",
+     "s": -301
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "",
+     "s": -293
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "service",
+     "s": -240
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "service",
+     "s": -143
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "service",
+     "s": -38
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "service",
+     "s": 0
+    }
+   ]
+  },
+  {
+   "id": "USGS-08168932",
+   "name": "Comal Rv (nc) nr Landa Lk, New Braunfels, TX",
+   "comid": 1619647,
+   "lineKm": [
+    -9.05,
+    9.05
+   ],
+   "found": [
+    {
+     "kind": "NID dam",
+     "name": "Comal River WS SCS Site 3 Dam (TX01550, Blieders Creek, 58 ft, Flood Risk Reduction, 68 m off)",
+     "what": "",
+     "s": -8990
+    },
+    {
+     "kind": "dam",
+     "name": "",
+     "what": "",
+     "s": -8977
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -8956
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -7819
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -4401
+    },
+    {
+     "kind": "bridge",
+     "name": "Loop 337",
+     "what": "primary",
+     "s": -3501
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -2928
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -2504
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -2429
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -2113
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1336
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1285
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1200
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "path",
+     "s": -1000
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "river",
+     "s": -658
+    },
+    {
+     "kind": "joins",
+     "name": "Comal River",
+     "what": "river",
+     "s": -658
+    },
+    {
+     "kind": "NID dam",
+     "name": "Landa Park Lake Dam (TX05963, Comal River, 9 ft, Recreation, 37 m off)",
+     "what": "",
+     "s": -469
+    },
+    {
+     "kind": "bridge",
+     "name": "Landa Park Railroad",
+     "what": "narrow_gauge",
+     "s": -377
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -375
+    },
+    {
+     "kind": "bridge",
+     "name": "Landa Park Drive",
+     "what": "tertiary",
+     "s": -370
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -242
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": -179
+    }
+   ]
+  },
+  {
+   "id": "USGS-08168913",
+   "name": "Comal Rv (oc) nr Landa Lk, New Braunfels, TX",
+   "comid": 1619647,
+   "lineKm": [
+    -9.05,
+    9.05
+   ],
+   "found": [
+    {
+     "kind": "NID dam",
+     "name": "Comal River WS SCS Site 3 Dam (TX01550, Blieders Creek, 58 ft, Flood Risk Reduction, 68 m off)",
+     "what": "",
+     "s": -8990
+    },
+    {
+     "kind": "dam",
+     "name": "",
+     "what": "",
+     "s": -8977
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -8956
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -7819
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -4401
+    },
+    {
+     "kind": "bridge",
+     "name": "Loop 337",
+     "what": "primary",
+     "s": -3501
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -2928
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -2504
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -2429
+    },
+    {
+     "kind": "culvert",
+     "name": "Blieders Creek",
+     "what": "",
+     "s": -2113
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1336
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1285
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1200
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "path",
+     "s": -1000
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "river",
+     "s": -658
+    },
+    {
+     "kind": "joins",
+     "name": "Comal River",
+     "what": "river",
+     "s": -658
+    },
+    {
+     "kind": "NID dam",
+     "name": "Landa Park Lake Dam (TX05963, Comal River, 9 ft, Recreation, 37 m off)",
+     "what": "",
+     "s": -469
+    },
+    {
+     "kind": "bridge",
+     "name": "Landa Park Railroad",
+     "what": "narrow_gauge",
+     "s": -377
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -375
+    },
+    {
+     "kind": "bridge",
+     "name": "Landa Park Drive",
+     "what": "tertiary",
+     "s": -370
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -242
+    },
+    {
+     "kind": "weir",
+     "name": "",
+     "what": "",
+     "s": -179
+    }
+   ]
+  },
+  {
+   "id": "USGS-08170500",
+   "name": "San Marcos Rv at San Marcos, TX",
+   "comid": 1631099,
+   "lineKm": [
+    -2.08,
+    6.46
+   ],
+   "found": [
+    {
+     "kind": "joins",
+     "name": "Sink Creek",
+     "what": "river",
+     "s": -2078
+    },
+    {
+     "kind": "culvert",
+     "name": "San Marcos River",
+     "what": "",
+     "s": -1289
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": -1256
+    },
+    {
+     "kind": "bridge",
+     "name": "San Marcos Springs Drive",
+     "what": "unclassified",
+     "s": -947
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": -255
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "river",
+     "s": -157
+    },
+    {
+     "kind": "weir",
+     "name": "Aquarena Dam",
+     "what": "",
+     "s": -115
+    },
+    {
+     "kind": "NID dam",
+     "name": "Aquarena Dam (TX01588, San Marcos River, 7 ft, Recreation, 4 m off)",
+     "what": "",
+     "s": -33
+    },
+    {
+     "kind": "culvert",
+     "name": "Sessom Creek",
+     "what": "",
+     "s": 0
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 227
+    },
+    {
+     "kind": "bridge",
+     "name": "Aquarena Springs Drive",
+     "what": "secondary",
+     "s": 237
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 246
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 329
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 403
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 750
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 833
+    },
+    {
+     "kind": "bridge",
+     "name": "East Hopkins Street",
+     "what": "primary",
+     "s": 875
+    },
+    {
+     "kind": "bridge",
+     "name": "UP Austin Subdivision",
+     "what": "rail",
+     "s": 925
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "ditch",
+     "s": 968
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 1003
+    },
+    {
+     "kind": "joins",
+     "name": "Purgatory Creek",
+     "what": "river",
+     "s": 1053
+    },
+    {
+     "kind": "bridge",
+     "name": "UP Austin Subdivision",
+     "what": "rail",
+     "s": 1379
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 1466
+    },
+    {
+     "kind": "dam",
+     "name": "Rio Vista Dam",
+     "what": "",
+     "s": 1607
+    },
+    {
+     "kind": "NID dam",
+     "name": "Rio Vista Dam (TX06886, San Marcos River, 8 ft, Recreation, 17 m off)",
+     "what": "",
+     "s": 1613
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "footway",
+     "s": 1737
+    },
+    {
+     "kind": "bridge",
+     "name": "Cheatham Street",
+     "what": "tertiary",
+     "s": 1743
+    },
+    {
+     "kind": "bridge",
+     "name": "Ramon Lucio Park Trail",
+     "what": "cycleway",
+     "s": 2015
+    },
+    {
+     "kind": "bridge",
+     "name": "",
+     "what": "cycleway",
+     "s": 2180
+    },
+    {
+     "kind": "bridge",
+     "name": "North Interstate 35",
+     "what": "secondary",
+     "s": 2189
+    },
+    {
+     "kind": "bridge",
+     "name": "Purple Heart Trail",
+     "what": "motorway",
+     "s": 2207
+    },
+    {
+     "kind": "bridge",
+     "name": "Purple Heart Trail",
+     "what": "motorway",
+     "s": 2225
+    },
+    {
+     "kind": "culvert",
+     "name": "",
+     "what": "",
+     "s": 2294
+    },
+    {
+     "kind": "joins",
+     "name": "San Marcos River",
+     "what": "river",
+     "s": 2506
+    },
+    {
+     "kind": "bridge",
+     "name": "Cape Street",
+     "what": "residential",
+     "s": 2933
+    },
+    {
+     "kind": "joins",
+     "name": "",
+     "what": "stream",
+     "s": 5142
+    },
+    {
+     "kind": "joins",
+     "name": "Blanco River",
+     "what": "river",
+     "s": 6459
+    },
+    {
+     "kind": "joins",
+     "name": "San Marcos River",
+     "what": "river",
+     "s": 6459
+    }
+   ]
+  }
+ ]
+}

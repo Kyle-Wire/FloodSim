@@ -12,6 +12,10 @@ that surcharges through a manhole onto it. They are the gap in Gate B (README: 8
   [benchmark1d2d](https://github.com/scott-jeffers/benchmark1d2d) re-hosts EA Tests 1, 2, 4, 5 and 6A, not 8.
 - The other ZIP on the GOV.UK publication page, *LIT 8570* (7.6 MB, checked 5 Nov 2026), holds only the report and its
   two-page summary (`SC120002 report.pdf`, `SC120002 summary.pdf`): no data. So the inputs have to come from the EA.
+- **HEC-RAS RD-51** (Brunner, April 2018, checked 14 Nov 2026) runs the same EA suite in HEC-RAS 5.0.4: Tests 1–7 and
+  8A completed; 8B not run (HEC-RAS then had no 2D surface linked to pipes). So HEC obtained the 8A data, but the report
+  publishes no data, only figures, and names a second EA contact for the report: fcerm.evidence@environment-agency.gov.uk.
+  It adds no tests beyond SC120002.
 - **Results are figures, with one table.** Water levels and velocities at the output points are plotted
   (Figures 4.42–4.44, 4.46–4.48), so bands will be read by eye as for Tests 1–7. The one numeric table is Table 4.11,
   the total volume through the 8B manhole: 4,954–5,840 m³ across nine packages.
@@ -58,7 +62,8 @@ into a pipe (the crest level and the volume out), and a surcharge that returns d
 
 ## Request to the Environment Agency (draft, not sent)
 
-To: enquiries@environment-agency.gov.uk (the contact the GOV.UK publication page gives for these files)
+To: enquiries@environment-agency.gov.uk (the contact the GOV.UK publication page gives for these files); cc
+fcerm.evidence@environment-agency.gov.uk (the evidence team, named in HEC RD-51)
 
 > Subject: Request for the Test 8A/8B data set, SC120002 2D benchmarking
 >
@@ -79,5 +84,3 @@ To: enquiries@environment-agency.gov.uk (the contact the GOV.UK publication page
 >
 > Thank you,
 > Kyle Wire, FloodSim
-</content>
-</invoke>
