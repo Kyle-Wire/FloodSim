@@ -257,3 +257,56 @@ Still held:
 - production wiring;
 - production routing settings;
 - any use of Charlotte other than as an integration test.
+
+## Post-run findings from PVM2 PV-TF1 run 1 (12 Nov 2026), appended; unscored
+
+These are recorded apart from the run's scored results (`physics/results/2026-11-12T15-00-21-588Z`), whose statuses are
+unchanged: 19 Passed, 8 Insufficient reference data. The evidence is in `physics/milestone2/post-run/pv-tf1-run1/`.
+
+### F10. SWMM's nominal slope on level conduits enters normal-flow limiting, per segment
+
+**Mechanism.**
+- SWMM replaces an end-invert drop below 0.001 ft with 0.001 ft (WARNING 04).
+- Its only routing effect under PV-TF1's settings is the normal-flow cap `qNorm = beta·a1·r1^(2/3)`, with
+  `beta ∝ √S` (`dwflow.c` lines 637–684).
+- The momentum equation, friction, flow classification and Froude number do not use it.
+
+**Size.** The slope is per segment (0.001 ft / L_seg), so the cap grows as √N: 0.011 / 0.021 / 0.043 / 0.061 m³/s at
+the still-water level for N = 1 / 4 / 16 / 32. That is the same order as the 0.1 m³/s fill.
+
+**In run 1.**
+- During the fill, the trigger conditions held at about 20 % of conduit-steps, with flows at or above the cap. Whether
+  the limiter actually fired is not observable: `Link.normalFlow` has no getter.
+- After 2 h it is not credibly active: flows stay below 0.61·qNorm.
+
+**Consequence.** It is a potential, unquantified confounder for any fill-path-dependent N comparison (P2a/P2b). It is
+removable with `NORMAL_FLOW_LIMITED NONE`. Production uses BOTH, so flat production conduits carry the same nominal
+slope.
+
+**Status: open.**
+
+### F11. PV-TF1's residual motion is the closed system's seiche, decaying by Manning friction
+
+**Period.** The motion still present at 12 h has the period of the linear, frictionless eigen-mode of the lumped
+network, independently computed, at every N (within 0.2 %):
+- 666 s at N = 1, which has no internal node and so has a single mode;
+- 455 s at N = 4;
+- 444 s at N = 16 and 32, the continuum seiche.
+
+It is unchanged by a 0.5 s step or by INERTIAL_DAMPING NONE.
+
+**Decay.** The decay is algebraic (1/amplitude linear in time). Its coefficient follows from the Manning term (within
+1 % at N = 1).
+
+**Classification:** a physical mode of the governing equations, not a numerical oscillation. At about 7 mm/s, Manning
+itself is outside its range of validity, which is a physical-model qualification.
+
+**Consequence:**
+- The registered rest flow condition (5e-6 m³/s per segment, every step) is not reached by passive decay in any
+  practical duration. By extrapolation it takes 7–11 months, which is **not observed and not a defensible duration
+  estimate.**
+- SWMM's flow-reversal value of 0.001 cfs (2.83e-5 m³/s) lies above that condition, which is untested.
+- A duration revision alone cannot make PV-TF1's rest definition attainable. A design revision is needed (see the
+  post-run README).
+
+**Status: open.**

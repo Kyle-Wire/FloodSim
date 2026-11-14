@@ -1,0 +1,42 @@
+{
+ "runId": "2026-11-12T15-00-21-588Z",
+ "order": [
+  "PV-TF1"
+ ],
+ "timing": {
+  "PV-TF1": 137.2
+ },
+ "counts": {
+  "PV-TF1": {
+   "byStatus": {
+    "Insufficient reference data": 8,
+    "Passed": 19
+   },
+   "byErrorTypeAndStatus": {
+    "accounting/Insufficient reference data": 4,
+    "numerical/Insufficient reference data": 4,
+    "accounting/Passed": 19
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Insufficient reference data": 8,
+   "Passed": 19
+  },
+  "byErrorTypeAndStatus": {
+   "accounting/Insufficient reference data": 4,
+   "numerical/Insufficient reference data": 4,
+   "accounting/Passed": 19
+  },
+  "deliberateFaults": {
+   "rows": 0,
+   "caught": 0
+  }
+ },
+ "invalidStatuses": 0
+}

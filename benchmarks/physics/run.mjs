@@ -69,7 +69,9 @@ const manifest = {
   references: { selfTests: st.checks.length, observations: st.observations },
   inputs: Object.fromEntries(inputs.map(f => [f, shaF(path.join(root, f))])),
 };
-for (const id of order) fs.writeFileSync(path.join(dir, `${id}.json`), JSON.stringify({ id, spec: relp(specs[id]._file), ...results[id] }, null, 1));
+// a benchmark may return raw files ({ name: Buffer | string }): written beside its result, covered by SHA256SUMS, kept out of its JSON
+for (const id of order) { const { files: raw = {}, ...res } = results[id]; fs.writeFileSync(path.join(dir, `${id}.json`), JSON.stringify({ id, spec: relp(specs[id]._file), rawFiles: Object.keys(raw), ...res }, null, 1));
+  for (const [f, b] of Object.entries(raw)) { if (!/^[\w.-]+$/.test(f) || fs.existsSync(path.join(dir, f))) throw new Error(`raw file name ${f}`); fs.writeFileSync(path.join(dir, f), b); } }
 fs.writeFileSync(path.join(dir, 'SUMMARY.json'), JSON.stringify(summary, null, 1));
 fs.writeFileSync(path.join(dir, 'MANIFEST.json'), JSON.stringify(manifest, null, 1));
 const files = fs.readdirSync(dir).sort();

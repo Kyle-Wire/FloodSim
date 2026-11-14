@@ -1,0 +1,128 @@
+{
+ "N4": {
+  "C1": {
+   "hfVarianceShare": 0.0581,
+   "maxAbsHighPassM3s": 0.000576
+  },
+  "C3": {
+   "hfVarianceShare": 0.0185,
+   "maxAbsHighPassM3s": 0.000821
+  },
+  "C4": {
+   "hfVarianceShare": 0.0575,
+   "maxAbsHighPassM3s": 0.000458
+  }
+ },
+ "N4-dt0.5": {
+  "C1": {
+   "hfVarianceShare": 0.0372,
+   "maxAbsHighPassM3s": 0.000593
+  },
+  "C3": {
+   "hfVarianceShare": 0.0182,
+   "maxAbsHighPassM3s": 0.00076
+  },
+  "C4": {
+   "hfVarianceShare": 0.0417,
+   "maxAbsHighPassM3s": 0.000502
+  }
+ },
+ "N4-inertialNONE": {
+  "C1": {
+   "hfVarianceShare": 0.0345,
+   "maxAbsHighPassM3s": 0.000454
+  },
+  "C3": {
+   "hfVarianceShare": 0.0195,
+   "maxAbsHighPassM3s": 0.00071
+  },
+  "C4": {
+   "hfVarianceShare": 0.0412,
+   "maxAbsHighPassM3s": 0.000608
+  }
+ },
+ "N16": {
+  "C1": {
+   "hfVarianceShare": 0.233,
+   "maxAbsHighPassM3s": 0.000801
+  },
+  "C9": {
+   "hfVarianceShare": 0.0363,
+   "maxAbsHighPassM3s": 0.000726
+  },
+  "C16": {
+   "hfVarianceShare": 0.228,
+   "maxAbsHighPassM3s": 0.000699
+  }
+ },
+ "N16-dt0.5": {
+  "C1": {
+   "hfVarianceShare": 0.304,
+   "maxAbsHighPassM3s": 0.000831
+  },
+  "C9": {
+   "hfVarianceShare": 0.0462,
+   "maxAbsHighPassM3s": 0.000844
+  },
+  "C16": {
+   "hfVarianceShare": 0.312,
+   "maxAbsHighPassM3s": 0.000906
+  }
+ },
+ "N16-inertialNONE": {
+  "C1": {
+   "hfVarianceShare": 0.227,
+   "maxAbsHighPassM3s": 0.000656
+  },
+  "C9": {
+   "hfVarianceShare": 0.0458,
+   "maxAbsHighPassM3s": 0.000781
+  },
+  "C16": {
+   "hfVarianceShare": 0.224,
+   "maxAbsHighPassM3s": 0.000569
+  }
+ },
+ "N32": {
+  "C1": {
+   "hfVarianceShare": 0.971,
+   "maxAbsHighPassM3s": 0.00247
+  },
+  "C17": {
+   "hfVarianceShare": 0.277,
+   "maxAbsHighPassM3s": 0.00192
+  },
+  "C32": {
+   "hfVarianceShare": 0.973,
+   "maxAbsHighPassM3s": 0.00249
+  }
+ },
+ "N32-dt0.5": {
+  "C1": {
+   "hfVarianceShare": 0.988,
+   "maxAbsHighPassM3s": 0.00273
+  },
+  "C17": {
+   "hfVarianceShare": 0.312,
+   "maxAbsHighPassM3s": 0.00188
+  },
+  "C32": {
+   "hfVarianceShare": 0.99,
+   "maxAbsHighPassM3s": 0.00272
+  }
+ },
+ "N32-inertialNONE": {
+  "C1": {
+   "hfVarianceShare": 0.99,
+   "maxAbsHighPassM3s": 0.00259
+  },
+  "C17": {
+   "hfVarianceShare": 0.29,
+   "maxAbsHighPassM3s": 0.00198
+  },
+  "C32": {
+   "hfVarianceShare": 0.99,
+   "maxAbsHighPassM3s": 0.00258
+  }
+ }
+}

@@ -354,3 +354,106 @@ The text above is kept as first proposed. Where it differs from the following, *
   - An outcome-interpretation table limits each conclusion.
 - **Criteria draft 2** adds conditions and removes or widens none. Draft 1 is kept in `proposedCriteriaHistory`, and
   nothing is hashed yet.
+
+### Revision 2 (12 Nov 2026, after technical review I1): draft 3 of PV-TF1
+
+Review I1 (`reviews/review-I1-2026-11-12.md`) did not approve PV-TF1 and raised two blocking objections. Draft 3
+(`spec-proposed/PV-TF1.json`) answers them as follows; the details are in `reviews/resolution-I1.md`.
+
+1. **Full-conduit guard** (`fullConduitGuard`).
+   - The node guard is retained.
+   - A per-step guard on every conduit segment's LINK_DEPTH is added, decided from the full series, with its maximum,
+     location, step and ratio recorded.
+   - **Limitation:** SWMM stores only a conduit's mid-depth. Its end depths, where the crown cutoff also acts, are
+     derived from the end nodes and are not exposed. In this zero-offset geometry they equal the end nodes' depths by
+     SWMM's own construction (source cited).
+   - Whether that equivalence is acceptable is left to the reviewer.
+2. **Rest hydraulic equilibrium** (`restHydraulicEquilibrium`, `criteria.restInternalWseAbsM` 1 mm). At every step of
+   the rest window, every junction's and conduit segment's water surface must be within 1 mm of the common tank water
+   surface, in SWMM's datum. A violation means Insufficient reference data.
+
+Unchanged:
+- the inflow, the geometry and the boundary conditions;
+- the predictions;
+- every existing criterion.
+
+Status: **returned for technical review, with one blocking question for the reviewer** (resolution-I1, Unresolved 1).
+
+### Revision 3 (12 Nov 2026, technical review decision): PV-TF1 draft 3 approved; clarifications 3a; registration
+
+The decision (`reviews/approval-2026-11-12.md`) approves draft 3 and accepts the zero-offset end-depth equivalence for
+the full-conduit guard in this geometry. New SWMM getters are not required. Four documentation clarifications were made
+before hashing (`definitionRevisions`, draft 3a):
+
+1. **G-node endpoint coverage.** Both endpoint nodes of every conduit segment are checked, read from LINK_NODE1 and
+   LINK_NODE2 at run time. No segment has an outfall endpoint here (OUT is joined only to the sealing weir); OUT is
+   checked too.
+2. **Hard validity conditions** (`hardValidityConditions` V1–V4): zero offsets, every node invert 0, every conduit level
+   as SWMM sees it, lengths and full depth as declared, checked at run time. Any deviation invalidates the experiment.
+   - SWMM never stores a slope of 0. For a level conduit it uses a nominal 0.001 ft drop and writes WARNING 04
+     (`link.c` `conduit_getSlope`). V3 therefore requires LINK_SLOPE to equal that nominal value and the warning to be
+     present. This was found in a 300 s smoke test of the module before hashing, which produced no at-rest result.
+3. **LINK_DEPTH** is a recorded midpoint observation, not an independent measurement of the depth profile.
+4. **The conduit water surface** uses the horizontal, zero-offset invert assumption.
+
+Two further definition changes, neither a criterion, hypothesis, geometry or boundary condition:
+- `dependsOn: ["PV-C1"]` is replaced by `relatedSpecs`. `run.mjs` runs a spec's dependencies first, and the
+  authorisation is to run PV-TF1 and nothing else; PV-C1 is not a computational input to PV-TF1.
+- `rawOutput` is widened to every routing step.
+- `stepping` keeps the run's final routing step, which `swmm_step` reports with an elapsed time of 0 and `src/swmm.js`
+  `stepTo` would drop. The module calls `swmm_step` itself; production code is unchanged.
+
+`run.mjs` gained one additive step: a benchmark may return raw files, which are written into the run directory and
+covered by SHA256SUMS. No existing spec returns any.
+
+The spec was then copied to `../spec/PV-TF1.json` and its criteria hashed as `criteriaRevisions[0]`. The proposed copy
+in `spec-proposed/` is kept as the record of the reviewed text.
+
+### Revision 4 (12 Nov 2026, after the post-run decision): PV-TF1-R2 proposed
+
+**Status.** This is a proposal only.
+- It is not hashed, not registered and not run.
+- `../spec/PV-TF1.json` and run 1 are unchanged.
+
+**What was proposed.** The technical review decision of 12 Nov 2026 (`reviews/decision-post-run-2026-11-12.md`) accepted the post-run analysis. It directed a new registration. That registration is proposed in `pv-tf1-r2/`:
+
+| File | Contents |
+|---|---|
+| `PV-TF1-R2.json` | the spec |
+| `DERIVATION.md` | the derivation |
+| `REVIEW-REQUEST.md` | questions for reviewers |
+| `derive.mjs` → `derived.json` | every derived number |
+
+**The design in brief:**
+- **Scoring.** Cycle-averaged equilibrium over M = 8 independently computed periods per window, K = 3 windows.
+- **Validity.** Run-time checks W1–W5: linearity, interpretation bound, period basis, empirical leakage, level drift.
+- **Imbalance and drift.** A uniformity row and a stationarity row separate a bounded oscillation from a persistent imbalance or drift.
+- **Configurations.** NORMAL_FLOW_LIMITED NONE is primary; BOTH is paired, with a separate tally.
+- **Segmentation.** N = 1 is a separate two-node reference; N = 4, 16 and 32 are compared under stated comparability rules.
+
+The original PV-TF1 is not executed again.
+
+**Draft 2 (same day), after the provisional verdict** (`reviews/verdict-r2-provisional-2026-11-12.md`). The verdict approved independent review only: not registration or execution, and not the 20-run matrix. Criteria are unchanged. The changes:
+- the ε budget is made auditable component by component, with the combination rule;
+- W4's limits are stated;
+- the Insufficient outcomes are reported in three sub-classes;
+- the hybrid raw-output strategy;
+- the NONE and BOTH arms are kept separate in the findings register;
+- a feasibility question, Q4c, is added.
+
+**Draft 3 (same day), a derivation revision after the technical review of draft 2** (`reviews/resolution-r2-draft2-2026-11-12.md`). Not approved for registration or execution.
+- **What changed:** no scored bound depends any more on modal leakage, ε or the monotone-surface assumption.
+  - The closure is scored on the representation volume.
+  - The uniformity and level allowances come from exact window identities of the reference link equation, evaluated on recorded flows.
+  - ε, W1, W3 and W4 are diagnostics.
+- **Unchanged:** the criteria, M, K, β, the matrix, the 48 h maximum and the hybrid output.
+- **Where it is:** the changes are listed in `pv-tf1-r2/CHANGELOG.md`; draft 2 is kept in `pv-tf1-r2/drafts/draft2/`.
+
+**Draft 3a (same day), a targeted closure pass after the technical review of draft 3** (`reviews/review-r2-draft3-2026-11-12.md`, disposition: revise before independent review). Not approved for registration or execution.
+- **What changed:**
+  - the SWMM-against-E4 residual r_s enters the uniformity bound (U ≤ τ_U + R_U) and is gated by G-reference (Froude ≤ 0.5 at every segment and step, G-depth, R_U ≤ 0.15 mm), else IR-reference. The uniformity row therefore has no Failed status;
+  - the level allowance uses the measured junction redistribution and no longer depends on E4;
+  - a depth-endpoint guard G-depth ([0.1 D, 0.9 D]) for C_fn and R2, with W′ taken over each segment's recorded range;
+  - section 3.5 states |V_b(t) − V_in| ≤ C_fn(t).
+- **Unchanged:** the criteria, the design, and the stationarity tiers.
+- **Where it is:** `pv-tf1-r2/CHANGELOG.md` (3 → 3a); draft 3 is kept in `pv-tf1-r2/drafts/draft3/`.

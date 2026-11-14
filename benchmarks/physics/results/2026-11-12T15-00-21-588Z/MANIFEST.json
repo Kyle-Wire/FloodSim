@@ -1,0 +1,93 @@
+{
+ "runId": "2026-11-12T15-00-21-588Z",
+ "written": "2026-11-12T15:00:21.631Z",
+ "node": "v24.16.0",
+ "platform": "win32 x64",
+ "git": {
+  "commit": "d2bcde2763a8112c7e23ce4adfe533d706b81fb0",
+  "dirty": true,
+  "diffSha256": "602eab36176fa1ce7fb55ba7f2b6b19fb1fb4f985b3c7a880fa6a2f6d1d4303f",
+  "statusSha256": "7abb9f315c403e29ae48109f167f9cbfe13328b1529284b8000cf00c4ec21798"
+ },
+ "swmm": {
+  "version": 52004,
+  "wasmSha256": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ },
+ "specs": {
+  "PV-TF1": {
+   "file": "benchmarks/physics/spec/PV-TF1.json",
+   "sha256": "320a92b1b4e19598911cd92dfca7d8541d6c48c3559afe1a07427260c3eff2fc",
+   "criteriaSha256": "193cad1fe639f61b7191c5af74ce232b35e32872559d694ead6e984aabf52dd4",
+   "criteriaRevision": 1
+  }
+ },
+ "references": {
+  "selfTests": 70,
+  "observations": [
+   {
+    "D": 0.3,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030934485647501217,
+    "swameeJain": 0.031031161868034007,
+    "relDiff": 0.003125192435213466
+   },
+   {
+    "D": 0.3,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.03682107586552344,
+    "swameeJain": 0.037474663408566845,
+    "relDiff": 0.01775036518298417
+   },
+   {
+    "D": 0.9,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030900141599101403,
+    "swameeJain": 0.030991807114608003,
+    "relDiff": 0.002966507943422049
+   },
+   {
+    "D": 0.9,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.0330191741448169,
+    "swameeJain": 0.03337204342638299,
+    "relDiff": 0.010686799131270196
+   },
+   {
+    "D": 1.8,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030891547580919776,
+    "swameeJain": 0.03098195459902438,
+    "relDiff": 0.0029265940098269915
+   },
+   {
+    "D": 1.8,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.03197484501515128,
+    "swameeJain": 0.032210276341372274,
+    "relDiff": 0.007363016962535292
+   }
+  ]
+ },
+ "inputs": {
+  "benchmarks/physics/lib/score.mjs": "06171fb1c33260a6ec103f0cd8f9d268e81f5598c4cd3bfed2605cc57512d3e1",
+  "benchmarks/physics/lib/swmm-run.mjs": "370bd6ca55adfda46d4c67289f2dd431f4d05df865a333bda06dfd3e5cdc3b7e",
+  "benchmarks/physics/references/geometry.mjs": "dd2d0bf7481b4f3425c60d457962410c534b601d088425a694eb0f795e6b6884",
+  "benchmarks/physics/references/gvf.mjs": "f6d843bb420d5eddaa038fe435e2f50e82fecece0c65560ca4fce03fba2c3d40",
+  "benchmarks/physics/references/manning.mjs": "151c9511a74af29a26564b68e18df7ca7c9f75c5bea74bb57002e114e5f84079",
+  "benchmarks/physics/references/pipe.mjs": "dc9385d146e0c80c3074f0c5df13205e8389f69526f4acbf19ca0283d0cb0cfa",
+  "benchmarks/physics/references/refs.test.mjs": "a733186a72522542fb9bc638a8dfd423b74521b0c2f2b64364b10e69785cd393",
+  "benchmarks/physics/references/volume.mjs": "2ccd04bbd6ac06d7f22cd1a169e8ea5dc569f79061460c24a515231e1bb49692",
+  "benchmarks/physics/references/weir.mjs": "07978a58eb34643e20114f2f03cf73e3e81390134c08fa4bd72654d3b5f5b501",
+  "benchmarks/physics/run.mjs": "4bd38a6803cdc759650c6630fe0a29a5fea296560b8352e880918b4c4baa0705",
+  "benchmarks/physics/transient/pv-tf1.mjs": "6eff747f72b33f301c01f634adf9caa76d7fb8f5747779dc5fdef1c766b172f1",
+  "src/swmm.js": "55aff82fad357802b064d1bf66f7760097e2d9d6a3e0c13912cc319246f30c4a",
+  "vendor/swmm-wasm/swmm.mjs": "91dc0e872abda2fbf28196077cbc04ef0800242491e0a97005dd5f5fba3ceb96",
+  "vendor/swmm-wasm/swmm.wasm": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ }
+}

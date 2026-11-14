@@ -1,0 +1,211 @@
+{
+ "id": "PV-TF1-R2",
+ "title": "Closed fill of a dry horizontal conduit, scored on cycle-averaged equilibrium (revision 2 of PV-TF1)",
+ "registrationStatus": "PROPOSED, draft 3 (12 Nov 2026), a derivation revision after the technical review resolution of draft 2 (reviews/resolution-r2-draft2-2026-11-12.md). Drafts 1 and 2 the same day; draft 2 is preserved in drafts/draft2/. Not hashed, not registered, not run, not in spec/. For technical review before independent review; no execution or registration is authorised. The original PV-TF1 registration (spec/PV-TF1.json) and run 1 (results/2026-11-12T15-00-21-588Z) are unchanged",
+ "supersedesForFutureExecution": "PV-TF1 (registered 12 Nov 2026): its instantaneous at-rest design is not executed again (decision of 12 Nov 2026). Its run 1 and statuses stand as recorded",
+ "category": "conservation",
+ "process": "a dry conduit filling from one end in a closed system, then oscillating freely; storage at intermediate junctions and in the conduit, judged on cycle-averaged end-state quantities whose allowances are computed from the recorded motion",
+ "module": "transient/pv-tf1-r2.mjs (not written; to be written only after approval)",
+ "executor": "node",
+ "relatedSpecs": [
+  "PV-TF1 (its geometry, inflow, guards, hard validity conditions and sealing device are carried unchanged)",
+  "PV-C1 (its closure and level criteria are carried)"
+ ],
+ "derivation": "milestone2/pv-tf1-r2/DERIVATION.md (draft 3); every derived number is computed by milestone2/pv-tf1-r2/derive.mjs into derived.json from the declared inputs only; the changes from draft 2 are listed in CHANGELOG.md and the status of every conclusion in DERIVATION.md section 11",
+ "equations": [
+  "E1 continuity of the closed system: after the inflow ends, the stored volume is constant, V_in = 180.0 m^3 (no outflow: the sealing weir must never flow)",
+  "E2 representation volume (the books), at every routing step: V_b(t) = A_t d_T1 + A_t d_T2 + sum_s V_s(y_i, y_i+1) + sum_j NODE_VOLUME_j, V_s the volume of segment s for a linear water surface between its two recorded end depths (references/volume.mjs conduitVolumeLinearSurface); window mean <V_b>_w over every step of window w",
+  "E3 definition sensitivity: C_fn,w = max_{t in w} (1/12) max|dW/dy|_w sum_s L_s (y_i(t) - y_i+1(t))^2, where max|dW/dy|_w is taken over the range of recorded node depths in w (|dW/dy| is monotone in |y - D/2|, so it is attained at an end of the range): the largest difference between the linear-surface volume (the reference) and the trapezoidal or midpoint representation volume of the same node depths (quadrature error; DERIVATION.md section 3.4)",
+  "E4 reference link equation (lumped St Venant with Manning, horizontal, per segment s between nodes i and i+1): H_i - H_i+1 = (L_s / (g Abar)) dQ/dt + L_s n^2 Q|Q| / (Abar^2 Rbar^(4/3)) - (1 / (g Abar)) [2 L_s v dAbar/dt + v^2 (A_i+1 - A_i)], Abar = A(ybar), Rbar = R(ybar), ybar = (y_i + y_i+1) / 2, v = Q / Abar, A_i = A(y_i)",
+  "E5 predicted mean head difference (E4 averaged over the n steps of window w, in its backward-Euler form): P_s,w = I_s + F_s - C_s, I_s = (L_s / (g n dt)) sum_{t in w} (Q_t - Q_t-1) / Abar_t, F_s = <L_s n^2 Q|Q| / (Abar^2 Rbar^(4/3))>_w, C_s = <(1 / (g Abar)) [2 L_s v (Abar_t - Abar_t-1) / dt + v^2 (A_i+1 - A_i)]>_w; every term from recorded flows and depths",
+  "E6 motion allowance for uniformity: tau_U,w = (1/2) sum_s |P_s,w|; uniformity U_w = max over every node j (both tanks and every junction) of |<WSE_j>_w - hbar_w|, hbar_w = (<WSE_T1>_w + <WSE_T2>_w) / 2",
+  "E7 level identity (exact): hbar_w - h_eq = [(<V_b>_w - V_in) - sum_j S_j <u_j>_w - <R2>_w] / Stilde, u_j = y_j - hbar_w, S_j = W(hbar_w) L / N (junction lumped area), Stilde = (V_level(hbar_w) - V_level(h_eq)) / (hbar_w - h_eq) >= 2 A_t + L min W, |R2(t)| <= (1/2) max|dW/dy|_w sum_s L_s max(u_i(t)^2, u_i+1(t)^2)",
+  "E8 level motion allowance: E_h,w = [S_J tau_U,w + <Rbound2>_w] / (2 A_t + L min W), S_J = sum_j S_j = W(hbar_w) L (N - 1) / N, Rbound2 the bound of E7",
+  "E9 reference level: h_eq from 2 A_t h + L A_circle(h) = V_in (references/volume.mjs equilibriumDepth), 0.506637 m",
+  "E10 reference periods (window length and diagnostics only): N = 1, the two-node lumped period 2 pi / sqrt(g A (1/S_1 + 1/S_2) / L), S_i = A_t + W L / 2; N >= 4, the fundamental of the frictionless linearised lumped network (node area = tank area + half of each joined conduit's top width x length; link inertance L_s / (g A)), at h_eq"
+ ],
+ "referenceAssumptions": [
+  "R1'' the reference dynamic model is the lumped network of E4 at resolution N. It enters only the uniformity and level allowances (E5-E8) and the periods (E10). That SWMM's EXTRAN link update is the backward-Euler form of E4 at Froude number <= 0.5 (dwflow.c lines 192-240: dq1-dq4 with sigma = rho = 1, so aWtd = aMid, rWtd = rMid) is a fact about the source, not an input; the residual is reported (diagnostic D4)",
+  "R2 the tanks are prismatic, 20 m^2, invert 0 (checked by the node-volume row)",
+  "R3'' the closure reference is the representation volume E2: the geometric volume implied by the recorded node depths through a linear surface in each segment. The physical water profile between nodes is not part of the reference; it is not part of SWMM's state and cannot be observed. Its sensitivity is reported (diagnostic D5), never scored. At rest the representation volume and the physical volume coincide",
+  "R4 junctions have zero plan area and zero volume; SWMM's junction volume is identically 0 (checked by a scored row)",
+  "R5 the declared inflow is the only source (reported row: the applied inflow against 180.0)",
+  "R6 the reference values (V_in, h_eq, T_ref) come from the declared inputs only. The allowances C_fn, tau_U, E_h are computed from the recorded state by the fixed formulas E3-E8; they are not reference values"
+ ],
+ "initialConditions": "everything dry (unchanged from PV-TF1)",
+ "boundaryConditions": "unchanged from PV-TF1: the trapezoid hydrograph into T1, 0 -> 0.1 m^3/s over 60 s, held to 1800 s, to 0 over 60 s (180.0 m^3); the only outfall behind the sealing weir (crest 2.5 m)",
+ "geometry": "unchanged from PV-TF1: T1, T2 prismatic 20 m^2, 3 m deep, invert 0; circular D 1.0 m, L 400 m, n 0.013, horizontal, zero offsets, N equal segments joined by N - 1 junctions at invert 0 (max depth 3 m); sealing weir W0 T2 -> OUT",
+ "hardValidityConditions": "unchanged from PV-TF1 (V1-V4, including V3's reading of SWMM's nominal slope for a level conduit); any deviation invalidates the experiment",
+ "parameters": {
+  "tankArea": { "value": 20, "unit": "m^2 (each tank)" },
+  "tankDepth": { "value": 3, "unit": "m" },
+  "pipeDiameter": { "value": 1, "unit": "m" },
+  "pipeLength": { "value": 400, "unit": "m (total)" },
+  "manningN": { "value": 0.013, "unit": "s m^-1/3 (also the n of the reference link equation E4)" },
+  "segments": { "value": [1, 4, 16, 32], "unit": "- (N = 1 a separate reference case; N = 4, 16, 32 the primary segmentation comparison, under the comparability rules of segmentationInterpretation)" },
+  "inflow": { "value": [[0, 0], [60, 0.1], [1800, 0.1], [1860, 0]], "unit": "[s, m^3/s], linear between points" },
+  "inflowVolume": { "value": 180, "unit": "m^3" },
+  "referenceLevel": { "value": 0.506637, "unit": "m (equilibriumDepth from the declared inputs)" },
+  "sealCrest": { "value": 2.5, "unit": "m" },
+  "durationS": { "value": 172800, "unit": "s (48 h; a fixed maximum, not a criterion; not changed after the fact)" },
+  "routingStepS": { "value": 1, "unit": "s (fixed)" },
+  "referencePeriodS": { "value": { "N1": 665.86, "N4": 455.64, "N16": 445.02, "N32": 444.5 }, "unit": "s (derived.json; sets the window length and the diagnostics; no validity condition depends on it)" },
+  "periodsPerWindow": { "value": 8, "unit": "- (M; window = round(M T_ref / dt) steps)" },
+  "windowSteps": { "value": { "N1": 5327, "N4": 3645, "N16": 3560, "N32": 3556 }, "unit": "routing steps" },
+  "scoredWindows": { "value": 3, "unit": "- (K consecutive windows ending at the last routing step; closure, level and uniformity on the last; stationarity and drift across all three)" },
+  "residualMotionShare": { "value": 0.1, "unit": "- (beta: the share of a criterion or of the head tolerance that an allowance may use)" },
+  "headToleranceM": { "value": 0.0015, "unit": "m (SWMM's HEAD_TOLERANCE as registered; the Passed/Qualified/Failed boundary of the uniformity row and the scale the uniformity gate protects; never a reference)" },
+  "periodTolerance": { "value": 0.015, "unit": "- (eps: a declared TOLERANCE for diagnostic D2 and the comparability rule; not an a-priori uncertainty bound; DERIVATION.md section 6)" },
+  "linearityFraction": { "value": 0.01, "unit": "- of A/W at h_eq (a_lin = 3.99 mm): diagnostic D1 only" },
+  "shiftedWindows": { "value": 8, "unit": "- (diagnostic D3: windows shifted back by j T_ref / 8, j = 0..7)" },
+  "guardDepthFrac": { "value": 0.9, "unit": "- of D (G-node, unchanged)" },
+  "conduitGuardDepthFrac": { "value": 0.9, "unit": "- of D (G-link, unchanged)" },
+  "minSurfArea": { "value": 1.167, "unit": "m^2" }
+ },
+ "solver": "SWMM 5.2.4 production wasm through lib/swmm-run.mjs: CMS, DYNWAVE, EXTRAN, INERTIAL_DAMPING PARTIAL, MIN_SLOPE 0, MIN_SURFAREA 1.167, fixed 1 s, MAX_TRIALS 8, HEAD_TOLERANCE 0.0015; NORMAL_FLOW_LIMITED is the experimental factor (configurations). Production settings are not changed",
+ "configurations": {
+  "PRIMARY": { "normalFlowLimited": "NONE", "why": "SWMM 5.2.4 accepts NONE (keywords.c line 70 -> NEITHER); dwflow.c line 255 then skips checkNormalFlow, the only routing use of the nominal WARNING 04 slope (F10). The segmentation comparison is made here" },
+  "PAIRED": { "normalFlowLimited": "BOTH", "why": "the registered PV-TF1 setting and production's (src/drainage.js line 409); scored with the same criteria, tallied separately, never pooled with PRIMARY; quantifies the limiter's effect. NONE and BOTH are not assumed equivalent" },
+  "diagnosticsUnscored": [
+   { "key": "NONE-dt0.5", "what": "PRIMARY with a 0.5 s step: time-discretisation sensitivity of every scored quantity" },
+   { "key": "NONE-msa0.1", "what": "PRIMARY with MIN_SURFAREA 0.1 m^2: separates P2b (junction minimum surface area)" },
+   { "key": "NONE-getter420", "what": "PRIMARY on the instrumented build: conduit volume (getter 420) as a decomposition only, after an exact equality check of every recorded value against production" }
+  ],
+  "matrix": "4 N x {PRIMARY, PAIRED} scored = 8 cases; 4 N x 3 diagnostics = 12 unscored runs; 20 runs in all. Not authorised. INERTIAL_DAMPING NONE is dropped: it does not bear on the storage mechanism"
+ },
+ "reference": {
+  "module": "references/volume.mjs",
+  "functions": ["equilibriumDepth", "tankVolume", "conduitVolumeLinearSurface (books)", "conduitVolumeBounds (diagnostic D5 only)"],
+  "periods": "milestone2/pv-tf1-r2/derive.mjs (lumped eigenvalues by Jacobi; the continuum check kL + 2 atan(A_t k / W) = m pi)",
+  "independence": "the reference values (180.0 m^3, h_eq, T_ref) come from the declared inputs alone; the allowances are fixed formulas declared before any run; no run-1 number enters any of them"
+ },
+ "cycleAveragedEquilibrium": {
+  "windows": "K = 3 consecutive windows w1, w2, w3, each windowSteps routing steps, the last ending at the final step; E5 also uses the step before each window",
+  "averaged": "every routing step in the window, unweighted (fixed step): tank depths and WSE, every junction's WSE and NODE_VOLUME, V_b, every segment's flow and the E5 terms",
+  "gates": [
+   "G-books: C_fn,w3 <= beta closureRel V_in (0.018 m^3); else closure and stationarity rows Insufficient reference data, sub-class IR-definition",
+   "G-uniformity: tau_U,w3 <= beta headToleranceM (0.15 mm); else uniformity row Insufficient reference data, sub-class IR-motion",
+   "G-level: E_h,w3 <= beta equilibriumAbsM (0.2 mm), else IR-motion; the uniformity row not Failed, else IR-imbalance; W5 holds, else IR-drift",
+   "W5 level drift: |hbar_wk - hbar_wk-1| <= E_h,wk + E_h,wk-1 + |<V_b>_wk - <V_b>_wk-1| / (2 A_t + L min W), k = 2, 3 (a mean level moving by more than the motion and the book drift explain)"
+  ],
+  "uniformityTiers": "Passed: U_w3 <= tau_U,w3 (explained by the recorded motion through E4); Qualified: <= tau_U,w3 + headToleranceM (within the solver's convergence tolerance); Failed (numerical): larger, a persistent hydraulic imbalance",
+  "stationarityTiers": "max_k |<V_b>_wk - <V_b>_wk-1|: Passed <= C_fn,wk + C_fn,wk-1 (no drift resolvable); Qualified <= beta closureRel V_in (0.018 m^3 per window); Failed (accounting) beyond: continuing drift",
+  "classification": [
+   "BOUNDED NATURAL OSCILLATION: gates hold, uniformity Passed, stationarity Passed",
+   "IMBALANCE WITHIN SOLVER TOLERANCE: uniformity Qualified; the level row, if within its criterion, Qualified (the junction redistribution may then exceed E_h)",
+   "PERSISTENT HYDRAULIC IMBALANCE: uniformity Failed; the level row is IR-imbalance; the books are still scored (they do not assume a level surface)",
+   "CONTINUING DRIFT: stationarity Failed (accounting) and/or W5 failed (level row IR-drift)",
+   "MOTION TOO LARGE: G-uniformity or G-level fails: those rows IR-motion; the books are unaffected"
+  ],
+  "diagnostics": [
+   "D1 linearity: a_max,w (max over nodes and steps of |WSE_i - hbar_w|) against a_lin; reported",
+   "D2 period: mean zero up-crossing interval of T1 - T2 against T_ref within eps; it checks the T1 - T2 fundamental only and does not validate any other mode; reported",
+   "D3 shifted windows: <V_b>, hbar, U over 8 windows shifted by j T_ref / 8; detects a phase-dependent mean at 45 deg resolution of the fundamental; cannot detect a component whose period divides T_ref / 8, cancellations between components, or variation slower than a window; reported",
+   "D4 momentum residual: r_s = <H_i - H_i+1>_w - P_s,w per segment, and its cumulative profile; a residual beyond the convergence scale indicates a term outside E4 (the normal-flow limiter, the flow-reversal rule, non-convergence); reported, never scored",
+   "D5 physical-profile sensitivity: the monotone bracket <B>_w (PV-C1 conduitVolumeBounds) and the envelope bound 2 a_env max W L; reported, never scored",
+   "D6 modal projection of the recorded node depths onto the reference modes (energy per mode per window); reported"
+  ]
+ },
+ "outputs": [
+  "SCORED per case: closure <V_b>_w3 against 180.0 m^3 (accounting; gate G-books)",
+  "SCORED per case: tank-mean level hbar_w3 against h_eq (numerical; gate G-level)",
+  "SCORED per case: uniformity U_w3 against tau_U,w3, tiers (numerical; gate G-uniformity); for N = 1 the two tanks only",
+  "SCORED per case: book stationarity across w1-w3, tiers (accounting; gate G-books)",
+  "SCORED per case (N >= 4): junction volume, every routing step (R4)",
+  "SCORED per case: sealing-weir flux, every step of the run, every step of the last window, and its integral (unchanged)",
+  "SCORED per case: tank node volume against A d, every step (unchanged)",
+  "VALIDITY per case: hard conditions V1-V4, stepping, G-node and G-link (unchanged); the gates with their values",
+  "REPORTED, NOT SCORED: C_fn, tau_U and its terms, E_h and its terms per window; D1-D6; SWMM's continuity error; the applied inflow; the instantaneous books and every PV-TF1 rest condition (comparison only)",
+  "REPORTED, NOT SCORED: the paired limiter effect per N, Delta_N = <V_b>_BOTH - <V_b>_NONE with uncertainty C_fn,BOTH + C_fn,NONE + both cases' D3 spreads; the D4 residual of both arms; the fill-phase limiter-condition counts under BOTH",
+  "REPORTED, NOT SCORED: the primary segmentation comparison (segmentationInterpretation)"
+ ],
+ "criteria": {
+  "closureRel": 0.001,
+  "equilibriumAbsM": 0.002,
+  "sealFluxAbs": 0,
+  "junctionVolumeAbsM3": 1e-9,
+  "nodeVolumeRel": 0.000001,
+  "cycle": { "periodsPerWindow": 8, "scoredWindows": 3, "residualMotionShare": 0.1, "headToleranceM": 0.0015 },
+  "diagnosticTolerances": { "periodTolerance": 0.015, "linearityFraction": 0.01, "shiftedWindows": 8 }
+ },
+ "criteriaNotes": "closureRel, equilibriumAbsM, sealFluxAbs, junctionVolumeAbsM3 and nodeVolumeRel are PV-C1's and PV-TF1's, unchanged since draft 1. M, K and beta are unchanged. eps, linearityFraction and shiftedWindows no longer enter any scored bound or validity condition (draft 3): they are diagnostic tolerances. The allowances are fixed formulas E3-E8 of the recorded state. PV-TF1's instantaneous rest criteria are reported for comparison only",
+ "segmentationInterpretation": {
+  "N1": "a separate reference case: a two-node system (no internal node) whose free motion is the two-node lumped mode (665.9 s); reported on its own and never placed on an N trend",
+  "comparability": "two segmentations are dynamically comparable for a mode when their lumped periods for that mode differ from the continuum's by at most 2 eps (3 %). A priori (derived.json): N = 16 and 32 are comparable in modes 1-3; N = 4 in the fundamental only; N = 1 in none. This is a declared design rule on the reference models; it does not say that SWMM's own modes agree with them",
+  "rules": [
+   "the N = 16 vs N = 32 difference is interpretable as a segmentation effect on storage",
+   "N = 4 is compared with them only for the cycle-averaged end state; fill-time differences involving N = 4 are reported, not attributed",
+   "no line, power law or extrapolation in N or 1/N is fitted; a direction is stated only where each successive difference exceeds the two cases' C_fn plus their D3 spreads",
+   "a case whose D2 period falls outside its tolerance is reported with that flag and is not used for a direction statement (a reporting rule; its scores stand)"
+  ]
+ },
+ "predictions": [
+  "P1 (open outfall explains T2-C): PRIMARY closes within the criterion at N = 4, 16, 32 (and at the N = 1 reference)",
+  "P2a (link storage carried by the end-node areas, J3): a closure offset of T2-C's sign, present at the N = 1 reference and at N = 4, smaller at 16 and 32, under PRIMARY",
+  "P2b (junction minimum surface area, J2): no offset at the N = 1 reference; an offset growing from N = 16 to N = 32 (and N = 4 below them), bounded by the J2 bound (1.8/8.9/18.3 m^3), and reduced in NONE-msa0.1",
+  "P3 (F1 excluded): the guards stay below 0.9 D (unchanged)",
+  "P4 (normal-flow limiter, F10): Delta_N exceeds its uncertainty at one or more N, and/or the BOTH arm shows a D4 residual absent under NONE; or no detectable difference",
+  "none of P1-P4 is a pass condition; rows are scored only against the criteria"
+ ],
+ "outcomeInterpretation": "DERIVATION.md section 9 (table); every row is limited to this closed, horizontal, part-full configuration, to the representation volume and to the end state; transientStatement applies",
+ "transientStatement": "unchanged from PV-TF1: the closure in motion is diagnostic only; a cycle-averaged end state that closes does not establish that the transient was correct",
+ "failureClasses": {
+  "accounting": "closure outside the criterion; book stationarity Failed; junction volume not 0; sealing weir flow not 0",
+  "numerical": "level outside the criterion; uniformity Failed (persistent hydraulic imbalance); books depending on the step beyond the criterion (dt0.5 diagnostic, reported)",
+  "invalidSetup": "a hard validity condition, guard, stepping or sealing condition not met (unchanged)",
+  "insufficientReference": "a gate not met; reported in sub-classes, never merged",
+  "insufficientSubclasses": {
+   "IR-motion": "the recorded motion is too large for the row's allowance (G-uniformity or G-level): the physical oscillation had not decayed enough",
+   "IR-drift": "the mean level was still moving beyond what the motion and the book drift explain (W5; level row only)",
+   "IR-imbalance": "the level row when the uniformity row is Failed: h_eq presumes a level mean surface",
+   "IR-definition": "C_fn exceeds its gate: the closure would depend on the choice of representation volume (books rows)",
+   "IR-basis (retired in draft 3)": "no scored row depends on the period or averaging assumptions any more; D2 and D3 anomalies are reported as flags beside the scores",
+   "distinctFrom": "a Failed row is a genuine storage, conservation, level or balance violation with its gate met"
+  }
+ },
+ "conservation": "closed system: the declared inflow is the only source, the sealing weir the only possible sink",
+ "resolution": "N = 1 (reference), 4, 16, 32; fixed 1 s step; diagnostic 0.5 s",
+ "assumptions": [
+  "R1''-R6",
+  "the API reads are SWMM's state at the end of each routing step; every step of the scored and shifted windows and the step before them is recorded (PV-TF1 stepping, rawOutput)"
+ ],
+ "limitations": [
+  "the end state only; the transient is not scored",
+  "the closure is of the representation volume (R3''): the physical volume in motion is not testable from SWMM's state at this criterion (D5: the envelope class needs a_env <= 22.5 um, the monotone class 35 um at N = 1 to 1.1 mm at N = 32); at rest the two coincide",
+  "the uniformity and level allowances rest on the reference link equation E4 (R1''); departures of SWMM's discretisation from E4 are not bounded a priori and fall into the Qualified tier up to the head tolerance",
+  "J2 (minimum surface area) is not directly observable; it is attributed through the N trend and the msa0.1 diagnostic",
+  "the limiter effect is measured as an end-state difference and through the D4 residual; whether the limiter fired at a given step is not observable (no getter)",
+  "48 h is a fixed maximum; if a gate is not met by then the outcome is Insufficient reference data in the stated sub-class, and the duration is not changed after the fact",
+  "Manning friction at mm/s velocities is outside its range of validity (F11): E4's friction term is the declared reference model, not a claim about water",
+  "D2 checks the T1 - T2 fundamental only; D3 has known blind spots; neither validates the modal content, and no scored row depends on them"
+ ],
+ "relationToFindings": {
+  "F1": "excluded by the guards (unchanged)",
+  "F3": "tested directly by P1, P2a, P2b; T2-C's registered rows stay Failed whatever the outcome",
+  "F4": "for the scored closure, removed by defining the reference on the representation volume; the physical in-motion volume remains unresolved and is reported (D5)",
+  "F10": "removed from the primary comparison by NONE; measured by the PAIRED configuration (P4, Delta_N and D4)",
+  "F11": "the oscillation is accepted as natural; its effect on the mean state is computed from the recorded motion instead of waited out or bounded by modal leakage",
+  "PV-TF1 run 1": "unchanged; see DERIVATION.md section 10 for what carries over"
+ },
+ "validRange": "a horizontal circular conduit filled from dry to below 0.9 D, closed system, ends at prismatic storage, free motion small enough that the computed allowances meet their gates",
+ "scoring": "automated, per case; PRIMARY and PAIRED tallied separately; status counts by error type and Insufficient sub-class; never a single pass percentage",
+ "rawOutput": {
+  "strategy": "hybrid (provisional verdict, Q4b; retained)",
+  "everyStepChecks": "all validity, guard, seal and stepping checks evaluated at every step for the full 48 h; all-step summaries kept",
+  "fullResolutionKept": [
+   "every routing step of the K scored windows plus the 8 shifted windows and the step before them (the last 3 M T_ref + T_ref + 1 step)",
+   "the raw interval around any guard or validity trip, +- one T_ref",
+   "the complete configuration, generated .inp files and hashes"
+  ],
+  "fullRecord": "every step for the whole run archived outside git with SHA256SUMS committed, if practical",
+  "rule": "the scored windows are never decimated"
+ },
+ "findingsRegisterRule": "the PRIMARY (NONE) and PAIRED (BOTH) arms are reported as separate findings, never pooled: NONE answers the storage question without the normal-flow limiter, BOTH whether production's limiter changes it. A difference within the combined uncertainty is recorded as no detectable difference under this experiment, not as no effect",
+ "criteriaRevisions": [],
+ "proposedCriteriaHistory": [
+  { "draft": 1, "date": "2026-11-12", "criteria": "closureRel 0.001, equilibriumAbsM 0.002, sealFluxAbs 0, junctionVolumeAbsM3 1e-9, nodeVolumeRel 1e-6; cycle M 8, K 3, eps 0.015, beta 0.1, linFrac 0.01, shifts 8, headTol 0.0015", "why": "first proposal of revision 2; not hashed" },
+  { "draft": 2, "date": "2026-11-12", "criteria": "unchanged from draft 1", "why": "definition and reporting changes only" },
+  { "draft": 3, "date": "2026-11-12", "criteria": "criterion values unchanged; eps, linFrac and shifts reclassified as diagnostic tolerances; uniformity and stationarity thresholds redefined (CHANGELOG.md)", "why": "derivation revision after the technical review of draft 2: the scored bounds no longer depend on modal leakage, the period tolerance or the monotone-surface assumption" }
+ ],
+ "definitionRevisions": []
+}

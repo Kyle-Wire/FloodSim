@@ -1,0 +1,153 @@
+{
+ "benchmark": "PV-TF1",
+ "case": "N4-getter420",
+ "format": "little-endian Float64, row-major, one row per routing step (state at the end of the step), gzip",
+ "columns": [
+  "t",
+  "dt",
+  "J1.depth",
+  "J1.head",
+  "J1.volume",
+  "J1.latflow",
+  "J2.depth",
+  "J2.head",
+  "J2.volume",
+  "J2.latflow",
+  "J3.depth",
+  "J3.head",
+  "J3.volume",
+  "J3.latflow",
+  "T1.depth",
+  "T1.head",
+  "T1.volume",
+  "T1.latflow",
+  "T2.depth",
+  "T2.head",
+  "T2.volume",
+  "T2.latflow",
+  "OUT.depth",
+  "OUT.head",
+  "OUT.volume",
+  "OUT.latflow",
+  "C1.depth",
+  "C1.flow",
+  "C1.velocity",
+  "C1.volume420",
+  "C2.depth",
+  "C2.flow",
+  "C2.velocity",
+  "C2.volume420",
+  "C3.depth",
+  "C3.flow",
+  "C3.velocity",
+  "C3.volume420",
+  "C4.depth",
+  "C4.flow",
+  "C4.velocity",
+  "C4.volume420",
+  "W0.depth",
+  "W0.flow",
+  "W0.velocity",
+  "W0.volume420"
+ ],
+ "units": {
+  "t": "s (end of step)",
+  "dt": "s",
+  "depth": "m",
+  "head": "m (SWMM datum)",
+  "volume": "m³",
+  "latflow": "m³/s",
+  "flow": "m³/s",
+  "velocity": "m/s",
+  "volume420": "m³ (instrumented build only)"
+ },
+ "rows": 43200,
+ "bytesUncompressed": 15897600,
+ "gzSha256": "76950174ee3ac05db4585f36b7c08f658ba27a2569a5ef983643934155b0a183",
+ "specFile": "benchmarks/physics/spec/PV-TF1.json",
+ "specSha256": "320a92b1b4e19598911cd92dfca7d8541d6c48c3559afe1a07427260c3eff2fc",
+ "swmmVersion": 52004,
+ "wasm": {
+  "file": "benchmarks/culvert/instrumented/out/swmm.wasm",
+  "sha256": "8b79fb09defe4450ba9410fe330666509a998af5d0f9612a110e538f016feb74"
+ },
+ "network": {
+  "nodes": [
+   {
+    "id": "J1",
+    "i": 0,
+    "elev": 0
+   },
+   {
+    "id": "J2",
+    "i": 1,
+    "elev": 0
+   },
+   {
+    "id": "J3",
+    "i": 2,
+    "elev": 0
+   },
+   {
+    "id": "T1",
+    "i": 3,
+    "elev": 0
+   },
+   {
+    "id": "T2",
+    "i": 4,
+    "elev": 0
+   },
+   {
+    "id": "OUT",
+    "i": 5,
+    "elev": 0
+   }
+  ],
+  "conduits": [
+   {
+    "id": "C1",
+    "i": 0,
+    "node1": "T1",
+    "node2": "J1",
+    "length": 100,
+    "slope": 0.0000030480000000141584,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C2",
+    "i": 1,
+    "node1": "J1",
+    "node2": "J2",
+    "length": 100,
+    "slope": 0.0000030480000000141584,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C3",
+    "i": 2,
+    "node1": "J2",
+    "node2": "J3",
+    "length": 100,
+    "slope": 0.0000030480000000141584,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C4",
+    "i": 3,
+    "node1": "J3",
+    "node2": "T2",
+    "length": 100,
+    "slope": 0.0000030480000000141584,
+    "fullDepth": 0.9999999999999999
+   }
+  ],
+  "weir": {
+   "id": "W0",
+   "i": 4,
+   "node1": "T2",
+   "node2": "OUT"
+  }
+ },
+ "inp": "[OPTIONS]\nFLOW_UNITS CMS\nFLOW_ROUTING DYNWAVE\nLINK_OFFSETS DEPTH\nALLOW_PONDING NO\nSKIP_STEADY_STATE NO\nSTART_DATE 01/01/2000\nSTART_TIME 00:00:00\nREPORT_START_DATE 01/01/2000\nREPORT_START_TIME 00:00:00\nEND_DATE 01/01/2000\nEND_TIME 12:00:00\nREPORT_STEP 00:15:00\nWET_STEP 00:01:00\nDRY_STEP 00:01:00\nROUTING_STEP 1\nVARIABLE_STEP 0\nLENGTHENING_STEP 0\nMIN_SURFAREA 1.167\nNORMAL_FLOW_LIMITED BOTH\nINERTIAL_DAMPING PARTIAL\nSURCHARGE_METHOD EXTRAN\nMIN_SLOPE 0\nMAX_TRIALS 8\nHEAD_TOLERANCE 0.0015\nTHREADS 1\n\n[JUNCTIONS]\nJ1 0 3 0 0 0\nJ2 0 3 0 0 0\nJ3 0 3 0 0 0\n\n[STORAGE]\nT1 0 3 0 FUNCTIONAL 0 0 20 0 0\nT2 0 3 0 FUNCTIONAL 0 0 20 0 0\n\n[OUTFALLS]\nOUT 0 FREE NO\n\n[CONDUITS]\nC1 T1 J1 100 0.013 0 0 0 0\nC2 J1 J2 100 0.013 0 0 0 0\nC3 J2 J3 100 0.013 0 0 0 0\nC4 J3 T2 100 0.013 0 0 0 0\n\n[WEIRS]\nW0 T2 OUT TRANSVERSE 2.5 1.84 NO 0 0\n\n[XSECTIONS]\nC1 CIRCULAR 1 0 0 0 1\nC2 CIRCULAR 1 0 0 0 1\nC3 CIRCULAR 1 0 0 0 1\nC4 CIRCULAR 1 0 0 0 1\nW0 RECT_OPEN 0.3 1 0 0\n\n[TIMESERIES]\nINF 00:00:00 0\nINF 00:01:00 0.1\nINF 00:30:00 0.1\nINF 00:31:00 0\n\n[INFLOWS]\nT1 FLOW INF FLOW 1.0 1.0\n"
+}

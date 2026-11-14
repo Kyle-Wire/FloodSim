@@ -1,0 +1,531 @@
+{
+ "draft": "3a",
+ "inputs": {
+  "g": 9.81,
+  "D": 1,
+  "L": 400,
+  "At": 20,
+  "n": 0.013,
+  "Vin": 180,
+  "routingStepS": 1
+ },
+ "constants": {
+  "closureRel": 0.001,
+  "equilibriumAbsM": 0.002,
+  "beta": 0.1,
+  "M": 8,
+  "windows": 3,
+  "headTolM": 0.0015,
+  "linFrac": 0.01,
+  "shiftCount": 8,
+  "aPrioriDepthBandM": 0.1,
+  "depthGuardFrac": [
+   0.1,
+   0.9
+  ],
+  "froudeLimit": 0.5
+ },
+ "hEq": 0.5066374,
+ "geometryAtHeq": {
+  "h": 0.5066374,
+  "A": 0.3993363,
+  "W": 0.9999119,
+  "P": 1.584071,
+  "R": 0.2520949,
+  "yHyd": 0.3993715,
+  "c": 1.979352,
+  "dWdy": -0.02655184
+ },
+ "continuum": {
+  "T": 444.3217,
+  "k": 0.007144294,
+  "phi": 0.1419376
+ },
+ "cases": {
+  "N1": {
+   "N": 1,
+   "segmentLengthM": 400,
+   "nodeSurfaceAreasM2": [
+    219.9824,
+    219.9824
+   ],
+   "junctionStorageM2": 0,
+   "levelStorageM2": 439.9648,
+   "referencePeriodS": 665.8631,
+   "referenceKind": "two-node lumped (rigid conduit column between two lumped storages: tank + half the conduit surface each)",
+   "modePeriodsS": [
+    665.8631
+   ],
+   "modeCount": 1,
+   "oscillatingModesCarryNoLinearVolume": {
+    "maxCosineWithUniformMode": 1.693758e-16,
+    "note": "sum_i S_i phi_mi = 0 for every oscillating mode of the reference network"
+   },
+   "fundamentalVsContinuum": {
+    "relPeriodDiff": 0.4986057,
+    "nodeShapeCorrelation": 1
+   },
+   "modes123VsContinuum": [
+    0.4986057,
+    null,
+    null
+   ],
+   "dynamicallyComparableToContinuumWithin2eps": [
+    false,
+    false,
+    false
+   ],
+   "periodTolerance": {
+    "status": "a declared TOLERANCE for the W3 diagnostic and the comparability rule; not an a-priori uncertainty bound; no scored bound uses it",
+    "level": {
+     "value": 0.002533993,
+     "kind": "computed: lumped model re-solved at h_eq +- 2 mm"
+    },
+    "amplitude": {
+     "value": 0.01,
+     "kind": "scaling estimate: O(a / y_hyd), coefficient 1 not derived"
+    },
+    "timeDiscretisationFundamental": {
+     "value": 0.000007420081,
+     "kind": "UNBOUNDED ESTIMATE: (w dt)^2/12 of a generic one-step scheme; SWMM EXTRAN (Picard iteration with under-relaxation 0.5, trapezoidal node continuity, backward-Euler link momentum) is not analysed"
+    },
+    "timeDiscretisationHighestMode": {
+     "value": 0.000007420081,
+     "kind": "unbounded estimate, as above"
+    },
+    "friction": {
+     "value": 0.00004724337,
+     "kind": "computed under linearisation at a_lin"
+    },
+    "sum": 0.01258866,
+    "declared": 0.015,
+    "combination": "linear sum of the four values, rounded up to the next 0.5 %"
+   },
+   "window": {
+    "M": 8,
+    "steps": 5327,
+    "seconds": 5327,
+    "scoredWindows": 3,
+    "totalSeconds": 15981,
+    "leakageFactorDiagnosticOnly": 0.04038484,
+    "why": "M reference periods put the window ends nearly in phase, which keeps the computed inertial term small; no validity condition depends on the period"
+   },
+   "budgets": {
+    "definitionSensitivityM3": 0.018,
+    "levelMotionAllowanceM": 0.0002,
+    "uniformityMotionAllowanceM": 0.00015,
+    "worstCaseAtLinearityAmplitude": {
+     "inertialM": 0.000317804,
+     "frictionM": 0.0001829379,
+     "convectiveM": 8.786242e-7,
+     "tauUM": 0.0002508102,
+     "EhM": 0.000003165516,
+     "CfnM3": 0.0009284769,
+     "R2M3": 0.001392715,
+     "froudeMax": 0.01048813
+    },
+    "linearityAmplitudeM": 0.003993715,
+    "aPrioriAmplitudeForLevelRowM": 0.03174459,
+    "aPrioriAmplitudeForUniformityRowM": 0.002708875,
+    "aPrioriAmplitudeForBooksM": 0.01758441,
+    "maxAbsDWdyInAPrioriBandPerM": 0.4365946,
+    "maxAbsDWdyOnDepthGuardPerM": 2.666667,
+    "levelNote": "EhM a priori uses tau_U for the junction mean deviations, i.e. assumes r_s = 0; at run time E8 uses the measured redistribution and needs no assumption",
+    "note": "worst case: window ends at opposite phase, friction and convection at their amplitude maxima; at run time the terms are computed from the record and are smaller for a decaying oscillation averaged over whole periods"
+   },
+   "physicalProfileSensitivity": {
+    "reportedOnly": true,
+    "envelopeBoundPerUnitAmplitudeM2": 800,
+    "envelopeAmplitudeForBudgetM": 0.0000225,
+    "monotoneBracketPerUnitFundamentalAmplitudeM2": 799.9295,
+    "monotoneBracketAmplitudeForBudgetM": 0.00003534603
+   }
+  },
+  "N4": {
+   "N": 4,
+   "segmentLengthM": 100,
+   "nodeSurfaceAreasM2": [
+    69.9956,
+    99.9912,
+    99.9912,
+    99.9912,
+    69.9956
+   ],
+   "junctionStorageM2": 299.9736,
+   "levelStorageM2": 439.9648,
+   "referencePeriodS": 455.6363,
+   "referenceKind": "fundamental of the lumped network (N + 1 nodes)",
+   "modePeriodsS": [
+    455.6363,
+    245.328,
+    185.0333,
+    163.8299
+   ],
+   "modeCount": 4,
+   "oscillatingModesCarryNoLinearVolume": {
+    "maxCosineWithUniformMode": 2.540636e-16,
+    "note": "sum_i S_i phi_mi = 0 for every oscillating mode of the reference network"
+   },
+   "fundamentalVsContinuum": {
+    "relPeriodDiff": 0.0254649,
+    "nodeShapeCorrelation": 0.9999994
+   },
+   "modes123VsContinuum": [
+    0.0254649,
+    0.1062259,
+    0.2549142
+   ],
+   "dynamicallyComparableToContinuumWithin2eps": [
+    true,
+    false,
+    false
+   ],
+   "periodTolerance": {
+    "status": "a declared TOLERANCE for the W3 diagnostic and the comparability rule; not an a-priori uncertainty bound; no scored bound uses it",
+    "level": {
+     "value": 0.002532067,
+     "kind": "computed: lumped model re-solved at h_eq +- 2 mm"
+    },
+    "amplitude": {
+     "value": 0.01,
+     "kind": "scaling estimate: O(a / y_hyd), coefficient 1 not derived"
+    },
+    "timeDiscretisationFundamental": {
+     "value": 0.00001584681,
+     "kind": "UNBOUNDED ESTIMATE: (w dt)^2/12 of a generic one-step scheme; SWMM EXTRAN (Picard iteration with under-relaxation 0.5, trapezoidal node continuity, backward-Euler link momentum) is not analysed"
+    },
+    "timeDiscretisationHighestMode": {
+     "value": 0.0001225723,
+     "kind": "unbounded estimate, as above"
+    },
+    "friction": {
+     "value": 0.00003904348,
+     "kind": "computed under linearisation at a_lin"
+    },
+    "sum": 0.01258696,
+    "declared": 0.015,
+    "combination": "linear sum of the four values, rounded up to the next 0.5 %"
+   },
+   "window": {
+    "M": 8,
+    "steps": 3645,
+    "seconds": 3645,
+    "scoredWindows": 3,
+    "totalSeconds": 10935,
+    "leakageFactorDiagnosticOnly": 0.04038657,
+    "why": "M reference periods put the window ends nearly in phase, which keeps the computed inertial term small; no validity condition depends on the period"
+   },
+   "budgets": {
+    "definitionSensitivityM3": 0.018,
+    "levelMotionAllowanceM": 0.0002,
+    "uniformityMotionAllowanceM": 0.00015,
+    "worstCaseAtLinearityAmplitude": {
+     "inertialM": 0.0003178176,
+     "frictionM": 0.00009445507,
+     "convectiveM": 0.00008041244,
+     "tauUM": 0.0002463426,
+     "EhM": 0.000171125,
+     "CfnM3": 0.0000639891,
+     "R2M3": 0.001392715,
+     "froudeMax": 0.009476681
+    },
+    "linearityAmplitudeM": 0.003993715,
+    "aPrioriAmplitudeForLevelRowM": 0.004470955,
+    "aPrioriAmplitudeForUniformityRowM": 0.002738003,
+    "aPrioriAmplitudeForBooksM": 0.06698233,
+    "maxAbsDWdyInAPrioriBandPerM": 0.4365946,
+    "maxAbsDWdyOnDepthGuardPerM": 2.666667,
+    "levelNote": "EhM a priori uses tau_U for the junction mean deviations, i.e. assumes r_s = 0; at run time E8 uses the measured redistribution and needs no assumption",
+    "note": "worst case: window ends at opposite phase, friction and convection at their amplitude maxima; at run time the terms are computed from the record and are smaller for a decaying oscillation averaged over whole periods"
+   },
+   "physicalProfileSensitivity": {
+    "reportedOnly": true,
+    "envelopeBoundPerUnitAmplitudeM2": 800,
+    "envelopeAmplitudeForBudgetM": 0.0000225,
+    "monotoneBracketPerUnitFundamentalAmplitudeM2": 199.9824,
+    "monotoneBracketAmplitudeForBudgetM": 0.0001413841
+   }
+  },
+  "N16": {
+   "N": 16,
+   "segmentLengthM": 25,
+   "nodeSurfaceAreasM2": [
+    32.4989,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    32.4989
+   ],
+   "junctionStorageM2": 374.967,
+   "levelStorageM2": 439.9648,
+   "referencePeriodS": 445.0184,
+   "referenceKind": "fundamental of the lumped network (N + 1 nodes)",
+   "modePeriodsS": [
+    445.0184,
+    223.1591,
+    149.5214,
+    112.9658,
+    91.26901,
+    77.0256
+   ],
+   "modeCount": 16,
+   "oscillatingModesCarryNoLinearVolume": {
+    "maxCosineWithUniformMode": 2.430034e-12,
+    "note": "sum_i S_i phi_mi = 0 for every oscillating mode of the reference network"
+   },
+   "fundamentalVsContinuum": {
+    "relPeriodDiff": 0.001568033,
+    "nodeShapeCorrelation": 1
+   },
+   "modes123VsContinuum": [
+    0.001568033,
+    0.006262878,
+    0.01406935
+   ],
+   "dynamicallyComparableToContinuumWithin2eps": [
+    true,
+    true,
+    true
+   ],
+   "periodTolerance": {
+    "status": "a declared TOLERANCE for the W3 diagnostic and the comparability rule; not an a-priori uncertainty bound; no scored bound uses it",
+    "level": {
+     "value": 0.002532015,
+     "kind": "computed: lumped model re-solved at h_eq +- 2 mm"
+    },
+    "amplitude": {
+     "value": 0.01,
+     "kind": "scaling estimate: O(a / y_hyd), coefficient 1 not derived"
+    },
+    "timeDiscretisationFundamental": {
+     "value": 0.00001661202,
+     "kind": "UNBOUNDED ESTIMATE: (w dt)^2/12 of a generic one-step scheme; SWMM EXTRAN (Picard iteration with under-relaxation 0.5, trapezoidal node continuity, backward-Euler link momentum) is not analysed"
+    },
+    "timeDiscretisationHighestMode": {
+     "value": 0.002070916,
+     "kind": "unbounded estimate, as above"
+    },
+    "friction": {
+     "value": 0.00003904348,
+     "kind": "computed under linearisation at a_lin"
+    },
+    "sum": 0.01258767,
+    "declared": 0.015,
+    "combination": "linear sum of the four values, rounded up to the next 0.5 %"
+   },
+   "window": {
+    "M": 8,
+    "steps": 3560,
+    "seconds": 3560,
+    "scoredWindows": 3,
+    "totalSeconds": 10680,
+    "leakageFactorDiagnosticOnly": 0.04038724,
+    "why": "M reference periods put the window ends nearly in phase, which keeps the computed inertial term small; no validity condition depends on the period"
+   },
+   "budgets": {
+    "definitionSensitivityM3": 0.018,
+    "levelMotionAllowanceM": 0.0002,
+    "uniformityMotionAllowanceM": 0.00015,
+    "worstCaseAtLinearityAmplitude": {
+     "inertialM": 0.0003178229,
+     "frictionM": 0.0000932418,
+     "convectiveM": 0.00008042251,
+     "tauUM": 0.0002457436,
+     "EhM": 0.0002126044,
+     "CfnM3": 0.000004138587,
+     "R2M3": 0.001392715,
+     "froudeMax": 0.01006184
+    },
+    "linearityAmplitudeM": 0.003993715,
+    "aPrioriAmplitudeForLevelRowM": 0.003818071,
+    "aPrioriAmplitudeForUniformityRowM": 0.002742049,
+    "aPrioriAmplitudeForBooksM": 0.2633827,
+    "maxAbsDWdyInAPrioriBandPerM": 0.4365946,
+    "maxAbsDWdyOnDepthGuardPerM": 2.666667,
+    "levelNote": "EhM a priori uses tau_U for the junction mean deviations, i.e. assumes r_s = 0; at run time E8 uses the measured redistribution and needs no assumption",
+    "note": "worst case: window ends at opposite phase, friction and convection at their amplitude maxima; at run time the terms are computed from the record and are smaller for a decaying oscillation averaged over whole periods"
+   },
+   "physicalProfileSensitivity": {
+    "reportedOnly": true,
+    "envelopeBoundPerUnitAmplitudeM2": 800,
+    "envelopeAmplitudeForBudgetM": 0.0000225,
+    "monotoneBracketPerUnitFundamentalAmplitudeM2": 49.99559,
+    "monotoneBracketAmplitudeForBudgetM": 0.0005655365
+   }
+  },
+  "N32": {
+   "N": 32,
+   "segmentLengthM": 12.5,
+   "nodeSurfaceAreasM2": [
+    26.2494,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    26.2494
+   ],
+   "junctionStorageM2": 387.4659,
+   "levelStorageM2": 439.9648,
+   "referencePeriodS": 444.4958,
+   "referenceKind": "fundamental of the lumped network (N + 1 nodes)",
+   "modePeriodsS": [
+    444.4958,
+    222.1164,
+    147.9622,
+    110.892,
+    88.67822,
+    73.90957
+   ],
+   "modeCount": 32,
+   "oscillatingModesCarryNoLinearVolume": {
+    "maxCosineWithUniformMode": 1.321131e-14,
+    "note": "sum_i S_i phi_mi = 0 for every oscillating mode of the reference network"
+   },
+   "fundamentalVsContinuum": {
+    "relPeriodDiff": 0.0003917164,
+    "nodeShapeCorrelation": 1
+   },
+   "modes123VsContinuum": [
+    0.0003917164,
+    0.001561128,
+    0.003494607
+   ],
+   "dynamicallyComparableToContinuumWithin2eps": [
+    true,
+    true,
+    true
+   ],
+   "periodTolerance": {
+    "status": "a declared TOLERANCE for the W3 diagnostic and the comparability rule; not an a-priori uncertainty bound; no scored bound uses it",
+    "level": {
+     "value": 0.002532013,
+     "kind": "computed: lumped model re-solved at h_eq +- 2 mm"
+    },
+    "amplitude": {
+     "value": 0.01,
+     "kind": "scaling estimate: O(a / y_hyd), coefficient 1 not derived"
+    },
+    "timeDiscretisationFundamental": {
+     "value": 0.00001665111,
+     "kind": "UNBOUNDED ESTIMATE: (w dt)^2/12 of a generic one-step scheme; SWMM EXTRAN (Picard iteration with under-relaxation 0.5, trapezoidal node continuity, backward-Euler link momentum) is not analysed"
+    },
+    "timeDiscretisationHighestMode": {
+     "value": 0.00833831,
+     "kind": "unbounded estimate, as above"
+    },
+    "friction": {
+     "value": 0.00003904348,
+     "kind": "computed under linearisation at a_lin"
+    },
+    "sum": 0.01258771,
+    "declared": 0.015,
+    "combination": "linear sum of the four values, rounded up to the next 0.5 %"
+   },
+   "window": {
+    "M": 8,
+    "steps": 3556,
+    "seconds": 3556,
+    "scoredWindows": 3,
+    "totalSeconds": 10668,
+    "leakageFactorDiagnosticOnly": 0.04038518,
+    "why": "M reference periods put the window ends nearly in phase, which keeps the computed inertial term small; no validity condition depends on the period"
+   },
+   "budgets": {
+    "definitionSensitivityM3": 0.018,
+    "levelMotionAllowanceM": 0.0002,
+    "uniformityMotionAllowanceM": 0.00015,
+    "worstCaseAtLinearityAmplitude": {
+     "inertialM": 0.0003178067,
+     "frictionM": 0.00009318557,
+     "convectiveM": 0.00008042295,
+     "tauUM": 0.0002457076,
+     "EhM": 0.000219554,
+     "CfnM3": 0.000001036456,
+     "R2M3": 0.001392715,
+     "froudeMax": 0.01009164
+    },
+    "linearityAmplitudeM": 0.003993715,
+    "aPrioriAmplitudeForLevelRowM": 0.003728167,
+    "aPrioriAmplitudeForUniformityRowM": 0.002742318,
+    "aPrioriAmplitudeForBooksM": 0.5,
+    "maxAbsDWdyInAPrioriBandPerM": 0.4365946,
+    "maxAbsDWdyOnDepthGuardPerM": 2.666667,
+    "levelNote": "EhM a priori uses tau_U for the junction mean deviations, i.e. assumes r_s = 0; at run time E8 uses the measured redistribution and needs no assumption",
+    "note": "worst case: window ends at opposite phase, friction and convection at their amplitude maxima; at run time the terms are computed from the record and are smaller for a decaying oscillation averaged over whole periods"
+   },
+   "physicalProfileSensitivity": {
+    "reportedOnly": true,
+    "envelopeBoundPerUnitAmplitudeM2": 800,
+    "envelopeAmplitudeForBudgetM": 0.0000225,
+    "monotoneBracketPerUnitFundamentalAmplitudeM2": 24.9978,
+    "monotoneBracketAmplitudeForBudgetM": 0.001131073
+   }
+  }
+ },
+ "continuumModePeriodsS": [
+  444.3217,
+  221.7702,
+  147.447
+ ],
+ "classicalFullPipeUTubePeriodS": 143.1629,
+ "secondOrder": {
+  "draft2C2Superseded": {
+   "formula": "0.5 |dW/dy| a^2 L",
+   "valueAtLinearityAmplitudeM3": 0.00008469908,
+   "why": "assumed that the internal deviation from the linear surface is at most a; not proved (technical review of draft 2, item 2); no longer used"
+  },
+  "definitionSensitivity": "C_fn = (1/12) max|dW/dy| sum_s L_s (y_i - y_i+1)^2: bounds the difference between the linear-surface volume (the reference) and the trapezoidal (1/12) or midpoint (1/24) volume of the same node depths",
+  "levelRemainder": "R2 = 0.5 max|dW/dy| sum_s L_s max(u_i^2, u_i+1^2), u_i = y_i - tank-mean level: Taylor remainder of the representation volume about the level state",
+  "maxAbsDWdyAtHeqPerM": 0.02655184,
+  "depthGuard": {
+   "fracOfD": [
+    0.1,
+    0.9
+   ],
+   "maxAbsDWdyPerM": 2.666667,
+   "rule": "outside it, C_fn and the R2 bound are not evaluated: IR-definition"
+  },
+  "froudeLimit": 0.5,
+  "maxAbsDWdyInAPrioriBandPerM": 0.4365946,
+  "aPrioriDepthBandM": 0.1
+ }
+}

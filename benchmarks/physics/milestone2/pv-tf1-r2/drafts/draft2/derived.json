@@ -1,0 +1,325 @@
+{
+ "inputs": {
+  "g": 9.81,
+  "D": 1,
+  "L": 400,
+  "At": 20,
+  "n": 0.013,
+  "Vin": 180,
+  "routingStepS": 1
+ },
+ "constants": {
+  "closureRel": 0.001,
+  "equilibriumAbsM": 0.002,
+  "beta": 0.1,
+  "M": 8,
+  "windows": 3,
+  "headTolM": 0.0015,
+  "linFrac": 0.01,
+  "shiftCount": 8
+ },
+ "hEq": 0.5066374,
+ "geometryAtHeq": {
+  "h": 0.5066374,
+  "A": 0.3993363,
+  "W": 0.9999119,
+  "P": 1.584071,
+  "R": 0.2520949,
+  "yHyd": 0.3993715,
+  "c": 1.979352,
+  "dWdy": -0.02655184
+ },
+ "continuum": {
+  "T": 444.3217,
+  "k": 0.007144294,
+  "phi": 0.1419376
+ },
+ "cases": {
+  "N1": {
+   "N": 1,
+   "segmentLengthM": 400,
+   "nodeSurfaceAreasM2": [
+    219.9824,
+    219.9824
+   ],
+   "referencePeriodS": 665.8631,
+   "referenceKind": "two-node lumped (rigid conduit column between two lumped storages: tank + half the conduit surface each); SWMM's N = 1 representation",
+   "modePeriodsS": [
+    665.8631
+   ],
+   "thetaRssPeriodsS": 665.8631,
+   "fundamentalVsContinuum": {
+    "relPeriodDiff": 0.4986057,
+    "nodeShapeCorrelation": 1
+   },
+   "modes123VsContinuum": [
+    0.4986057,
+    null,
+    null
+   ],
+   "dynamicallyComparableToContinuumWithin2eps": [
+    false,
+    false,
+    false
+   ],
+   "eps": {
+    "level": 0.002533993,
+    "timeDiscretisationFundamental": 0.000007420081,
+    "timeDiscretisationHighestMode": 0.000007420081,
+    "amplitude": 0.01,
+    "friction": 0.00004724337,
+    "sum": 0.01258866,
+    "declared": 0.015
+   },
+   "window": {
+    "M": 8,
+    "steps": 5327,
+    "seconds": 5327,
+    "scoredWindows": 3,
+    "totalSeconds": 15981,
+    "leakageFactor": 0.04038484
+   },
+   "budgets": {
+    "residualMotionVolumeM3": 0.018,
+    "oscillatingBracketAllowM3": 0.4457118,
+    "tankAmplitudeAllowForLevelRowM": 0.004952353,
+    "linearityAmplitudeM": 0.003993715,
+    "bracketPerUnitFundamentalAmplitudeM2": 799.9295,
+    "impliedFundamentalAmplitudeAllowM": 0.0005571888
+   }
+  },
+  "N4": {
+   "N": 4,
+   "segmentLengthM": 100,
+   "nodeSurfaceAreasM2": [
+    69.9956,
+    99.9912,
+    99.9912,
+    99.9912,
+    69.9956
+   ],
+   "referencePeriodS": 455.6363,
+   "referenceKind": "fundamental of the lumped network (N + 1 nodes)",
+   "modePeriodsS": [
+    455.6363,
+    245.328,
+    185.0333,
+    163.8299
+   ],
+   "thetaRssPeriodsS": 573.47,
+   "fundamentalVsContinuum": {
+    "relPeriodDiff": 0.0254649,
+    "nodeShapeCorrelation": 0.9999994
+   },
+   "modes123VsContinuum": [
+    0.0254649,
+    0.1062259,
+    0.2549142
+   ],
+   "dynamicallyComparableToContinuumWithin2eps": [
+    true,
+    false,
+    false
+   ],
+   "eps": {
+    "level": 0.002532067,
+    "timeDiscretisationFundamental": 0.00001584681,
+    "timeDiscretisationHighestMode": 0.0001225723,
+    "amplitude": 0.01,
+    "friction": 0.00003904348,
+    "sum": 0.01258696,
+    "declared": 0.015
+   },
+   "window": {
+    "M": 8,
+    "steps": 3645,
+    "seconds": 3645,
+    "scoredWindows": 3,
+    "totalSeconds": 10935,
+    "leakageFactor": 0.04038657
+   },
+   "budgets": {
+    "residualMotionVolumeM3": 0.018,
+    "oscillatingBracketAllowM3": 0.4456927,
+    "tankAmplitudeAllowForLevelRowM": 0.004952141,
+    "linearityAmplitudeM": 0.003993715,
+    "bracketPerUnitFundamentalAmplitudeM2": 199.9824,
+    "impliedFundamentalAmplitudeAllowM": 0.00222866
+   }
+  },
+  "N16": {
+   "N": 16,
+   "segmentLengthM": 25,
+   "nodeSurfaceAreasM2": [
+    32.4989,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    24.9978,
+    32.4989
+   ],
+   "referencePeriodS": 445.0184,
+   "referenceKind": "fundamental of the lumped network (N + 1 nodes)",
+   "modePeriodsS": [
+    445.0184,
+    223.1591,
+    149.5214,
+    112.9658,
+    91.26901,
+    77.0256
+   ],
+   "thetaRssPeriodsS": 567.1959,
+   "fundamentalVsContinuum": {
+    "relPeriodDiff": 0.001568033,
+    "nodeShapeCorrelation": 1
+   },
+   "modes123VsContinuum": [
+    0.001568033,
+    0.006262878,
+    0.01406935
+   ],
+   "dynamicallyComparableToContinuumWithin2eps": [
+    true,
+    true,
+    true
+   ],
+   "eps": {
+    "level": 0.002532015,
+    "timeDiscretisationFundamental": 0.00001661202,
+    "timeDiscretisationHighestMode": 0.002070916,
+    "amplitude": 0.01,
+    "friction": 0.00003904348,
+    "sum": 0.01258767,
+    "declared": 0.015
+   },
+   "window": {
+    "M": 8,
+    "steps": 3560,
+    "seconds": 3560,
+    "scoredWindows": 3,
+    "totalSeconds": 10680,
+    "leakageFactor": 0.04038724
+   },
+   "budgets": {
+    "residualMotionVolumeM3": 0.018,
+    "oscillatingBracketAllowM3": 0.4456853,
+    "tankAmplitudeAllowForLevelRowM": 0.004952059,
+    "linearityAmplitudeM": 0.003993715,
+    "bracketPerUnitFundamentalAmplitudeM2": 49.99559,
+    "impliedFundamentalAmplitudeAllowM": 0.003993715
+   }
+  },
+  "N32": {
+   "N": 32,
+   "segmentLengthM": 12.5,
+   "nodeSurfaceAreasM2": [
+    26.2494,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    12.4989,
+    26.2494
+   ],
+   "referencePeriodS": 444.4958,
+   "referenceKind": "fundamental of the lumped network (N + 1 nodes)",
+   "modePeriodsS": [
+    444.4958,
+    222.1164,
+    147.9622,
+    110.892,
+    88.67822,
+    73.90957
+   ],
+   "thetaRssPeriodsS": 566.8804,
+   "fundamentalVsContinuum": {
+    "relPeriodDiff": 0.0003917164,
+    "nodeShapeCorrelation": 1
+   },
+   "modes123VsContinuum": [
+    0.0003917164,
+    0.001561128,
+    0.003494607
+   ],
+   "dynamicallyComparableToContinuumWithin2eps": [
+    true,
+    true,
+    true
+   ],
+   "eps": {
+    "level": 0.002532013,
+    "timeDiscretisationFundamental": 0.00001665111,
+    "timeDiscretisationHighestMode": 0.00833831,
+    "amplitude": 0.01,
+    "friction": 0.00003904348,
+    "sum": 0.01258771,
+    "declared": 0.015
+   },
+   "window": {
+    "M": 8,
+    "steps": 3556,
+    "seconds": 3556,
+    "scoredWindows": 3,
+    "totalSeconds": 10668,
+    "leakageFactor": 0.04038518
+   },
+   "budgets": {
+    "residualMotionVolumeM3": 0.018,
+    "oscillatingBracketAllowM3": 0.445708,
+    "tankAmplitudeAllowForLevelRowM": 0.004952311,
+    "linearityAmplitudeM": 0.003993715,
+    "bracketPerUnitFundamentalAmplitudeM2": 24.9978,
+    "impliedFundamentalAmplitudeAllowM": 0.003993715
+   }
+  }
+ },
+ "continuumModePeriodsS": [
+  444.3217,
+  221.7702,
+  147.447
+ ],
+ "classicalFullPipeUTubePeriodS": 143.1629,
+ "secondOrder": {
+  "curvatureOfAreaPerM2": 0.01327592,
+  "note": "the conduit area is evaluated at the recorded node depths and integrated exactly over a linear surface, so the curvature of A(y) enters only through the unknown profile between nodes: bounded by 0.5 |dW/dy| a^2 L",
+  "curvatureBoundAtLinearityAmplitudeM3": 0.00008469908,
+  "setupPerVelocity": "v^2 / (2 g): the mean set-down of a moving surface; at 0.05 m/s it is 1.3e-4 m"
+ }
+}
