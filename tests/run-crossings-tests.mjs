@@ -1,6 +1,6 @@
 // Closed-crossing check (src/crossings.js): a stream path over a synthetic valley, with and without a fill across it.
 // Usage: node tests/run-crossings-tests.mjs
-import { closedCrossings, crossingNote, joinStreams } from '../src/crossings.js';
+import { closedCrossings, crossingNote, joinStreams, joinLines } from '../src/crossings.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -94,6 +94,12 @@ const path = Array.from({ length: nx }, (_, i) => J * nx + i);
   }
   check('without the culvert the two ways are separate and nothing is found', closedCrossings(fine, f, ways).checked === 2 && closedCrossings(fine, f, ways).closed.length === 0);
   check('a culvert joined to no stream is not walked as one', closedCrossings(fine, f, [], { culverts: [{ cells: cut(88, 151), line: [[7, 7], [8, 8]], D: 1 }] }).checked === 0);
+}
+
+{
+  const ways = [{ line: [[2, 0], [3, 0], [4, 1]], kind: 'stream', name: 'Creek' }, { line: [[0, 0], [1, 0]], kind: 'stream', name: 'Creek' }, { line: [[1, 0], [2, 0]], kind: 'stream' }, { line: [[9, 9], [8, 8]], kind: 'ditch' }];
+  const j = joinLines(ways), creek = j.find(l => l.name === 'Creek');
+  check('joinLines: three ways become one line with no repeated point, the lone ditch stays', j.length === 2 && creek.ways.join() === '1,2,0' && JSON.stringify(creek.line) === '[[0,0],[1,0],[2,0],[3,0],[4,1]]' && j.some(l => l.kind === 'ditch' && l.line.length === 2));
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall crossings tests passed');

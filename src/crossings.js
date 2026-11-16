@@ -60,6 +60,19 @@ export function joinStreams(entries) {
   return out;
 }
 
+/**
+ * Mapped waterways with the ways that continue into each other made one line (joinStreams on their end points), for
+ * breachChannels: an embankment whose two sides are on different ways, or whose top is a short way of its own, is then
+ * a rise inside one line and can be cut. → [{ line, kind, name, ways }]
+ */
+export function joinLines(ways) {
+  return joinStreams(ways.map((w, n) => ({ path: [n], line: w.line, name: w.name, kind: w.kind }))).map((s) => {
+    const line = [];
+    for (const n of s.ways) for (const p of ways[n].line) { const q = line[line.length - 1]; if (!q || q[0] !== p[0] || q[1] !== p[1]) line.push(p); }
+    return { line, kind: ways[s.ways[0]].kind, name: s.name, ways: s.ways };
+  });
+}
+
 export function closedCrossings(fine, f, paths, { culverts = [], minPond = 0.5, tol = 0.15, reach = 400, corridor = 30, near = 15, natural = 1.5 } = {}) {
   const { nx, z } = f, dx = fine.dx, pad = Math.max(1, Math.round(corridor / dx));
   const span = (p, q) => dx * Math.hypot(p % nx - q % nx, ((p / nx) | 0) - ((q / nx) | 0));
