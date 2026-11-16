@@ -1,6 +1,9 @@
 // Closed-crossing check (src/crossings.js): a stream path over a synthetic valley, with and without a fill across it.
 // Usage: node tests/run-crossings-tests.mjs
 import { closedCrossings, crossingNote, joinStreams, joinLines } from '../src/crossings.js';
+import { breachChannels, bridgeMask } from '../src/channels.js';
+import { GridRef, fromUTM } from '../src/geo.js';
+
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
@@ -100,6 +103,32 @@ const path = Array.from({ length: nx }, (_, i) => J * nx + i);
   const ways = [{ line: [[2, 0], [3, 0], [4, 1]], kind: 'stream', name: 'Creek' }, { line: [[0, 0], [1, 0]], kind: 'stream', name: 'Creek' }, { line: [[1, 0], [2, 0]], kind: 'stream' }, { line: [[9, 9], [8, 8]], kind: 'ditch' }];
   const j = joinLines(ways), creek = j.find(l => l.name === 'Creek');
   check('joinLines: three ways become one line with no repeated point, the lone ditch stays', j.length === 2 && creek.ways.join() === '1,2,0' && JSON.stringify(creek.line) === '[[0,0],[1,0],[2,0],[3,0],[4,1]]' && j.some(l => l.kind === 'ditch' && l.line.length === 2));
+}
+
+// ---- the cutter (src/channels.js breachChannels) on the same valley: what it opens, and what it leaves for the check
+{
+  const grid = new GridRef({ zone: 18, x0: 0, y0: 0, x1: nx, y1: ny, dx: 1 }), ll = (i, j) => fromUTM(i + 0.5, grid.y1 - (j + 0.5), 18);
+  const stream = [{ line: [ll(0, J), ll(nx - 1, J)], kind: 'stream', name: 'Creek' }];
+  const left = (f) => closedCrossings(grid, f, breachChannels(grid, f, stream, { snap: false }).paths).closed.length;
+  const cutOf = (edit) => { const f = valley(edit); const r = breachChannels(grid, f, stream, { snap: false }); return { r, f, closed: closedCrossings(grid, f, r.paths).closed.length }; };
+  const short = cutOf(g => fill(g, 90, 109, bed(89) + 3, { road: true }));
+  check('a 20 m road fill is cut, and nothing is left closed', short.r.breaches === 1 && short.closed === 0);
+  const long = cutOf(g => fill(g, 90, 129, bed(89) + 3, { road: true }));
+  check('a 40 m road fill that closes the valley is cut too (a road crossed at an angle)', long.r.breaches === 1 && long.closed === 0 && long.r.cuts[0].kind === 'road', `${long.r.cuts[0]?.length} m`);
+  const round = cutOf(g => { fill(g, 90, 129, bed(89) + 3, { road: true }); for (let j = J + 8; j <= J + 10; j++) for (let i = 80; i <= 140; i++) g.z[j * nx + i] = bed(i); });
+  check('a 40 m road rise the water gets round within the corridor is left alone', round.r.breaches === 0);
+  const wide = cutOf(g => fill(g, 70, 139, bed(69) + 3, { road: true }));
+  check('a 70 m road fill is not cut: it stays, and the check lists it', wide.r.breaches === 0 && wide.closed === 1);
+  const high = cutOf(g => fill(g, 90, 109, bed(89) + 5, { road: true }));
+  check('a 5 m road fill is not cut (over the 4 m limit) and is listed', high.r.breaches === 0 && high.closed === 1);
+  // a mapped bridge: the lidar specification removes the deck, so what is left under it is cut, to 80 m and 8 m
+  const under = (i0, i1, top, withBridge) => { const f = valley(g => fill(g, i0, i1, top)); if (withBridge) f.bridge = bridgeMask(grid, f, [{ line: [ll((i0 + i1) >> 1, 0), ll((i0 + i1) >> 1, ny - 1)], width: 12 }]); const r = breachChannels(grid, f, stream, { snap: false }); return { r, closed: closedCrossings(grid, f, r.paths).closed.length }; };
+  const b1 = under(70, 139, bed(69) + 6, true), b0 = under(70, 139, bed(69) + 6, false);
+  check('a 70 m, 6 m fill under a mapped bridge is cut; the same fill with no bridge is not', b1.r.bridges === 1 && b1.r.cuts[0].kind === 'bridge' && b1.closed === 0 && b0.r.bridges === 0 && b0.closed === 1);
+  check('a 100 m fill under a mapped bridge is not cut', under(50, 149, bed(49) + 6, true).r.bridges === 0);
+  check('the cutter walks until a pass cuts nothing, and a second call finds nothing left', short.r.passes === 2 && breachChannels(grid, short.f, stream, { snap: false }).cuts.length === 0);
+  const m = bridgeMask(grid, valley(), [{ line: [ll(100, 0), ll(100, ny - 1)], width: 10 }]);
+  check('bridge mask: the line widened to its deck', m[J * nx + 100] === 1 && m[J * nx + 105] === 1 && m[J * nx + 107] === 0 && bridgeMask(grid, valley(), undefined).every(v => v === 0));
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nall crossings tests passed');

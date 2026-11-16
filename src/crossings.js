@@ -107,7 +107,9 @@ export function closedCrossings(fine, f, paths, { culverts = [], minPond = 0.5, 
       let b = a + 1, peak = za, top = a + 1;
       while (b < path.length && z[path[b]] > za + tol && span(path[a], path[b]) <= reach) { if (z[path[b]] > peak) { peak = z[path[b]]; top = b; } b++; }
       if (b >= path.length || z[path[b]] > za + tol || peak - za < minPond) { a++; continue; }
-      const crest = spillLevel(f, path, a, b, pad), pond = crest - za;
+      let crest = spillLevel(f, path, a, b, pad);
+      if (!Number.isFinite(crest)) crest = peak; // walled in by buildings: the level over the path itself
+      const pond = crest - za;
       if (!(pond >= minPond)) { a = b; continue; } // the water gets round it lower down
       const hump = Array.prototype.slice.call(path, a + 1, b), ck = path[top];
       if (seen.has(ck)) { a = b; continue; } // reached again from another headwater

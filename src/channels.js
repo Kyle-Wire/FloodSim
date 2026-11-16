@@ -152,24 +152,30 @@ export function spillLevel(f, path, a, b, pad) {
  * Breach short obstructions along open waterways on the fine (1 m) grid, in place, after moving each line onto the
  * thalweg (snapThalweg). Walking downstream from each low point to the next point at or below it, the hump between is
  * graded straight if it has no building and is either
- *   a road embankment  some cell is road; ≤ maxLength long and ≤ maxHeight high; or
+ *   a road embankment  some cell is road; ≤ maxHeight high and ≤ maxLength long, or up to closed.length long where it
+ *                      closes the valley (the lowest way past it within `corridor` m is closed.min above its foot): a
+ *                      two-lane road crossed at an angle is 35-40 m of fill along the stream (Fourmile Creek and South
+ *                      Branch Pennsauken Creek, 16 Nov 2026), and a mapped stream does not end at a road; or
  *   a fill             no road; ≤ fill.length long (where it stands more than `tol` above its upstream foot); its crest
  *                      fill.min-fill.max above the foot, the crest being the lowest level at which water gets past it
  *                      within `corridor` m (so it spans the valley floor); and not the top of a ridge the walk has
  *                      climbed onto (no ground more than fill.min below its foot in the fill.length upstream).
+ *   a mapped bridge    some cell is under a bridge OpenStreetMap maps (f.bridge, bridgeMask): ≤ bridge.length long and
+ *                      ≤ bridge.height high. The lidar base specification removes bridge decks, so a rise left under one
+ *                      is approach fill or a deck the lidar kept, and the stream passes under it
  * The cut is `width` m wide (a band of cells around the path): three 1 m cells always hold a whole 2 m solver cell,
  * so the cut survives coarsening (src/terrain.js coarsen averages the 1 m ground), where a 1 m trench would be half lost.
  * @param f     fine model from buildFine (z, bld, road)
  * @param lines [{ line: [[lon, lat]…], kind }] in their mapped (downstream) direction
- * @returns { breaches, fills, cells, volume, snapped, offset, paths, cuts } — road embankments and fills cut, cells
+ * @returns { passes, breaches, fills, cells, volume, snapped, offset, paths, cuts } — road embankments and fills cut, cells
  *          lowered, volume removed (m³), lines snapped, their mean distance from the mapped line (m), the cell paths
  *          walked, and each cut { kind: 'road'|'fill', k (crest cell), foot, crest, length (m) }
  */
-export function breachChannels(fine, f, lines, { maxLength = 30, maxHeight = 4, tol = 0.15, fill = { min: 0.5, max: 2, length: 40 }, snap = true, corridor = 15, width = 3 } = {}) {
-  const { nx } = f, dx = fine.dx, A = dx * dx, pad = Math.round(corridor / dx), reach = Math.max(maxLength, fill.length);
+export function breachChannels(fine, f, lines, { maxLength = 30, maxHeight = 4, tol = 0.15, fill = { min: 0.5, max: 2, length: 40 }, bridge = { length: 80, height: 8 }, closed = { length: 60, min: 0.5 }, snap = true, corridor = 15, width = 3 } = {}) {
+  const { nx } = f, dx = fine.dx, A = dx * dx, pad = Math.round(corridor / dx), reach = Math.max(maxLength, fill.length, closed.length, f.bridge ? bridge.length : 0);
   const half = Math.max(0, Math.round((width / dx - 1) / 2)); // cells either side of the path in the cut
   const span = (p, q) => dx * Math.hypot(p % nx - q % nx, ((p / nx) | 0) - ((q / nx) | 0)); // m between two cells
-  let breaches = 0, fills = 0, cells = 0, volume = 0, snapped = 0, offSum = 0, offN = 0;
+  let breaches = 0, fills = 0, bridges = 0, cells = 0, volume = 0, snapped = 0, offSum = 0, offN = 0;
   const paths = [], cuts = [];
   for (const w of lines) {
     let path = mappedCells(fine, f, w.line);
@@ -178,6 +184,12 @@ export function breachChannels(fine, f, lines, { maxLength = 30, maxHeight = 4, 
       if (s) { path = s.path; snapped++; offSum += s.offset * path.length; offN += path.length; }
     }
     paths.push(path);
+  }
+  // One walk of a path. Cutting one stream can lower the bed beside another (where two meet, or share a way) and so
+  // turn a rise it has already walked past into a closed one, so every path is walked again until a pass cuts nothing
+  // (Fourmile Creek, 16 Nov 2026: a road fill left in on the first pass and cut on a second).
+  const walk = (path) => {
+    let made = 0;
     const dist = new Float64Array(path.length); // m along the path
     for (let m = 1; m < path.length; m++) dist[m] = dist[m - 1] + span(path[m], path[m - 1]);
     // walk downstream: from each low point, find the next point at or below it; if the hump between is an
@@ -188,13 +200,16 @@ export function breachChannels(fine, f, lines, { maxLength = 30, maxHeight = 4, 
       if (f.z[path[a + 1]] <= za + tol) { a++; continue; }
       let b = a + 1, peak = za, top = a + 1;
       while (b < path.length && f.z[path[b]] > za + tol && span(path[a], path[b]) <= reach + dx) { if (f.z[path[b]] > peak) { peak = f.z[path[b]]; top = b; } b++; }
-      if (b >= path.length || f.z[path[b]] > za + tol || peak - za > maxHeight) { a++; continue; }
-      const hump = path.slice(a + 1, b), len = span(path[a], path[b]) - dx; // m above the foot, straight across (the path zig-zags over a crest)
+      if (b >= path.length || f.z[path[b]] > za + tol) { a++; continue; }
+      const hump = path.slice(a + 1, b), len = span(path[a], path[b]) - dx;
+      const under = !!f.bridge && hump.some(k => f.bridge[k]);
+      if (peak - za > (under ? bridge.height : maxHeight)) { a++; continue; } // m above the foot, straight across (the path zig-zags over a crest)
       if (hump.some(k => f.bld[k])) { a++; continue; }
       const road = hump.some(k => f.road?.[k]);
       let crest = peak;
-      if (road ? len > maxLength : len > fill.length || peak - za < fill.min) { a++; continue; }
-      if (!road) {
+      if (under ? len > bridge.length : road ? len > closed.length : len > fill.length || peak - za < fill.min) { a++; continue; }
+      if (!under && road && len > maxLength && spillLevel(f, path, a, b, pad) - za < closed.min) { a++; continue; } // long, and the water gets round it: terrain
+      if (!under && !road) {
         let foot = Infinity; for (let m = a - 1; m >= 0 && dist[a] - dist[m] <= fill.length; m--) foot = Math.min(foot, f.z[path[m]]);
         if (foot < za - fill.min) { a++; continue; }
         crest = spillLevel(f, path, a, b, pad);
@@ -208,12 +223,27 @@ export function breachChannels(fine, f, lines, { maxLength = 30, maxHeight = 4, 
           if (f.z[k] > zt) { volume += (f.z[k] - zt) * A; f.z[k] = zt; cells++; }
         }
       }
-      if (road) breaches++; else fills++;
-      cuts.push({ kind: road ? 'road' : 'fill', k: path[top], foot: za, crest, length: len });
+      made++;
+      if (under) bridges++; else if (road) breaches++; else fills++;
+      cuts.push({ kind: under ? 'bridge' : road ? 'road' : 'fill', k: path[top], foot: za, crest, length: len });
       a = b;
     }
+    return made;
+  };
+  let passes = 0;
+  for (let made = 1; made && passes < 4; passes++) { made = 0; for (const path of paths) made += walk(path); }
+  return { passes, breaches, fills, bridges, cells, volume, snapped, offset: offN ? offSum / offN : 0, paths, cuts };
+}
+
+/** Fine cells under mapped bridges: each bridge's line, widened to its deck. → Uint8Array (1 under a bridge) */
+export function bridgeMask(fine, f, bridges) {
+  const { nx, ny } = f, m = new Uint8Array(nx * ny);
+  for (const b of bridges ?? []) {
+    const r = Math.max(1, Math.ceil((b.width ?? 8) / 2 / fine.dx));
+    for (const k of mappedCells(fine, f, b.line)) { const ci = k % nx, cj = (k / nx) | 0;
+      for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) { const i = ci + di, j = cj + dj; if (i >= 0 && j >= 0 && i < nx && j < ny && di * di + dj * dj <= r * r) m[j * nx + i] = 1; } }
   }
-  return { breaches, fills, cells, volume, snapped, offset: offN ? offSum / offN : 0, paths, cuts };
+  return m;
 }
 
 /**

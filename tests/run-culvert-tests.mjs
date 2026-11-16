@@ -4,7 +4,7 @@
 // Usage: node tests/run-culvert-tests.mjs
 import { culvertFlow, culvertState, culvertOf, inletHeadwater, criticalDepth, section, INLETS } from '../src/culvert.js';
 import * as REF from '../benchmarks/culvert/hds5.mjs';
-import { culvertFlow as oldFlow } from '../src/river.js';
+import { culvertFlowSimple as oldFlow } from '../src/river.js';
 
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`); if (!ok) fails++; };
