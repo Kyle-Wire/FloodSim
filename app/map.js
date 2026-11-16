@@ -67,6 +67,9 @@ import * as RAS from '../src/hecras.js'; // HEC-RAS handoff: the 2D package expo
 import { MANNING } from '../src/terrain.js';
 import { layerInputs, transformFor } from '../src/infra.js';
 import { toUTM } from '../src/geo.js';
+import { parseSteady, steadyMinutes, steadyFlow } from '../src/steady.js';
+/** The steady-flow test setup (src/steady.js; RT-1), or null: opt-in, from the hidden #steadyTest input. */
+const steady = () => parseSteady($('steadyTest')?.value);
 import * as SSX from '../src/streamstats.js'; // ungauged inflows
 import * as CPD from '../src/compound.js';
 import * as RQ from '../src/rainqa.js';
@@ -944,6 +947,7 @@ function currentStorm() {
   return withCoast(st && emu?.rain != null && emu.rain !== 1 ? scaleStorm(st, emu.rain) : st); // + the design tide / SLR (compound flooding)
 }
 function stormBase() {
+  { const sd = steady(); if (sd) return { ...constantStorm(0, steadyMinutes(sd)), name: 'Steady-flow test (no rain)' }; }
   if (stormSrc === 'hist') return hist.storm;
   if (stormSrc === 'radar') return nc.storms[$('ncMember').value] ?? nc.storms.ctl ?? null;
   if (stormSrc === 'const') return constantStorm(Number($('rain').value), Number($('dur').value));
@@ -1902,7 +1906,7 @@ function roofHoldStages(c, net, roof, green) {
 function ensureSolver() {
   if (run.solver) return;
   const { c, F } = run;
-  let infil = c.infil;
+  let infil = steady() ? new Float32Array(c.infil.length) : c.infil; // the steady-flow test: no infiltration
   if (drainSrc === 'lumped') { const extra = lumpedInfil(c, c.roadFrac, Number($('lumpRate').value)); infil = c.infil.map((v, k) => v + extra[k]); }
   const coupled = drainSrc === 'network' && run.net && swmmEngine;
   run.culverts = run.culv.length ? new CulvertLinks(run.culv, c.z, { cellArea: F * F }) : null;
@@ -1949,7 +1953,7 @@ function ensureSolver() {
   if (shared) log(`${shared} exchange point${shared > 1 ? 's share a cell' : ' shares a cell'} with another: the surface books will not close`, 'warn');
   run.solver = new GPUSolver(device, {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
-    sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, underdrains: coupled && run.sw.under.length ? run.sw.under.flatMap(g => g.cells) : undefined, crest, ga: run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: rainBase0(run, c),
+    sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, underdrains: coupled && run.sw.under.length ? run.sw.under.flatMap(g => g.cells) : undefined, crest, ga: steady() ? undefined : run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: rainBase0(run, c),
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
     // --- local time stepping (opt-in, Solver settings checkbox; off by default) ---
     lts: $('ltsOn')?.checked || undefined,
@@ -2020,15 +2024,25 @@ let pairPrep = null;
  * within 60 m, whose highest water surface is recorded every simulated minute.
  */
 function gaugeWatch(r) {
-  const st = r.storm ?? currentStorm(); if (!st?.t0 || !inflow.levels.length) return null;
+  const sd = steady(), st = r.storm ?? currentStorm();
+  if (sd?.gauge) return gaugeWatchAt(r, [sd.gauge], Date.UTC(2000, 0, 1), true); // the steady-flow test: its gauge, a nominal clock
+  if (!st?.t0 || !inflow.levels.length) return null;
+  return gaugeWatchAt(r, inflow.levels, st.t0, false);
+}
+function gaugeWatchAt(r, levels, t0, steadyRun) {
   const { c, F } = r, fine = model.fine, R = Math.max(3, Math.ceil(60 / (F * fine.dx)));
-  const lines = (model.osm.waterways || []).filter(w => /river|stream|canal|tidal/.test(w.kind)).map(w => toCells(fine, w.line));
-  const water = waterCells(c, F, fine, model.nlcd, lines), gauges = [];
-  for (const g of inflow.levels) {
+  let ways = (model.osm.waterways || []).filter(w => /river|stream|canal|tidal/.test(w.kind));
+  // the steady-flow test reads the channel the flow is given to (README: along the channel within ±50 m): that river's
+  // mapped line only, not a pond or another stream beside the gauge
+  const river = steadyRun ? steady() && steadyEntry(steady())?.name : null;
+  if (river && ways.some(w => w.name === river)) ways = ways.filter(w => w.name === river);
+  const lines = ways.map(w => toCells(fine, w.line));
+  const water = waterCells(c, F, fine, steadyRun ? null : model.nlcd, lines), gauges = [];
+  for (const g of levels) {
     const k = cellAt(fine, c, F, g.lon, g.lat); if (k < 0 || !c.mask[k] || (c.inside && !c.inside[k])) continue;
     gauges.push({ g, cells: nearestCells(c, waterNear(c, water, k, R), k, 200), series: [], wse: [] });
   }
-  return gauges.length ? { t0: st.t0, gauges, next: 0 } : null;
+  return gauges.length ? { t0, gauges, next: 0, steady: steadyRun } : null;
 }
 /** The level at each gauge: the median water surface of the 9 nearest channel cells at least 10 cm deep (a bank cell
  *  wet with rain is not the gauge's water). Each cell's surface is kept too: once the gauge's readings are in, the
@@ -2079,6 +2093,7 @@ function validationOf(r, rec) {
 }
 async function fillGauges(r, v) {
   const w = r.gaugeWatch; if (!w) return;
+  if (w.steady) { for (const out of v.gauges) out.why = 'steady-flow test: scored against the field measurements (benchmarks/rating)'; return; }
   await Promise.all(w.gauges.map(async (gw, i) => {
     const out = v.gauges[i]; if (!gw.cells.length) return;
     const t1 = gw.series.at(-1)?.[0] ?? w.t0;
@@ -2154,10 +2169,11 @@ function edgeEntries(c, entries, used) {
  * its peaks, times and books all start with the storm. Skipped in the subgrid speed mode and without river inflow.
  */
 async function warmUp(r) {
-  const hours = Number($('warmUp').value) || 0; r.warm = null;
+  // a steady-flow test with a fill (src/steady.js) warms up at that flow instead: the reach full before the steps
+  const sd = steady(), fill = sd?.fill, hours = fill ? fill.hours : Number($('warmUp').value) || 0; r.warm = null;
   if (!(hours > 0) || !r.inflowReady?.length || r.c.sg || !device) return;
   const { c, F } = r, T = hours * 3600, t0 = performance.now();
-  const { entries, mask } = edgeEntries(c, r.inflowReady.map(e => { const q0 = Math.max(0, typeof e.flow === 'function' ? e.flow(0) : e.flow); return { ...e, flow: () => q0 }; }), new Set());
+  const { entries, mask } = edgeEntries(c, r.inflowReady.map(e => { const q0 = fill ? fill.q : Math.max(0, typeof e.flow === 'function' ? e.flow(0) : e.flow); return { ...e, flow: () => q0 }; }), new Set());
   if (!entries.length) return;
   const storm = currentStorm(); let stageCells = stageEdgeCells(c, F, mask, storm); // the tide (or a river outlet) held at its level at the storm's start
   if (!stageCells) { r.outlet = outletFor(r, c, F, mask); stageCells = r.outlet?.cells; }
@@ -2168,10 +2184,12 @@ async function warmUp(r) {
     const start = startWater(c, F, stageCells), at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
     s.setDepth((x, y) => Math.max(start ? start.depth[at(x, y)] : 0, c.bathyFill ? c.bathyFill[at(x, y)] : 0));
     const links = new InflowLinks(entries), hub = new LinkHub(s, [links], 2);
-    while (s.t < T - 1e-6) { if (run !== r) return; await s.advance(Math.min(T, hub.tNext)); if (s.t >= hub.tNext - 1e-6) await hub.exchange(); }
+    let shown = 0;
+    while (s.t < T - 1e-6) { if (run !== r) return; await s.advance(Math.min(T, hub.tNext)); if (s.t >= hub.tNext - 1e-6) await hub.exchange();
+      if (fill && s.t >= (shown + 1) * 3600) { shown = Math.floor(s.t / 3600); log(`Fill: ${shown} of ${hours} h at ${fill.q} m³/s (${Math.round(links.totals.volume).toLocaleString()} m³ in)`); } }
     const st = await s.readState();
     r.warm = { hours, h: st.h, hu: st.hu, hv: st.hv, volumeIn: links.totals.volume };
-    log(`Baseflow warm-up: ${hours} h of river base flow before the storm${stageCells?.length ? `, the ${r.outlet ? 'river outlet' : 'tide'} held at ${stageAt(storm, 0).toFixed(2)} m on ${stageCells.length} edge cells` : ''} (${Math.round(links.totals.volume).toLocaleString()} m³ in, ${((performance.now() - t0) / 1000).toFixed(1)} s)`, 'ok');
+    log(`${fill ? `Fill: ${hours} h at ${fill.q} m³/s before the steps` : `Baseflow warm-up: ${hours} h of river base flow before the storm`}${stageCells?.length ? `, the ${r.outlet ? 'river outlet' : 'tide'} held at ${stageAt(storm, 0).toFixed(2)} m on ${stageCells.length} edge cells` : ''} (${Math.round(links.totals.volume).toLocaleString()} m³ in, ${((performance.now() - t0) / 1000).toFixed(1)} s)`, 'ok');
   } finally { s.destroy(); }
 }
 $('runBtn').onclick = async () => {
@@ -3802,6 +3820,7 @@ function inflowNoteUpdate() {
 }
 /** Each entry's flow as a function of model time (s), fetched before the run starts. */
 async function prepareInflow() {
+  { const sd = steady(); if (sd) return steadyInflow(sd); }
   const out = [], st = currentStorm();
   for (let i = 0; i < inflow.entries.length; i++) {
     const site = $('inGauge' + i)?.value; if (!site) continue;
@@ -3829,6 +3848,21 @@ async function prepareInflow() {
   }
   if (out.length) log('River inflow: ' + out.map(e => e.label).join('; '), 'ok', out.some(e => e.ungauged) ? 'USGS NWIS, StreamStats' : 'USGS NWIS');
   return out;
+}
+
+/** The steady-flow test's one inflow: the stepped discharge at the river entry nearest its point (else the first). */
+/** The river entry the steady-flow test feeds: the one nearest its inflow point, else the first. */
+function steadyEntry(sd) {
+  if (!inflow.entries.length) return null;
+  if (!Array.isArray(sd.inflow)) return inflow.entries[0];
+  const f = model.fine, [x, y] = toUTM(sd.inflow[0], sd.inflow[1], f.zone), fi = (x - f.x0) / f.dx, fj = (f.y1 - y) / f.dx;
+  return inflow.entries.reduce((a, b) => (Math.hypot(b.at[0] - fi, b.at[1] - fj) < Math.hypot(a.at[0] - fi, a.at[1] - fj) ? b : a));
+}
+function steadyInflow(sd) {
+  const en = steadyEntry(sd); if (!en) throw new Error('steady-flow test: no river enters the area');
+  const label = `steady-flow test at ${en.name || 'the river entry'}: ${sd.steps.map(([q, m]) => `${q.toFixed(2)} m³/s for ${m} min`).join(', ')}`;
+  log('River inflow: ' + label, 'ok', 'benchmarks/rating');
+  return [{ at: en.at, flow: steadyFlow(sd), label, site: 'steady', name: en.name }];
 }
 
 // ---- ungauged inflows (src/streamstats.js)

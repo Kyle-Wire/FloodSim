@@ -541,6 +541,7 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
             <option value="IPL">Estimate: Interior Plains</option><option value="IHI">Estimate: Interior Highlands</option><option value="LUP">Estimate: Laurentian Upland</option><option value="RMS">Estimate: Rocky Mountains</option>
             <option value="IMP">Estimate: Intermontane Plateaus</option><option value="PMS">Estimate: Pacific Mountains</option></select></div>
         <p class="note" id="bathyNote"></p>
+        <input type="hidden" id="steadyTest" value=""><!-- steady-flow test (src/steady.js, benchmarks/rating): set only by a test project -->
         <p class="subhead">HEC-RAS cross-sections (optional)</p>
         <p class="note">A 1D model's geometry file (.g01 …) with GIS cut lines, and its project .prj (units) or the RAS Mapper projection .prj. The sections set the bed under the flattened water between them, where BlueTopo has no survey; the curve above fills the rest.</p>
         <label class="ifield"><span>Elevations in</span><select id="xsUnits"><option value="auto">Project units (else feet)</option><option value="US">feet</option><option value="SI">metres</option></select></label>
