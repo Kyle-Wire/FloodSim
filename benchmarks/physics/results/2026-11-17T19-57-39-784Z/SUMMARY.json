@@ -1,0 +1,36 @@
+{
+ "runId": "2026-11-17T19-57-39-784Z",
+ "order": [
+  "PV-SS7"
+ ],
+ "timing": {
+  "PV-SS7": 0
+ },
+ "counts": {
+  "PV-SS7": {
+   "byStatus": {
+    "Passed": 17
+   },
+   "byErrorTypeAndStatus": {
+    "accounting/Passed": 17
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Passed": 17
+  },
+  "byErrorTypeAndStatus": {
+   "accounting/Passed": 17
+  },
+  "deliberateFaults": {
+   "rows": 0,
+   "caught": 0
+  }
+ },
+ "invalidStatuses": 0
+}

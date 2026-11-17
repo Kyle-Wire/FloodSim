@@ -1,0 +1,534 @@
+{
+ "id": "PV-SS1",
+ "spec": "benchmarks/physics/spec/PV-SS1.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [cpu]",
+   "quantity": "steady outflow, last 300 s (m³/s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02222222222222222,
+   "sim": 0.02222222172306634,
+   "abs": -4.991558798239648e-10,
+   "rel": -2.246201459207842e-8,
+   "limit": 0.0002222222222222222,
+   "criterion": {
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [cpu]",
+   "quantity": "steady depth at 50.5 m (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.006220826398098698,
+   "sim": 0.006247814889521378,
+   "abs": 0.000026988491422680685,
+   "rel": 0.004338409352000132,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [cpu]",
+   "quantity": "steady depth at 75.5 m (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.007918472739747589,
+   "sim": 0.007953304052707734,
+   "abs": 0.0000348313129601447,
+   "rel": 0.004398741285716037,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [cpu]",
+   "quantity": "time to 50 % of steady outflow (s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 222.61670908530886,
+   "sim": 223.4948551898952,
+   "abs": 0.8781461045863352,
+   "rel": 0.003944654955122085,
+   "limit": 22.26167090853089,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [cpu]",
+   "quantity": "time to 90 % of steady outflow (s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 316.7533826041971,
+   "sim": 318.769142933698,
+   "abs": 2.0157603295008926,
+   "rel": 0.006363816269074258,
+   "limit": 31.67533826041971,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 2.1649348980190608e-15,
+   "abs": 2.1649348980190608e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [gpu]",
+   "quantity": "steady outflow, last 300 s (m³/s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02222222222222222,
+   "sim": 0.022222215108340607,
+   "abs": -7.113881612258455e-9,
+   "rel": -3.201246725516305e-7,
+   "limit": 0.0002222222222222222,
+   "criterion": {
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [gpu]",
+   "quantity": "steady depth at 50.5 m (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.006220826398098698,
+   "sim": 0.006247806828469038,
+   "abs": 0.000026980430370340293,
+   "rel": 0.004337113535041977,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [gpu]",
+   "quantity": "steady depth at 75.5 m (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.007918472739747589,
+   "sim": 0.007953297346830368,
+   "abs": 0.00003482460708277915,
+   "rel": 0.004397894420722503,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [gpu]",
+   "quantity": "time to 50 % of steady outflow (s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 222.61670908530886,
+   "sim": 223.49480702463802,
+   "abs": 0.8780979393291659,
+   "rel": 0.003944438595544373,
+   "limit": 22.26167090853089,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [gpu]",
+   "quantity": "time to 90 % of steady outflow (s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 316.7533826041971,
+   "sim": 318.76933752228587,
+   "abs": 2.0159549180887666,
+   "rel": 0.006364430591125926,
+   "limit": 31.67533826041971,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-a [gpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 7.360146132562328e-8,
+   "abs": 7.360146132562328e-8,
+   "rel": null,
+   "limit": 0.00001,
+   "criterion": {
+    "abs": 0.00001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [cpu]",
+   "quantity": "steady outflow, last 300 s (m³/s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.006666666666666666,
+   "sim": 0.006666926138595223,
+   "abs": 2.594719285568467e-7,
+   "rel": 0.000038920789283527005,
+   "limit": 0.00006666666666666667,
+   "criterion": {
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [cpu]",
+   "quantity": "steady depth at 30.5 m (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.0025606097607808313,
+   "sim": 0.0024020100659408196,
+   "abs": -0.00015859969484001164,
+   "rel": -0.061938252860384437,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [cpu]",
+   "quantity": "steady depth at 45.5 m (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.0032551449408248674,
+   "sim": 0.0031033620558145567,
+   "abs": -0.00015178288501031074,
+   "rel": -0.04662861032905291,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [cpu]",
+   "quantity": "time to 50 % of steady outflow (s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 182.54449577659364,
+   "sim": 167.24547334302756,
+   "abs": -15.29902243356608,
+   "rel": -0.0838098260288808,
+   "limit": 18.254449577659365,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [cpu]",
+   "quantity": "time to 90 % of steady outflow (s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 259.73605822578133,
+   "sim": 258.70276022681963,
+   "abs": -1.0332979989617002,
+   "rel": -0.003978261647689605,
+   "limit": 25.973605822578136,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -1.9151347174783935e-15,
+   "abs": -1.9151347174783935e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [gpu]",
+   "quantity": "steady outflow, last 300 s (m³/s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.006666666666666666,
+   "sim": 0.006666923397957969,
+   "abs": 2.5673129130238115e-7,
+   "rel": 0.00003850969369535717,
+   "limit": 0.00006666666666666667,
+   "criterion": {
+    "rel": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [gpu]",
+   "quantity": "steady depth at 30.5 m (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.0025606097607808313,
+   "sim": 0.0024019910488277674,
+   "abs": -0.0001586187119530639,
+   "rel": -0.06194567965119948,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [gpu]",
+   "quantity": "steady depth at 45.5 m (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.0032551449408248674,
+   "sim": 0.0031033630948513746,
+   "abs": -0.00015178184597349278,
+   "rel": -0.04662829113072631,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [gpu]",
+   "quantity": "time to 50 % of steady outflow (s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 182.54449577659364,
+   "sim": 167.24519547428204,
+   "abs": -15.299300302311593,
+   "rel": -0.08381134822621868,
+   "limit": 18.254449577659365,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [gpu]",
+   "quantity": "time to 90 % of steady outflow (s)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 259.73605822578133,
+   "sim": 258.70017265145293,
+   "abs": -1.035885574328404,
+   "rel": -0.003988223974000319,
+   "limit": 25.973605822578136,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS1",
+   "case": "SS1-b [gpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 2.248017438866162e-9,
+   "abs": 2.248017438866162e-9,
+   "rel": null,
+   "limit": 0.00001,
+   "criterion": {
+    "abs": 0.00001
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS1-a [cpu]": {
+   "edgeShareOfRain": 0.8226278991530306
+  },
+  "SS1-a [gpu]": {
+   "edgeShareOfRain": 0.8226279706567875
+  },
+  "SS1-b [cpu]": {
+   "edgeShareOfRain": 0.8607999770124765
+  },
+  "SS1-b [gpu]": {
+   "edgeShareOfRain": 0.8607999412515446
+  }
+ },
+ "notRun": [],
+ "raw": {
+  "SS1-a [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS1-a.cpu.json",
+   "sha256": "0c9371da848df15cf0d80997be32cd061805da4fcf77fc97d51e47c8c8234830",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 1.519,
+   "steps": 2163,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS1-a [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS1-a.gpu.json",
+   "sha256": "a7a7f951808192c486dd5e2db7f3875e608d16caadee32fb1b85c5738a98b51e",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 7.253,
+   "steps": 2162,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS1-b [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS1-b.cpu.json",
+   "sha256": "8c2d2ec35a92eaa457d4a7db687f78fcc62b8ecc671f379cd1e437dbb360dece",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 0.396,
+   "steps": 1540,
+   "grid": {
+    "nx": 60,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 480
+   }
+  },
+  "SS1-b [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS1-b.gpu.json",
+   "sha256": "87f9017c3c7bf31ffdc7353a82d262209db2ce1f313ebc52d61210dc48da3f15",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 6.098,
+   "steps": 1540,
+   "grid": {
+    "nx": 60,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 480
+   }
+  }
+ },
+ "hand": {
+  "SS1-a": {
+   "steadyOutflowM3s": 0.02222222222222222,
+   "tcS": 337.4238339426285,
+   "t50S": 222.61670908530886,
+   "t90S": 316.7533826041971,
+   "kinematicNumber": 111.69160168200425,
+   "depthM": {
+    "mid": 0.006220826398098698,
+    "low": 0.007918472739747589
+   }
+  },
+  "SS1-b": {
+   "steadyOutflowM3s": 0.006666666666666666,
+   "tcS": 276.6857163738704,
+   "t50S": 182.54449577659364,
+   "t90S": 259.73605822578133,
+   "kinematicNumber": 250.3348030602024,
+   "depthM": {
+    "mid": 0.0025606097607808313,
+    "low": 0.0032551449408248674
+   }
+  }
+ }
+}

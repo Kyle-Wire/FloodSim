@@ -750,3 +750,40 @@ in these cases. Green-Ampt infiltration is not tested.
   bookkeeping of surcharged nodes and return flow, and is open.
 - **F18 and F20** have fixes in the same pull request: EXTRAN with two-way exchange is refused, and the wall rule's
   reach is in metres. The new exchange does not make EXTRAN usable.
+
+## Street sandbox, fourth set (17 Nov 2026, evening): the GPU rows and the fixes, appended
+
+**The GPU rows are in.** All 108 cases ran on the production GPU solver (NVIDIA, headless Edge). The GPU and CPU rows
+agree to three or four digits. On the code before the fixes four statuses differed: three were the GPU's surface books
+(below), and one street level passed on the GPU by 1.5 mm where the CPU failed by 0.5 mm. So the findings above hold
+on the production path, F14 included (the pond read 0.128 m on the GPU, 0.121 m on the CPU, 0.199 m by hand).
+
+**F22, extended: the subgrid modes** (GPU only). On the 1 m map at the end:
+
+| | By hand | 4 m subgrid | 8 m subgrid |
+|---|---|---|---|
+| Kerb: depth in the gutter | 0.050 m | 0.040 | 0.047 |
+| Kerb: depth on the lot behind it | 0 | 0.000 | 0.000 |
+| Crown: depth in the far gutter | 0 | 0.000 | **0.010** (the limit) |
+| Hollow: depth of water in it | 0.098 m | **0.069** | **0.071** |
+| Driveway dip beside a house (PV-SS6) | 0.802 m | **0.707** | **0.614** |
+| Rear yard through a 1 m passage (PV-SS6) | 0 | 0.010 | **0.030** |
+| Bowl: houses' peak wall depths against the 1 m run | – | within 3 mm, same houses exposed | within 11 mm, same houses exposed |
+
+- The 4 m subgrid mode keeps the kerb and the crown, and keeps the passage open, where the plain 2 m and 4 m runs do
+  not. It reads the small hollow 3 cm shallow and the driveway dip 12 % shallow.
+- The 8 m mode is worse on each and loses the crown at the limit.
+- 1 m is still the only grid that passes every detail row.
+
+**F25. GPU surface books reach 1.4e-5 to 1.9e-5 in three runs,** against the 1e-5 limit registered for the GPU (a
+hollow spilling for three hours, and two coupled runs). Low; recorded. Three GPU rows Failed. With the exchange fixed
+the coupled run that read 1.9e-5 reads 3.3e-6.
+
+**The fixes** (`physics/street/FIXES.md`, which gives every number before and after):
+- **F14, the exchange:** fixed. On the GPU and the CPU alike the pond goes to 0.150 m (by hand 0.199 m), the held
+  outfall to 0.1500 m (by hand 0.150 m). The existing coupled cases with exact answers pass 22 of 22 on the GPU with
+  it. A first version of the fix failed one of those measures by 0.004 points and was changed; both runs are filed.
+  **Still open under F14:** SWMM's SLOT conveyance (the remaining 5 cm), and SWMM's continuity error on surcharged
+  nodes and return flow (0.8–1.1 % with rain, 17–19 % of a few cubic metres without).
+- **F18:** EXTRAN with two-way exchange is refused. Spill at the rim is unchanged.
+- **F20:** fixed; PV-SS7 passes 17 of 17.

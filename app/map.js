@@ -1984,9 +1984,11 @@ function ensureSolver() {
     run.swmm = swmmEngine; run.swmmClosed = false;
     run.twoWay = $('twoWay').checked;
     if (run.cso) csoBeforeRun(run);
-    run.inp = toINP(run.net, model.fine, { durationS: Math.ceil(tStop() / 60) * 60 + 3600, title: 'FloodSim synthetic network (data tier 2)', pressurise: run.twoWay, routing: swmmRouting() });
+    const routing = swmmRouting();
+    if (run.twoWay && routing.surcharge === 'EXTRAN') { routing.surcharge = 'SLOT'; log('EXTRAN cannot be used with two-way exchange (manhole heads swing by metres): this run uses SLOT', 'warn'); }
+    run.inp = toINP(run.net, model.fine, { durationS: Math.ceil(tStop() / 60) * 60 + 3600, title: 'FloodSim synthetic network (data tier 2)', pressurise: run.twoWay, routing });
     run.swmm.open(run.inp);
-    run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofStages ? run.roofStages[0].roofArea ?? run.roof?.roofArea : run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay, returns: run.netReturns });
+    run.coupler = new Coupler(run.solver, run.net, run.swmm, c.z, { interval: 2, roofArea: run.roofStages ? run.roofStages[0].roofArea ?? run.roof?.roofArea : run.roofEarly?.roofArea ?? run.roof?.roofArea, twoWay: run.twoWay, returns: run.netReturns, nodeArea: routing.minSurfArea });
     $('netReadouts').hidden = false;
   }
   if (run.coupler && run.window?.mode === 'record') run.coupler.recordInlets = true;

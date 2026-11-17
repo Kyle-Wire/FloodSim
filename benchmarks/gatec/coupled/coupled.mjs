@@ -13,7 +13,8 @@ const cellsAt = (c, x, y) => {
   return span(y, c.ny).flatMap(j => span(x, c.nx).map(i => j * c.nx + i));
 };
 
-export async function runCase(device, id, twoWay) {
+/** couplerOpts: extra Coupler options (diagnostics only: follow, nodeArea); none for the scored runs. */
+export async function runCase(device, id, twoWay, couplerOpts = {}) {
   const c = CASES[id], N = c.nx * c.ny, z = new Float64Array(N);
   for (let j = 0; j < c.ny; j++) for (let i = 0; i < c.nx; i++) z[j * c.nx + i] = c.bed((i + 0.5) * c.dx, (j + 0.5) * c.dx);
   const mh = Math.min(c.ny - 1, Math.floor(c.manhole.y / c.dx)) * c.nx + Math.min(c.nx - 1, Math.floor(c.manhole.x / c.dx));
@@ -31,7 +32,7 @@ export async function runCase(device, id, twoWay) {
   });
   await solver.ready; solver.setDepth((x, y, zz) => (c.level0 != null ? Math.max(0, c.level0 - zz) : 0));
   const swmm = await loadSWMM(); swmm.open(caseINP(c, { pressurise: twoWay }));
-  const cp = new Coupler(solver, net, swmm, z, { interval: 2, twoWay });
+  const cp = new Coupler(solver, net, swmm, z, { interval: 2, twoWay, ...couplerOpts });
   const series = [], wall0 = performance.now();
   const sample = async () => { const s = await solver.readState(); series.push({ t: solver.t, surface: s.mass.volume, ontoSurface: -s.mass.exchanged, edge: s.mass.outflow }); return s; };
   await sample();

@@ -11,7 +11,24 @@
 // Water moved between the models is identical on both sides, so the combined balance is
 //   surface stored + network stored = rain − infiltration − surface outflow − pipe outfalls leaving the model
 //   (± SWMM continuity error).
+//
+// Two-way exchange at a surcharged manhole (`follow`, the default with twoWay). A grate's own resistance is a few
+// millimetres of head; the pipe below it is the real limit, and a manhole holds almost no water (SWMM's minimum node
+// area, 1.2 m²). So a rate set from the head difference of the moment (an orifice law, as before) is stiff: over one
+// 2 s interval it moves the manhole's head many times the difference that set it, the head swings past the street's
+// level and back, its mean stands above the street, and the pipe is driven harder than the street can drive it
+// (benchmarks/FINDINGS.md F14: a pond that should stand at 0.20 m read 0.12 m). Instead the rate for the coming
+// interval is what the manhole's pipes carried away over the last one (its lateral inflow less what its own level
+// took up) plus half of what would bring its head to the street's level less the grate's own loss, kept between
+// what the grate takes freely and what the orifice law returns. At rest that is exactly the pipes' flow with the
+// manhole at the street's level. Below a surcharge the sum always exceeds the free rate, so nothing changes there.
+// The node area assumed is SWMM's minimum node area (MIN_SURFAREA, which the caller passes): a node is never smaller
+// than that. An area taken too small only slows the approach; one taken more than about 1.7 times too large would
+// swing, so a caller that sets a smaller MIN_SURFAREA in the .inp must pass it here. (A first version took half the
+// minimum for safety; its slower start left the A12-010 books 0.004 points outside their limit.)
 import { inletFlow, inletOptions, returnsHere, posKey } from './drainage.js';
+
+const FOLLOW_GAIN = 0.5;   // share of the head gap closed each interval
 
 export class Coupler {
   /**
@@ -21,8 +38,13 @@ export class Coupler {
    * @param swmm   SWMM engine already opened with the network's .inp
    * @param zs     solver bed elevations (absolute, m) to read the surface level at each inlet cell
    */
-  constructor(solver, net, swmm, zs, { interval = 2, roofArea = null, twoWay = false, returns = [] } = {}) {
+  constructor(solver, net, swmm, zs, { interval = 2, roofArea = null, twoWay = false, returns = [], follow = true, nodeArea = 1.2 } = {}) {
     Object.assign(this, { solver, net, swmm, interval });
+    // follow: with twoWay, a manhole's exchange follows the street level (see the top of this file); false = the
+    // orifice law on the head difference of the moment, as before. nodeArea: SWMM's MIN_SURFAREA (m²)
+    this.follow = twoWay && follow;
+    this.nodeArea = nodeArea; // m²: the manhole's own storage, the least a SWMM node has (see the top of this file)
+    this.Hprev = new Float64Array(net.nodes.length).fill(NaN);
     // twoWay: inlet manholes pressurise (give them a large surcharge depth in the .inp) and water returns through the
     // inlet on the head difference, as HEC-RAS does, instead of spilling at the rim. Return flow per manhole is capped by
     // what its pipes deliver, so SWMM is never asked for water a nearly empty node does not hold.
@@ -122,12 +144,32 @@ export class Coupler {
         back[m] *= Math.min(1, pipeIn / want[i]);
       }
     }
+    // follow: per manhole, what its pipes carried away over the interval just ended (its lateral inflow less what its
+    // own level took up), and the part of its lateral inflow that did not come through its grates (roofs, underdrains)
+    const carried = this.follow ? new Float64Array(net.nodes.length) : null, grateIn = this.follow ? new Float64Array(net.nodes.length) : null;
+    if (this.follow) {
+      for (let m = 0; m < M; m++) grateIn[this.inletNodes[m]] += vol[m] / interval + this.ret[m];
+      for (let i = 0; i < carried.length; i++) if (this.perNode[i]) {
+        const H = this.state.head[i]; carried[i] = Number.isFinite(this.Hprev[i]) ? lat[i] - (H - this.Hprev[i]) * this.nodeArea / interval : lat[i];
+        this.Hprev[i] = H;
+      }
+    }
     for (let m = 0; m < M; m++) {
       const i = this.inletNodes[m], n = net.nodes[i];
       const share = overflow[i] / this.perNode[i]; // a manhole's overflow leaves through all of its grates
-      this.q[m] = inletFlow(h[m], this.zs[m], this.state.head[i], this.grates[m], this.opt[m], this.crest[m]) - share - (back?.[m] ?? 0); this.ret[m] = share;
+      let take = inletFlow(h[m], this.zs[m], this.state.head[i], this.grates[m], this.opt[m], this.crest[m]), bk = back?.[m] ?? 0;
+      if (this.follow && this.grates[m] > 0) {
+        const o = this.opt[m], kA = o.Co * o.inletArea * this.grates[m] * (1 - Math.min(0.95, o.clog ?? 0));
+        const free = inletFlow(h[m], this.zs[m], -Infinity, this.grates[m], o, this.crest[m]), eta = this.zs[m] + Math.max(this.crest[m], h[m]);
+        const qm = vol[m] / interval + this.ret[m];                 // what went through this grate over the interval just ended
+        const loss = Math.sign(qm) * (qm / kA) ** 2 / (2 * 9.81);  // the grate's own head loss at that rate
+        const want = (carried[i] - (lat[i] - grateIn[i])) / this.perNode[i] + FOLLOW_GAIN * (eta - loss - this.state.head[i]) * this.nodeArea / interval / this.perNode[i];
+        const qn = Math.min(free, Math.max(-bk, want));
+        take = Math.max(0, qn); bk = Math.max(0, -qn);
+      }
+      this.q[m] = take - share - bk; this.ret[m] = share;
       if (this.prescribe?.has(m)) { this.q[m] = 0; this.ret[m] = 0; } // replayed: no surface exchange (the cell is outside the window)
-      if (back) this.totals.backflow += back[m] * interval;
+      if (back) this.totals.backflow += bk * interval;
       flooding += share;
     }
     for (let k = 0; k < this.returns.length; k++) this.q[M + k] = -this.retQ[k]; // negative: onto the ground

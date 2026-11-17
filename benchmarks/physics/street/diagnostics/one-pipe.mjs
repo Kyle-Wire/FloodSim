@@ -17,7 +17,8 @@ const specs = loadSpecs(), out = [];
 const VARIANTS = [['as registered', {}], ['EXTRAN', { surcharge: 'EXTRAN' }], ['exchange 0.5 s, SWMM 0.25 s', { interval: 0.5, routingStep: 0.25 }], ['EXTRAN, exchange 0.5 s, SWMM 0.25 s', { surcharge: 'EXTRAN', interval: 0.5, routingStep: 0.25 }]];
 for (const id of ['SS3-a', 'SS4-d', 'SS4-a']) for (const [name, v] of VARIANTS) {
   const def = buildCase(id, specs), c = def.c, cu = def.coupled, interval = v.interval ?? cu.interval;
-  const inp = v.surcharge || v.routingStep ? toINP(cu.net, { x0: 0, y1: c.ny * c.dx, dx: 1 }, { durationS: Math.ceil(def.tEnd / 60) * 60 + 3600, pressurise: cu.twoWay, surcharge: v.surcharge ?? 'SLOT', routingStep: v.routingStep ?? 1 }) : cu.inp;
+  // since the fix, toINP refuses EXTRAN with two-way exchange: those variants are then reported as refused
+  let inp; try { inp = v.surcharge || v.routingStep ? toINP(cu.net, { x0: 0, y1: c.ny * c.dx, dx: 1 }, { durationS: Math.ceil(def.tEnd / 60) * 60 + 3600, pressurise: cu.twoWay, surcharge: v.surcharge ?? 'SLOT', routingStep: v.routingStep ?? 1 }) : cu.inp; } catch (err) { console.log(`${id}  ${name.padEnd(36)} refused: ${err.message}`); out.push({ case: id, variant: name, refused: err.message }); continue; }
   const sim = new CpuSim(def.opts); sim.setDepth(() => 0);
   const swmm = await loadSWMM(); swmm.open(inp);
   const cp = new Coupler(sim, cu.net, swmm, c.z, { interval, twoWay: cu.twoWay });
