@@ -12,6 +12,7 @@ import * as st from '../references/street.mjs';
 import { SCENES } from './terrain.mjs';
 import { buildCase } from './cases.mjs';
 import { openWater, exposure, footprintIndex } from '../../../src/damage.js';
+import { inletFlow } from '../../../src/drainage.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url)), MMHR = 1 / 3.6e6, EXECS = ['cpu', 'gpu'];
 let EXPECT = false;
@@ -277,7 +278,17 @@ function ss9(spec, specs) {
   });
 }
 
-const SCORERS = { 'PV-SS1': ss1, 'PV-SS2': ss2, 'PV-SS3': ss3, 'PV-SS4': ss4, 'PV-SS5': ss5, 'PV-SS6': ss6, 'PV-SS7': ss7, 'PV-SS8': ss8, 'PV-SS9': ss9 };
+// ---------------------------------------------------------------- PV-SS10: the exchange law against the Sheffield rig
+function ss10(spec) {
+  const P = spec.parameters, D = P.inletDiameterM.value, o = { inletPerim: Math.PI * D, inletArea: Math.PI * D * D / 4, ...P.appCoefficients.value }, k = o.inletPerim * Math.sqrt(2 * 9.81), rows = [], T = P.tests.value;
+  const fit = (h) => T.reduce((a, t) => a + t.QeRawLs / 1000 / (k * Math.pow(h(t), 1.5)), 0) / T.length;
+  const hand = { appWeirCoefficient: o.Cw, paperEquivalent: [P.paperCi.value.lower, P.paperCi.value.expected, P.paperCi.value.upper].map(c => 2 / 3 * c), fittedToTheTests: fit(t => t.hsTableM), fittedWithRawP7Depths: fit(t => t.p7RawMm / 1000),
+    grates2018EquivalentOnOuterCircumference: Object.fromEntries(P.grates2018.value.map(([g, cw, pv]) => [g, +(2 / 3 * cw * pv / o.inletPerim).toFixed(3)])) };
+  if (!EXPECT) for (const t of T) rows.push(row({ benchmark: spec.id, caseId: `S1 test ${t.test} (h_s ${(1000 * t.hsTableM).toFixed(1)} mm)`, quantity: 'exchange into the sewer (l/s)', errorType: 'physical-model', ref: t.QeRawLs, sim: 1000 * inletFlow(t.hsTableM, 0, -1, 1, o, 0), crit: { rel: spec.criteria.exchangeRel } }));
+  return { rows, cases: { coefficients: hand }, notRun: [], raw: {}, hand: { coefficients: hand } };
+}
+
+const SCORERS = { 'PV-SS10': ss10, 'PV-SS1': ss1, 'PV-SS2': ss2, 'PV-SS3': ss3, 'PV-SS4': ss4, 'PV-SS5': ss5, 'PV-SS6': ss6, 'PV-SS7': ss7, 'PV-SS8': ss8, 'PV-SS9': ss9 };
 export async function run(spec, specs) { const f = SCORERS[spec.id]; if (!f) throw new Error('no scorer for ' + spec.id); return f(spec, specs); }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]) && process.argv.includes('--expect')) {

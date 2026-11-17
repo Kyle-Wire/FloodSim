@@ -1,0 +1,36 @@
+{
+ "runId": "2026-11-17T18-34-52-775Z",
+ "order": [
+  "PV-SS10"
+ ],
+ "timing": {
+  "PV-SS10": 0
+ },
+ "counts": {
+  "PV-SS10": {
+   "byStatus": {
+    "Failed": 15
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Failed": 15
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Failed": 15
+  },
+  "byErrorTypeAndStatus": {
+   "physical-model/Failed": 15
+  },
+  "deliberateFaults": {
+   "rows": 0,
+   "caught": 0
+  }
+ },
+ "invalidStatuses": 0
+}
