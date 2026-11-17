@@ -30,7 +30,7 @@ export async function runCase(makeSim, def, { log = () => {} } = {}) {
   const rateAt = (t) => rain.find(b => t >= b.t0 - 1e-9 && t < b.t1 - 1e-9)?.rate ?? 0;
   const stops = [...new Set([...rain.flatMap(b => [b.t0, b.t1]), ...Array.from({ length: Math.floor(tEnd / every) + 1 }, (_, k) => k * every), tEnd])].filter(t => t > 0 && t <= tEnd + 1e-9).sort((a, b) => a - b);
   const series = [], sample = async () => {
-    const s = await sim.readState(), row = { t: +sim.t.toFixed(3), volume: s.mass.volume, rain: s.mass.rain, outflow: s.mass.outflow, infil: s.mass.infil, exchanged: s.mass.exchanged ?? 0, probes: {} };
+    const s = await sim.readState(), row = { t: +sim.t.toFixed(3), volume: s.mass.volume, rain: s.mass.rain, outflow: s.mass.outflow, infil: s.mass.infil, giStored: s.mass.giStored ?? 0, exchanged: s.mass.exchanged ?? 0, probes: {} };
     for (const p of probes) { const q = stat(s.h, p.cells); row.probes[p.id] = c.sg ? null : [r4(q.mean), r4(q.max)]; }
     if (cp) { row.pipeFlow = Array.from(cp.state.flow, r4); row.head = Array.from(cp.state.head, r4); row.outVol = Array.from(cp.outVol, r4); row.toNetwork = cp.totals.toNetwork; row.toSurface = cp.totals.toSurface; row.flooding = cp.state.flooding; }
     series.push(row); return s;

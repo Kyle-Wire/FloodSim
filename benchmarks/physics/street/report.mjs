@@ -10,7 +10,7 @@ const fmt = (v) => (v == null ? '–' : typeof v !== 'number' ? String(v) : v ==
 const L = ['# Street sandbox: scored results', '',
   'Written by `report.mjs` from the latest scored run of each spec. Statuses are never merged into one percentage. `cpu` rows are the CPU surface solver (fp64), `gpu` rows the production GPU solver in the browser.', ''];
 const summary = [];
-for (let k = 1; k <= 10; k++) {
+for (let k = 1; k <= 12; k++) {
   const id = `PV-SS${k}`, spec = JSON.parse(fs.readFileSync(path.join(specDir, id + '.json')));
   const run = fs.readdirSync(resDir).sort().reverse().find(d => fs.existsSync(path.join(resDir, d, id + '.json')));
   L.push(`## ${id}  ${spec.title}`, '');

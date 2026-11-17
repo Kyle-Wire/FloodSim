@@ -17,3 +17,14 @@ c57de436effcc085037ff7deafdcf71637546c3689226de7df2245eea50d094f *street/cases.m
 73d75d91e462dd0248a47ba663b856a810210ad67541f05a3db74369c2720b78 *street/harness.mjs
 254b05462699d3f59ffad453163aa47ce1e3717b793c19d1306ea7d5a24c42ac *street/exec-cpu.mjs
 83408ff67787a9dfaf941e05fde903874177787a3ecd1f35524e8b232ac4f732 *spec/PV-SS10.json
+# Added 2026-11-17T14:06:26-05:00, before any of these cases ran: PV-SS9 revision 2 (detail cases), PV-SS11, PV-SS12, and the files changed for them.
+84592fb111045b672dad3e96edbaf741bd43cd939fc78fdafcf1b4f8de5d19aa *spec/PV-SS9.json
+5d5f5765ea18342ffe97f043ba5036cfa8dfd7e6b48d09be53b4b7eaede0491d *spec/PV-SS11.json
+5f7133222d0be3a2fa44c2dc0139570c75b4e474c56f6a06ad1e2a3f60ad6c73 *spec/PV-SS12.json
+7780a16304ab47885f52af223f2ebf88fb26b836483028ea9b8e228f7f6e1a19 *references/street.mjs
+59b671d61010bac5d8a30a5bb700413adb6ba23eed51a8707399ee6427d1b0ae *references/refs.test.mjs
+550e4d6acc7e4888dffe1717862415ebbcdd37739a0f317169baae24e0f1a3d3 *street/score.mjs
+389bc06556c5920e353e501fbb935f0f784d43f5dd47b69b6c7c77a9833cfe75 *street/terrain.mjs
+35f333c03b64caee7c157f1c1866c77c4ce40ae35e2c970007dfa76510d74ea6 *street/cases.mjs
+a172a017a9c8037ee9e229305b5634f667f9c57e23486604a1992a751a5e3035 *street/harness.mjs
+9b44f108e492785f119cd053c64b65427181d72b2b4f89a509dcb3211629d60f *street/exec-cpu.mjs

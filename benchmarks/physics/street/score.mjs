@@ -263,6 +263,7 @@ function ss8(spec, specs) {
 function ss9(spec, specs) {
   const C = spec.criteria, rule = spec.parameters.wallRule.value;
   return collect(spec, Object.keys(spec.parameters.cases.value), ({ exec, e, r }, R, ran) => {
+    if (e.scene !== 'block') return detailRows(spec, e, r, R, ran);
     const h = blockHand(spec, e), hand = { restLevelM: h.restLevelM, sagDepthAtRestM: h.sagDepthM }; if (!ran) return { hand };
     const base = latestRaw(spec.parameters.base.value, exec), p = r.probes.find(q => q.id === 'sag');
     R('pond depth at the sag at the end, on the 1 m map (m)', 'numerical', h.sagDepthM, p.final1m.mean, { abs: C.finalLevelAbsM });
@@ -278,6 +279,79 @@ function ss9(spec, specs) {
   });
 }
 
+/** PV-SS9 revision 2: a kerb, a crown and a small hollow, read on the 1 m map at the end. */
+function detailRows(spec, e, r, R, ran) {
+  const C = spec.criteria, f = SCENES[e.scene]({}), P = e.rain.mmhr * e.rain.minutes / 60 / 1000, val = (p, k) => (p.final1m ?? p.final)[k];
+  if (e.scene === 'kerbStreet') {
+    const south = []; let zg = Infinity; for (let j = 0; j < f.ny; j++) for (let i = 0; i < f.nx; i++) { const y = (j + 0.5) * f.dx; if (y < 9) south.push(f.z[j * f.nx + i]); if (y >= 5 && y < 6) zg = Math.min(zg, f.z[j * f.nx + i]); }
+    const V = P * south.length * f.dx * f.dx, level = st.levelForVolume(south, f.dx * f.dx, V), hand = { rainOnTheSouthSideM3: V, pondLevelM: level, gutterDepthM: level - zg, crownM: 0.08, crownCellM: 0.07, kerbM: 0.15, lotBehindKerbM: 0, farGutterM: 0 };
+    if (!ran) return { hand };
+    const p = (id) => r.probes.find(q => q.id === id);
+    R('kerb: depth in the gutter the rain fell beside (m)', 'numerical', hand.gutterDepthM, val(p('gutterS'), 'max'), { abs: C.detailDepthAbsM });
+    R('kerb: depth on the lot behind the kerb (m)', 'numerical', 0, val(p('lotS'), 'max'), { abs: C.detailDryM });
+    R('crown: depth in the far gutter (m)', 'numerical', 0, val(p('gutterN'), 'max'), { abs: C.detailDryM });
+    return { hand, report: { wallSeconds: r.wallSeconds, cells: r.grid.cells } };
+  }
+  const V = P * 33, hand = { rainOnItsCatchmentM3: V, depthM: V / 9, capacityM3: 9 * 0.15 };
+  if (!ran) return { hand };
+  R('hollow: depth of water in it (m)', 'numerical', hand.depthM, val(r.probes[0], 'mean'), { abs: C.detailDepthAbsM });
+  return { hand, report: { wallSeconds: r.wallSeconds, cells: r.grid.cells, deepestM: val(r.probes[0], 'max') } };
+}
+
+// ---------------------------------------------------------------- PV-SS11: surface only, an allowance, or pipes, against known answers
+function ss11(spec, specs) {
+  const C = spec.criteria, P = spec.parameters, g = P.grate.value, table = [];
+  const out = collect(spec, Object.keys(P.cases.value), ({ id, exec, e, r }, R, ran) => {
+    const fam = id.split('-')[1], d = e.drainage ?? { kind: 'none' }, trt = d.kind === 'pipe' ? 'pipe' : d.kind === 'lumped' ? `allowance ${d.mmhr} mm/h` : 'surface only';
+    const def = buildCase(id, specs), rateAt = (t) => def.rain.find(b => t >= b.t0 - 1e-9 && t < b.t1 - 1e-9)?.rate ?? 0, depthP = def.rain.reduce((a, b) => a + b.rate * (b.t1 - b.t0), 0);
+    let truth, what, sim = null, crit;
+    if (fam === 'sagA' || fam === 'sagB') {
+      const s = P.scenes.value.sag, area = s.L * s.W, tp = P.truePipes.value[fam], o = { L: tp.L, K: st.pipeK(tp.D, P.pipeN.value), Co: g.Co, A: g.A, Cw: g.Cw, P: g.P };
+      if (fam === 'sagA') { const Q = Math.max(...def.rain.map(b => b.rate)) * area; truth = bisect((h) => st.inletFree(h, o) - Q, 0, 2); what = 'peak depth at the grate (m)'; if (ran) sim = Math.max(...r.series.map(q => q.probes.inlet[0])); }
+      else { const f = SCENES.sagStreet(s), z = Array.from(f.z), hist = st.sagHistory({ inflow: (t) => rateAt(t) * area, stage: (V) => st.levelForVolume(z, 1, V), zs: 0, Hout: tp.stage, o, tEnd: e.tEnd, every: 10 });
+        truth = Math.max(...hist.map(q => q.eta)); what = 'peak pond level in the sag (m)'; if (ran) sim = Math.max(...r.series.map(q => q.probes.sag[0])); }
+      crit = lim(C.sagDepthAbsM, C.sagDepthRel, truth);
+    } else if (fam === 'hollow') {
+      truth = Math.min(P.scenes.value.hollow.depth, depthP * P.hollow.value.catchmentM2 / P.hollow.value.areaM2); what = 'depth in the hollow at the end (m)'; crit = { abs: C.hollowDepthAbsM };
+      if (ran) sim = r.probes.find(q => q.id === 'hollow').final.mean;
+    } else {
+      const s = P.scenes.value.hill, G = P.hec22Grate.value, i = e.rain.mmhr * MMHR, Qg = i * s.W * G.x, E = st.grateEfficiency(Qg, s.n, s.Sx, s.SL, G.W, G.L), Qrem = i * s.W * 90.5 - E.E * Qg;
+      truth = st.kerbCellDepth(st.gutterSpread(Qrem, s.n, s.Sx, s.SL), s.Sx); what = 'depth in the kerb cell 40 m below the grate (m)'; crit = lim(C.hillDepthAbsM, C.hillDepthRel, truth);
+      if (ran) sim = r.probes.find(q => q.id === 'kerb').final.mean;
+    }
+    const hand = { trueDepthM: truth };
+    if (!ran) return { hand };
+    R(what, 'physical-model', truth, sim, crit, { note: trt });
+    table.push({ case: id, exec, family: fam, storm: e.rain.ari ?? `${e.rain.mmhr} mm/h`, treatment: trt, trueM: truth, measuredM: sim, errorM: sim - truth, inside: Math.abs(sim - truth) <= crit.abs });
+    return { hand, report: { treatment: trt, trueM: truth, measuredM: sim, errorM: sim - truth } };
+  });
+  out.table = table;
+  return out;
+}
+
+// ---------------------------------------------------------------- PV-SS12: measures one owner can take
+function ss12(spec, specs) {
+  const C = spec.criteria, P = spec.parameters;
+  const out = collect(spec, Object.keys(P.cases.value), ({ id, e, r }, R, ran) => {
+    const def = buildCase(id, specs), f = def.probeFine, A = f.dx * f.dx, N = f.nx * f.ny, Pm = e.rain.mmhr * e.rain.minutes / 60 / 1000, T = e.tEnd;
+    let open = 0; for (let k = 0; k < N; k++) if (!f.bld[k]) open++;
+    const boxArea = (b) => { let n = 0; for (let j = 0; j < f.ny; j++) for (let i = 0; i < f.nx; i++) { const x = (i + 0.5) * f.dx, y = (j + 0.5) * f.dx; if (x >= b.x0 && x < b.x1 && y >= b.y0 && y < b.y1 && !f.bld[j * f.nx + i]) n++; } return n * A; };
+    const Vr = Pm * (e.heldRoof ? open * A : N * A); let taken = 0, hand = { rainReachingTheGroundM3: Vr };
+    if (e.measure) { const Ag = boxArea(e.measure.box), si = st.storeIntake(e.measure.rateMmHr * MMHR, e.measure.store, P.nativeMmHr.value * MMHR, T); taken = Math.min(Vr, Ag * si.intake); Object.assign(hand, { measureAreaM2: Ag, storageM3: Ag * e.measure.store, fullAfterS: si.tFull, canTakeByTheEndM3: Ag * si.intake }); }
+    if (e.soil) { const Ap = boxArea(e.soil.box); taken = Math.min(Vr, e.soil.mmhr * MMHR * Ap * T); Object.assign(hand, { soilAreaM2: Ap }); }
+    const left = Vr - taken; Object.assign(hand, { takenM3: taken, leftOnTheGroundM3: left });
+    if (!ran) return { hand };
+    const end = r.series.at(-1);
+    if (e.measure || e.soil) {
+      R('water left on the ground at the end (m³)', 'numerical', left, end.volume, left > C.dryAbsM3 ? { rel: C.volumeRel } : { abs: C.dryAbsM3 });
+      R('water the measure took (m³)', 'numerical', taken, end.infil, { rel: C.volumeRel });
+    } else R('water on the ground at the end (m³)', 'numerical', Vr, end.volume, { rel: C.roofRel }, { note: e.heldRoof ? 'the roof holds its rain' : 'the roof sheds onto the ground (control)' });
+    return { hand, report: { leftM3: end.volume, takenM3: end.infil, inTheStoreM3: end.giStored, depthAtTheLowEdgeM: r.probes[0].final.mean } };
+  });
+  if (!EXPECT) for (const u of P.unsupported.value) out.rows.push(row({ benchmark: spec.id, caseId: u.measure, quantity: u.why, errorType: 'physical-model', ref: null, sim: null, status: 'Unsupported' }));
+  return out;
+}
+
 // ---------------------------------------------------------------- PV-SS10: the exchange law against the Sheffield rig
 function ss10(spec) {
   const P = spec.parameters, D = P.inletDiameterM.value, o = { inletPerim: Math.PI * D, inletArea: Math.PI * D * D / 4, ...P.appCoefficients.value }, k = o.inletPerim * Math.sqrt(2 * 9.81), rows = [], T = P.tests.value;
@@ -288,7 +362,7 @@ function ss10(spec) {
   return { rows, cases: { coefficients: hand }, notRun: [], raw: {}, hand: { coefficients: hand } };
 }
 
-const SCORERS = { 'PV-SS10': ss10, 'PV-SS1': ss1, 'PV-SS2': ss2, 'PV-SS3': ss3, 'PV-SS4': ss4, 'PV-SS5': ss5, 'PV-SS6': ss6, 'PV-SS7': ss7, 'PV-SS8': ss8, 'PV-SS9': ss9 };
+const SCORERS = { 'PV-SS10': ss10, 'PV-SS11': ss11, 'PV-SS12': ss12, 'PV-SS1': ss1, 'PV-SS2': ss2, 'PV-SS3': ss3, 'PV-SS4': ss4, 'PV-SS5': ss5, 'PV-SS6': ss6, 'PV-SS7': ss7, 'PV-SS8': ss8, 'PV-SS9': ss9 };
 export async function run(spec, specs) { const f = SCORERS[spec.id]; if (!f) throw new Error('no scorer for ' + spec.id); return f(spec, specs); }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]) && process.argv.includes('--expect')) {

@@ -150,6 +150,34 @@ export function hglCapacityFactor(nodes, pipes, outlets, hi = 64) {
   return lo;
 }
 
+// ---------------------------------------------------------------- a gutter and a grate on a grade (FHWA HEC-22, 3rd ed., §4.3.2, §4.4.4.1)
+/** Spread T (m) of a flow Q (m³/s) in a uniform triangular gutter: Q = (0.376 / n) Sx^1.67 SL^0.5 T^2.67 (Eq. 4-2). */
+export const gutterSpread = (Q, n, Sx, SL) => Math.pow(Q * n / (0.376 * Math.pow(Sx, 1.67) * Math.sqrt(SL)), 1 / 2.67);
+/** Self-test twin: the gutter's flow by integrating Manning's unit discharge (1/n) d^(5/3) √SL across the spread. */
+export function gutterFlowByStrips(T, n, Sx, SL, m = 200000) { let q = 0; for (let k = 0; k < m; k++) q += Math.pow(Sx * (k + 0.5) * T / m, 5 / 3) * T / m; return q * Math.sqrt(SL) / n; }
+/** Share of a gutter's flow a grate W wide and L long takes (Eq. 4-16, 4-19, 4-20; frontal flow all taken, V below splash-over). */
+export function grateEfficiency(Q, n, Sx, SL, W, L) {
+  const T = gutterSpread(Q, n, Sx, SL), V = Q / (0.5 * T * T * Sx), Eo = 1 - Math.pow(Math.max(0, 1 - W / T), 2.67), Rs = 1 / (1 + 0.0828 * Math.pow(V, 1.8) / (Sx * Math.pow(L, 2.3)));
+  return { T, V, Eo, Rs, E: Eo + Rs * (1 - Eo) };
+}
+/** Mean depth (m) over the first metre from the kerb of a gutter flowing with spread T: the depth a 1 m kerb cell holds. */
+export const kerbCellDepth = (T, Sx, w = 1) => (T >= w ? Sx * (T - w / 2) : Sx * T * T / (2 * w));
+
+// ---------------------------------------------------------------- a storage measure (a rain garden, permeable paving)
+/**
+ * Depth of water (m, per unit area of the measure) taken in by time T by a store that is under water throughout: it
+ * takes water at `rate` until its capacity `cap` is full, loses it to the soil below at `drain`, and once full takes
+ * only what drains. → { intake, tFull }
+ */
+export function storeIntake(rate, cap, drain, T) {
+  const tFull = rate > drain ? cap / (rate - drain) : Infinity;
+  return { tFull, intake: T <= tFull ? rate * T : rate * tFull + drain * (T - tFull) };
+}
+/** Self-test twin: the same by stepping the store. */
+export function storeIntakeStepped(rate, cap, drain, T, dt = 0.5) {
+  let s = 0, taken = 0; for (let t = 0; t < T - 1e-9; t += dt) { const st = Math.max(0, s - drain * dt), g = Math.min(rate * dt, cap - st); s = st + g; taken += g; } return taken;
+}
+
 // ---------------------------------------------------------------- the wall-exposure rule
 /**
  * Water against a building, by the rule as written. depth, wse, bld (1 = building), road (1 = street), fp (1 = this

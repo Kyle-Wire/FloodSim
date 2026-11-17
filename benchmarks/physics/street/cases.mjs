@@ -4,6 +4,7 @@
 import { coarsen, roofRouting } from '../../../src/terrain.js';
 import { buildSubgrid } from '../../../src/subgrid.js';
 import { synthNetwork, toINP, lumpedInfil, DESIGN_DEFAULTS } from '../../../src/drainage.js';
+import { drawnGI } from '../../../src/stormwater.js';
 import { hyetograph, A14_DURATIONS, A14_ARI } from '../../../src/storm.js';
 import { GridRef, fromUTM } from '../../../src/geo.js';
 import { SCENES } from './terrain.mjs';
@@ -94,12 +95,23 @@ export function buildCase(id, specs) {
   const N = c.nx * c.ny; let infil = c.infil ? Float64Array.from(c.infil) : new Float64Array(N);
   const d = e.drainage ?? { kind: 'none' };
   if (d.kind === 'lumped') { const extra = lumpedInfil(c, c.roadFrac, d.mmhr); infil = infil.map((v, k) => v + extra[k]); }
+  // owner-scale measures (PV-SS12), each through the app's own layer for it
+  let gi = null, rainField = c.rainField;
+  if (e.measure) { // a drawn rain garden or permeable patch: the drawn-GI store on its cells (src/stormwater.js drawnGI)
+    const m = e.measure, cells = probeCells(fine, { kind: 'box', ...m.box });
+    gi = drawnGI({ ...fine, drawnGI: [{ id: 1, kind: m.kind, cells, rate: m.rateMmHr * MMHR, store: m.store, under: 0 }] }, c, c.F);
+  }
+  if (e.soil) for (const k of solverCells(fine, probeCells(fine, { kind: 'box', ...e.soil.box }), c)) infil[k] += e.soil.mmhr * MMHR; // bare soil taking water at a constant rate
+  if (e.heldRoof) { // a roof whose rain is held (a cistern that has not filled): src/terrain.js roofRouting with the roof in `held`
+    const ids = new Int32Array(N); for (let k = 0; k < N; k++) ids[k] = c.mask[k] ? 0 : 1;
+    rainField = Float64Array.from(roofRouting(c.mask, c.nx, c.ny, 1, { ids, roofs: new Map([[1, { roof: 'cistern', retention: e.heldRoof.retention }]]), held: new Set([1]) }).rainField);
+  }
   let coupled = null;
   if (d.kind === 'pipe') coupled = onePipe(d, base, c, e);
   else if (d.kind === 'network') coupled = network(d, base, c, e, pf);
-  const opts = { nx: c.nx, ny: c.ny, dx: c.dx, z: c.z, mask: c.mask, manning: c.manning, infil, rainField: c.rainField, inlets: coupled ? coupled.net.inlets.map(q => q.cell) : undefined,
+  const opts = { nx: c.nx, ny: c.ny, dx: c.dx, z: c.z, mask: c.mask, manning: c.manning, infil, rainField, gi: gi ? { rate: gi.rate, cap: gi.cap, drain: gi.drain } : undefined, inlets: coupled ? coupled.net.inlets.map(q => q.cell) : undefined,
     subgrid: c.sg ?? undefined, bc: { ...ALL('wall'), ...(e.bc === 'app' ? ALL('outflow') : e.bc ?? {}) }, ...APP_SOLVER };
-  return { id, spec: spec.id, entry: e, base, fine, probeFine, c, opts, rain, tEnd: e.tEnd, every: e.every ?? 60, probes, coupled, keepFields: !!e.keepFields, level0: e.level0 ?? null, houses: base.houses ?? null };
+  return { id, spec: spec.id, entry: e, base, fine, probeFine, c, opts, rain, tEnd: e.tEnd, every: e.every ?? 60, probes, coupled, gi, keepFields: !!e.keepFields, level0: e.level0 ?? null, houses: base.houses ?? null };
 }
 
 /** One manhole with one grate on one pipe to an outlet outside the surface model. */

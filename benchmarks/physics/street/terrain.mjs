@@ -81,4 +81,33 @@ export function gutterStreet({ L, W, SL, Sx, n, dx = 1 }) {
   return layers(Math.round(L / dx), Math.round(W / dx), dx, (x, y) => SL * (L - x) + Sx * y, { nRoad: n });
 }
 
-export const SCENES = { plane, hollowStreet, sagStreet, driveway, rearYard, block, gutterStreet };
+/**
+ * A street with kerbs and a crown (added 17 Nov for PV-SS9 revision 2). 24 × 16 m, closed: an 8 m street along x at
+ * y ∈ [5, 13) falling at `cross` from its crown (y = 9) to both gutters; lots behind kerbs `kerb` high, falling to
+ * the street at `lot`. Rain falls on the south side only (y < 9), so the north gutter's true depth is nil. The kerb
+ * lines sit on odd metres: 2 m and 4 m cells straddle them.
+ */
+export function kerbStreet({ dx = 1, cross = 0.02, kerb = 0.15, lot = 0.02 }) {
+  const zf = (x, y) => (y >= 5 && y < 13 ? cross * (4 - Math.abs(y - 9)) : y < 5 ? kerb + lot * (5 - y) : kerb + lot * (y - 13));
+  return layers(24 / dx, 16 / dx, dx, zf, { road: (x, y) => y >= 5 && y < 13, rain0: (x, y) => y >= 9 });
+}
+
+/**
+ * A lot with a small hollow (added 17 Nov for PV-SS9 revision 2). 16 × 16 m, closed, falling south at S; a 3 × 3 m
+ * hollow at x, y ∈ [5, 8) with a level floor `depth` below its rim (the ground just downslope of it). Its catchment
+ * is the hollow and the 3 m strip upslope of it: 33 m².
+ */
+export function hollowLot({ dx = 1, S = 0.02, depth = 0.15 }) {
+  const rim = S * 4.5, zf = (x, y) => (x >= 5 && x < 8 && y >= 5 && y < 8 ? rim - depth : S * y);
+  return layers(16 / dx, 16 / dx, dx, zf, { road: () => false });
+}
+
+/**
+ * One owner's lot (added 17 Nov for PV-SS12). 10 × 10 m, closed, falling east at S, so everything ends against the
+ * east edge; with `house`, a 4 × 4 m building at x ∈ [0, 4), y ∈ [3, 7).
+ */
+export function lot10({ dx = 1, S = 0.02, house = false }) {
+  return layers(10 / dx, 10 / dx, dx, (x) => S * (10 - x), { bld: (x, y) => house && x < 4 && y >= 3 && y < 7, road: () => false });
+}
+
+export const SCENES = { plane, hollowStreet, sagStreet, driveway, rearYard, block, gutterStreet, kerbStreet, hollowLot, lot10 };

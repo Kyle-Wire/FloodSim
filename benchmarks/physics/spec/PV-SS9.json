@@ -1,8 +1,8 @@
 {
  "id": "PV-SS9",
- "title": "Coarse run then downscale",
+ "title": "Coarse run then downscale: do a kerb, a crown and a small hollow survive?",
  "category": "convergence",
- "process": "a coarse run mapped onto the 1 m ground against a straight 1 m run of the same case: how much faster, how much worse",
+ "process": "a coarse run mapped onto the 1 m ground against the known answer on the 1 m ground: whether street detail survives, how much faster, how much worse",
  "module": "street/score.mjs",
  "executor": "node (CPU surface solver) and browser (GPU); raw measurements in street/raw/, scored by run.mjs",
  "dependsOn": [
@@ -10,16 +10,24 @@
  ],
  "equations": [
   "at rest the pond stands at the level the rain volume fills on the 1 m ground, whatever grid ran",
-  "the 1 m map of a coarse run: the water surface carried onto the 1 m ground (src/downscale.js), or the subgrid tables' level (src/subgrid.js)"
+  "the 1 m map of a coarse run: the water surface carried onto the 1 m ground (src/downscale.js), or the subgrid tables' level (src/subgrid.js)",
+  "kerb and crown: rain on one side of a crowned street behind kerbs ponds in that side's gutter at the level its volume fills; while that level is below the kerb and the crown, the lot behind the kerb and the far gutter hold nothing",
+  "hollow: a 3 x 3 m hollow holds the rain of its own 33 m^2: depth = P x 33 / 9"
  ],
  "initialConditions": "dry",
  "boundaryConditions": "surface closed on all sides; no drainage",
- "geometry": "the bowl neighbourhood, 100-yr storm, no drainage (PV-SS8 case none-100 is the 1 m run)",
+ "geometry": "the bowl neighbourhood, 100-yr storm, no drainage (PV-SS8 case none-100 is the 1 m run). Detail scenes (terrain.mjs): kerbStreet, a 24 x 16 m street with a 0.08 m crown, 0.15 m kerbs on odd metres and rain on the south side only; hollowLot, a 16 x 16 m lot at 2 % with a 3 x 3 m hollow 0.15 m deep at x, y 5-8 m",
  "parameters": {
   "scenes": {
    "value": {
     "block": {
      "kind": "block"
+    },
+    "kerbStreet": {
+     "kind": "kerbStreet"
+    },
+    "hollowLot": {
+     "kind": "hollowLot"
     }
    },
    "unit": "m"
@@ -126,6 +134,280 @@
       }
      },
      "keepFields": true
+    },
+    "SS9-kerb-1": {
+     "scene": "kerbStreet",
+     "grid": {
+      "F": 1
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "gutterS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 5,
+       "y1": 6
+      },
+      "lotS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 4,
+       "y1": 5
+      },
+      "gutterN": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 12,
+       "y1": 13
+      }
+     }
+    },
+    "SS9-hollow-1": {
+     "scene": "hollowLot",
+     "grid": {
+      "F": 1
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "hollow": {
+       "kind": "box",
+       "x0": 5,
+       "x1": 8,
+       "y0": 5,
+       "y1": 8
+      }
+     }
+    },
+    "SS9-kerb-2": {
+     "scene": "kerbStreet",
+     "grid": {
+      "F": 2
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "gutterS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 5,
+       "y1": 6
+      },
+      "lotS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 4,
+       "y1": 5
+      },
+      "gutterN": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 12,
+       "y1": 13
+      }
+     }
+    },
+    "SS9-hollow-2": {
+     "scene": "hollowLot",
+     "grid": {
+      "F": 2
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "hollow": {
+       "kind": "box",
+       "x0": 5,
+       "x1": 8,
+       "y0": 5,
+       "y1": 8
+      }
+     }
+    },
+    "SS9-kerb-4": {
+     "scene": "kerbStreet",
+     "grid": {
+      "F": 4
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "gutterS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 5,
+       "y1": 6
+      },
+      "lotS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 4,
+       "y1": 5
+      },
+      "gutterN": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 12,
+       "y1": 13
+      }
+     }
+    },
+    "SS9-hollow-4": {
+     "scene": "hollowLot",
+     "grid": {
+      "F": 4
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "hollow": {
+       "kind": "box",
+       "x0": 5,
+       "x1": 8,
+       "y0": 5,
+       "y1": 8
+      }
+     }
+    },
+    "SS9-kerb-4s": {
+     "scene": "kerbStreet",
+     "grid": {
+      "F": 4,
+      "subgrid": true
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "gutterS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 5,
+       "y1": 6
+      },
+      "lotS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 4,
+       "y1": 5
+      },
+      "gutterN": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 12,
+       "y1": 13
+      }
+     }
+    },
+    "SS9-hollow-4s": {
+     "scene": "hollowLot",
+     "grid": {
+      "F": 4,
+      "subgrid": true
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "hollow": {
+       "kind": "box",
+       "x0": 5,
+       "x1": 8,
+       "y0": 5,
+       "y1": 8
+      }
+     }
+    },
+    "SS9-kerb-8s": {
+     "scene": "kerbStreet",
+     "grid": {
+      "F": 8,
+      "subgrid": true
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "gutterS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 5,
+       "y1": 6
+      },
+      "lotS": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 4,
+       "y1": 5
+      },
+      "gutterN": {
+       "kind": "box",
+       "x0": 0,
+       "x1": 24,
+       "y0": 12,
+       "y1": 13
+      }
+     }
+    },
+    "SS9-hollow-8s": {
+     "scene": "hollowLot",
+     "grid": {
+      "F": 8,
+      "subgrid": true
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "hollow": {
+       "kind": "box",
+       "x0": 5,
+       "x1": 8,
+       "y0": 5,
+       "y1": 8
+      }
+     }
     }
    },
    "unit": "grid: F m cells with downscaling, or the subgrid mode"
@@ -158,14 +440,17 @@
   "end pond level on the 1 m map against the arithmetic level",
   "peak wall depth at each house against the 1 m run (root mean square over the houses)",
   "houses exposed (10 cm rule) against the 1 m run",
-  "reported: wall time against the 1 m run on the same executor"
+  "reported: wall time against the 1 m run on the same executor",
+  "detail scenes, on the 1 m map at the end: the depth in the gutter the rain fell beside; the depth on the lot behind the kerb; the depth in the far gutter; the depth in the hollow"
  ],
  "criteria": {
   "finalLevelAbsM": 0.01,
   "houseDepthRmseM": 0.05,
-  "exposureAgreement": 0.9
+  "exposureAgreement": 0.9,
+  "detailDepthAbsM": 0.02,
+  "detailDryM": 0.01
  },
- "criteriaNotes": "End level: 1 cm. Against the 1 m run: 5 cm root mean square on the wall depths and nine houses in ten given the same exposed / not exposed answer; these rows carry the status Not independently validated because the reference is the same solver.",
+ "criteriaNotes": "End level: 1 cm. Against the 1 m run: 5 cm root mean square on the wall depths and nine houses in ten given the same exposed / not exposed answer; these rows carry the status Not independently validated because the reference is the same solver. Revision 2, the pass rule in Kyle's terms: after a coarse run is mapped to 1 m, a KERB survives if the lot behind it holds under 1 cm and the gutter holds its depth within 2 cm; a CROWN survives if the far gutter holds under 1 cm; a HOLLOW survives if its depth is within 2 cm of the hand answer. 1 m stays the baseline and is held to the same rule.",
  "conservation": "surface books (reported)",
  "resolution": "1 m; 2 m and 4 m with downscaling; 4 m and 8 m subgrid",
  "assumptions": [
@@ -173,7 +458,9 @@
  ],
  "limitations": [
   "one scene, one storm, no drainage",
-  "CPU wall times say little about the GPU: the speed-up that matters is the gpu rows'"
+  "CPU wall times say little about the GPU: the speed-up that matters is the gpu rows'",
+  "the detail scenes are level along the street: a kerb and a crown are tested holding still water, not steering a flow",
+  "one kerb height, one crown height, one hollow size; each sits across 2 m and 4 m cell boundaries"
  ],
  "validRange": "ponding in a bowl; not sheet flow on a hillside",
  "scoring": "automated: street/score.mjs builds rows with lib/score.mjs row(); one row set per executor (cpu, gpu), never merged; a case with no raw file is listed as not run and has no rows",
@@ -183,6 +470,18 @@
    "date": "2026-11-17",
    "hash": "06874c70da0d39cc2f2189030492fa02593a5409272c439a1d24ea60d2b1c2bd",
    "why": "first registration, before any sandbox case was run"
+  },
+  {
+   "revision": 2,
+   "date": "2026-11-17",
+   "hash": "e8303a24876b29b9c9acbcf2e8b552f5302acf9b1c4ef581f305d3314b5655ad",
+   "why": "two criteria added for the detail cases (detailDepthAbsM, detailDryM); the three registered in revision 1 are unchanged. Reason: Kyle's direction of 17 Nov 2026 that coarse-then-downscale is a pass or fail question about kerbs, crowns and small hollows."
+  }
+ ],
+ "definitionRevisions": [
+  {
+   "date": "2026-11-17",
+   "why": "revision 2, after the first CPU run of the bowl cases: Kyle's direction (relayed by the product session) that 1 m stays the baseline and that this case must say whether a kerb, a street crown and a small hollow survive a coarse run. Ten detail cases, two scenes and two criteria were added; the bowl cases, their criteria and their results are unchanged. The detail cases were registered before any of them ran."
   }
  ]
 }

@@ -119,6 +119,17 @@ export function selfTest() {
     check('wall rule: water at the wall joined to street water counts; cut off from the street it does not; water 3 m away does not', a.counts && Math.abs(a.level - 10.15) < 1e-12 && !b.counts && !c.counts, JSON.stringify([a, b, c]));
   }
 
+  {
+    // HEC-22 gutter and grate; a storage measure
+    const n = 0.016, Sx = 0.02, SL = 0.02, Q = 0.0167, T = st.gutterSpread(Q, n, Sx, SL), g = st.grateEfficiency(Q, n, Sx, SL, 0.6, 0.9);
+    check('gutter: HEC-22 spread carries the flow Manning gives strip by strip (1.5 %: the manual rounds 5/3, 8/3 and 3/8)', rel(st.gutterFlowByStrips(T, n, Sx, SL), Q) < 0.015, `${st.gutterFlowByStrips(T, n, Sx, SL)} vs ${Q}`);
+    check('grate: the frontal share is the strip flow over the grate\'s width (0.5 %)', rel(1 - st.gutterFlowByStrips(T - 0.6, n, Sx, SL) / st.gutterFlowByStrips(T, n, Sx, SL), g.Eo) < 0.005, String(g.Eo));
+    check('grate: efficiency between its frontal share and 1; side interception falls to nil with the cross slope', g.E > g.Eo && g.E < 1 && st.grateEfficiency(Q, n, 0.001, SL, 0.6, 0.9).Rs < g.Rs && st.grateEfficiency(Q, n, 1e-9, SL, 0.6, 0.9).Rs < 0.02, `${g.Rs}, ${st.grateEfficiency(Q, n, 1e-9, SL, 0.6, 0.9).Rs}`);
+    check('kerb cell: mean depth over the first metre of a triangle = quadrature (1e-9)', (() => { let s = 0; const N = 100000; for (let k = 0; k < N; k++) s += Math.max(0, Sx * (T - (k + 0.5) / N)) / N; return Math.abs(s - st.kerbCellDepth(T, Sx)) < 1e-9; })());
+    for (const [rate, cap, drain, Tt] of [[100 / 3.6e6, 0.3, 2 / 3.6e6, 21600], [1000 / 3.6e6, 0.2, 2 / 3.6e6, 7200], [100 / 3.6e6, 0.3, 2 / 3.6e6, 3600]])
+      check(`storage measure: intake by ${Tt} s, closed form = stepped store (0.1 %)`, rel(st.storeIntakeStepped(rate, cap, drain, Tt), st.storeIntake(rate, cap, drain, Tt).intake) < 1e-3, `${st.storeIntakeStepped(rate, cap, drain, Tt)} vs ${st.storeIntake(rate, cap, drain, Tt).intake}`);
+  }
+
   // independence: no reference imports from outside references/
   const dir = path.dirname(fileURLToPath(import.meta.url)), bad = [];
   for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.mjs'))) for (const m of fs.readFileSync(path.join(dir, f), 'utf8').matchAll(/(?:import|from)\s*\(?\s*['"]([^'"]+)['"]/g))

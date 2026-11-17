@@ -18,7 +18,7 @@ import { runCase } from './harness.mjs';
 export class CpuSim {
   constructor(o) {
     if (o.subgrid) throw new Error('the subgrid speed mode runs on the GPU only');
-    const s = this.s = new CPUSolver({ nx: o.nx, ny: o.ny, dx: o.dx, z: o.z, manning: o.manning, mask: o.mask, bc: o.bc, hdry: o.hdry, hfront: o.hfront, dtDry: o.dtDry });
+    const s = this.s = new CPUSolver({ nx: o.nx, ny: o.ny, dx: o.dx, z: o.z, manning: o.manning, mask: o.mask, bc: o.bc, hdry: o.hdry, hfront: o.hfront, dtDry: o.dtDry, gi: o.gi });
     this.nx = o.nx; this.ny = o.ny; this.dx = o.dx;
     for (let j = 0; j < o.ny; j++) for (let i = 0; i < o.nx; i++) { const k = j * o.nx + i, c = s.idx(i, j); if (o.infil) s.infil[c] = typeof o.infil === 'number' ? o.infil : o.infil[k]; }
     if (o.rainField) { s.rainField = new Float64Array(s.NX * s.NY).fill(1); for (let j = 0; j < o.ny; j++) for (let i = 0; i < o.nx; i++) s.rainField[s.idx(i, j)] = o.rainField[j * o.nx + i]; }
@@ -45,7 +45,8 @@ export class CpuSim {
   async readState() {
     const s = this.s, V = s.vol, volume = s.volume(), expected = V.initial + V.rain - V.infil - V.outflow - this.exchanged;
     const scale = Math.max(1e-30, Math.abs(expected), V.initial + V.rain + Math.max(0, -this.exchanged));
-    return { h: s.field('h'), hmax: s.field('maxDepth'), mass: { volume, rain: V.rain, infil: V.infil, outflow: V.outflow, exchanged: this.exchanged, clipped: V.clipped, expected, rel: (volume - expected) / scale } };
+    let giStored = 0; for (let c = 0; c < s.giStore.length; c++) giStored += s.giStore[c]; giStored *= s.dx * s.dx;
+    return { h: s.field('h'), hmax: s.field('maxDepth'), mass: { giStored, volume, rain: V.rain, infil: V.infil, outflow: V.outflow, exchanged: this.exchanged, clipped: V.clipped, expected, rel: (volume - expected) / scale } };
   }
   destroy() {}
 }
