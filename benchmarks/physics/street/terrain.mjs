@@ -103,6 +103,18 @@ export function hollowLot({ dx = 1, S = 0.02, depth = 0.15 }) {
 }
 
 /**
+ * A yard that drains to a small hollow (PV-SS9 revision 2, second setup). 16 × 16 m: above y = 5 the ground falls
+ * south at S and toward the line x = 6.5 at Sx; a 3 × 3 m hollow at x, y ∈ [5, 8) has a level floor `depth` below its
+ * rim; the row below it (y ∈ [4, 5)) is a berm except over the hollow's width, where it is the rim, and takes no rain.
+ * So the hollow's catchment is exactly the ground above y = 5: 176 m². Below the berm the lot falls south to its foot.
+ */
+export function hollowYard({ dx = 1, S = 0.02, Sx = 0.02, depth = 0.15, berm = 0.30 }) {
+  const rim = S * 4.5, inH = (x, y) => x >= 5 && x < 8 && y >= 5 && y < 8;
+  const zf = (x, y) => (inH(x, y) ? rim - depth : y >= 5 ? S * y + Sx * Math.abs(x - 6.5) : y >= 4 ? rim + (x >= 5 && x < 8 ? 0 : berm) : S * y);
+  return layers(16 / dx, 16 / dx, dx, zf, { road: () => false, rain0: (x, y) => y >= 4 && y < 5 });
+}
+
+/**
  * One owner's lot (added 17 Nov for PV-SS12). 10 × 10 m, closed, falling east at S, so everything ends against the
  * east edge; with `house`, a 4 × 4 m building at x ∈ [0, 4), y ∈ [3, 7).
  */
@@ -110,4 +122,4 @@ export function lot10({ dx = 1, S = 0.02, house = false }) {
   return layers(10 / dx, 10 / dx, dx, (x) => S * (10 - x), { bld: (x, y) => house && x < 4 && y >= 3 && y < 7, road: () => false });
 }
 
-export const SCENES = { plane, hollowStreet, sagStreet, driveway, rearYard, block, gutterStreet, kerbStreet, hollowLot, lot10 };
+export const SCENES = { plane, hollowStreet, sagStreet, driveway, rearYard, block, gutterStreet, kerbStreet, hollowLot, hollowYard, lot10 };

@@ -1,11 +1,11 @@
-# Street sandbox (PV-SS1 … PV-SS10)
+# Street sandbox (PV-SS1 … PV-SS12)
 
 Made-up street cases whose answers are known before the model runs: by hand arithmetic, a closed form, or a
 laboratory measurement. A family of the physics suite (`../README.md`), built 17 Nov 2026 at Kyle's instruction to
 test the urban hydraulics behind the home-buyer flood report.
 
 - **Short report:** [REPORT.md](REPORT.md). **Every scored row:** [RESULTS.md](RESULTS.md). **Findings:**
-  `../../FINDINGS.md`, F12–F21.
+  `../../FINDINGS.md`, F12–F24.
 - This family did not go through the three reviews `../milestone2/` sets for PVM2 tests, and it does not touch PVM2's
   held items (PV-TF1-R2, PV-RV1, production wiring). Its results are sandbox results. **Nothing here is called
   validated.**
@@ -32,10 +32,14 @@ Run the sandbox with `--only`: a bare `run.mjs` runs every spec in the suite, PV
 | PV-SS6 | 6 A driveway dip and a rear yard at 0.5, 1, 2, 4 m, 4 m and 8 m subgrid | the level a rain volume stands at on the 0.5 m ground; each grid's own answer from its mean ground |
 | PV-SS7 | 7 The wall-exposure rule | twelve hand-made depth grids |
 | PV-SS8 | 8 Pipes, an allowance, no drainage | no drainage is arithmetic; the allowance has an upper bound; the pipes are reported beside them |
-| PV-SS9 | 9 Coarse run then downscale | the end level is arithmetic; the peak is compared with the 1 m run (Not independently validated) |
+| PV-SS9 | 9 Coarse run then downscale: do a kerb, a crown and a small hollow survive? (revision 2) | a gutter pond below its kerb and crown; a hollow holding its yard's rain; the bowl's end level |
 | PV-SS10 | laboratory | 15 steady tests of the Sheffield rig (Rubinato et al. 2017): the exchange into the sewer at a measured depth |
+| PV-SS11 | 8, made thorough: surface only, an allowance, or pipes, each against a known answer | a sag whose drain keeps up, a sag whose drain cannot, a hollow with no drain, a kerbed street on a grade (FHWA HEC-22) |
+| PV-SS12 | measures one owner can take | a rain garden, a permeable strip, bare soil and a held roof take the volume their size says; four measures FloodSim cannot represent are listed as Unsupported |
 
-Kyle's nine cases are all here; none was dropped. Merged: case 3's free-outfall run doubles as case 4's comparison,
+Kyle's nine cases are all here; none was dropped. PV-SS9 revision 2, PV-SS11 and PV-SS12 follow his direction of the
+same afternoon, relayed by the product session: keep the detail (1 m is the baseline), surface only is what most
+reports will use, and what-ifs at the scale of one owner. Merged: case 3's free-outfall run doubles as case 4's comparison,
 and case 8's pipe runs are case 3's network runs. What the existing suite already covers and is not repeated:
 manhole-to-street surcharge with exact answers (`../../gatec/coupled/`, 22 of 22), and full-pipe friction (PV-P1).
 
@@ -74,6 +78,16 @@ manhole-to-street surcharge with exact answers (`../../gatec/coupled/`, 22 of 22
     fixed. Its spec says so.
   - **`terrain.mjs`** gained one scene (`gutterStreet`) for the gutter diagnostic. No registered case uses it and the
     registered scenes are unchanged.
+  - **PV-SS9 revision 2, PV-SS11 and PV-SS12** were registered at 14:06 EST (commit `f7a8d63`), before any of their
+    cases ran. PV-SS9 gained two criteria for its detail cases; its three earlier criteria and its bowl results are
+    unchanged. PV-SS11 is not blind for its pipe treatment (its spec says what had been seen).
+  - **PV-SS9, two definition revisions to the hollow cases** (in the spec). First the lot's foot was closed and its
+    pond drowned the hollow: my setup error. Then the hand answer turned out to be arguable (the cells beside the
+    hollow shed water into it), so the hollow was moved to the low point of a bermed yard where its catchment is
+    exact. Both earlier sets of raw files are kept; their rows are in `results/2026-11-17T19-13-18-241Z` and
+    `…T19-14-04-695Z`. Criteria unchanged.
+  - **Two stray raw folders** (`raw/2026-11-17T19-06-39-084Z`, `…-190Z`) are from a launch with a shell slip that cut
+    some runs short. The complete runs of the same cases are in `raw/2026-11-17T19-07-cpu`, which the scorer uses.
 - No criterion was changed after a run.
 - The grade line of PV-SS3 follows HEC-22 §7.5 for friction (from the outlet upstream, Manning full flow) but starts
   from the pipe's own depth at the outlet, as SWMM's normal-depth outfall does, not from HEC-22's (d_c + D) / 2, and has
@@ -129,4 +143,7 @@ case from the paper: the flume's outlet weir setting is not published.
 - **The laboratory's unsteady tests and its sewer-to-surface tests** (S3, S4): in a coupled run the manhole head is a
   result, so they need the rig's surface, which the paper does not fix.
 - **The product's own copy of the wall rule** (`Climate Inspection/tools/gate2/wall.py`): not tested here.
-- **Infiltration, roofs to the sewer, real DEMs, real storms.**
+- **The subgrid modes on the detail cases:** whether a 4 m or 8 m subgrid run keeps a kerb, a crown and a hollow is the
+  open question of F22. GPU only.
+- **A true answer for a whole network.** PV-SS11's pipe rows are single streets.
+- **Green-Ampt infiltration, roofs to the sewer, real DEMs, real storms.**

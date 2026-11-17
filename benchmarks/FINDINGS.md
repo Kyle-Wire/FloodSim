@@ -623,3 +623,115 @@ flow crossing the grate's width times HEC-22's efficiency, in place of the weir 
 - **No drainage** (PV-SS8): the pond stands at the level the rain fills, to 0.03 mm.
 - **The wall rule at 1 m** (PV-SS7): 11 of 11 hand cases.
 - **Surface books:** 1e-13 or better in every CPU run.
+
+## Street sandbox, second set (17 Nov 2026, afternoon), appended
+
+After Kyle's direction relayed by the product session: 1 m stays the baseline and coarse-then-downscale must say whether
+street detail survives (PV-SS9 revision 2); surface-only is what most reports will use, so each drainage treatment is
+scored against a hand answer (PV-SS11); measures one owner can take get known-answer cases (PV-SS12). All three were
+registered before they ran. CPU rows; the GPU rows and the subgrid modes are not yet run.
+
+| ID | Finding | Severity | Status | Rows affected (registered status kept) |
+|---|---|---|---|---|
+| F22 | A coarse run loses the street crown at 2 m and the small hollow at 4 m; the kerb survives | High for any use of coarse runs | Explained | PV-SS9 detail: 4 Failed at 2 m and 4 m; 4 Passed at 1 m |
+| F23 | Surface only is exact where nothing drains and 0.4–0.6 m too deep at a sag a drain serves; an allowance is wrong both ways | High for areas without pipe data | Explained | PV-SS11: 26 Failed, 11 Passed |
+| F24 | Rain gardens, permeable paving and soil take exactly what their size says; four owner-scale measures cannot be represented | Medium (product scope) | Documented | PV-SS12: 10 Passed, 4 Unsupported |
+
+### F22. What survives a coarse run
+
+**Evidence** (PV-SS9 revision 2). A street with a 0.08 m crown and 0.15 m kerbs, rain on one side only; a 3 × 3 m hollow
+at the low point of a yard. Read on the 1 m map at the end.
+
+| | By hand | 1 m | 2 m, mapped to 1 m | 4 m, mapped to 1 m |
+|---|---|---|---|---|
+| Kerb: depth in the gutter | 0.050 m | 0.049 | 0.060 | 0.060 |
+| Kerb: depth on the lot behind it | 0 | 0.000 | 0.000 | 0.000 |
+| Crown: depth in the far gutter | 0 | 0.003 | **0.045** | **0.060** |
+| Hollow: depth of water in it | 0.098 m | 0.098 | **0.120** | **0.000** |
+
+- **1 m holds all three.**
+- **The kerb survives at 2 m and 4 m,** because the 1 m map puts the water level back on the 1 m ground.
+- **The crown does not.** A 2 m cell across the crown has a mean bed below the pond, so the water crosses; at 4 m the
+  two gutters stand at one level.
+- **The hollow** is 2.2 cm too deep at 2 m (limit 2 cm) and gone at 4 m: a 4 m cell's mean bed has no pit.
+
+**Reading.** Kyle's rule ("maintaining the streets, the curbs, the small hollows") is met at 1 m only. A plain coarse
+run is not a way to keep that detail, with or without the 1 m map. The subgrid modes carry 1 m storage in each cell and
+may do better; they are GPU only and not yet run.
+
+**Two setups of the hollow case were invalid and are kept.** First the lot's foot was closed and its pond drowned the
+hollow (my error). Then, with the foot open, the 1 m run filled the hollow to its rim (0.150 m against a hand 0.110 m):
+the cells beside the hollow shed part of their sheet flow sideways into it, which the hand answer did not allow for.
+Neither is exact, so the case was rebuilt with a catchment that cannot be argued about. Both are in the spec's
+`definitionRevisions`. **Observation, not scored:** on a plain slope a pit one to three cells wide takes water from
+the cells beside it as well as from above; how much is right is not known from this case.
+
+### F23. Surface only, an allowance, or pipes, against known answers
+
+**Evidence** (PV-SS11). Four streets whose true answer is worked by hand, 60 min design storms. Depths in metres.
+
+| Street | Storm | True | Pipe (FloodSim) | Surface only | Allowance 30 mm/h | Allowance 50 mm/h |
+|---|---|---|---|---|---|---|
+| Sag, drain keeps up: peak at the grate | 10-yr | 0.026 | 0.026 | **0.417** | **0.254** | **0.188** |
+| | 100-yr | 0.036 | 0.036 | **0.558** | **0.415** | **0.343** |
+| | 500-yr | 0.043 | 0.043 | **0.657** | **0.534** | **0.454** |
+| Sag, drain cannot keep up: peak pond | 10-yr | 0.043 | 0.039 | **0.417** | **0.254** | **0.188** |
+| | 100-yr | 0.135 | 0.115 | **0.558** | **0.415** | **0.343** |
+| | 500-yr | 0.205 | 0.188 | **0.657** | **0.534** | **0.454** |
+| Hollow with no drain: depth at the end | 10-yr | 0.200 | – | 0.200 | **0.064** | **0.007** |
+| | 100-yr | 0.200 | – | 0.200 | **0.169** | **0.097** |
+| | 500-yr | 0.200 | – | 0.200 | **0.173** | **0.151** |
+| Kerbed street on a grade: kerb cell | 100 mm/h | 0.0168 | **0.0219** | **0.0246** | 0.0204 | 0.0168 |
+
+Bold is outside the limit (2 cm or 20 %; 5 mm or 20 % on the grade).
+
+| Treatment | Inside the limit |
+|---|---|
+| Pipe network | 6 of 7 |
+| Surface only | 3 of 10 |
+| Allowance 30 mm/h | 1 of 10 |
+| Allowance 50 mm/h | 1 of 10 |
+
+**Reading.**
+- **Surface only is exact where nothing drains:** a hollow, a yard, any low ground without an inlet.
+- **At a low point that a drain serves it is far too deep:** 0.42–0.66 m where the truth is 3–20 cm. These sags are
+  closed, the worst case. In an open street the depth is capped by the height of the sag's rim (PV-SS2), so read a
+  surface-only depth as that cap.
+- **An allowance is not a better estimate.** It is still 0.15–0.49 m too deep at a served sag, and it drains a hollow
+  that nothing drains (0.007–0.173 m against 0.200 m). It is wrong in both directions.
+- **On a grade all four are within 8 mm.** Moving water is shallow whichever treatment is used.
+- **The pipe rows carry F14 and F21:** 8–14 % low at the failing sag, 5 mm high on the grade (the grate takes too
+  little).
+
+**What a report may say where there is no pipe data.** A surface-only run is an upper bound: it shows where water
+gathers and how deep it would stand if no drain took any. It cannot say that a low point floods, only that it would
+if its drains were absent or blocked. It can say that a low point with no way out (a hollow below its rim, a yard)
+holds water, and how much. An allowance should not be used to turn the bound into an estimate.
+
+**Limits.** Four made-up streets. No case has a true answer for a whole network. The true sags assume a clean grate on
+a clean pipe.
+
+### F24. Measures one owner can take
+
+**Evidence** (PV-SS12). A 10 × 10 m lot, the measure at its low edge.
+
+| Measure | By hand | FloodSim |
+|---|---|---|
+| Rain garden 4 m², 1.2 m³ of storage, 1.0 m³ of rain | all of it taken, ground dry | 0.999 m³ taken, 0.001 m³ left |
+| The same, 3.0 m³ of rain | 1.752 m³ left at 6 h | 1.7520 |
+| Permeable strip 10 m², 2.0 m³ of storage, 3.0 m³ of rain | 0.960 m³ left at 2 h | 0.9600 |
+| Bare soil 20 m² at 10 mm/h, 3.0 m³ of rain | 2.600 m³ left at 2 h | 2.6000 |
+| A roof whose rain is held, 30 mm of rain | 2.520 m³ on the ground (3.000 without) | 2.5200 (3.0000) |
+
+All ten rows pass. A storage measure holds its storage, plus what drains to the soil below, and no more.
+
+**Not representable as one owner's what-if (listed as Unsupported, not approximated):**
+- **A rain barrel or cistern on an existing house.** A cistern exists only for a building drawn in site design, and
+  its filling and overflow are timed in `app/map.js`, which a headless run does not reach.
+- **A French drain.** The nearest thing is a rain garden's underdrain to a sewer manhole (GPU only).
+- **Removing paving.** Site design can add paving or permeable paving; it cannot turn paving into soil. The solver's
+  infiltration at a soil's rate, which such a control would use, is exact.
+- **A green roof on one house.** Area-wide only.
+
+**Limits.** The rain garden here is storage with an intake rate; the ponding depression that site design digs is not
+in these cases. Green-Ampt infiltration is not tested.

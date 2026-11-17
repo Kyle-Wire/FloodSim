@@ -1,0 +1,1209 @@
+{
+ "id": "PV-SS3",
+ "spec": "benchmarks/physics/spec/PV-SS3.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-a [cpu]",
+   "quantity": "pond level in the sag at 3600 s (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.18629966987065372,
+   "sim": 0.1251,
+   "abs": -0.06119966987065373,
+   "rel": -0.328501225542397,
+   "limit": 0.005588990096119612,
+   "criterion": {
+    "abs": 0.005588990096119612
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-a [cpu]",
+   "quantity": "pond level in the sag at 7200 s (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.19867371792370592,
+   "sim": 0.12106,
+   "abs": -0.07761371792370592,
+   "rel": -0.39065921116708,
+   "limit": 0.005960211537711178,
+   "criterion": {
+    "abs": 0.005960211537711178
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-a [cpu]",
+   "quantity": "pipe flow at 7200 s (m³/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.022172627422644933,
+   "sim": 0.02192,
+   "abs": -0.00025262742264493473,
+   "rel": -0.011393662006286455,
+   "limit": 0.00044345254845289865,
+   "criterion": {
+    "rel": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-a [cpu]",
+   "quantity": "water on the street at 1800 s (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 4.813553272676359,
+   "sim": 5.277749693907913,
+   "abs": 0.4641964212315548,
+   "rel": 0.0964352932098037,
+   "limit": 0.24067766363381793,
+   "criterion": {
+    "rel": 0.05
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-a [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -4.080069615497437e-15,
+   "abs": -4.080069615497437e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-a [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.772,
+   "abs": 0.772,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-b [cpu]",
+   "quantity": "pond level in the sag at 3600 s (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.18629966987065372,
+   "sim": 0.39263,
+   "abs": 0.20633033012934626,
+   "rel": 1.1075184957257287,
+   "limit": 0.005588990096119612,
+   "criterion": {
+    "abs": 0.005588990096119612
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-b [cpu]",
+   "quantity": "pond level in the sag at 7200 s (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.19867371792370592,
+   "sim": 0.59864,
+   "abs": 0.39996628207629403,
+   "rel": 2.013181644035513,
+   "limit": 0.005960211537711178,
+   "criterion": {
+    "abs": 0.005960211537711178
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-b [cpu]",
+   "quantity": "pipe flow at 7200 s (m³/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.022172627422644933,
+   "sim": 0.01731,
+   "abs": -0.004862627422644934,
+   "rel": -0.21930767743288404,
+   "limit": 0.00044345254845289865,
+   "criterion": {
+    "rel": 0.02
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-b [cpu]",
+   "quantity": "water on the street at 1800 s (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 4.813553272676359,
+   "sim": 11.397041389385935,
+   "abs": 6.583488116709576,
+   "rel": 1.3676981937813115,
+   "limit": 0.24067766363381793,
+   "criterion": {
+    "rel": 0.05
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-b [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 1.945110739143316e-14,
+   "abs": 1.945110739143316e-14,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-b [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.014,
+   "abs": 0.014,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-c [cpu]",
+   "quantity": "depth at the grate at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.029306142462879138,
+   "sim": 0.029306142534837626,
+   "abs": 7.195848777952207e-11,
+   "rel": 2.4554063323301205e-9,
+   "limit": 0.005861228492575828,
+   "criterion": {
+    "abs": 0.005861228492575828
+   },
+   "status": "Passed",
+   "note": "free outfall: the pipe carries the rain, the street stands at the grate's weir head"
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-c [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -1.4119261315670288e-14,
+   "abs": -1.4119261315670288e-14,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-c [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.143,
+   "abs": 0.143,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-d [cpu]",
+   "quantity": "highest manhole head above the friction grade line from the peak pipe flows (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.0021811873868565756,
+   "abs": 0.0021811873868565756,
+   "rel": null,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "one-sided bound; worst at J1"
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-d [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -5.924713121728104e-15,
+   "abs": -5.924713121728104e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-d [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -0.078,
+   "abs": -0.078,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-e [cpu]",
+   "quantity": "highest manhole head above the friction grade line from the peak pipe flows (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.0076508593787041335,
+   "abs": 0.0076508593787041335,
+   "rel": null,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "one-sided bound; worst at J1"
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-e [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -2.512073846103686e-15,
+   "abs": -2.512073846103686e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-e [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -0.093,
+   "abs": -0.093,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-f [cpu]",
+   "quantity": "highest manhole head above the friction grade line from the peak pipe flows (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.009749310041651693,
+   "abs": 0.009749310041651693,
+   "rel": null,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "one-sided bound; worst at J1"
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-f [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -1.8746027657857023e-14,
+   "abs": -1.8746027657857023e-14,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-f [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -0.134,
+   "abs": -0.134,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-x2 [cpu]",
+   "quantity": "highest manhole head above the friction grade line from the peak pipe flows (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0,
+   "sim": -0.0015166903443181723,
+   "abs": -0.0015166903443181723,
+   "rel": null,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "one-sided bound; worst at J1"
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-x2 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -2.8571916074911966e-15,
+   "abs": -2.8571916074911966e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-x2 [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -0.452,
+   "abs": -0.452,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-x4 [cpu]",
+   "quantity": "highest manhole head above the friction grade line from the peak pipe flows (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0,
+   "sim": -0.0786113239170887,
+   "abs": -0.0786113239170887,
+   "rel": null,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "one-sided bound; worst at J0"
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-x4 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 3.809588809988305e-15,
+   "abs": 3.809588809988305e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS3",
+   "case": "SS3-x4 [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -0.012,
+   "abs": -0.012,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS3-a [cpu]": {
+   "exchange": "two-way",
+   "sagDepthEndM": 0.12106,
+   "streetVolumeEndM3": 5.774743196278224,
+   "pipeFlowEndM3s": 0.02192,
+   "nodeHeadEndM": 0.16861,
+   "maxNodeHeadM": 0.1922854610361336,
+   "totals": {
+    "toNetwork": 154.22525680372095,
+    "toSurface": 0,
+    "overflowReturned": 0,
+    "overflowLost": 0,
+    "roofToSewer": 0,
+    "backflow": 0,
+    "latOut": 0,
+    "extra": 0,
+    "outfallReturned": 0
+   },
+   "continuity": {
+    "externalInflow": 0.155,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0.154,
+    "flooding": 0,
+    "initialStored": 0,
+    "finalStored": 0,
+    "errorPct": 0.772
+   },
+   "swmmVersion": 52004
+  },
+  "SS3-b [cpu]": {
+   "exchange": "spill at the rim",
+   "sagDepthEndM": 0.59864,
+   "streetVolumeEndM3": 37.55389189128087,
+   "pipeFlowEndM3s": 0.01731,
+   "nodeHeadEndM": 0,
+   "maxNodeHeadM": 0,
+   "totals": {
+    "toNetwork": 134.27473256397712,
+    "toSurface": 11.82862445525831,
+    "overflowReturned": 2085.72698025622,
+    "overflowLost": 0,
+    "roofToSewer": 0,
+    "backflow": 0,
+    "latOut": 1.1907811571509885e-7,
+    "extra": 0,
+    "outfallReturned": 0
+   },
+   "continuity": {
+    "externalInflow": 2.209,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0.122,
+    "flooding": 2.086,
+    "initialStored": 0,
+    "finalStored": 0,
+    "errorPct": 0.014
+   },
+   "swmmVersion": 52004
+  },
+  "SS3-c [cpu]": {
+   "exchange": "two-way",
+   "sagDepthEndM": 0.04408,
+   "streetVolumeEndM3": 3.4035384987646897,
+   "pipeFlowEndM3s": 0.02222,
+   "nodeHeadEndM": -0.53781,
+   "maxNodeHeadM": -0.5378107566971447,
+   "totals": {
+    "toNetwork": 156.59646150123376,
+    "toSurface": 0,
+    "overflowReturned": 0,
+    "overflowLost": 0,
+    "roofToSewer": 0,
+    "backflow": 0,
+    "latOut": 0,
+    "extra": 0,
+    "outfallReturned": 0
+   },
+   "continuity": {
+    "externalInflow": 0.157,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0.156,
+    "flooding": 0,
+    "initialStored": 0,
+    "finalStored": 0,
+    "errorPct": 0.143
+   },
+   "swmmVersion": 52004
+  },
+  "SS3-d [cpu]": {
+   "rainM3": 614.3999999999975,
+   "sewerShareOfRain": 0.9995110887394519,
+   "takenInM3": 644.7533596810351,
+   "returnedToStreetM3": 30.653746759518384,
+   "swmmFloodingLossM3": 0,
+   "manholes": 5,
+   "manholesSurchargedToGround": 2,
+   "highestHeadAboveGroundM": 0.25738279195774927,
+   "sagDepthPeakM": 0.27927,
+   "sagDepthEndM": 0.00077,
+   "streetVolumePeakM3": 201.72801895890495,
+   "streetVolumeEndM3": 0.30038707847711305,
+   "pipes": [
+    {
+     "name": "C0",
+     "D": 0.375,
+     "designQ": 0.07010524010904338,
+     "maxQ": 0.1546796859440116,
+     "ratio": 2.2063926420253193,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C1",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.028467749001970622,
+     "ratio": 0.4340426404034614,
+     "maxDepthOverD": 0.4483793384495466
+    },
+    {
+     "name": "C2",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.22648220401014327,
+     "ratio": 3.2400677295681444,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C3",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.0274660940852915,
+     "ratio": 0.4187705883427797,
+     "maxDepthOverD": 0.4410793778787292
+    },
+    {
+     "name": "C4",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.22532557266912623,
+     "ratio": 3.2235208935842072,
+     "maxDepthOverD": 1.0000000000000002
+    }
+   ],
+   "designFlowMultipleBeforeGradeLineReachesGround": 1.750163635753856,
+   "grates": 3,
+   "inletVolumesM3": [
+    0,
+    26.620315877629128,
+    280.26619626594044,
+    337.86684753746493,
+    0
+   ],
+   "stats": {
+    "junctions": 5,
+    "outfalls": 2,
+    "pipes": 5,
+    "inlets": 3,
+    "grates": 3,
+    "lids": 2,
+    "realInlets": false,
+    "unconnectedGrates": 0,
+    "realOutfalls": 0,
+    "offsiteOutlets": 2,
+    "pipeLength": 67.99999899901047,
+    "streetLength": 319.999997,
+    "drainedFraction": 1,
+    "minD": 0.3,
+    "maxD": 0.375,
+    "served": 9152
+   },
+   "designIntensity10": 136.2148447714549,
+   "housesExposed": 0,
+   "swmmVersion": 52004
+  },
+  "SS3-e [cpu]": {
+   "rainM3": 983.0399999999873,
+   "sewerShareOfRain": 0.999677751872933,
+   "takenInM3": 1023.7603639966952,
+   "returnedToStreetM3": 41.037146795539904,
+   "swmmFloodingLossM3": 0,
+   "manholes": 5,
+   "manholesSurchargedToGround": 2,
+   "highestHeadAboveGroundM": 0.3720540045741884,
+   "sagDepthPeakM": 0.39575,
+   "sagDepthEndM": 0.00091,
+   "streetVolumePeakM3": 405.10785351580006,
+   "streetVolumeEndM3": 0.3167827988320685,
+   "pipes": [
+    {
+     "name": "C0",
+     "D": 0.375,
+     "designQ": 0.07010524010904338,
+     "maxQ": 0.1593973866319069,
+     "ratio": 2.2736871934819187,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C1",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.04686429697337491,
+     "ratio": 0.7145314930789758,
+     "maxDepthOverD": 0.6170851349445238
+    },
+    {
+     "name": "C2",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.2321153698930534,
+     "ratio": 3.3206561319651113,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C3",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.04610197329922817,
+     "ratio": 0.7029084813562781,
+     "maxDepthOverD": 0.601824229417802
+    },
+    {
+     "name": "C4",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.23197165459903388,
+     "ratio": 3.3186001325172376,
+     "maxDepthOverD": 1.0000000000000002
+    }
+   ],
+   "designFlowMultipleBeforeGradeLineReachesGround": 1.750163635753856,
+   "grates": 3,
+   "inletVolumesM3": [
+    0,
+    44.93146005153006,
+    434.28960100906005,
+    544.5393029361043,
+    0
+   ],
+   "stats": {
+    "junctions": 5,
+    "outfalls": 2,
+    "pipes": 5,
+    "inlets": 3,
+    "grates": 3,
+    "lids": 2,
+    "realInlets": false,
+    "unconnectedGrates": 0,
+    "realOutfalls": 0,
+    "offsiteOutlets": 2,
+    "pipeLength": 67.99999899901047,
+    "streetLength": 319.999997,
+    "drainedFraction": 1,
+    "minD": 0.3,
+    "maxD": 0.375,
+    "served": 9152
+   },
+   "designIntensity10": 136.2148447714549,
+   "housesExposed": 4,
+   "swmmVersion": 52004
+  },
+  "SS3-f [cpu]": {
+   "rainM3": 1290.2400000000196,
+   "sewerShareOfRain": 0.8858440560898238,
+   "takenInM3": 1156.4168668393597,
+   "returnedToStreetM3": 13.465431910008183,
+   "swmmFloodingLossM3": 0,
+   "manholes": 5,
+   "manholesSurchargedToGround": 2,
+   "highestHeadAboveGroundM": 0.4449707960634263,
+   "sagDepthPeakM": 0.47824,
+   "sagDepthEndM": 0.28628,
+   "streetVolumePeakM3": 614.6649328696011,
+   "streetVolumeEndM3": 147.28856507065203,
+   "pipes": [
+    {
+     "name": "C0",
+     "D": 0.375,
+     "designQ": 0.07010524010904338,
+     "maxQ": 0.14827084520905998,
+     "ratio": 2.114975214098631,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C1",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.06234089423977186,
+     "ratio": 0.9505003834012461,
+     "maxDepthOverD": 0.7572476544858404
+    },
+    {
+     "name": "C2",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.23622872640768364,
+     "ratio": 3.3795020521622914,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C3",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.06089157533018223,
+     "ratio": 0.9284028790899147,
+     "maxDepthOverD": 0.7357447971100733
+    },
+    {
+     "name": "C4",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.2360847586768768,
+     "ratio": 3.3774424413388933,
+     "maxDepthOverD": 1.0000000000000002
+    }
+   ],
+   "designFlowMultipleBeforeGradeLineReachesGround": 1.750163635753856,
+   "grates": 3,
+   "inletVolumesM3": [
+    0,
+    60.30416689913911,
+    466.50560928471356,
+    629.6070906555053,
+    0
+   ],
+   "stats": {
+    "junctions": 5,
+    "outfalls": 2,
+    "pipes": 5,
+    "inlets": 3,
+    "grates": 3,
+    "lids": 2,
+    "realInlets": false,
+    "unconnectedGrates": 0,
+    "realOutfalls": 0,
+    "offsiteOutlets": 2,
+    "pipeLength": 67.99999899901047,
+    "streetLength": 319.999997,
+    "drainedFraction": 1,
+    "minD": 0.3,
+    "maxD": 0.375,
+    "served": 9152
+   },
+   "designIntensity10": 136.2148447714549,
+   "housesExposed": 4,
+   "swmmVersion": 52004
+  },
+  "SS3-x2 [cpu]": {
+   "rainM3": 1671.1680000000088,
+   "sewerShareOfRain": 0.2964736717843928,
+   "takenInM3": 500.3707443595153,
+   "returnedToStreetM3": 4.913431230932516,
+   "swmmFloodingLossM3": 0,
+   "manholes": 5,
+   "manholesSurchargedToGround": 2,
+   "highestHeadAboveGroundM": 0.5379304765058749,
+   "sagDepthPeakM": 0.59734,
+   "sagDepthEndM": 0.59734,
+   "streetVolumePeakM3": 1175.7106868714172,
+   "streetVolumeEndM3": 1175.7106868714172,
+   "pipes": [
+    {
+     "name": "C0",
+     "D": 0.375,
+     "designQ": 0.07010524010904338,
+     "maxQ": 0.1330597291008896,
+     "ratio": 1.897999762841198,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C1",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.10471068686755207,
+     "ratio": 1.5965049784338847,
+     "maxDepthOverD": 1
+    },
+    {
+     "name": "C2",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.24370636962405548,
+     "ratio": 3.486477655762058,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C3",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.10204489382250566,
+     "ratio": 1.555860112134093,
+     "maxDepthOverD": 1
+    },
+    {
+     "name": "C4",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.24360413707732428,
+     "ratio": 3.4850151109364145,
+     "maxDepthOverD": 1.0000000000000002
+    }
+   ],
+   "designFlowMultipleBeforeGradeLineReachesGround": 1.750163635753856,
+   "grates": 3,
+   "inletVolumesM3": [
+    0,
+    96.39056462452592,
+    174.0417316852396,
+    229.93844804974995,
+    0
+   ],
+   "stats": {
+    "junctions": 5,
+    "outfalls": 2,
+    "pipes": 5,
+    "inlets": 3,
+    "grates": 3,
+    "lids": 2,
+    "realInlets": false,
+    "unconnectedGrates": 0,
+    "realOutfalls": 0,
+    "offsiteOutlets": 2,
+    "pipeLength": 67.99999899901047,
+    "streetLength": 319.999997,
+    "drainedFraction": 1,
+    "minD": 0.3,
+    "maxD": 0.375,
+    "served": 9152
+   },
+   "designIntensity10": 136.2148447714549,
+   "swmmVersion": 52004
+  },
+  "SS3-x4 [cpu]": {
+   "rainM3": 3342.3359999999802,
+   "sewerShareOfRain": 0.18393533122961664,
+   "takenInM3": 616.3098006463294,
+   "returnedToStreetM3": 1.5361214056610983,
+   "swmmFloodingLossM3": 0,
+   "manholes": 5,
+   "manholesSurchargedToGround": 3,
+   "highestHeadAboveGroundM": 0.7533555843481288,
+   "sagDepthPeakM": 0.81539,
+   "sagDepthEndM": 0.81539,
+   "streetVolumePeakM3": 2727.562320759326,
+   "streetVolumeEndM3": 2727.562320759326,
+   "pipes": [
+    {
+     "name": "C0",
+     "D": 0.375,
+     "designQ": 0.07010524010904338,
+     "maxQ": 0.14021427638329378,
+     "ratio": 2.0000541495215067,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C1",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.12650624899788349,
+     "ratio": 1.9288179876385072,
+     "maxDepthOverD": 1
+    },
+    {
+     "name": "C2",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.2552600923558893,
+     "ratio": 3.6517658926167123,
+     "maxDepthOverD": 1.0000000000000002
+    },
+    {
+     "name": "C3",
+     "D": 0.3,
+     "designQ": 0.06558744775745677,
+     "maxQ": 0.12634123323288987,
+     "ratio": 1.9263020219981937,
+     "maxDepthOverD": 1
+    },
+    {
+     "name": "C4",
+     "D": 0.375,
+     "designQ": 0.06990045360574304,
+     "maxQ": 0.2550986338094698,
+     "ratio": 3.649456057156556,
+     "maxDepthOverD": 1.0000000000000002
+    }
+   ],
+   "designFlowMultipleBeforeGradeLineReachesGround": 1.750163635753856,
+   "grates": 3,
+   "inletVolumesM3": [
+    0,
+    189.28864539663107,
+    190.37885499758337,
+    236.64230025211526,
+    0
+   ],
+   "stats": {
+    "junctions": 5,
+    "outfalls": 2,
+    "pipes": 5,
+    "inlets": 3,
+    "grates": 3,
+    "lids": 2,
+    "realInlets": false,
+    "unconnectedGrates": 0,
+    "realOutfalls": 0,
+    "offsiteOutlets": 2,
+    "pipeLength": 67.99999899901047,
+    "streetLength": 319.999997,
+    "drainedFraction": 1,
+    "minD": 0.3,
+    "maxD": 0.375,
+    "served": 9152
+   },
+   "designIntensity10": 136.2148447714549,
+   "swmmVersion": 52004
+  }
+ },
+ "notRun": [
+  "SS3-a [gpu]",
+  "SS3-b [gpu]",
+  "SS3-c [gpu]",
+  "SS3-d [gpu]",
+  "SS3-e [gpu]",
+  "SS3-f [gpu]",
+  "SS3-x2 [gpu]",
+  "SS3-x4 [gpu]"
+ ],
+ "raw": {
+  "SS3-a [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS3-a.cpu.json",
+   "sha256": "4e305c83c0b6d08ff19238b23f3173d19f37b156682fc2165a0d6d5dab7b1b28",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 6.072,
+   "steps": 34328,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS3-b [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS3-b.cpu.json",
+   "sha256": "19be2c5482c92683c085047986a0098675eade4b74829e826e9e779c6f1693e9",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 12.618,
+   "steps": 57739,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS3-c [cpu]": {
+   "file": "street/raw/2026-11-17T18-40-cpu/SS3-c.cpu.json",
+   "sha256": "71a8b198ffdf9d9b6beef1e5ccfa455c4ce8d8217b00700a8445a4996c8e5a88",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 7.938,
+   "steps": 24907,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS3-d [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS3-d.cpu.json",
+   "sha256": "596c16c158e00fecba800cfd171c14744734919e9ceb4594f981ba61b7efac9f",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 244.011,
+   "steps": 27063,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS3-e [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS3-e.cpu.json",
+   "sha256": "ec1988aa078e7dc3948ffbe0144cbe8fd0319ceb5d86c802993db8c7349c9054",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 347.989,
+   "steps": 38078,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS3-f [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS3-f.cpu.json",
+   "sha256": "e5fb0813de713bc9db29f232de524568e77387ccbaf7e6846a5e2b30077e8430",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 422.221,
+   "steps": 44330,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS3-x2 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS3-x2.cpu.json",
+   "sha256": "614fd2d233021f7b992502fcce2747f2ed5d589c3e67802d3b041e2e02ee293e",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 234.083,
+   "steps": 17603,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS3-x4 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS3-x4.cpu.json",
+   "sha256": "a15bf248e7b1dcfdc9d44e1ac2de835acea754719f8046bef42eb965399ad238",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 274.837,
+   "steps": 21098,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  }
+ },
+ "hand": {
+  "SS3-a": {
+   "rainOverAreaM3s": 0.02222222222222222,
+   "equilibriumLevelM": 0.20058010570965776,
+   "restVolumeM3": 0,
+   "levelM": {
+    "3600": 0.18629966987065372,
+    "7200": 0.19867371792370592
+   },
+   "pipeFlowM3s": {
+    "3600": 0.021847979028483296,
+    "7200": 0.022172627422644933
+   },
+   "earlyVolumeM3": 4.813553272676359
+  },
+  "SS3-b": {
+   "rainOverAreaM3s": 0.02222222222222222,
+   "equilibriumLevelM": 0.20058010570965776,
+   "restVolumeM3": 0,
+   "levelM": {
+    "3600": 0.18629966987065372,
+    "7200": 0.19867371792370592
+   },
+   "pipeFlowM3s": {
+    "3600": 0.021847979028483296,
+    "7200": 0.022172627422644933
+   },
+   "earlyVolumeM3": 4.813553272676359
+  },
+  "SS3-c": {
+   "rainOverAreaM3s": 0.02222222222222222,
+   "inletWeirHeadM": 0.029306142462879138,
+   "pipeFullCapacityAtGroundM3s": 0.03319174080873227
+  }
+ }
+}

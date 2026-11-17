@@ -12,8 +12,10 @@ Written by `report.mjs` from the latest scored run of each spec. Statuses are ne
 | PV-SS6 | Cell size: a driveway dip and a rear yard | 16 | 4 | – | 12 case-executor pairs |
 | PV-SS7 | The wall-exposure rule | 16 | 1 | – | – |
 | PV-SS8 | Drainage treatments side by side | 11 | 5 | – | 8 case-executor pairs |
-| PV-SS9 | Coarse run then downscale | 2 | 0 | 4 Not independently validated | 4 case-executor pairs |
+| PV-SS9 | Coarse run then downscale: do a kerb, a crown and a small hollow survive? | 10 | 4 | 4 Not independently validated | 14 case-executor pairs |
 | PV-SS10 | Street-to-sewer exchange against laboratory measurements | 0 | 15 | – | – |
+| PV-SS11 | Surface only, an allowance, or pipes: each against a known answer | 11 | 26 | – | 37 case-executor pairs |
+| PV-SS12 | Measures one owner can take | 10 | 0 | 4 Unsupported | 6 case-executor pairs |
 
 ## PV-SS1  Rain on a tilted street
 
@@ -55,7 +57,7 @@ Run `results/2026-11-17T18-15-21-477Z/`. 12 Passed. Not yet run: SS2-a [gpu], SS
 
 ## PV-SS3  One inlet and one pipe; a synthetic network under storms beyond its design
 
-Run `results/2026-11-17T18-31-16-897Z/`. 8 Failed, 22 Passed. Not yet run: SS3-a [gpu], SS3-b [gpu], SS3-c [gpu], SS3-d [gpu], SS3-e [gpu], SS3-f [gpu], SS3-x2 [gpu], SS3-x4 [gpu].
+Run `results/2026-11-17T19-16-10-828Z/`. 8 Failed, 22 Passed. Not yet run: SS3-a [gpu], SS3-b [gpu], SS3-c [gpu], SS3-d [gpu], SS3-e [gpu], SS3-f [gpu], SS3-x2 [gpu], SS3-x4 [gpu].
 
 | Case | Quantity | Expected | Measured | Limit | Status |
 |---|---|---|---|---|---|
@@ -183,7 +185,7 @@ Run `results/2026-11-17T18-15-21-477Z/`. 16 Passed, 1 Failed.
 
 ## PV-SS8  Drainage treatments side by side
 
-Run `results/2026-11-17T18-31-16-897Z/`. 11 Passed, 5 Failed. Not yet run: SS8-none-10 [gpu], SS8-none-100 [gpu], SS8-none-500 [gpu], SS8-lump30-10 [gpu], SS8-lump30-100 [gpu], SS8-lump30-500 [gpu], SS8-lump50-100 [gpu], SS8-lump50-500 [gpu].
+Run `results/2026-11-17T19-16-10-828Z/`. 11 Passed, 5 Failed. Not yet run: SS8-none-10 [gpu], SS8-none-100 [gpu], SS8-none-500 [gpu], SS8-lump30-10 [gpu], SS8-lump30-100 [gpu], SS8-lump30-500 [gpu], SS8-lump50-100 [gpu], SS8-lump50-500 [gpu].
 
 | Case | Quantity | Expected | Measured | Limit | Status |
 |---|---|---|---|---|---|
@@ -204,9 +206,9 @@ Run `results/2026-11-17T18-31-16-897Z/`. 11 Passed, 5 Failed. Not yet run: SS8-n
 | SS8-lump50-500 [cpu] | highest volume on the ground against its upper bound (m³) (one-sided bound: Σ max(0, i − allowance) Δt × area) | 708.1 | 806.0 | ± 14.161 | **Failed** |
 | SS8-lump50-500 [cpu] | surface books (relative) | 0 | -1.2e-14 | ± 1.0e-9 | Passed |
 
-## PV-SS9  Coarse run then downscale
+## PV-SS9  Coarse run then downscale: do a kerb, a crown and a small hollow survive?
 
-Run `results/2026-11-17T18-31-16-897Z/`. 2 Passed, 4 Not independently validated. Not yet run: SS9-2 [gpu], SS9-4 [gpu], SS9-4s [gpu], SS9-8s [gpu].
+Run `results/2026-11-17T19-16-10-828Z/`. 10 Passed, 4 Not independently validated, 4 Failed. Not yet run: SS9-2 [gpu], SS9-4 [gpu], SS9-4s [gpu], SS9-8s [gpu], SS9-kerb-1 [gpu], SS9-hollow-1 [gpu], SS9-kerb-2 [gpu], SS9-hollow-2 [gpu], SS9-kerb-4 [gpu], SS9-hollow-4 [gpu], SS9-kerb-4s [gpu], SS9-hollow-4s [gpu], SS9-kerb-8s [gpu], SS9-hollow-8s [gpu].
 
 | Case | Quantity | Expected | Measured | Limit | Status |
 |---|---|---|---|---|---|
@@ -216,6 +218,18 @@ Run `results/2026-11-17T18-31-16-897Z/`. 2 Passed, 4 Not independently validated
 | SS9-4 [cpu] | pond depth at the sag at the end, on the 1 m map (m) | 0.5715 | 0.5781 | ± 0.0100 | Passed |
 | SS9-4 [cpu] | peak wall depth at the houses against the 1 m run, root mean square (m) (the reference is the same solver at 1 m; limit 0.05 m: inside) | 0 | 0.0466 | ± 0.0500 | **Not independently validated** |
 | SS9-4 [cpu] | houses given the same exposed / not exposed answer as the 1 m run (share) (the reference is the same solver at 1 m; limit 0.9: outside) | 1.000 | 0.8571 | ± 0.1000 | **Not independently validated** |
+| SS9-kerb-1 [cpu] | kerb: depth in the gutter the rain fell beside (m) | 0.0500 | 0.0490 | ± 0.0200 | Passed |
+| SS9-kerb-1 [cpu] | kerb: depth on the lot behind the kerb (m) | 0 | 1.0e-5 | ± 0.0100 | Passed |
+| SS9-kerb-1 [cpu] | crown: depth in the far gutter (m) | 0 | 0.0028 | ± 0.0100 | Passed |
+| SS9-hollow-1 [cpu] | hollow: depth of water in it (m) | 0.0978 | 0.0976 | ± 0.0200 | Passed |
+| SS9-kerb-2 [cpu] | kerb: depth in the gutter the rain fell beside (m) | 0.0500 | 0.0600 | ± 0.0200 | Passed |
+| SS9-kerb-2 [cpu] | kerb: depth on the lot behind the kerb (m) | 0 | 0 | ± 0.0100 | Passed |
+| SS9-kerb-2 [cpu] | crown: depth in the far gutter (m) | 0 | 0.0449 | ± 0.0100 | **Failed** |
+| SS9-hollow-2 [cpu] | hollow: depth of water in it (m) | 0.0978 | 0.1200 | ± 0.0200 | **Failed** |
+| SS9-kerb-4 [cpu] | kerb: depth in the gutter the rain fell beside (m) | 0.0500 | 0.0600 | ± 0.0200 | Passed |
+| SS9-kerb-4 [cpu] | kerb: depth on the lot behind the kerb (m) | 0 | 0 | ± 0.0100 | Passed |
+| SS9-kerb-4 [cpu] | crown: depth in the far gutter (m) | 0 | 0.0600 | ± 0.0100 | **Failed** |
+| SS9-hollow-4 [cpu] | hollow: depth of water in it (m) | 0.0978 | 0 | ± 0.0200 | **Failed** |
 
 ## PV-SS10  Street-to-sewer exchange against laboratory measurements
 
@@ -238,3 +252,68 @@ Run `results/2026-11-17T18-34-52-775Z/`. 15 Failed.
 | S1 test 13 (h_s 10.7 mm) | exchange into the sewer (l/s) | 1.216 | 1.848 | ± 0.1216 | **Failed** |
 | S1 test 14 (h_s 10.8 mm) | exchange into the sewer (l/s) | 1.202 | 1.874 | ± 0.1202 | **Failed** |
 | S1 test 15 (h_s 11.0 mm) | exchange into the sewer (l/s) | 1.249 | 1.927 | ± 0.1249 | **Failed** |
+
+## PV-SS11  Surface only, an allowance, or pipes: each against a known answer
+
+Run `results/2026-11-17T19-13-18-241Z/`. 11 Passed, 26 Failed. Not yet run: SS11-sagA-10-pipe [gpu], SS11-sagA-10-none [gpu], SS11-sagA-10-lump30 [gpu], SS11-sagA-10-lump50 [gpu], SS11-sagA-100-pipe [gpu], SS11-sagA-100-none [gpu], SS11-sagA-100-lump30 [gpu], SS11-sagA-100-lump50 [gpu], SS11-sagA-500-pipe [gpu], SS11-sagA-500-none [gpu], SS11-sagA-500-lump30 [gpu], SS11-sagA-500-lump50 [gpu], SS11-sagB-10-pipe [gpu], SS11-sagB-10-none [gpu], SS11-sagB-10-lump30 [gpu], SS11-sagB-10-lump50 [gpu], SS11-sagB-100-pipe [gpu], SS11-sagB-100-none [gpu], SS11-sagB-100-lump30 [gpu], SS11-sagB-100-lump50 [gpu], SS11-sagB-500-pipe [gpu], SS11-sagB-500-none [gpu], SS11-sagB-500-lump30 [gpu], SS11-sagB-500-lump50 [gpu], SS11-hollow-10-none [gpu], SS11-hollow-10-lump30 [gpu], SS11-hollow-10-lump50 [gpu], SS11-hollow-100-none [gpu], SS11-hollow-100-lump30 [gpu], SS11-hollow-100-lump50 [gpu], SS11-hollow-500-none [gpu], SS11-hollow-500-lump30 [gpu], SS11-hollow-500-lump50 [gpu], SS11-hill-pipe [gpu], SS11-hill-none [gpu], SS11-hill-lump30 [gpu], SS11-hill-lump50 [gpu].
+
+| Case | Quantity | Expected | Measured | Limit | Status |
+|---|---|---|---|---|---|
+| SS11-sagA-10-pipe [cpu] | peak depth at the grate (m) (pipe) | 0.0264 | 0.0264 | ± 0.0200 | Passed |
+| SS11-sagA-10-none [cpu] | peak depth at the grate (m) (surface only) | 0.0264 | 0.4169 | ± 0.0200 | **Failed** |
+| SS11-sagA-10-lump30 [cpu] | peak depth at the grate (m) (allowance 30 mm/h) | 0.0264 | 0.2541 | ± 0.0200 | **Failed** |
+| SS11-sagA-10-lump50 [cpu] | peak depth at the grate (m) (allowance 50 mm/h) | 0.0264 | 0.1878 | ± 0.0200 | **Failed** |
+| SS11-sagA-100-pipe [cpu] | peak depth at the grate (m) (pipe) | 0.0362 | 0.0362 | ± 0.0200 | Passed |
+| SS11-sagA-100-none [cpu] | peak depth at the grate (m) (surface only) | 0.0362 | 0.5582 | ± 0.0200 | **Failed** |
+| SS11-sagA-100-lump30 [cpu] | peak depth at the grate (m) (allowance 30 mm/h) | 0.0362 | 0.4151 | ± 0.0200 | **Failed** |
+| SS11-sagA-100-lump50 [cpu] | peak depth at the grate (m) (allowance 50 mm/h) | 0.0362 | 0.3434 | ± 0.0200 | **Failed** |
+| SS11-sagA-500-pipe [cpu] | peak depth at the grate (m) (pipe) | 0.0434 | 0.0433 | ± 0.0200 | Passed |
+| SS11-sagA-500-none [cpu] | peak depth at the grate (m) (surface only) | 0.0434 | 0.6572 | ± 0.0200 | **Failed** |
+| SS11-sagA-500-lump30 [cpu] | peak depth at the grate (m) (allowance 30 mm/h) | 0.0434 | 0.5335 | ± 0.0200 | **Failed** |
+| SS11-sagA-500-lump50 [cpu] | peak depth at the grate (m) (allowance 50 mm/h) | 0.0434 | 0.4542 | ± 0.0200 | **Failed** |
+| SS11-sagB-10-pipe [cpu] | peak pond level in the sag (m) (pipe) | 0.0426 | 0.0394 | ± 0.0200 | Passed |
+| SS11-sagB-10-none [cpu] | peak pond level in the sag (m) (surface only) | 0.0426 | 0.4169 | ± 0.0200 | **Failed** |
+| SS11-sagB-10-lump30 [cpu] | peak pond level in the sag (m) (allowance 30 mm/h) | 0.0426 | 0.2541 | ± 0.0200 | **Failed** |
+| SS11-sagB-10-lump50 [cpu] | peak pond level in the sag (m) (allowance 50 mm/h) | 0.0426 | 0.1878 | ± 0.0200 | **Failed** |
+| SS11-sagB-100-pipe [cpu] | peak pond level in the sag (m) (pipe) | 0.1347 | 0.1154 | ± 0.0269 | Passed |
+| SS11-sagB-100-none [cpu] | peak pond level in the sag (m) (surface only) | 0.1347 | 0.5582 | ± 0.0269 | **Failed** |
+| SS11-sagB-100-lump30 [cpu] | peak pond level in the sag (m) (allowance 30 mm/h) | 0.1347 | 0.4151 | ± 0.0269 | **Failed** |
+| SS11-sagB-100-lump50 [cpu] | peak pond level in the sag (m) (allowance 50 mm/h) | 0.1347 | 0.3434 | ± 0.0269 | **Failed** |
+| SS11-sagB-500-pipe [cpu] | peak pond level in the sag (m) (pipe) | 0.2049 | 0.1883 | ± 0.0410 | Passed |
+| SS11-sagB-500-none [cpu] | peak pond level in the sag (m) (surface only) | 0.2049 | 0.6572 | ± 0.0410 | **Failed** |
+| SS11-sagB-500-lump30 [cpu] | peak pond level in the sag (m) (allowance 30 mm/h) | 0.2049 | 0.5335 | ± 0.0410 | **Failed** |
+| SS11-sagB-500-lump50 [cpu] | peak pond level in the sag (m) (allowance 50 mm/h) | 0.2049 | 0.4542 | ± 0.0410 | **Failed** |
+| SS11-hollow-10-none [cpu] | depth in the hollow at the end (m) (surface only) | 0.2000 | 0.2000 | ± 0.0200 | Passed |
+| SS11-hollow-10-lump30 [cpu] | depth in the hollow at the end (m) (allowance 30 mm/h) | 0.2000 | 0.0642 | ± 0.0200 | **Failed** |
+| SS11-hollow-10-lump50 [cpu] | depth in the hollow at the end (m) (allowance 50 mm/h) | 0.2000 | 0.0072 | ± 0.0200 | **Failed** |
+| SS11-hollow-100-none [cpu] | depth in the hollow at the end (m) (surface only) | 0.2000 | 0.2001 | ± 0.0200 | Passed |
+| SS11-hollow-100-lump30 [cpu] | depth in the hollow at the end (m) (allowance 30 mm/h) | 0.2000 | 0.1693 | ± 0.0200 | **Failed** |
+| SS11-hollow-100-lump50 [cpu] | depth in the hollow at the end (m) (allowance 50 mm/h) | 0.2000 | 0.0966 | ± 0.0200 | **Failed** |
+| SS11-hollow-500-none [cpu] | depth in the hollow at the end (m) (surface only) | 0.2000 | 0.2001 | ± 0.0200 | Passed |
+| SS11-hollow-500-lump30 [cpu] | depth in the hollow at the end (m) (allowance 30 mm/h) | 0.2000 | 0.1728 | ± 0.0200 | **Failed** |
+| SS11-hollow-500-lump50 [cpu] | depth in the hollow at the end (m) (allowance 50 mm/h) | 0.2000 | 0.1509 | ± 0.0200 | **Failed** |
+| SS11-hill-pipe [cpu] | depth in the kerb cell 40 m below the grate (m) (pipe) | 0.0168 | 0.0219 | ± 0.0050 | **Failed** |
+| SS11-hill-none [cpu] | depth in the kerb cell 40 m below the grate (m) (surface only) | 0.0168 | 0.0246 | ± 0.0050 | **Failed** |
+| SS11-hill-lump30 [cpu] | depth in the kerb cell 40 m below the grate (m) (allowance 30 mm/h) | 0.0168 | 0.0204 | ± 0.0050 | Passed |
+| SS11-hill-lump50 [cpu] | depth in the kerb cell 40 m below the grate (m) (allowance 50 mm/h) | 0.0168 | 0.0168 | ± 0.0050 | Passed |
+
+## PV-SS12  Measures one owner can take
+
+Run `results/2026-11-17T19-13-18-241Z/`. 10 Passed, 4 Unsupported. Not yet run: SS12-garden-under [gpu], SS12-garden-over [gpu], SS12-paving [gpu], SS12-soil [gpu], SS12-roof-open [gpu], SS12-roof-held [gpu].
+
+| Case | Quantity | Expected | Measured | Limit | Status |
+|---|---|---|---|---|---|
+| SS12-garden-under [cpu] | water left on the ground at the end (m³) | 0 | 9.6e-4 | ± 0.0300 | Passed |
+| SS12-garden-under [cpu] | water the measure took (m³) | 1.000 | 0.9990 | ± 0.0300 | Passed |
+| SS12-garden-over [cpu] | water left on the ground at the end (m³) | 1.752 | 1.752 | ± 0.0526 | Passed |
+| SS12-garden-over [cpu] | water the measure took (m³) | 1.248 | 1.248 | ± 0.0374 | Passed |
+| SS12-paving [cpu] | water left on the ground at the end (m³) | 0.9600 | 0.9600 | ± 0.0288 | Passed |
+| SS12-paving [cpu] | water the measure took (m³) | 2.040 | 2.040 | ± 0.0612 | Passed |
+| SS12-soil [cpu] | water left on the ground at the end (m³) | 2.600 | 2.600 | ± 0.0780 | Passed |
+| SS12-soil [cpu] | water the measure took (m³) | 0.4000 | 0.4000 | ± 0.0120 | Passed |
+| SS12-roof-open [cpu] | water on the ground at the end (m³) (the roof sheds onto the ground (control)) | 3.000 | 3.000 | ± 0.0030 | Passed |
+| SS12-roof-held [cpu] | water on the ground at the end (m³) (the roof holds its rain) | 2.520 | 2.520 | ± 0.0025 | Passed |
+| A rain barrel or cistern on an existing house | no control: a cistern exists only for a building drawn in site design (src/design.js roof 'cistern'), and its filling and overflow are timed in app/map.js (roofHoldStages), which a headless run of src/ does not reach. SS12-roof-held tests only that a held roof sheds nothing | – | – | – | **Unsupported** |
+| A French drain | no control: the nearest thing is a rain garden's underdrain to a sewer manhole (src/stormwater.js UnderdrainLinks, GPU kernel only). A trench drain to daylight or to a dry well is not represented | – | – | – | **Unsupported** |
+| Removing paving (bare soil in its place) as a what-if | no control: site design can add paving or permeable paving but cannot turn paving into soil. SS12-soil tests the solver's infiltration at a soil's rate, which is what such a control would use | – | – | – | **Unsupported** |
+| A green roof on an existing house | area-wide only (a share of all roofs holds the first 25 mm), timed in app/map.js; not one owner's roof | – | – | – | **Unsupported** |

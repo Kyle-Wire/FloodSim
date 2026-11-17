@@ -1,0 +1,2022 @@
+{
+ "id": "PV-SS11",
+ "spec": "benchmarks/physics/spec/PV-SS11.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-10-pipe [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.02644776305614653,
+   "sim": 0.02636,
+   "abs": -0.00008776305614652952,
+   "rel": -0.0033183545980888978,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "pipe"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-10-none [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.02644776305614653,
+   "sim": 0.41687,
+   "abs": 0.3904222369438535,
+   "rel": 14.762013562924684,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-10-lump30 [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.02644776305614653,
+   "sim": 0.25408,
+   "abs": 0.22763223694385343,
+   "rel": 8.606861626089435,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-10-lump50 [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.02644776305614653,
+   "sim": 0.18775,
+   "abs": 0.16130223694385348,
+   "rel": 6.0988990487180885,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 50 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-100-pipe [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.0361800309355321,
+   "sim": 0.03618,
+   "abs": -3.0935532101261654e-8,
+   "rel": -8.550443794916751e-7,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "pipe"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-100-none [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.0361800309355321,
+   "sim": 0.55824,
+   "abs": 0.5220599690644678,
+   "rel": 14.429505878386555,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-100-lump30 [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.0361800309355321,
+   "sim": 0.41513,
+   "abs": 0.3789499690644679,
+   "rel": 10.474008984119036,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-100-lump50 [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.0361800309355321,
+   "sim": 0.34338,
+   "abs": 0.3071999690644679,
+   "rel": 8.49087082351744,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 50 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-500-pipe [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.04337123696561947,
+   "sim": 0.04335,
+   "abs": -0.000021236965619467196,
+   "rel": -0.0004896555206922462,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "pipe"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-500-none [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.04337123696561947,
+   "sim": 0.6572,
+   "abs": 0.6138287630343805,
+   "rel": 14.152899616881223,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-500-lump30 [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.04337123696561947,
+   "sim": 0.53351,
+   "abs": 0.4901387630343806,
+   "rel": 11.301009547477637,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagA-500-lump50 [cpu]",
+   "quantity": "peak depth at the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.04337123696561947,
+   "sim": 0.45416,
+   "abs": 0.41078876303438056,
+   "rel": 9.471456010351153,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 50 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-10-pipe [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.04258251548779356,
+   "sim": 0.03935,
+   "abs": -0.003232515487793554,
+   "rel": -0.07591180208036716,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "pipe"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-10-none [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.04258251548779356,
+   "sim": 0.41687,
+   "abs": 0.37428748451220645,
+   "rel": 8.789698781874392,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-10-lump30 [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.04258251548779356,
+   "sim": 0.25408,
+   "abs": 0.2114974845122064,
+   "rel": 4.966768216706995,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-10-lump50 [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.04258251548779356,
+   "sim": 0.18775,
+   "abs": 0.14516748451220646,
+   "rel": 3.4090866368338264,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 50 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-100-pipe [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.134695883567592,
+   "sim": 0.11538,
+   "abs": -0.019315883567591993,
+   "rel": -0.1434036665114495,
+   "limit": 0.0269391767135184,
+   "criterion": {
+    "abs": 0.0269391767135184
+   },
+   "status": "Passed",
+   "note": "pipe"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-100-none [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.134695883567592,
+   "sim": 0.55824,
+   "abs": 0.42354411643240797,
+   "rel": 3.1444473670189668,
+   "limit": 0.0269391767135184,
+   "criterion": {
+    "abs": 0.0269391767135184
+   },
+   "status": "Failed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-100-lump30 [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.134695883567592,
+   "sim": 0.41513,
+   "abs": 0.280434116432408,
+   "rel": 2.081979857177171,
+   "limit": 0.0269391767135184,
+   "criterion": {
+    "abs": 0.0269391767135184
+   },
+   "status": "Failed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-100-lump50 [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.134695883567592,
+   "sim": 0.34338,
+   "abs": 0.20868411643240803,
+   "rel": 1.5492983965444487,
+   "limit": 0.0269391767135184,
+   "criterion": {
+    "abs": 0.0269391767135184
+   },
+   "status": "Failed",
+   "note": "allowance 50 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-500-pipe [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.204853497100689,
+   "sim": 0.18828,
+   "abs": -0.016573497100689005,
+   "rel": -0.08090414532949294,
+   "limit": 0.040970699420137806,
+   "criterion": {
+    "abs": 0.040970699420137806
+   },
+   "status": "Passed",
+   "note": "pipe"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-500-none [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.204853497100689,
+   "sim": 0.6572,
+   "abs": 0.452346502899311,
+   "rel": 2.208146354840967,
+   "limit": 0.040970699420137806,
+   "criterion": {
+    "abs": 0.040970699420137806
+   },
+   "status": "Failed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-500-lump30 [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.204853497100689,
+   "sim": 0.53351,
+   "abs": 0.32865650289931103,
+   "rel": 1.6043489984345776,
+   "limit": 0.040970699420137806,
+   "criterion": {
+    "abs": 0.040970699420137806
+   },
+   "status": "Failed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-sagB-500-lump50 [cpu]",
+   "quantity": "peak pond level in the sag (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.204853497100689,
+   "sim": 0.45416,
+   "abs": 0.249306502899311,
+   "rel": 1.216999008695334,
+   "limit": 0.040970699420137806,
+   "criterion": {
+    "abs": 0.040970699420137806
+   },
+   "status": "Failed",
+   "note": "allowance 50 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hollow-10-none [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.19999999999999996,
+   "sim": 0.19997000811128982,
+   "abs": -0.000029991888710140246,
+   "rel": -0.00014995944355070126,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hollow-10-lump30 [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.19999999999999996,
+   "sim": 0.0641515924583944,
+   "abs": -0.13584840754160554,
+   "rel": -0.6792420377080278,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hollow-10-lump50 [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.19999999999999996,
+   "sim": 0.007164211949729977,
+   "abs": -0.19283578805027,
+   "rel": -0.9641789402513502,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 50 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hollow-100-none [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20005460349104312,
+   "abs": 0.00005460349104310924,
+   "rel": 0.0002730174552155462,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hollow-100-lump30 [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.1693072006376623,
+   "abs": -0.030692799362337708,
+   "rel": -0.15346399681168854,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hollow-100-lump50 [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.09655565230891482,
+   "abs": -0.1034443476910852,
+   "rel": -0.517221738455426,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 50 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hollow-500-none [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20005506794517444,
+   "abs": 0.0000550679451744307,
+   "rel": 0.0002753397258721535,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hollow-500-lump30 [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.17276937238896875,
+   "abs": -0.02723062761103126,
+   "rel": -0.1361531380551563,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hollow-500-lump50 [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.1509157254849689,
+   "abs": -0.04908427451503111,
+   "rel": -0.24542137257515556,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "allowance 50 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hill-pipe [cpu]",
+   "quantity": "depth in the kerb cell 40 m below the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.016761494562718634,
+   "sim": 0.021870505975353602,
+   "abs": 0.005109011412634968,
+   "rel": 0.3048064355787561,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Failed",
+   "note": "pipe"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hill-none [cpu]",
+   "quantity": "depth in the kerb cell 40 m below the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.016761494562718634,
+   "sim": 0.02457127684896022,
+   "abs": 0.007809782286241587,
+   "rel": 0.46593591383028066,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Failed",
+   "note": "surface only"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hill-lump30 [cpu]",
+   "quantity": "depth in the kerb cell 40 m below the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.016761494562718634,
+   "sim": 0.020422593770443274,
+   "abs": 0.0036610992077246406,
+   "rel": 0.21842319573743477,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Passed",
+   "note": "allowance 30 mm/h"
+  },
+  {
+   "benchmark": "PV-SS11",
+   "case": "SS11-hill-lump50 [cpu]",
+   "quantity": "depth in the kerb cell 40 m below the grate (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.016761494562718634,
+   "sim": 0.016817395259780592,
+   "abs": 0.000055900697061957855,
+   "rel": 0.0033350663840140894,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Passed",
+   "note": "allowance 50 mm/h"
+  }
+ ],
+ "cases": {
+  "SS11-sagA-10-pipe [cpu]": {
+   "treatment": "pipe",
+   "trueM": 0.02644776305614653,
+   "measuredM": 0.02636,
+   "errorM": -0.00008776305614652952,
+   "swmmVersion": 52004
+  },
+  "SS11-sagA-10-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.02644776305614653,
+   "measuredM": 0.41687,
+   "errorM": 0.3904222369438535
+  },
+  "SS11-sagA-10-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.02644776305614653,
+   "measuredM": 0.25408,
+   "errorM": 0.22763223694385343
+  },
+  "SS11-sagA-10-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.02644776305614653,
+   "measuredM": 0.18775,
+   "errorM": 0.16130223694385348
+  },
+  "SS11-sagA-100-pipe [cpu]": {
+   "treatment": "pipe",
+   "trueM": 0.0361800309355321,
+   "measuredM": 0.03618,
+   "errorM": -3.0935532101261654e-8,
+   "swmmVersion": 52004
+  },
+  "SS11-sagA-100-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.0361800309355321,
+   "measuredM": 0.55824,
+   "errorM": 0.5220599690644678
+  },
+  "SS11-sagA-100-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.0361800309355321,
+   "measuredM": 0.41513,
+   "errorM": 0.3789499690644679
+  },
+  "SS11-sagA-100-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.0361800309355321,
+   "measuredM": 0.34338,
+   "errorM": 0.3071999690644679
+  },
+  "SS11-sagA-500-pipe [cpu]": {
+   "treatment": "pipe",
+   "trueM": 0.04337123696561947,
+   "measuredM": 0.04335,
+   "errorM": -0.000021236965619467196,
+   "swmmVersion": 52004
+  },
+  "SS11-sagA-500-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.04337123696561947,
+   "measuredM": 0.6572,
+   "errorM": 0.6138287630343805
+  },
+  "SS11-sagA-500-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.04337123696561947,
+   "measuredM": 0.53351,
+   "errorM": 0.4901387630343806
+  },
+  "SS11-sagA-500-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.04337123696561947,
+   "measuredM": 0.45416,
+   "errorM": 0.41078876303438056
+  },
+  "SS11-sagB-10-pipe [cpu]": {
+   "treatment": "pipe",
+   "trueM": 0.04258251548779356,
+   "measuredM": 0.03935,
+   "errorM": -0.003232515487793554,
+   "swmmVersion": 52004
+  },
+  "SS11-sagB-10-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.04258251548779356,
+   "measuredM": 0.41687,
+   "errorM": 0.37428748451220645
+  },
+  "SS11-sagB-10-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.04258251548779356,
+   "measuredM": 0.25408,
+   "errorM": 0.2114974845122064
+  },
+  "SS11-sagB-10-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.04258251548779356,
+   "measuredM": 0.18775,
+   "errorM": 0.14516748451220646
+  },
+  "SS11-sagB-100-pipe [cpu]": {
+   "treatment": "pipe",
+   "trueM": 0.134695883567592,
+   "measuredM": 0.11538,
+   "errorM": -0.019315883567591993,
+   "swmmVersion": 52004
+  },
+  "SS11-sagB-100-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.134695883567592,
+   "measuredM": 0.55824,
+   "errorM": 0.42354411643240797
+  },
+  "SS11-sagB-100-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.134695883567592,
+   "measuredM": 0.41513,
+   "errorM": 0.280434116432408
+  },
+  "SS11-sagB-100-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.134695883567592,
+   "measuredM": 0.34338,
+   "errorM": 0.20868411643240803
+  },
+  "SS11-sagB-500-pipe [cpu]": {
+   "treatment": "pipe",
+   "trueM": 0.204853497100689,
+   "measuredM": 0.18828,
+   "errorM": -0.016573497100689005,
+   "swmmVersion": 52004
+  },
+  "SS11-sagB-500-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.204853497100689,
+   "measuredM": 0.6572,
+   "errorM": 0.452346502899311
+  },
+  "SS11-sagB-500-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.204853497100689,
+   "measuredM": 0.53351,
+   "errorM": 0.32865650289931103
+  },
+  "SS11-sagB-500-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.204853497100689,
+   "measuredM": 0.45416,
+   "errorM": 0.249306502899311
+  },
+  "SS11-hollow-10-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.19999999999999996,
+   "measuredM": 0.19997000811128982,
+   "errorM": -0.000029991888710140246
+  },
+  "SS11-hollow-10-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.19999999999999996,
+   "measuredM": 0.0641515924583944,
+   "errorM": -0.13584840754160554
+  },
+  "SS11-hollow-10-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.19999999999999996,
+   "measuredM": 0.007164211949729977,
+   "errorM": -0.19283578805027
+  },
+  "SS11-hollow-100-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.2,
+   "measuredM": 0.20005460349104312,
+   "errorM": 0.00005460349104310924
+  },
+  "SS11-hollow-100-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.2,
+   "measuredM": 0.1693072006376623,
+   "errorM": -0.030692799362337708
+  },
+  "SS11-hollow-100-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.2,
+   "measuredM": 0.09655565230891482,
+   "errorM": -0.1034443476910852
+  },
+  "SS11-hollow-500-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.2,
+   "measuredM": 0.20005506794517444,
+   "errorM": 0.0000550679451744307
+  },
+  "SS11-hollow-500-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.2,
+   "measuredM": 0.17276937238896875,
+   "errorM": -0.02723062761103126
+  },
+  "SS11-hollow-500-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.2,
+   "measuredM": 0.1509157254849689,
+   "errorM": -0.04908427451503111
+  },
+  "SS11-hill-pipe [cpu]": {
+   "treatment": "pipe",
+   "trueM": 0.016761494562718634,
+   "measuredM": 0.021870505975353602,
+   "errorM": 0.005109011412634968,
+   "swmmVersion": 52004
+  },
+  "SS11-hill-none [cpu]": {
+   "treatment": "surface only",
+   "trueM": 0.016761494562718634,
+   "measuredM": 0.02457127684896022,
+   "errorM": 0.007809782286241587
+  },
+  "SS11-hill-lump30 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.016761494562718634,
+   "measuredM": 0.020422593770443274,
+   "errorM": 0.0036610992077246406
+  },
+  "SS11-hill-lump50 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.016761494562718634,
+   "measuredM": 0.016817395259780592,
+   "errorM": 0.000055900697061957855
+  }
+ },
+ "notRun": [
+  "SS11-sagA-10-pipe [gpu]",
+  "SS11-sagA-10-none [gpu]",
+  "SS11-sagA-10-lump30 [gpu]",
+  "SS11-sagA-10-lump50 [gpu]",
+  "SS11-sagA-100-pipe [gpu]",
+  "SS11-sagA-100-none [gpu]",
+  "SS11-sagA-100-lump30 [gpu]",
+  "SS11-sagA-100-lump50 [gpu]",
+  "SS11-sagA-500-pipe [gpu]",
+  "SS11-sagA-500-none [gpu]",
+  "SS11-sagA-500-lump30 [gpu]",
+  "SS11-sagA-500-lump50 [gpu]",
+  "SS11-sagB-10-pipe [gpu]",
+  "SS11-sagB-10-none [gpu]",
+  "SS11-sagB-10-lump30 [gpu]",
+  "SS11-sagB-10-lump50 [gpu]",
+  "SS11-sagB-100-pipe [gpu]",
+  "SS11-sagB-100-none [gpu]",
+  "SS11-sagB-100-lump30 [gpu]",
+  "SS11-sagB-100-lump50 [gpu]",
+  "SS11-sagB-500-pipe [gpu]",
+  "SS11-sagB-500-none [gpu]",
+  "SS11-sagB-500-lump30 [gpu]",
+  "SS11-sagB-500-lump50 [gpu]",
+  "SS11-hollow-10-none [gpu]",
+  "SS11-hollow-10-lump30 [gpu]",
+  "SS11-hollow-10-lump50 [gpu]",
+  "SS11-hollow-100-none [gpu]",
+  "SS11-hollow-100-lump30 [gpu]",
+  "SS11-hollow-100-lump50 [gpu]",
+  "SS11-hollow-500-none [gpu]",
+  "SS11-hollow-500-lump30 [gpu]",
+  "SS11-hollow-500-lump50 [gpu]",
+  "SS11-hill-pipe [gpu]",
+  "SS11-hill-none [gpu]",
+  "SS11-hill-lump30 [gpu]",
+  "SS11-hill-lump50 [gpu]"
+ ],
+ "raw": {
+  "SS11-sagA-10-pipe [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-10-pipe.cpu.json",
+   "sha256": "cd09bb1731ddee75c1581fb5c17157fd5b85fb12615861940070b242d704fbba",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 3.322,
+   "steps": 8245,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-10-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-10-none.cpu.json",
+   "sha256": "b1924942a1fab307d50c3c30572f9c8895df85b20d6df33496d0d00eb0614f32",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 6.29,
+   "steps": 26676,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-10-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-10-lump30.cpu.json",
+   "sha256": "4badb775b319c0f2002326fc18c54a6563a6b9807ee7429a801eb113ee3ba2f8",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 3.611,
+   "steps": 17832,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-10-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-10-lump50.cpu.json",
+   "sha256": "fac6f33b6be179e083bbd2f4851a5bd6459becea47f66153959cff81d61428ff",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 3.309,
+   "steps": 15003,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-100-pipe [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-100-pipe.cpu.json",
+   "sha256": "5c5c82bd4a9c1dbf26a66ef09dbbcb0db5a13e130f99eef235c88c2ab140dff0",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 3.69,
+   "steps": 9569,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-100-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-100-none.cpu.json",
+   "sha256": "9fcbcfdcc6083ec33a300c4edbb7123fbb6f63d1aa9d30295a1b2f66cb377378",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 9.032,
+   "steps": 31511,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-100-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-100-lump30.cpu.json",
+   "sha256": "a727e17ea96426effd0f260276da0097d5cf755d22864b646f361dd5e0e4aa7d",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 4.287,
+   "steps": 23670,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-100-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-100-lump50.cpu.json",
+   "sha256": "c13089f43c98ae357adddf75541efbf657c03a102ca01fd42fbd4f73281ca17d",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 5.332,
+   "steps": 20847,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-500-pipe [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-500-pipe.cpu.json",
+   "sha256": "bf86075f8c89b139a2c1c84b598d380e6a206e2d3eb9368391bda78222a4c6be",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 3.967,
+   "steps": 10220,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-500-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-500-none.cpu.json",
+   "sha256": "96b0fbd5c005548fa8a6e8bd542979364704e6542734d6790fdfdebc1facbfdd",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 8.314,
+   "steps": 34560,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-500-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-500-lump30.cpu.json",
+   "sha256": "0dba6b216d0e8d9bbfb27037bfd200a22168d8f182d08fc519cdfd402522cd84",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 5.37,
+   "steps": 28743,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagA-500-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagA-500-lump50.cpu.json",
+   "sha256": "133ea8e5b5a3082c96b780521353ef4ff649d81a544308cc78c31860f0cc9785",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 5.004,
+   "steps": 24384,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-10-pipe [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-10-pipe.cpu.json",
+   "sha256": "e584359919d5dcb83313639d5eaa466d7fa95bd4631dcd0cd34f2e5d14fcd917",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 1.898,
+   "steps": 8224,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-10-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-10-none.cpu.json",
+   "sha256": "85bb79fdd1852ce6892ef06ef1a7fd87a1e068aa5fe3765443b67b002a84ea45",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 5.152,
+   "steps": 26676,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-10-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-10-lump30.cpu.json",
+   "sha256": "dcce00090243c1b2abaa6a52fa7b659bc7a8fb8888e3c0187ecc47c29abdca11",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 2.816,
+   "steps": 17832,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-10-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-10-lump50.cpu.json",
+   "sha256": "bc4b619d94517d4bbdddf8e69464e0535e0e1612660185545a61ad5bd0841668",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 2.207,
+   "steps": 15003,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-100-pipe [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-100-pipe.cpu.json",
+   "sha256": "45a30d64597a072fb9ce3c5bebef6ac78974f61f704c3b83af38965c5c1dfe80",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 2.542,
+   "steps": 10323,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-100-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-100-none.cpu.json",
+   "sha256": "e0a8cbe51e8f7894a21ebfd863cdbc9ff79e243394d6f6045cb2d48cf00aa325",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 6.306,
+   "steps": 31511,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-100-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-100-lump30.cpu.json",
+   "sha256": "656dfba9948adb3caecffa7b6a4906c57956152e96bdf421fc427816d32cb338",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 5.355,
+   "steps": 23670,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-100-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-100-lump50.cpu.json",
+   "sha256": "7215574ae8da0ce408060dec3f72af72d0598eae0de334ee6d0640e1eafb3fdf",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 4.869,
+   "steps": 20847,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-500-pipe [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-500-pipe.cpu.json",
+   "sha256": "30a9d9a7406608b6d866d557e1d86175c807dd582f69ab72768b0ea0fc6e81f5",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 4.873,
+   "steps": 12219,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-500-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-500-none.cpu.json",
+   "sha256": "a5b940066e54d9d2cbc5906096ca7237148b13f43cb1d2a4dd0df5e60e9e53c0",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 11.629,
+   "steps": 34560,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-500-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-500-lump30.cpu.json",
+   "sha256": "3440f573bbacfd70bfa38489043485ad0c50227262e4397548df09e3656c9ca9",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 9.511,
+   "steps": 28743,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-sagB-500-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-sagB-500-lump50.cpu.json",
+   "sha256": "544ae3d5780cc8b4857fb530c7366b361c60225d56e3a080a5311e00b1a1fb38",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 7.526,
+   "steps": 24384,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS11-hollow-10-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hollow-10-none.cpu.json",
+   "sha256": "d84fd53b8457cb5767c522bc1506960984ac105ffa8aebe164ae1d158b50d847",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 10.411,
+   "steps": 33397,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS11-hollow-10-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hollow-10-lump30.cpu.json",
+   "sha256": "d43a25a8b60f7fcdf3d768e3fede2f8a7b7861a64d0fa0d2c9581c67f8b3e901",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 7.118,
+   "steps": 20877,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS11-hollow-10-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hollow-10-lump50.cpu.json",
+   "sha256": "a109f3453456fabc3f6ed77b361c09664d4c8659430c17a26e2209f0ca80b45b",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 4.532,
+   "steps": 14473,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS11-hollow-100-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hollow-100-none.cpu.json",
+   "sha256": "2c96b1cdbba64762e81b2ad9528d5df83088bf40fa69f5cd91616eae5c38a971",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 14.5,
+   "steps": 35569,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS11-hollow-100-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hollow-100-lump30.cpu.json",
+   "sha256": "b34828cf1858def1582fb58d6a4923b65cb9573abf9dca49ee532fc216182723",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 9.127,
+   "steps": 31141,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS11-hollow-100-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hollow-100-lump50.cpu.json",
+   "sha256": "fdc863e4db61b4bd25fede97ffbebf5fc17af2f91f174dc8eb2bd06f0c8dbb1d",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 5.308,
+   "steps": 25801,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS11-hollow-500-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hollow-500-none.cpu.json",
+   "sha256": "aacb411906201030ac6b43a23b228e6870c21ccb5f39edca725b2d58cc65c71a",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 9.907,
+   "steps": 36490,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS11-hollow-500-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hollow-500-lump30.cpu.json",
+   "sha256": "a083a7a6f6b02ffe9c8615ab9051ffd74830b3ef2c182868eadea892fa598192",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 7.745,
+   "steps": 33373,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS11-hollow-500-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hollow-500-lump50.cpu.json",
+   "sha256": "a01d25274d616029a6cb24f003dfd958ac764f5396967cbf53726821209cbf36",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 8.854,
+   "steps": 31059,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS11-hill-pipe [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hill-pipe.cpu.json",
+   "sha256": "3c2df58d14fc2786376f6d7c07cdc3b001e1e2b31d4a20a8b2994a6c596f703c",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 2.631,
+   "steps": 3990,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS11-hill-none [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hill-none.cpu.json",
+   "sha256": "8d368bede81ff73817f38d2d1c61fff8b89ca5475b64e909d6b0d1780dcdcda8",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 2.744,
+   "steps": 4129,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS11-hill-lump30 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hill-lump30.cpu.json",
+   "sha256": "149cf09b030b585267a1cc44b1b16dbf7867059708b5aa25cfe6446a8add3751",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 2.106,
+   "steps": 3693,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS11-hill-lump50 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS11-hill-lump50.cpu.json",
+   "sha256": "feb201c0a336d4982136200a24f9ea04e4f4d61de5f1816cf8a1b68b109b7abf",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 1.643,
+   "steps": 3246,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  }
+ },
+ "hand": {
+  "SS11-sagA-10-pipe": {
+   "trueDepthM": 0.02644776305614653
+  },
+  "SS11-sagA-10-none": {
+   "trueDepthM": 0.02644776305614653
+  },
+  "SS11-sagA-10-lump30": {
+   "trueDepthM": 0.02644776305614653
+  },
+  "SS11-sagA-10-lump50": {
+   "trueDepthM": 0.02644776305614653
+  },
+  "SS11-sagA-100-pipe": {
+   "trueDepthM": 0.0361800309355321
+  },
+  "SS11-sagA-100-none": {
+   "trueDepthM": 0.0361800309355321
+  },
+  "SS11-sagA-100-lump30": {
+   "trueDepthM": 0.0361800309355321
+  },
+  "SS11-sagA-100-lump50": {
+   "trueDepthM": 0.0361800309355321
+  },
+  "SS11-sagA-500-pipe": {
+   "trueDepthM": 0.04337123696561947
+  },
+  "SS11-sagA-500-none": {
+   "trueDepthM": 0.04337123696561947
+  },
+  "SS11-sagA-500-lump30": {
+   "trueDepthM": 0.04337123696561947
+  },
+  "SS11-sagA-500-lump50": {
+   "trueDepthM": 0.04337123696561947
+  },
+  "SS11-sagB-10-pipe": {
+   "trueDepthM": 0.04258251548779356
+  },
+  "SS11-sagB-10-none": {
+   "trueDepthM": 0.04258251548779356
+  },
+  "SS11-sagB-10-lump30": {
+   "trueDepthM": 0.04258251548779356
+  },
+  "SS11-sagB-10-lump50": {
+   "trueDepthM": 0.04258251548779356
+  },
+  "SS11-sagB-100-pipe": {
+   "trueDepthM": 0.134695883567592
+  },
+  "SS11-sagB-100-none": {
+   "trueDepthM": 0.134695883567592
+  },
+  "SS11-sagB-100-lump30": {
+   "trueDepthM": 0.134695883567592
+  },
+  "SS11-sagB-100-lump50": {
+   "trueDepthM": 0.134695883567592
+  },
+  "SS11-sagB-500-pipe": {
+   "trueDepthM": 0.204853497100689
+  },
+  "SS11-sagB-500-none": {
+   "trueDepthM": 0.204853497100689
+  },
+  "SS11-sagB-500-lump30": {
+   "trueDepthM": 0.204853497100689
+  },
+  "SS11-sagB-500-lump50": {
+   "trueDepthM": 0.204853497100689
+  },
+  "SS11-hollow-10-none": {
+   "trueDepthM": 0.19999999999999996
+  },
+  "SS11-hollow-10-lump30": {
+   "trueDepthM": 0.19999999999999996
+  },
+  "SS11-hollow-10-lump50": {
+   "trueDepthM": 0.19999999999999996
+  },
+  "SS11-hollow-100-none": {
+   "trueDepthM": 0.2
+  },
+  "SS11-hollow-100-lump30": {
+   "trueDepthM": 0.2
+  },
+  "SS11-hollow-100-lump50": {
+   "trueDepthM": 0.2
+  },
+  "SS11-hollow-500-none": {
+   "trueDepthM": 0.2
+  },
+  "SS11-hollow-500-lump30": {
+   "trueDepthM": 0.2
+  },
+  "SS11-hollow-500-lump50": {
+   "trueDepthM": 0.2
+  },
+  "SS11-hill-pipe": {
+   "trueDepthM": 0.016761494562718634
+  },
+  "SS11-hill-none": {
+   "trueDepthM": 0.016761494562718634
+  },
+  "SS11-hill-lump30": {
+   "trueDepthM": 0.016761494562718634
+  },
+  "SS11-hill-lump50": {
+   "trueDepthM": 0.016761494562718634
+  }
+ },
+ "table": [
+  {
+   "case": "SS11-sagA-10-pipe",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 10,
+   "treatment": "pipe",
+   "trueM": 0.02644776305614653,
+   "measuredM": 0.02636,
+   "errorM": -0.00008776305614652952,
+   "inside": true
+  },
+  {
+   "case": "SS11-sagA-10-none",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 10,
+   "treatment": "surface only",
+   "trueM": 0.02644776305614653,
+   "measuredM": 0.41687,
+   "errorM": 0.3904222369438535,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagA-10-lump30",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 10,
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.02644776305614653,
+   "measuredM": 0.25408,
+   "errorM": 0.22763223694385343,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagA-10-lump50",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 10,
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.02644776305614653,
+   "measuredM": 0.18775,
+   "errorM": 0.16130223694385348,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagA-100-pipe",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 100,
+   "treatment": "pipe",
+   "trueM": 0.0361800309355321,
+   "measuredM": 0.03618,
+   "errorM": -3.0935532101261654e-8,
+   "inside": true
+  },
+  {
+   "case": "SS11-sagA-100-none",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 100,
+   "treatment": "surface only",
+   "trueM": 0.0361800309355321,
+   "measuredM": 0.55824,
+   "errorM": 0.5220599690644678,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagA-100-lump30",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 100,
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.0361800309355321,
+   "measuredM": 0.41513,
+   "errorM": 0.3789499690644679,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagA-100-lump50",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 100,
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.0361800309355321,
+   "measuredM": 0.34338,
+   "errorM": 0.3071999690644679,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagA-500-pipe",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 500,
+   "treatment": "pipe",
+   "trueM": 0.04337123696561947,
+   "measuredM": 0.04335,
+   "errorM": -0.000021236965619467196,
+   "inside": true
+  },
+  {
+   "case": "SS11-sagA-500-none",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 500,
+   "treatment": "surface only",
+   "trueM": 0.04337123696561947,
+   "measuredM": 0.6572,
+   "errorM": 0.6138287630343805,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagA-500-lump30",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 500,
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.04337123696561947,
+   "measuredM": 0.53351,
+   "errorM": 0.4901387630343806,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagA-500-lump50",
+   "exec": "cpu",
+   "family": "sagA",
+   "storm": 500,
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.04337123696561947,
+   "measuredM": 0.45416,
+   "errorM": 0.41078876303438056,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagB-10-pipe",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 10,
+   "treatment": "pipe",
+   "trueM": 0.04258251548779356,
+   "measuredM": 0.03935,
+   "errorM": -0.003232515487793554,
+   "inside": true
+  },
+  {
+   "case": "SS11-sagB-10-none",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 10,
+   "treatment": "surface only",
+   "trueM": 0.04258251548779356,
+   "measuredM": 0.41687,
+   "errorM": 0.37428748451220645,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagB-10-lump30",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 10,
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.04258251548779356,
+   "measuredM": 0.25408,
+   "errorM": 0.2114974845122064,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagB-10-lump50",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 10,
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.04258251548779356,
+   "measuredM": 0.18775,
+   "errorM": 0.14516748451220646,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagB-100-pipe",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 100,
+   "treatment": "pipe",
+   "trueM": 0.134695883567592,
+   "measuredM": 0.11538,
+   "errorM": -0.019315883567591993,
+   "inside": true
+  },
+  {
+   "case": "SS11-sagB-100-none",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 100,
+   "treatment": "surface only",
+   "trueM": 0.134695883567592,
+   "measuredM": 0.55824,
+   "errorM": 0.42354411643240797,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagB-100-lump30",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 100,
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.134695883567592,
+   "measuredM": 0.41513,
+   "errorM": 0.280434116432408,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagB-100-lump50",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 100,
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.134695883567592,
+   "measuredM": 0.34338,
+   "errorM": 0.20868411643240803,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagB-500-pipe",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 500,
+   "treatment": "pipe",
+   "trueM": 0.204853497100689,
+   "measuredM": 0.18828,
+   "errorM": -0.016573497100689005,
+   "inside": true
+  },
+  {
+   "case": "SS11-sagB-500-none",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 500,
+   "treatment": "surface only",
+   "trueM": 0.204853497100689,
+   "measuredM": 0.6572,
+   "errorM": 0.452346502899311,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagB-500-lump30",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 500,
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.204853497100689,
+   "measuredM": 0.53351,
+   "errorM": 0.32865650289931103,
+   "inside": false
+  },
+  {
+   "case": "SS11-sagB-500-lump50",
+   "exec": "cpu",
+   "family": "sagB",
+   "storm": 500,
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.204853497100689,
+   "measuredM": 0.45416,
+   "errorM": 0.249306502899311,
+   "inside": false
+  },
+  {
+   "case": "SS11-hollow-10-none",
+   "exec": "cpu",
+   "family": "hollow",
+   "storm": 10,
+   "treatment": "surface only",
+   "trueM": 0.19999999999999996,
+   "measuredM": 0.19997000811128982,
+   "errorM": -0.000029991888710140246,
+   "inside": true
+  },
+  {
+   "case": "SS11-hollow-10-lump30",
+   "exec": "cpu",
+   "family": "hollow",
+   "storm": 10,
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.19999999999999996,
+   "measuredM": 0.0641515924583944,
+   "errorM": -0.13584840754160554,
+   "inside": false
+  },
+  {
+   "case": "SS11-hollow-10-lump50",
+   "exec": "cpu",
+   "family": "hollow",
+   "storm": 10,
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.19999999999999996,
+   "measuredM": 0.007164211949729977,
+   "errorM": -0.19283578805027,
+   "inside": false
+  },
+  {
+   "case": "SS11-hollow-100-none",
+   "exec": "cpu",
+   "family": "hollow",
+   "storm": 100,
+   "treatment": "surface only",
+   "trueM": 0.2,
+   "measuredM": 0.20005460349104312,
+   "errorM": 0.00005460349104310924,
+   "inside": true
+  },
+  {
+   "case": "SS11-hollow-100-lump30",
+   "exec": "cpu",
+   "family": "hollow",
+   "storm": 100,
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.2,
+   "measuredM": 0.1693072006376623,
+   "errorM": -0.030692799362337708,
+   "inside": false
+  },
+  {
+   "case": "SS11-hollow-100-lump50",
+   "exec": "cpu",
+   "family": "hollow",
+   "storm": 100,
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.2,
+   "measuredM": 0.09655565230891482,
+   "errorM": -0.1034443476910852,
+   "inside": false
+  },
+  {
+   "case": "SS11-hollow-500-none",
+   "exec": "cpu",
+   "family": "hollow",
+   "storm": 500,
+   "treatment": "surface only",
+   "trueM": 0.2,
+   "measuredM": 0.20005506794517444,
+   "errorM": 0.0000550679451744307,
+   "inside": true
+  },
+  {
+   "case": "SS11-hollow-500-lump30",
+   "exec": "cpu",
+   "family": "hollow",
+   "storm": 500,
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.2,
+   "measuredM": 0.17276937238896875,
+   "errorM": -0.02723062761103126,
+   "inside": false
+  },
+  {
+   "case": "SS11-hollow-500-lump50",
+   "exec": "cpu",
+   "family": "hollow",
+   "storm": 500,
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.2,
+   "measuredM": 0.1509157254849689,
+   "errorM": -0.04908427451503111,
+   "inside": false
+  },
+  {
+   "case": "SS11-hill-pipe",
+   "exec": "cpu",
+   "family": "hill",
+   "storm": "100 mm/h",
+   "treatment": "pipe",
+   "trueM": 0.016761494562718634,
+   "measuredM": 0.021870505975353602,
+   "errorM": 0.005109011412634968,
+   "inside": false
+  },
+  {
+   "case": "SS11-hill-none",
+   "exec": "cpu",
+   "family": "hill",
+   "storm": "100 mm/h",
+   "treatment": "surface only",
+   "trueM": 0.016761494562718634,
+   "measuredM": 0.02457127684896022,
+   "errorM": 0.007809782286241587,
+   "inside": false
+  },
+  {
+   "case": "SS11-hill-lump30",
+   "exec": "cpu",
+   "family": "hill",
+   "storm": "100 mm/h",
+   "treatment": "allowance 30 mm/h",
+   "trueM": 0.016761494562718634,
+   "measuredM": 0.020422593770443274,
+   "errorM": 0.0036610992077246406,
+   "inside": true
+  },
+  {
+   "case": "SS11-hill-lump50",
+   "exec": "cpu",
+   "family": "hill",
+   "storm": "100 mm/h",
+   "treatment": "allowance 50 mm/h",
+   "trueM": 0.016761494562718634,
+   "measuredM": 0.016817395259780592,
+   "errorM": 0.000055900697061957855,
+   "inside": true
+  }
+ ]
+}

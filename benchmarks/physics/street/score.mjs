@@ -292,7 +292,7 @@ function detailRows(spec, e, r, R, ran) {
     R('crown: depth in the far gutter (m)', 'numerical', 0, val(p('gutterN'), 'max'), { abs: C.detailDryM });
     return { hand, report: { wallSeconds: r.wallSeconds, cells: r.grid.cells } };
   }
-  const V = P * 33, hand = { rainOnItsCatchmentM3: V, depthM: V / 9, capacityM3: 9 * 0.15 };
+  const V = P * (e.scene === 'hollowYard' ? 176 : 33), hand = { rainOnItsCatchmentM3: V, depthM: V / 9, capacityM3: 9 * 0.15 };
   if (!ran) return { hand };
   R('hollow: depth of water in it (m)', 'numerical', hand.depthM, val(r.probes[0], 'mean'), { abs: C.detailDepthAbsM });
   return { hand, report: { wallSeconds: r.wallSeconds, cells: r.grid.cells, deepestM: val(r.probes[0], 'max') } };

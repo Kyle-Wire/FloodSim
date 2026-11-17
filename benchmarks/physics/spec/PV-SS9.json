@@ -12,11 +12,11 @@
   "at rest the pond stands at the level the rain volume fills on the 1 m ground, whatever grid ran",
   "the 1 m map of a coarse run: the water surface carried onto the 1 m ground (src/downscale.js), or the subgrid tables' level (src/subgrid.js)",
   "kerb and crown: rain on one side of a crowned street behind kerbs ponds in that side's gutter at the level its volume fills; while that level is below the kerb and the crown, the lot behind the kerb and the far gutter hold nothing",
-  "hollow: a 3 x 3 m hollow holds the rain of its own 33 m^2: depth = P x 33 / 9"
+  "hollow: a 3 x 3 m hollow at the low point of a yard holds the rain of the 176 m^2 that drain to it: depth = P x 176 / 9"
  ],
  "initialConditions": "dry",
- "boundaryConditions": "surface closed on all sides; no drainage",
- "geometry": "the bowl neighbourhood, 100-yr storm, no drainage (PV-SS8 case none-100 is the 1 m run). Detail scenes (terrain.mjs): kerbStreet, a 24 x 16 m street with a 0.08 m crown, 0.15 m kerbs on odd metres and rain on the south side only; hollowLot, a 16 x 16 m lot at 2 % with a 3 x 3 m hollow 0.15 m deep at x, y 5-8 m",
+ "boundaryConditions": "surface closed on all sides; no drainage Detail scenes: the kerbed street is closed on all sides; the hollow lot is closed except its foot, a free-outfall edge.",
+ "geometry": "the bowl neighbourhood, 100-yr storm, no drainage (PV-SS8 case none-100 is the 1 m run). Detail scenes (terrain.mjs): kerbStreet, a 24 x 16 m street with a 0.08 m crown, 0.15 m kerbs on odd metres and rain on the south side only; hollowLot, a 16 x 16 m lot at 2 % with a 3 x 3 m hollow 0.15 m deep at x, y 5-8 m. hollowYard (the scene the hollow cases use after the second definition revision): the same lot with the ground above the hollow falling to it from both sides and a berm below it, so that exactly 176 m^2 drain to the hollow",
  "parameters": {
   "scenes": {
    "value": {
@@ -28,6 +28,9 @@
     },
     "hollowLot": {
      "kind": "hollowLot"
+    },
+    "hollowYard": {
+     "kind": "hollowYard"
     }
    },
    "unit": "m"
@@ -170,13 +173,13 @@
      }
     },
     "SS9-hollow-1": {
-     "scene": "hollowLot",
+     "scene": "hollowYard",
      "grid": {
       "F": 1
      },
      "rain": {
-      "mmhr": 60,
-      "minutes": 30
+      "mmhr": 30,
+      "minutes": 10
      },
      "tEnd": 3600,
      "probes": {
@@ -187,6 +190,9 @@
        "y0": 5,
        "y1": 8
       }
+     },
+     "bc": {
+      "south": "outflow"
      }
     },
     "SS9-kerb-2": {
@@ -224,13 +230,13 @@
      }
     },
     "SS9-hollow-2": {
-     "scene": "hollowLot",
+     "scene": "hollowYard",
      "grid": {
       "F": 2
      },
      "rain": {
-      "mmhr": 60,
-      "minutes": 30
+      "mmhr": 30,
+      "minutes": 10
      },
      "tEnd": 3600,
      "probes": {
@@ -241,6 +247,9 @@
        "y0": 5,
        "y1": 8
       }
+     },
+     "bc": {
+      "south": "outflow"
      }
     },
     "SS9-kerb-4": {
@@ -278,13 +287,13 @@
      }
     },
     "SS9-hollow-4": {
-     "scene": "hollowLot",
+     "scene": "hollowYard",
      "grid": {
       "F": 4
      },
      "rain": {
-      "mmhr": 60,
-      "minutes": 30
+      "mmhr": 30,
+      "minutes": 10
      },
      "tEnd": 3600,
      "probes": {
@@ -295,6 +304,9 @@
        "y0": 5,
        "y1": 8
       }
+     },
+     "bc": {
+      "south": "outflow"
      }
     },
     "SS9-kerb-4s": {
@@ -333,14 +345,14 @@
      }
     },
     "SS9-hollow-4s": {
-     "scene": "hollowLot",
+     "scene": "hollowYard",
      "grid": {
       "F": 4,
       "subgrid": true
      },
      "rain": {
-      "mmhr": 60,
-      "minutes": 30
+      "mmhr": 30,
+      "minutes": 10
      },
      "tEnd": 3600,
      "probes": {
@@ -351,6 +363,9 @@
        "y0": 5,
        "y1": 8
       }
+     },
+     "bc": {
+      "south": "outflow"
      }
     },
     "SS9-kerb-8s": {
@@ -389,14 +404,14 @@
      }
     },
     "SS9-hollow-8s": {
-     "scene": "hollowLot",
+     "scene": "hollowYard",
      "grid": {
       "F": 8,
       "subgrid": true
      },
      "rain": {
-      "mmhr": 60,
-      "minutes": 30
+      "mmhr": 30,
+      "minutes": 10
      },
      "tEnd": 3600,
      "probes": {
@@ -407,6 +422,9 @@
        "y0": 5,
        "y1": 8
       }
+     },
+     "bc": {
+      "south": "outflow"
      }
     }
    },
@@ -482,6 +500,14 @@
   {
    "date": "2026-11-17",
    "why": "revision 2, after the first CPU run of the bowl cases: Kyle's direction (relayed by the product session) that 1 m stays the baseline and that this case must say whether a kerb, a street crown and a small hollow survive a coarse run. Ten detail cases, two scenes and two criteria were added; the bowl cases, their criteria and their results are unchanged. The detail cases were registered before any of them ran."
+  },
+  {
+   "date": "2026-11-17",
+   "why": "after the first CPU run of the three plain hollow cases, which all read 0.18 m against a hand answer of 0.11 m, the 1 m baseline included: a setup error of mine, not a model result. The lot was closed at its foot, so the lot's runoff ponded 0.14 m deep against the foot wall and drowned the hollow; the hand answer is for a hollow standing alone. The foot of the lot is now the free-outfall edge. Criteria unchanged (same hash). The hollow cases were run again; the first raw files are kept and their rows stand in results/2026-11-17T19-13-18-241Z as an invalid setup."
+  },
+  {
+   "date": "2026-11-17",
+   "why": "second change to the hollow cases, after their second CPU run. With the foot open, the 1 m run filled the hollow to its rim (0.150 m) where the hand answer was 0.110 m, 2 m read 0.120 m and 4 m 0.100 m. The hand answer took the hollow's catchment to be the strip directly upslope of it (33 m^2); on the grid the cells beside the hollow also shed part of their sheet flow sideways into it. Neither is exact, so the case had no unambiguous answer: an invalid setup, not a model failure and not a pass for the coarse grids. The hollow now sits at the low point of a yard closed by a berm (scene hollowYard), where everything above it must enter it, and the storm is 5 mm so the hollow does not fill. Criteria unchanged (same hash). The first two sets of raw files are kept. The sideways capture is recorded in FINDINGS as an observation."
   }
  ]
 }
