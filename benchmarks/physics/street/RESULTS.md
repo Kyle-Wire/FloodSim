@@ -13,6 +13,7 @@ Written by `report.mjs` from the latest scored run of each spec. Statuses are ne
 | PV-SS7 | The wall-exposure rule | 16 | 1 | – | – |
 | PV-SS8 | Drainage treatments side by side | 11 | 5 | – | 8 case-executor pairs |
 | PV-SS9 | Coarse run then downscale | 2 | 0 | 4 Not independently validated | 4 case-executor pairs |
+| PV-SS10 | Street-to-sewer exchange against laboratory measurements | 0 | 15 | – | – |
 
 ## PV-SS1  Rain on a tilted street
 
@@ -215,3 +216,25 @@ Run `results/2026-11-17T18-31-16-897Z/`. 2 Passed, 4 Not independently validated
 | SS9-4 [cpu] | pond depth at the sag at the end, on the 1 m map (m) | 0.5715 | 0.5781 | ± 0.0100 | Passed |
 | SS9-4 [cpu] | peak wall depth at the houses against the 1 m run, root mean square (m) (the reference is the same solver at 1 m; limit 0.05 m: inside) | 0 | 0.0466 | ± 0.0500 | **Not independently validated** |
 | SS9-4 [cpu] | houses given the same exposed / not exposed answer as the 1 m run (share) (the reference is the same solver at 1 m; limit 0.9: outside) | 1.000 | 0.8571 | ± 0.1000 | **Not independently validated** |
+
+## PV-SS10  Street-to-sewer exchange against laboratory measurements
+
+Run `results/2026-11-17T18-34-52-775Z/`. 15 Failed.
+
+| Case | Quantity | Expected | Measured | Limit | Status |
+|---|---|---|---|---|---|
+| S1 test 1 (h_s 7.7 mm) | exchange into the sewer (l/s) | 0.6859 | 1.128 | ± 0.0686 | **Failed** |
+| S1 test 2 (h_s 8.2 mm) | exchange into the sewer (l/s) | 0.7691 | 1.240 | ± 0.0769 | **Failed** |
+| S1 test 3 (h_s 8.5 mm) | exchange into the sewer (l/s) | 0.8281 | 1.309 | ± 0.0828 | **Failed** |
+| S1 test 4 (h_s 8.8 mm) | exchange into the sewer (l/s) | 0.8808 | 1.378 | ± 0.0881 | **Failed** |
+| S1 test 5 (h_s 9.0 mm) | exchange into the sewer (l/s) | 0.9017 | 1.426 | ± 0.0902 | **Failed** |
+| S1 test 6 (h_s 9.2 mm) | exchange into the sewer (l/s) | 0.9327 | 1.474 | ± 0.0933 | **Failed** |
+| S1 test 7 (h_s 9.4 mm) | exchange into the sewer (l/s) | 0.9717 | 1.522 | ± 0.0972 | **Failed** |
+| S1 test 8 (h_s 9.7 mm) | exchange into the sewer (l/s) | 1.062 | 1.595 | ± 0.1062 | **Failed** |
+| S1 test 9 (h_s 9.9 mm) | exchange into the sewer (l/s) | 1.097 | 1.645 | ± 0.1097 | **Failed** |
+| S1 test 10 (h_s 10.0 mm) | exchange into the sewer (l/s) | 1.109 | 1.670 | ± 0.1109 | **Failed** |
+| S1 test 11 (h_s 10.2 mm) | exchange into the sewer (l/s) | 1.137 | 1.720 | ± 0.1137 | **Failed** |
+| S1 test 12 (h_s 10.4 mm) | exchange into the sewer (l/s) | 1.146 | 1.771 | ± 0.1146 | **Failed** |
+| S1 test 13 (h_s 10.7 mm) | exchange into the sewer (l/s) | 1.216 | 1.848 | ± 0.1216 | **Failed** |
+| S1 test 14 (h_s 10.8 mm) | exchange into the sewer (l/s) | 1.202 | 1.874 | ± 0.1202 | **Failed** |
+| S1 test 15 (h_s 11.0 mm) | exchange into the sewer (l/s) | 1.249 | 1.927 | ± 0.1249 | **Failed** |
