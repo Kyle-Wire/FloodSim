@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><title>Street sandbox: GPU executor</title>
+<style>body { font: 13px/1.5 ui-monospace, monospace; background: #0d1117; color: #c9d1d9; margin: 16px; } pre { white-space: pre-wrap; }</style>
+<pre id="log">Street sandbox (PV-SS1 … PV-SS9) on the GPU surface solver. Driven by run-browser.mjs; ?cases=SS1-a,SS2-b runs them here and shows the timing.
+</pre>
+<script type="module">
+// The browser executor: the production GPU solver (src/solver-gpu.js) under the same run loop as the CPU executor
+// (harness.mjs). It returns raw measurements; node writes the file and scores it.
+import { GPUSolver } from '../../../src/solver-gpu.js';
+import { buildCase, caseIds } from './cases.mjs';
+import { runCase } from './harness.mjs';
+const out = document.getElementById('log'), log = (s) => { out.textContent += s + '\n'; console.log(s); };
+const specs = {};
+for (let k = 1; k <= 9; k++) { const r = await fetch(`../spec/PV-SS${k}.json`, { cache: 'no-store' }); if (r.ok) { const s = await r.json(); specs[s.id] = s; } }
+const adapter = await navigator.gpu?.requestAdapter({ powerPreference: 'high-performance' });
+let device = null, info = null;
+if (!adapter) log('No WebGPU adapter');
+else {
+  device = await adapter.requestDevice({ requiredLimits: { maxStorageBuffersPerShaderStage: Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10), maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize, maxBufferSize: adapter.limits.maxBufferSize } });
+  device.onuncapturederror = (e) => log('GPU error: ' + e.error.message);
+  const i = adapter.info ?? {}; info = { vendor: i.vendor, architecture: i.architecture, device: i.device, description: i.description, fallback: i.isFallbackAdapter ?? adapter.isFallbackAdapter ?? null, userAgent: navigator.userAgent };
+}
+window.__cases = () => caseIds(specs);
+window.__adapter = () => info;
+/** One case → its raw record as a JSON string. */
+window.__runCase = async (id) => {
+  if (!device) throw new Error('no WebGPU device');
+  const def = buildCase(id, specs);
+  const r = await runCase(async (o) => { const s = new GPUSolver(device, o); await s.ready; return s; }, def, { log });
+  r.executor = 'gpu'; r.engine = 'GPUSolver fp32 (src/solver-gpu.js), browser WebGPU'; r.adapter = info; r.written = new Date().toISOString();
+  return JSON.stringify(r);
+};
+window.__ready = true;
+const q = new URLSearchParams(location.search).get('cases');
+if (q) for (const id of q.split(',')) { try { const r = JSON.parse(await window.__runCase(id)); log(`${id}: ${r.grid.nx}×${r.grid.ny} @ ${r.grid.dx} m, ${r.steps} steps, ${r.wallSeconds.toFixed(1)} s, surface books ${r.mass.rel.toExponential(1)}`); } catch (e) { log(`${id} failed: ${e.message}`); } }
+</script>

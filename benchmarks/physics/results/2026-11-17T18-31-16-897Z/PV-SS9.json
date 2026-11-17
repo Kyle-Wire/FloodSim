@@ -1,0 +1,191 @@
+{
+ "id": "PV-SS9",
+ "spec": "benchmarks/physics/spec/PV-SS9.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [cpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5715605616569519,
+   "abs": 0.000023443753023766334,
+   "rel": 0.000041018776015361236,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [cpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00037796447300922755,
+   "abs": 0.00037796447300922755,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [cpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [cpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5780546739697456,
+   "abs": 0.006517556065817498,
+   "rel": 0.011403556937334487,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [cpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.04663076850566127,
+   "abs": 0.04663076850566127,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [cpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 0.8571428571428571,
+   "abs": -0.1428571428571429,
+   "rel": -0.1428571428571429,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: outside"
+  }
+ ],
+ "cases": {
+  "SS9-2 [cpu]": {
+   "cells": 3072,
+   "wallSeconds": 56.403,
+   "steps": 22400,
+   "housesExposed": 6,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 465.186,
+   "timesFasterThan1m": 8.247540024466783,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.00496257149927489
+  },
+  "SS9-4 [cpu]": {
+   "cells": 768,
+   "wallSeconds": 6.388,
+   "steps": 10894,
+   "housesExposed": 8,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 465.186,
+   "timesFasterThan1m": 72.82185347526612,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.010587925512897018
+  }
+ },
+ "notRun": [
+  "SS9-2 [gpu]",
+  "SS9-4 [gpu]",
+  "SS9-4s [gpu]",
+  "SS9-8s [gpu]"
+ ],
+ "raw": {
+  "SS9-2 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS9-2.cpu.json",
+   "sha256": "e873f16abcc9cfdd4b28b0c13dcd64ff37cfacf66df9bcb5504d8b50332e4782",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 56.403,
+   "steps": 22400,
+   "grid": {
+    "nx": 64,
+    "ny": 48,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 3072
+   }
+  },
+  "SS9-4 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS9-4.cpu.json",
+   "sha256": "e4d81ae3b350ab2669acc9a620056ca830d4c60398a4ce34c42abd5b797504bc",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 6.388,
+   "steps": 10894,
+   "grid": {
+    "nx": 32,
+    "ny": 24,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 768
+   }
+  }
+ },
+ "hand": {
+  "SS9-2": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-4": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-4s": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-8s": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  }
+ }
+}

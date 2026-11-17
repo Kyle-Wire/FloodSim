@@ -38,7 +38,7 @@ export async function runCase(makeSim, def, { log = () => {} } = {}) {
   let s = await sample();
   for (const T of stops) {
     sim.rainRate = rateAt(sim.t);
-    while (sim.t < T - 1e-9) {
+    while (sim.t < T - 1e-4) { // the GPU keeps time in fp32: every stop here is a whole second
       await sim.advance(cp ? Math.min(T, cp.tNext) : T);
       if (cp && sim.t >= cp.tNext - 1e-6) await cp.exchange();
     }

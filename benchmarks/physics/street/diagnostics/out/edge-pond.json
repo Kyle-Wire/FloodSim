@@ -1,0 +1,26 @@
+[
+ {
+  "stormMm": 40,
+  "endDepthAtBlockM": 0.10473117269698333,
+  "trueEndDepthM": 0.16,
+  "edgeShareOfRain": 0.01798906312711096,
+  "rainM3": 6.399999999999994,
+  "leftAcrossEdgeM3": 0.11513000401351003
+ },
+ {
+  "stormMm": 80,
+  "endDepthAtBlockM": 0.20944502366548556,
+  "trueEndDepthM": 0.2,
+  "edgeShareOfRain": 0.018148349222598694,
+  "rainM3": 12.800000000000042,
+  "leftAcrossEdgeM3": 0.23229887004926403
+ },
+ {
+  "stormMm": 160,
+  "endDepthAtBlockM": 0.339857278164358,
+  "trueEndDepthM": 0.2,
+  "edgeShareOfRain": 0.01243179395974911,
+  "rainM3": 25.60000000000008,
+  "leftAcrossEdgeM3": 0.3182539253695782
+ }
+]

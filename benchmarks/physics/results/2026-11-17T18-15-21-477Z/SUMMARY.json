@@ -1,0 +1,125 @@
+{
+ "runId": "2026-11-17T18-15-21-477Z",
+ "order": [
+  "PV-SS1",
+  "PV-SS2",
+  "PV-SS4",
+  "PV-SS5",
+  "PV-SS6",
+  "PV-SS7"
+ ],
+ "timing": {
+  "PV-SS1": 0.1,
+  "PV-SS2": 0,
+  "PV-SS4": 11.7,
+  "PV-SS5": 0.1,
+  "PV-SS6": 0.1,
+  "PV-SS7": 0
+ },
+ "counts": {
+  "PV-SS1": {
+   "byStatus": {
+    "Passed": 12
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 10,
+    "accounting/Passed": 2
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS2": {
+   "byStatus": {
+    "Passed": 12
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 9,
+    "accounting/Passed": 3
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS4": {
+   "byStatus": {
+    "Failed": 11,
+    "Passed": 6
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Failed": 8,
+    "physical-model/Passed": 1,
+    "accounting/Passed": 5,
+    "accounting/Failed": 3
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS5": {
+   "byStatus": {
+    "Passed": 8,
+    "Failed": 1
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 4,
+    "physical-model/Failed": 1,
+    "physical-model/Passed": 4
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS6": {
+   "byStatus": {
+    "Passed": 16,
+    "Failed": 4
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 16,
+    "numerical/Failed": 4
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS7": {
+   "byStatus": {
+    "Passed": 16,
+    "Failed": 1
+   },
+   "byErrorTypeAndStatus": {
+    "accounting/Passed": 16,
+    "accounting/Failed": 1
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Passed": 70,
+   "Failed": 17
+  },
+  "byErrorTypeAndStatus": {
+   "numerical/Passed": 39,
+   "accounting/Passed": 26,
+   "physical-model/Failed": 9,
+   "physical-model/Passed": 5,
+   "accounting/Failed": 4,
+   "numerical/Failed": 4
+  },
+  "deliberateFaults": {
+   "rows": 0,
+   "caught": 0
+  }
+ },
+ "invalidStatuses": 0
+}

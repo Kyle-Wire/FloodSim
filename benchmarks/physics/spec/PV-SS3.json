@@ -13,6 +13,12 @@
  ],
  "initialConditions": "street dry; pipes dry (a held outlet level fills them from the outlet before the rain matters)",
  "boundaryConditions": "surface: closed on all sides, so the sewer is the only way out. SS3-a, -b: the outlet held at 0.227 m below the sag (above the pipe crown). SS3-c: a free outfall. Network cases: the outlets the app writes (a 100 m continuation pipe to a normal-depth outfall where a street leaves the scene).",
+ "definitionRevisions": [
+  {
+   "date": "2026-11-17",
+   "why": "after registration and after the first CPU run of SS3-a, -b, -c: a probe on the grate's own cell (x 97-98, y 1-2 m) was added to these three cases. The registered output for SS3-c is the depth at the grate (its weir head); the first setup recorded only the mean over the 20 m^2 sag, which had been seen (0.044 m) when this was fixed. Criteria unchanged (same hash). SS3-c was run again; the first raw file is kept."
+  }
+ ],
  "geometry": "one pipe: a 100 x 4 m street falling at 3 % into a level sag 5 m long (z 0), one grate (0.2 m^2, 2 m weir length, Cw 0.5, Co 0.6: the app's defaults) at (97.5, 1.5) m over a manhole 1.0 m deep, one 0.15 m pipe 20 m long at 0.5 %, n 0.013. Network: the bowl neighbourhood (terrain.mjs block: 128 x 96 m, three streets, 14 houses, falling at 0.8 % to the Main / East crossing), the network from synthNetwork with the app's defaults (design 10 yr, inlets every 60 m).",
  "parameters": {
   "scenes": {
@@ -60,6 +66,13 @@
        "kind": "box",
        "x0": 95,
        "x1": 100
+      },
+      "inlet": {
+       "kind": "box",
+       "x0": 97,
+       "x1": 98,
+       "y0": 1,
+       "y1": 2
       }
      },
      "drainage": {
@@ -88,6 +101,13 @@
        "kind": "box",
        "x0": 95,
        "x1": 100
+      },
+      "inlet": {
+       "kind": "box",
+       "x0": 97,
+       "x1": 98,
+       "y0": 1,
+       "y1": 2
       }
      },
      "drainage": {
@@ -116,6 +136,13 @@
        "kind": "box",
        "x0": 95,
        "x1": 100
+      },
+      "inlet": {
+       "kind": "box",
+       "x0": 97,
+       "x1": 98,
+       "y0": 1,
+       "y1": 2
       }
      },
      "drainage": {
