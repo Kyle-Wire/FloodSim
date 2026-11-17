@@ -315,7 +315,11 @@ itself is outside its range of validity, which is a physical-model qualification
 
 From the street sandbox, `physics/street/` (specs PV-SS1 to PV-SS10, registered 17 Nov 2026 before any case ran;
 `physics/spec/REGISTRATION-2026-11-17.sha256`). Scored results: `physics/street/RESULTS.md`. Diagnostics are unscored
-and kept in `physics/street/diagnostics/`.
+and kept in `physics/street/diagnostics/`. PV-SS10 was registered later the same day and is not a blind test.
+
+Sources opened on 17 Nov 2026: FHWA HEC-22, 3rd ed. (§4.4.4.1, §7.1.5, §7.5); SWMM 5.2.4 `dwflow.c` (getSlotWidth,
+getArea, getHydRad); Rubinato et al. 2017 and 2018. The kinematic-wave limit k > 20 of Woolhiser & Liggett (1967) is
+as quoted by Morris & Woolhiser (1980); the 1967 paper itself could not be opened.
 
 - The sandbox is not part of PVM2 and did not have PVM2's three reviews. Nothing below is a validation claim.
 - **CPU rows only so far.** They use the CPU surface solver with this suite's copy of the GPU inlet rule, the
@@ -335,6 +339,7 @@ and kept in `physics/street/diagnostics/`.
 | F18 | Spill-at-the-rim exchange, and EXTRAN with two-way exchange, give wrong answers without limit | Medium (neither is the default) | Explained | PV-SS3 b: 4 Failed; PV-SS4 c: 2 Failed |
 | F19 | A coarse grid's own cells misread narrow dips; the 1 m map made from it does not | Medium | Documented | PV-SS6 drive-2, drive-4: 2 Failed |
 | F20 | The wall rule steps two cells out, not 2 m | Low | Documented | PV-SS7 R12: 1 Failed |
+| F21 | A grate in a gutter on a grade takes about half of what HEC-22 gives | High on hillsides, if it holds | **Open: a diagnostic, not a registered case** | none |
 
 What passed is listed at the end.
 
@@ -475,8 +480,10 @@ the pipe or the grate's orifice sets the flow, and the coefficient moves the dep
 sheet flow the default grate took 61–76 % of the water crossing its cell (`diagnostics/on-grade.mjs`), about what
 flows over a 0.6 m grate (1.0–1.3 ×), so the default is not far out there either.
 
-**Proposed fix.** Lower the default weir coefficient from 0.5 to about 0.33, and say where it comes from. Low cost,
-modest effect. Kyle to decide.
+**Proposed fix.** Do not change the coefficient on this evidence alone. At the level of the law the default is about
+55 % high against the rig. In a model run on a kerbed grade the same grate takes about half of what HEC-22 gives (F21).
+The two point opposite ways because the law is applied to the depth in the grate's own cell, which the grate itself
+draws down. Settle F21 first, then set the coefficient. Kyle to decide.
 
 ### F16. What "sized for the 10-yr storm" means
 
@@ -572,9 +579,42 @@ rows compare the solver with itself and are Not independently validated. The sub
 passed all eleven hand cases. At 2 m cells it reaches 4 m (PV-SS7 R12, failed as predicted). The app calls it on the
 1 m grid only, so nothing in production is affected. If it is ever called on a coarser grid, pass the reach in metres.
 
+### F21. A grate in a gutter on a grade (diagnostic)
+
+**Evidence** (`physics/street/diagnostics/gutter.mjs`, unscored). Half a street 8 m wide, falling 1, 2 and 4 % along its
+length and 2 % toward a kerb; rain 50–200 mm/h, so 8–33 l/s reaches one default grate in the kerb cell. Against FHWA
+HEC-22 (3rd ed., §4.4.4.1, Eq. 4-16 to 4-21) for a 0.6 × 0.9 m grate in a uniform gutter:
+
+| Slope along the street | FloodSim takes | HEC-22, the flow over the grate only | HEC-22 with side flow |
+|---|---|---|---|
+| 1 % | 31–40 % | 54–78 % | 69–88 % |
+| 2 % | 29–37 % | 60–83 % | 69–89 % |
+| 4 % | 26–33 % | 66–89 % | 71–92 % |
+
+- **The gutter flow itself is right.** The kerb cell 5 m above the grate is as deep as HEC-22's triangular gutter
+  averaged over that cell, within 1.1 mm (4 %) in all nine runs (for example 26.1 mm against 36.2 − 10.0).
+- On a plane with no kerb (`diagnostics/on-grade.mjs`) the same grate took 61–76 % of the water crossing its cell.
+
+**Cause (likely, not isolated).** The weir law is applied to the depth in the grate's own cell. The grate draws that
+cell down (8–18 mm, against 18–37 mm just upstream), and the water crosses the cell at 0.4–1 m/s; the law has no term
+for water that arrives moving. HEC-22 takes all the flow that passes over a grate at these speeds.
+
+**Reading.** On a hillside FloodSim's grates take too little, not too much. What they miss runs on down the street;
+in a box cut across the slope it then leaves over the edge (F13).
+
+**Production relevance.** Tract 353.02: the sewer took 49–57 % of the rain in every storm and 23–35 % left across the
+edge. Both are what under-capture on a grade would give. Not checked on that run.
+
+**Status.** Open. One street shape; the model's 1 m cells against a formula for one grate size; unscored. It is the
+main case the sandbox does not yet register.
+
+**Proposed fix.** Register the case with HEC-22 as its reference. Then consider a capture rule for moving water: the
+flow crossing the grate's width times HEC-22's efficiency, in place of the weir law. Kyle to decide.
+
 ### What passed
 
-- **Rain on a tilted street** (PV-SS1): outflow = rain × area to 1e-7; depths within 0.2 mm; time to steady state
+- **A gutter's depth** (diagnostic, F21): within 1.1 mm of HEC-22's.
+- **Rain on a tilted street** (PV-SS1): outflow = rain × area to 0.004 %; depths within 0.2 mm; time to steady state
   within 1 % at 1 % slope and 8 % at 2 % (limit 10 %).
 - **A hollow** (PV-SS2): fills to arithmetic (0.1200 m), spills at its rim, ends at the rim to 0.014 mm; a storm twice
   as large ends at the same depth to 6e-8 m. This is the South Street behaviour (the same depth from 10- to 500-yr),

@@ -186,5 +186,5 @@ pipe-to-surface exchange), on the CPU surface solver and, once run, the GPU. It 
 instruction without PVM2's three reviews, so its results are sandbox results, not PVM2 results.
 
 - Description and how to run: `street/README.md`. Short report: `street/REPORT.md`. Every row: `street/RESULTS.md`.
-- Findings F12–F20: `../FINDINGS.md`.
+- Findings F12–F21: `../FINDINGS.md`.
 - Run it with `--only PV-SS1,…`: a bare `run.mjs` also runs PV-TF1.

@@ -1,0 +1,164 @@
+[
+ {
+  "SL": 0.01,
+  "rainMmHr": 50,
+  "approachFlowLs": 8.333333333333334,
+  "takenLs": 3.3485207520425244,
+  "efficiency": 0.4018224902451029,
+  "hec22": {
+   "spreadM": 1.3968074721239,
+   "velocityMs": 0.42711581719207237,
+   "Eo": 0.7765918638150293,
+   "Rs": 0.46710636486419127,
+   "efficiency": 0.8809472261894752,
+   "depthAtKerbM": 0.027936149442478003
+  },
+  "modelOverHec22": 0.45612549571576544,
+  "depthInGrateCellM": 0.008300457659813994,
+  "depthInKerbCellAboveM": 0.017893292911327307
+ },
+ {
+  "SL": 0.01,
+  "rainMmHr": 100,
+  "approachFlowLs": 16.666666666666668,
+  "takenLs": 6.1246526893227164,
+  "efficiency": 0.367479161359363,
+  "hec22": {
+   "spreadM": 1.8114351800823612,
+   "velocityMs": 0.507929168735014,
+   "Eo": 0.6584214317509325,
+   "Rs": 0.3908641912802004,
+   "efficiency": 0.791932262588253,
+   "depthAtKerbM": 0.036228703601647226
+  },
+  "modelOverHec22": 0.46402852708429854,
+  "depthInGrateCellM": 0.012411414792951679,
+  "depthInKerbCellAboveM": 0.026053348518901148
+ },
+ {
+  "SL": 0.01,
+  "rainMmHr": 200,
+  "approachFlowLs": 33.333333333333336,
+  "takenLs": 10.481443423777943,
+  "efficiency": 0.3144433027133383,
+  "hec22": {
+   "spreadM": 2.349140792217181,
+   "velocityMs": 0.6040329813770962,
+   "Eo": 0.5449962485414307,
+   "Rs": 0.3196028992317047,
+   "efficiency": 0.6904167666688914,
+   "depthAtKerbM": 0.04698281584434362
+  },
+  "modelOverHec22": 0.45543984140254573,
+  "depthInGrateCellM": 0.017758638205608756,
+  "depthInKerbCellAboveM": 0.036552835940750907
+ },
+ {
+  "SL": 0.02,
+  "rainMmHr": 50,
+  "approachFlowLs": 8.333333333333334,
+  "takenLs": 3.085651779547338,
+  "efficiency": 0.3702782135456806,
+  "hec22": {
+   "spreadM": 1.2265730702715834,
+   "velocityMs": 0.5539006861517692,
+   "Eo": 0.8336192565563348,
+   "Rs": 0.35442624380234206,
+   "efficiency": 0.8925889584961142,
+   "depthAtKerbM": 0.02453146140543167
+  },
+  "modelOverHec22": 0.41483620206275784,
+  "depthInGrateCellM": 0.00785949185304328,
+  "depthInKerbCellAboveM": 0.014394755689875176
+ },
+ {
+  "SL": 0.02,
+  "rainMmHr": 100,
+  "approachFlowLs": 16.666666666666668,
+  "takenLs": 5.6341730523854405,
+  "efficiency": 0.33805038314312646,
+  "hec22": {
+   "spreadM": 1.5906684741979218,
+   "velocityMs": 0.6587026369765732,
+   "Eo": 0.7175699218619924,
+   "Rs": 0.2866816536848287,
+   "efficiency": 0.7985374437129318,
+   "depthAtKerbM": 0.03181336948395844
+  },
+  "modelOverHec22": 0.423336921524062,
+  "depthInGrateCellM": 0.011739613491567685,
+  "depthInKerbCellAboveM": 0.021514982252434648
+ },
+ {
+  "SL": 0.02,
+  "rainMmHr": 200,
+  "approachFlowLs": 33.333333333333336,
+  "takenLs": 9.732178878039381,
+  "efficiency": 0.2919653663411815,
+  "hec22": {
+   "spreadM": 2.062841795676234,
+   "velocityMs": 0.7833338625635952,
+   "Eo": 0.6005587244624878,
+   "Rs": 0.22732607983326697,
+   "efficiency": 0.6913621437540303,
+   "depthAtKerbM": 0.04125683591352468
+  },
+  "modelOverHec22": 0.42230453168268295,
+  "depthInGrateCellM": 0.01690079223519225,
+  "depthInKerbCellAboveM": 0.030454578831634622
+ },
+ {
+  "SL": 0.04,
+  "rainMmHr": 50,
+  "approachFlowLs": 8.333333333333334,
+  "takenLs": 2.722320182559403,
+  "efficiency": 0.3266784219071283,
+  "hec22": {
+   "spreadM": 1.0770858022600895,
+   "velocityMs": 0.7183203191499492,
+   "Eo": 0.8863042238936064,
+   "Rs": 0.25587622659439957,
+   "efficiency": 0.915396270063432,
+   "depthAtKerbM": 0.021541716045201793
+  },
+  "modelOverHec22": 0.35687104327450586,
+  "depthInGrateCellM": 0.007278748264609777,
+  "depthInKerbCellAboveM": 0.011569241393548622
+ },
+ {
+  "SL": 0.04,
+  "rainMmHr": 100,
+  "approachFlowLs": 16.666666666666668,
+  "takenLs": 4.907825132831886,
+  "efficiency": 0.2944695079699131,
+  "hec22": {
+   "spreadM": 1.3968074721239,
+   "velocityMs": 0.8542316343841447,
+   "Eo": 0.7765918638150293,
+   "Rs": 0.2011005957317572,
+   "efficiency": 0.8215193730931485,
+   "depthAtKerbM": 0.027936149442478003
+  },
+  "modelOverHec22": 0.35844499547367886,
+  "depthInGrateCellM": 0.010703553582425373,
+  "depthInKerbCellAboveM": 0.01737592948570537
+ },
+ {
+  "SL": 0.04,
+  "rainMmHr": 200,
+  "approachFlowLs": 33.333333333333336,
+  "takenLs": 8.616033475846127,
+  "efficiency": 0.2584810042753838,
+  "hec22": {
+   "spreadM": 1.8114351800823612,
+   "velocityMs": 1.015858337470028,
+   "Eo": 0.6584214317509325,
+   "Rs": 0.1555989089939233,
+   "efficiency": 0.7115706843061937,
+   "depthAtKerbM": 0.036228703601647226
+  },
+  "modelOverHec22": 0.3632541502569232,
+  "depthInGrateCellM": 0.015582550387197185,
+  "depthInKerbCellAboveM": 0.025078798042557558
+ }
+]

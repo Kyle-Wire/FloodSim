@@ -5,7 +5,7 @@ laboratory measurement. A family of the physics suite (`../README.md`), built 17
 test the urban hydraulics behind the home-buyer flood report.
 
 - **Short report:** [REPORT.md](REPORT.md). **Every scored row:** [RESULTS.md](RESULTS.md). **Findings:**
-  `../../FINDINGS.md`, F12–F20.
+  `../../FINDINGS.md`, F12–F21.
 - This family did not go through the three reviews `../milestone2/` sets for PVM2 tests, and it does not touch PVM2's
   held items (PV-TF1-R2, PV-RV1, production wiring). Its results are sandbox results. **Nothing here is called
   validated.**
@@ -72,7 +72,12 @@ manhole-to-street surcharge with exact answers (`../../gatec/coupled/`, 22 of 22
   - **PV-SS10 was added and registered later the same day** (commit before its run). It is **not blind**: the
     spreadsheets' means and the paper's coefficient had been read, and a hand estimate made, before its criteria were
     fixed. Its spec says so.
+  - **`terrain.mjs`** gained one scene (`gutterStreet`) for the gutter diagnostic. No registered case uses it and the
+    registered scenes are unchanged.
 - No criterion was changed after a run.
+- The grade line of PV-SS3 follows HEC-22 §7.5 for friction (from the outlet upstream, Manning full flow) but starts
+  from the pipe's own depth at the outlet, as SWMM's normal-depth outfall does, not from HEC-22's (d_c + D) / 2, and has
+  no junction losses.
 
 ## Executors
 
@@ -91,7 +96,8 @@ Rows are kept apart by executor and never merged.
 | `one-pipe.mjs` | Why do the one-pipe cases read low and wobble? | The exchange rate flips sign most intervals at 2 s; at 0.5 s (SWMM ≤ 0.25 s) the pond matches Manning with SLOT's extra conveyance. EXTRAN with two-way exchange is unusable |
 | `edge-pond.mjs` | Was PV-SS5 down-small's pass an accident? | Yes: 0.105 / 0.209 / 0.340 m for 40 / 80 / 160 mm against a true 0.160 / 0.200 / 0.200 m |
 | `allowance.mjs` | Why do the allowance rows stand above their bound? | The allowance is spread over open cells only and taken only from wet street cells: 73–85 % of its nominal rate |
-| `on-grade.mjs` | How much does a default grate take on a continuous grade? (not a registered case) | 61–76 % of the water crossing its cell, 1.0–1.3 × what flows over a 0.6 m grate |
+| `on-grade.mjs` | How much does a default grate take on a plane with no kerb? (not a registered case) | 61–76 % of the water crossing its cell, 1.0–1.3 × what flows over a 0.6 m grate |
+| `gutter.mjs` | And in a kerbed gutter on a grade, against FHWA HEC-22? (not a registered case) | 26–40 % of the flow reaching it, where HEC-22 gives 69–92 %. The gutter's depth matches HEC-22 within 1.1 mm |
 
 The first version of `one-pipe.mjs` set the exchange interval below SWMM's routing step. The coupler then drops
 exchanges, so that output was discarded and the script says so.
@@ -116,8 +122,8 @@ case from the paper: the flume's outlet weir setting is not published.
 
 ## Not covered
 
-- **A grate on a grade in a gutter** (FHWA HEC-22 interception with a cross slope and a kerb). `on-grade.mjs` is a
-  first look under sheet flow only. This is the main missing case: Tract 353.02's sewer share is set by it.
+- **A grate in a gutter on a grade** as a registered case (FHWA HEC-22 §4.4.4.1). `gutter.mjs` and `on-grade.mjs` are
+  first looks, unscored. This is the main missing case: Tract 353.02's sewer share is set by it (F21).
 - **Kerbs, crowns and gutters** in any case: every street here is a plane or a bowl.
 - **EA Tests 8A and 8B:** the inputs are still not public (`../../ea/TEST8.md`).
 - **The laboratory's unsteady tests and its sewer-to-surface tests** (S3, S4): in a coupled run the manhole head is a

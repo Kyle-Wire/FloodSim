@@ -75,4 +75,10 @@ export function block({ dx = 1, fall = 0.008, kerb = 0.15 }) {
   return { ...f, houses, streets: [{ name: 'Main', line: [[0, 48], [NX, 48]] }, { name: 'West', line: [[32, 0], [32, NY]] }, { name: 'East', line: [[96, 0], [96, NY]] }], sag: [96, 48] };
 }
 
-export const SCENES = { plane, hollowStreet, sagStreet, driveway, rearYard, block };
+/** Half a street with a kerb (diagnostics only; added after registration, no registered case uses it): falls east
+ *  at SL and toward the kerb along y = 0 at the cross slope Sx. */
+export function gutterStreet({ L, W, SL, Sx, n, dx = 1 }) {
+  return layers(Math.round(L / dx), Math.round(W / dx), dx, (x, y) => SL * (L - x) + Sx * y, { nRoad: n });
+}
+
+export const SCENES = { plane, hollowStreet, sagStreet, driveway, rearYard, block, gutterStreet };

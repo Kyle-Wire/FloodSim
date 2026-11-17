@@ -1,7 +1,7 @@
 # Street sandbox: report (17 Nov 2026)
 
 Ten test families, each with its answer and pass rule fixed before it ran. Every row is in [RESULTS.md](RESULTS.md);
-the evidence for each finding is in `../../FINDINGS.md` (F12–F20). Nothing here is called validated.
+the evidence for each finding is in `../../FINDINGS.md` (F12–F21). Nothing here is called validated.
 
 **The GPU rows are not yet run.** Everything below is the CPU surface solver with the production coupler and SWMM. The
 GPU was busy with the production batch.
@@ -9,14 +9,18 @@ GPU was busy with the production batch.
 ## The short answer
 
 - **The surface solver is right** on every case with a hand answer: rain on a street, a hollow filling and spilling,
-  still water in a dip, no drainage.
-- **Your reading holds in part.** Where a pipe is the limit, FloodSim sends too much down it and leaves too little on
-  the street: a pond that should be 20 cm deep reads 12 cm. Two causes, both found (F14). The default grate also takes
-  about half as much again as a laboratory rig measured (F15).
-- **But that is not why the production runs flood so little.** The synthetic network carries 3 times its "10-yr"
-  design flow before the street fills (F16), so its pipes are rarely the limit at all.
+  still water in a dip, no drainage, the depth of flow in a gutter.
+- **"Too much down the drains" holds only where a pipe is the limit.** At a sag whose pipe is too small, a pond that
+  should be 20 cm deep reads 12 cm. Two causes, both found (F14).
+- **On a grade it is the other way round.** In a kerbed gutter the default grate takes about half of what the FHWA
+  manual gives (F21; a diagnostic, not yet a registered case). The water it misses runs on downhill.
+- **The synthetic network is not a 10-yr sewer.** It carries 1.75 times its design flows before a manhole reaches the
+  ground, and about 3 times with water standing on the street (F16). SWMM's heads match a hand grade line to 1 cm.
 - **The two things most likely to put a wrong depth against a house are not hydraulics.** A 2 m grid closes the 1 m
   gaps between houses (F12), and the model box cuts off water or holds it at its edge (F13).
+
+Put together, for a hillside tract like 353.02: grates miss water, it runs downhill, and it leaves the box. The pipes
+are never tested. That reading fits the production numbers; it has not been checked on those runs.
 
 ## Each case
 
@@ -40,6 +44,7 @@ GPU was busy with the production batch.
 | 9 | 2 m run mapped to 1 m | end level **Passed**; against the 1 m run inside the limits | – | 8 × faster (CPU); houses' wall depths within 0.4 mm; same houses exposed |
 | 9 | 4 m run mapped to 1 m | end level **Passed**; against the 1 m run outside one limit | – | 73 × faster (CPU); wall depths 4.7 cm out; 8 houses exposed against 6 |
 | 10 | Sheffield rig: water down an open inlet | **Failed** (15 of 15) | 0.69–1.25 l/s measured | 1.13–1.93 l/s: 54–65 % more |
+| – | A grate in a gutter on a grade (diagnostic, unscored) | – | HEC-22: 69–92 % of the flow taken | 26–40 % |
 | 6, 9 | 4 m and 8 m subgrid modes | not yet run (GPU only) | | |
 
 Cases 3, 4, 5, 6, 8 and 9 are CPU rows. The GPU rows of every case are not yet run.
@@ -61,15 +66,17 @@ cannot be read from this case; only the first is arithmetic. One made-up neighbo
 
 1. **F12. A 2 m grid closes 1 m gaps between houses.** A yard that drains reads 10.7 cm, over the threshold.
 2. **F13. The model box.** Cut across a slope it reads 38 % of the true depth. Its edge holds a pond like a wall.
-3. **F14. A surcharged pipe carries too much.** SWMM's SLOT method adds 2–13 % by pipe size; the two-way exchange
+3. **F21. Grates on a grade take about half of what HEC-22 gives.** A diagnostic; if it holds, hillsides shed too much
+   water downhill.
+4. **F14. A surcharged pipe carries too much.** SWMM's SLOT method adds 2–13 % by pipe size; the two-way exchange
    wobbles and adds more. Ponds at a sag read 14–39 % shallow.
-4. **F15. The default grate is generous.** Weir coefficient 0.5 against 0.32 measured in the Sheffield rig.
-5. **F16. "Sized for the 10-yr storm" is not a 10-yr sewer.** It carries 1.75 times its design flows before a manhole
-   reaches the ground, and 3 times with water standing on the street.
+5. **F16. "Sized for the 10-yr storm" is not a 10-yr sewer.**
 6. **F17. The allowance removes less than its rate,** and no drainage is 15–21 cm deeper than pipes in the bowl.
-7. **F18. Two non-default settings fail without limit:** spill at the rim, and EXTRAN with two-way exchange.
-8. **F19. Read depths from the 1 m map,** never from coarse cells.
-9. **F20. The wall rule's reach is in cells.** Harmless at 1 m.
+7. **F15. The grate's weir coefficient is 0.5 against 0.32 in the Sheffield rig.** Do not change it until F21 is
+   settled: the two point opposite ways.
+8. **F18. Two non-default settings fail without limit:** spill at the rim, and EXTRAN with two-way exchange.
+9. **F19. Read depths from the 1 m map,** never from coarse cells.
+10. **F20. The wall rule's reach is in cells.** Harmless at 1 m.
 
 ## What I recommend changing in FloodSim
 
@@ -78,9 +85,10 @@ For you to decide; nothing under `src/` was touched.
 1. **Wall exposure from 1 m runs only,** until coarsening keeps passages open. Add a check that counts the 1 m gaps a
    coarse mask closes.
 2. **Draw the model box from the terrain,** and flag a house whose pond touches the edge.
-3. **Stabilise the two-way exchange** (cap the rate so the manhole head cannot pass the street level in one interval,
+3. **Register a grate-in-a-gutter case against HEC-22, then fix capture on a grade.** Leave the weir coefficient
+   alone until then.
+4. **Stabilise the two-way exchange** (cap the rate so the manhole head cannot pass the street level in one interval,
    or exchange every 0.5 s). Confirm on the GPU first.
-4. **Lower the default grate weir coefficient** from 0.5 to about 0.33.
 5. **Stop calling the synthetic network a 10-yr sewer.** For the nationwide product, decide between a network that
    carries its design flow and no more, and an allowance with the no-drainage run beside it.
 6. **Fix the allowance** so its rate is over the whole area, roofs included.
@@ -90,7 +98,6 @@ For you to decide; nothing under `src/` was touched.
 
 - The GPU rows of every case, and the 4 m and 8 m subgrid modes, which run on the GPU only. One command,
   `node benchmarks/physics/street/run-browser.mjs`, then score.
-- A grate in a gutter on a grade (HEC-22): not built. It is the case that sets how much of the rain reaches the sewer
-  on a hillside like Tract 353.02.
+- A registered grate-in-a-gutter case. The diagnostic is one street shape against a formula for one grate size.
 - The Sheffield rig as a full 2D case: the paper does not give the flume's outlet setting.
-- The South Street and tract runs were not re-examined; F12 and F13 name the mechanisms to look for there.
+- The South Street and tract runs were not re-examined; F12, F13 and F21 name the mechanisms to look for there.
