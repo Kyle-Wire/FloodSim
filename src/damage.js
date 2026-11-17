@@ -91,12 +91,14 @@ export function openWater(maxDepth, { nx, ny, dx = 1, bld, road, minDepth = 0.10
  * Peak water against each structure. → per structure { level, ground, ffe, depthFF (m above the first floor, or null
  * when no water reached it), wetCells, how }.
  * g: { nx, ny, dx, z (ground), bld (building mask), maxWse, maxDepth }; at: structure → [x, y] cell coords;
- * fp: footprintIndex (optional); ring: cells outward from the footprint that count as next to it (default 2);
+ * fp: footprintIndex (optional); reach: how far out from the footprint a cell counts as next to it (m, default 2: two
+ * cells on a 1 m grid, one on a 2 m grid); ring: the same in cells, if given it overrides reach;
  * minDepth: the least peak depth (m) on a cell for its water to count against the building (default 0.10);
  * counts: Uint8Array, 1 where water may count (openWater's mask; default all).
  */
-export function exposure(structures, g, at, { fp = null, ring = 2, minDepth = 0.10, radius = 5, counts = null } = {}) {
+export function exposure(structures, g, at, { fp = null, ring = null, reach = 2, minDepth = 0.10, radius = 5, counts = null } = {}) {
   const { nx, ny, z, bld, maxWse, maxDepth } = g;
+  ring ??= Math.max(1, Math.round(reach / (g.dx > 0 ? g.dx : 1) - 1e-9)); // the reach in whole cells, at least the cells that touch the wall
   const near = new Map(); // footprint → the open cells next to it
   const ringOf = (f) => {
     if (near.has(f)) return near.get(f);

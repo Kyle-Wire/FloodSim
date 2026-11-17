@@ -7,10 +7,10 @@ Written by `report.mjs` from the latest scored run of each spec. Statuses are ne
 | PV-SS1 | Rain on a tilted street | 12 | 0 | – | 2 case-executor pairs |
 | PV-SS2 | A hollow of known volume under rain | 12 | 0 | – | 3 case-executor pairs |
 | PV-SS3 | One inlet and one pipe; a synthetic network under storms beyond its design | 22 | 8 | – | 8 case-executor pairs |
-| PV-SS4 | An outfall held under water | 6 | 11 | – | 4 case-executor pairs |
+| PV-SS4 | An outfall held under water | 10 | 7 | – | 4 case-executor pairs |
 | PV-SS5 | The same block in a small box and a large one | 8 | 1 | – | 5 case-executor pairs |
 | PV-SS6 | Cell size: a driveway dip and a rear yard | 16 | 4 | – | 12 case-executor pairs |
-| PV-SS7 | The wall-exposure rule | 16 | 1 | – | – |
+| PV-SS7 | The wall-exposure rule | 17 | 0 | – | – |
 | PV-SS8 | Drainage treatments side by side | 11 | 5 | – | 8 case-executor pairs |
 | PV-SS9 | Coarse run then downscale: do a kerb, a crown and a small hollow survive? | 10 | 4 | 4 Not independently validated | 14 case-executor pairs |
 | PV-SS10 | Street-to-sewer exchange against laboratory measurements | 0 | 15 | – | – |
@@ -58,16 +58,16 @@ Run `results/2026-11-17T18-15-21-477Z/`. 12 Passed. Not yet run: SS2-a [gpu], SS
 
 ## PV-SS3  One inlet and one pipe; a synthetic network under storms beyond its design
 
-Run `results/2026-11-17T19-16-10-828Z/`. 8 Failed, 22 Passed. Not yet run: SS3-a [gpu], SS3-b [gpu], SS3-c [gpu], SS3-d [gpu], SS3-e [gpu], SS3-f [gpu], SS3-x2 [gpu], SS3-x4 [gpu].
+Run `results/2026-11-17T19-46-35-600Z/`. 8 Failed, 22 Passed. Not yet run: SS3-a [gpu], SS3-b [gpu], SS3-c [gpu], SS3-d [gpu], SS3-e [gpu], SS3-f [gpu], SS3-x2 [gpu], SS3-x4 [gpu].
 
 | Case | Quantity | Expected | Measured | Limit | Status |
 |---|---|---|---|---|---|
-| SS3-a [cpu] | pond level in the sag at 3600 s (m) | 0.1863 | 0.1251 | ± 0.0056 | **Failed** |
-| SS3-a [cpu] | pond level in the sag at 7200 s (m) | 0.1987 | 0.1211 | ± 0.0060 | **Failed** |
-| SS3-a [cpu] | pipe flow at 7200 s (m³/s) | 0.0222 | 0.0219 | ± 4.4e-4 | Passed |
-| SS3-a [cpu] | water on the street at 1800 s (m³) | 4.814 | 5.278 | ± 0.2407 | **Failed** |
-| SS3-a [cpu] | surface books (relative) | 0 | -4.1e-15 | ± 1.0e-9 | Passed |
-| SS3-a [cpu] | SWMM continuity error (%) | 0 | 0.7720 | ± 0.5000 | **Failed** |
+| SS3-a [cpu] | pond level in the sag at 3600 s (m) | 0.1863 | 0.1455 | ± 0.0056 | **Failed** |
+| SS3-a [cpu] | pond level in the sag at 7200 s (m) | 0.1987 | 0.1502 | ± 0.0060 | **Failed** |
+| SS3-a [cpu] | pipe flow at 7200 s (m³/s) | 0.0222 | 0.0222 | ± 4.4e-4 | Passed |
+| SS3-a [cpu] | water on the street at 1800 s (m³) | 4.814 | 5.936 | ± 0.2407 | **Failed** |
+| SS3-a [cpu] | surface books (relative) | 0 | -9.5e-15 | ± 1.0e-9 | Passed |
+| SS3-a [cpu] | SWMM continuity error (%) | 0 | 0.7560 | ± 0.5000 | **Failed** |
 | SS3-b [cpu] | pond level in the sag at 3600 s (m) | 0.1863 | 0.3926 | ± 0.0056 | **Failed** |
 | SS3-b [cpu] | pond level in the sag at 7200 s (m) | 0.1987 | 0.5986 | ± 0.0060 | **Failed** |
 | SS3-b [cpu] | pipe flow at 7200 s (m³/s) | 0.0222 | 0.0173 | ± 4.4e-4 | **Failed** |
@@ -77,45 +77,45 @@ Run `results/2026-11-17T19-16-10-828Z/`. 8 Failed, 22 Passed. Not yet run: SS3-a
 | SS3-c [cpu] | depth at the grate at the end (m) (free outfall: the pipe carries the rain, the street stands at the grate's weir head) | 0.0293 | 0.0293 | ± 0.0059 | Passed |
 | SS3-c [cpu] | surface books (relative) | 0 | -1.4e-14 | ± 1.0e-9 | Passed |
 | SS3-c [cpu] | SWMM continuity error (%) | 0 | 0.1430 | ± 0.5000 | Passed |
-| SS3-d [cpu] | highest manhole head above the friction grade line from the peak pipe flows (m) (one-sided bound; worst at J1) | 0 | 0.0022 | ± 0.1000 | Passed |
-| SS3-d [cpu] | surface books (relative) | 0 | -5.9e-15 | ± 1.0e-9 | Passed |
-| SS3-d [cpu] | SWMM continuity error (%) | 0 | -0.0780 | ± 0.5000 | Passed |
-| SS3-e [cpu] | highest manhole head above the friction grade line from the peak pipe flows (m) (one-sided bound; worst at J1) | 0 | 0.0077 | ± 0.1000 | Passed |
-| SS3-e [cpu] | surface books (relative) | 0 | -2.5e-15 | ± 1.0e-9 | Passed |
-| SS3-e [cpu] | SWMM continuity error (%) | 0 | -0.0930 | ± 0.5000 | Passed |
-| SS3-f [cpu] | highest manhole head above the friction grade line from the peak pipe flows (m) (one-sided bound; worst at J1) | 0 | 0.0097 | ± 0.1000 | Passed |
-| SS3-f [cpu] | surface books (relative) | 0 | -1.9e-14 | ± 1.0e-9 | Passed |
-| SS3-f [cpu] | SWMM continuity error (%) | 0 | -0.1340 | ± 0.5000 | Passed |
-| SS3-x2 [cpu] | highest manhole head above the friction grade line from the peak pipe flows (m) (one-sided bound; worst at J1) | 0 | -0.0015 | ± 0.1000 | Passed |
-| SS3-x2 [cpu] | surface books (relative) | 0 | -2.9e-15 | ± 1.0e-9 | Passed |
-| SS3-x2 [cpu] | SWMM continuity error (%) | 0 | -0.4520 | ± 0.5000 | Passed |
+| SS3-d [cpu] | highest manhole head above the friction grade line from the peak pipe flows (m) (one-sided bound; worst at J0) | 0 | 1.4e-4 | ± 0.1000 | Passed |
+| SS3-d [cpu] | surface books (relative) | 0 | -1.3e-14 | ± 1.0e-9 | Passed |
+| SS3-d [cpu] | SWMM continuity error (%) | 0 | -0.0820 | ± 0.5000 | Passed |
+| SS3-e [cpu] | highest manhole head above the friction grade line from the peak pipe flows (m) (one-sided bound; worst at J1) | 0 | 0.0060 | ± 0.1000 | Passed |
+| SS3-e [cpu] | surface books (relative) | 0 | -3.4e-15 | ± 1.0e-9 | Passed |
+| SS3-e [cpu] | SWMM continuity error (%) | 0 | -0.0960 | ± 0.5000 | Passed |
+| SS3-f [cpu] | highest manhole head above the friction grade line from the peak pipe flows (m) (one-sided bound; worst at J1) | 0 | 0.0103 | ± 0.1000 | Passed |
+| SS3-f [cpu] | surface books (relative) | 0 | -1.5e-14 | ± 1.0e-9 | Passed |
+| SS3-f [cpu] | SWMM continuity error (%) | 0 | -0.1130 | ± 0.5000 | Passed |
+| SS3-x2 [cpu] | highest manhole head above the friction grade line from the peak pipe flows (m) (one-sided bound; worst at J0) | 0 | -0.0060 | ± 0.1000 | Passed |
+| SS3-x2 [cpu] | surface books (relative) | 0 | 2.7e-15 | ± 1.0e-9 | Passed |
+| SS3-x2 [cpu] | SWMM continuity error (%) | 0 | -0.4380 | ± 0.5000 | Passed |
 | SS3-x4 [cpu] | highest manhole head above the friction grade line from the peak pipe flows (m) (one-sided bound; worst at J0) | 0 | -0.0786 | ± 0.1000 | Passed |
-| SS3-x4 [cpu] | surface books (relative) | 0 | 3.8e-15 | ± 1.0e-9 | Passed |
-| SS3-x4 [cpu] | SWMM continuity error (%) | 0 | -0.0120 | ± 0.5000 | Passed |
+| SS3-x4 [cpu] | surface books (relative) | 0 | -6.8e-15 | ± 1.0e-9 | Passed |
+| SS3-x4 [cpu] | SWMM continuity error (%) | 0 | -0.0060 | ± 0.5000 | Passed |
 
 ## PV-SS4  An outfall held under water
 
-Run `results/2026-11-17T18-15-21-477Z/`. 11 Failed, 6 Passed. Not yet run: SS4-a [gpu], SS4-b [gpu], SS4-c [gpu], SS4-d [gpu].
+Run `results/2026-11-17T19-46-35-600Z/`. 10 Passed, 7 Failed. Not yet run: SS4-a [gpu], SS4-b [gpu], SS4-c [gpu], SS4-d [gpu].
 
 | Case | Quantity | Expected | Measured | Limit | Status |
 |---|---|---|---|---|---|
-| SS4-a [cpu] | street level in the sag at 3600 s (m) | 0.1500 | 0.1445 | ± 0.0050 | **Failed** |
-| SS4-a [cpu] | water on the street at 3600 s (m³) | 4.500 | 4.281 | ± 0.2250 | Passed |
-| SS4-a [cpu] | surface books (relative) | 0 | 3.3e-15 | ± 1.0e-9 | Passed |
-| SS4-a [cpu] | SWMM continuity error (%) | 0 | 12.537 | ± 0.5000 | **Failed** |
-| SS4-b [cpu] | street level in the sag at 3600 s (m) | 0.1500 | 0.1401 | ± 0.0050 | **Failed** |
-| SS4-b [cpu] | water on the street at 3600 s (m³) | 4.500 | 4.065 | ± 0.2250 | **Failed** |
-| SS4-b [cpu] | surface books (relative) | 0 | -3.3e-15 | ± 1.0e-9 | Passed |
-| SS4-b [cpu] | SWMM continuity error (%) | 0 | 10.078 | ± 0.5000 | **Failed** |
+| SS4-a [cpu] | street level in the sag at 3600 s (m) | 0.1500 | 0.1500 | ± 0.0050 | Passed |
+| SS4-a [cpu] | water on the street at 3600 s (m³) | 4.500 | 4.500 | ± 0.2250 | Passed |
+| SS4-a [cpu] | surface books (relative) | 0 | -1.8e-14 | ± 1.0e-9 | Passed |
+| SS4-a [cpu] | SWMM continuity error (%) | 0 | 19.309 | ± 0.5000 | **Failed** |
+| SS4-b [cpu] | street level in the sag at 3600 s (m) | 0.1500 | 0.1500 | ± 0.0050 | Passed |
+| SS4-b [cpu] | water on the street at 3600 s (m³) | 4.500 | 4.500 | ± 0.2250 | Passed |
+| SS4-b [cpu] | surface books (relative) | 0 | -2.6e-15 | ± 1.0e-9 | Passed |
+| SS4-b [cpu] | SWMM continuity error (%) | 0 | 16.820 | ± 0.5000 | **Failed** |
 | SS4-c [cpu] | street level in the sag at 3600 s (m) | 0.1500 | 0.7260 | ± 0.0050 | **Failed** |
 | SS4-c [cpu] | water on the street at 3600 s (m³) | 4.500 | 49.645 | ± 0.2250 | **Failed** |
 | SS4-c [cpu] | surface books (relative) | 0 | -1.6e-15 | ± 1.0e-9 | Passed |
 | SS4-c [cpu] | SWMM continuity error (%) | 0 | 0.0960 | ± 0.5000 | Passed |
-| SS4-d [cpu] | pond level in the sag at 3600 s (m) | 0.4862 | 0.4284 | ± 0.0146 | **Failed** |
-| SS4-d [cpu] | pond level in the sag at 7200 s (m) | 0.5466 | 0.4705 | ± 0.0164 | **Failed** |
-| SS4-d [cpu] | pipe flow at 7200 s (m³/s) | 0.0214 | 0.0222 | ± 4.3e-4 | **Failed** |
-| SS4-d [cpu] | surface books (relative) | 0 | 7.3e-16 | ± 1.0e-9 | Passed |
-| SS4-d [cpu] | SWMM continuity error (%) | 0 | 1.150 | ± 0.5000 | **Failed** |
+| SS4-d [cpu] | pond level in the sag at 3600 s (m) | 0.4862 | 0.4510 | ± 0.0146 | **Failed** |
+| SS4-d [cpu] | pond level in the sag at 7200 s (m) | 0.5466 | 0.4914 | ± 0.0164 | **Failed** |
+| SS4-d [cpu] | pipe flow at 7200 s (m³/s) | 0.0214 | 0.0218 | ± 4.3e-4 | Passed |
+| SS4-d [cpu] | surface books (relative) | 0 | -8.2e-16 | ± 1.0e-9 | Passed |
+| SS4-d [cpu] | SWMM continuity error (%) | 0 | 1.146 | ± 0.5000 | **Failed** |
 
 ## PV-SS5  The same block in a small box and a large one
 
@@ -162,7 +162,7 @@ Run `results/2026-11-17T18-15-21-477Z/`. 16 Passed, 4 Failed. Not yet run: SS6-d
 
 ## PV-SS7  The wall-exposure rule
 
-Run `results/2026-11-17T18-15-21-477Z/`. 16 Passed, 1 Failed.
+Run `results/2026-11-17T19-57-39-784Z/`. 17 Passed.
 
 | Case | Quantity | Expected | Measured | Limit | Status |
 |---|---|---|---|---|---|
@@ -182,11 +182,11 @@ Run `results/2026-11-17T18-15-21-477Z/`. 16 Passed, 1 Failed.
 | R10 two street-joined strips at different levels: the higher one | water counts against the building (1 yes, 0 no) | 1.000 | 1.000 | ± 0 | Passed |
 | R10 two street-joined strips at different levels: the higher one | wall level (m) | 10.300 | 10.300 | ± 1.0e-6 | Passed |
 | R11 50 cm against the wall, linked to the street only by 5 cm of water | water counts against the building (1 yes, 0 no) | 0 | 0 | ± 0 | Passed |
-| R12 at 2 m cells: 15 cm joined to the street on the cell 2-4 m from the wall | water counts against the building (1 yes, 0 no) | 0 | 1.000 | ± 0 | **Failed** |
+| R12 at 2 m cells: 15 cm joined to the street on the cell 2-4 m from the wall | water counts against the building (1 yes, 0 no) | 0 | 0 | ± 0 | Passed |
 
 ## PV-SS8  Drainage treatments side by side
 
-Run `results/2026-11-17T19-16-10-828Z/`. 11 Passed, 5 Failed. Not yet run: SS8-none-10 [gpu], SS8-none-100 [gpu], SS8-none-500 [gpu], SS8-lump30-10 [gpu], SS8-lump30-100 [gpu], SS8-lump30-500 [gpu], SS8-lump50-100 [gpu], SS8-lump50-500 [gpu].
+Run `results/2026-11-17T19-46-35-600Z/`. 11 Passed, 5 Failed. Not yet run: SS8-none-10 [gpu], SS8-none-100 [gpu], SS8-none-500 [gpu], SS8-lump30-10 [gpu], SS8-lump30-100 [gpu], SS8-lump30-500 [gpu], SS8-lump50-100 [gpu], SS8-lump50-500 [gpu].
 
 | Case | Quantity | Expected | Measured | Limit | Status |
 |---|---|---|---|---|---|
@@ -256,7 +256,7 @@ Run `results/2026-11-17T18-34-52-775Z/`. 15 Failed.
 
 ## PV-SS11  Surface only, an allowance, or pipes: each against a known answer
 
-Run `results/2026-11-17T19-13-18-241Z/`. 11 Passed, 26 Failed. Not yet run: SS11-sagA-10-pipe [gpu], SS11-sagA-10-none [gpu], SS11-sagA-10-lump30 [gpu], SS11-sagA-10-lump50 [gpu], SS11-sagA-100-pipe [gpu], SS11-sagA-100-none [gpu], SS11-sagA-100-lump30 [gpu], SS11-sagA-100-lump50 [gpu], SS11-sagA-500-pipe [gpu], SS11-sagA-500-none [gpu], SS11-sagA-500-lump30 [gpu], SS11-sagA-500-lump50 [gpu], SS11-sagB-10-pipe [gpu], SS11-sagB-10-none [gpu], SS11-sagB-10-lump30 [gpu], SS11-sagB-10-lump50 [gpu], SS11-sagB-100-pipe [gpu], SS11-sagB-100-none [gpu], SS11-sagB-100-lump30 [gpu], SS11-sagB-100-lump50 [gpu], SS11-sagB-500-pipe [gpu], SS11-sagB-500-none [gpu], SS11-sagB-500-lump30 [gpu], SS11-sagB-500-lump50 [gpu], SS11-hollow-10-none [gpu], SS11-hollow-10-lump30 [gpu], SS11-hollow-10-lump50 [gpu], SS11-hollow-100-none [gpu], SS11-hollow-100-lump30 [gpu], SS11-hollow-100-lump50 [gpu], SS11-hollow-500-none [gpu], SS11-hollow-500-lump30 [gpu], SS11-hollow-500-lump50 [gpu], SS11-hill-pipe [gpu], SS11-hill-none [gpu], SS11-hill-lump30 [gpu], SS11-hill-lump50 [gpu].
+Run `results/2026-11-17T19-46-35-600Z/`. 11 Passed, 26 Failed. Not yet run: SS11-sagA-10-pipe [gpu], SS11-sagA-10-none [gpu], SS11-sagA-10-lump30 [gpu], SS11-sagA-10-lump50 [gpu], SS11-sagA-100-pipe [gpu], SS11-sagA-100-none [gpu], SS11-sagA-100-lump30 [gpu], SS11-sagA-100-lump50 [gpu], SS11-sagA-500-pipe [gpu], SS11-sagA-500-none [gpu], SS11-sagA-500-lump30 [gpu], SS11-sagA-500-lump50 [gpu], SS11-sagB-10-pipe [gpu], SS11-sagB-10-none [gpu], SS11-sagB-10-lump30 [gpu], SS11-sagB-10-lump50 [gpu], SS11-sagB-100-pipe [gpu], SS11-sagB-100-none [gpu], SS11-sagB-100-lump30 [gpu], SS11-sagB-100-lump50 [gpu], SS11-sagB-500-pipe [gpu], SS11-sagB-500-none [gpu], SS11-sagB-500-lump30 [gpu], SS11-sagB-500-lump50 [gpu], SS11-hollow-10-none [gpu], SS11-hollow-10-lump30 [gpu], SS11-hollow-10-lump50 [gpu], SS11-hollow-100-none [gpu], SS11-hollow-100-lump30 [gpu], SS11-hollow-100-lump50 [gpu], SS11-hollow-500-none [gpu], SS11-hollow-500-lump30 [gpu], SS11-hollow-500-lump50 [gpu], SS11-hill-pipe [gpu], SS11-hill-none [gpu], SS11-hill-lump30 [gpu], SS11-hill-lump50 [gpu].
 
 | Case | Quantity | Expected | Measured | Limit | Status |
 |---|---|---|---|---|---|
@@ -272,15 +272,15 @@ Run `results/2026-11-17T19-13-18-241Z/`. 11 Passed, 26 Failed. Not yet run: SS11
 | SS11-sagA-500-none [cpu] | peak depth at the grate (m) (surface only) | 0.0434 | 0.6572 | ± 0.0200 | **Failed** |
 | SS11-sagA-500-lump30 [cpu] | peak depth at the grate (m) (allowance 30 mm/h) | 0.0434 | 0.5335 | ± 0.0200 | **Failed** |
 | SS11-sagA-500-lump50 [cpu] | peak depth at the grate (m) (allowance 50 mm/h) | 0.0434 | 0.4542 | ± 0.0200 | **Failed** |
-| SS11-sagB-10-pipe [cpu] | peak pond level in the sag (m) (pipe) | 0.0426 | 0.0394 | ± 0.0200 | Passed |
+| SS11-sagB-10-pipe [cpu] | peak pond level in the sag (m) (pipe) | 0.0426 | 0.0409 | ± 0.0200 | Passed |
 | SS11-sagB-10-none [cpu] | peak pond level in the sag (m) (surface only) | 0.0426 | 0.4169 | ± 0.0200 | **Failed** |
 | SS11-sagB-10-lump30 [cpu] | peak pond level in the sag (m) (allowance 30 mm/h) | 0.0426 | 0.2541 | ± 0.0200 | **Failed** |
 | SS11-sagB-10-lump50 [cpu] | peak pond level in the sag (m) (allowance 50 mm/h) | 0.0426 | 0.1878 | ± 0.0200 | **Failed** |
-| SS11-sagB-100-pipe [cpu] | peak pond level in the sag (m) (pipe) | 0.1347 | 0.1154 | ± 0.0269 | Passed |
+| SS11-sagB-100-pipe [cpu] | peak pond level in the sag (m) (pipe) | 0.1347 | 0.1211 | ± 0.0269 | Passed |
 | SS11-sagB-100-none [cpu] | peak pond level in the sag (m) (surface only) | 0.1347 | 0.5582 | ± 0.0269 | **Failed** |
 | SS11-sagB-100-lump30 [cpu] | peak pond level in the sag (m) (allowance 30 mm/h) | 0.1347 | 0.4151 | ± 0.0269 | **Failed** |
 | SS11-sagB-100-lump50 [cpu] | peak pond level in the sag (m) (allowance 50 mm/h) | 0.1347 | 0.3434 | ± 0.0269 | **Failed** |
-| SS11-sagB-500-pipe [cpu] | peak pond level in the sag (m) (pipe) | 0.2049 | 0.1883 | ± 0.0410 | Passed |
+| SS11-sagB-500-pipe [cpu] | peak pond level in the sag (m) (pipe) | 0.2049 | 0.1919 | ± 0.0410 | Passed |
 | SS11-sagB-500-none [cpu] | peak pond level in the sag (m) (surface only) | 0.2049 | 0.6572 | ± 0.0410 | **Failed** |
 | SS11-sagB-500-lump30 [cpu] | peak pond level in the sag (m) (allowance 30 mm/h) | 0.2049 | 0.5335 | ± 0.0410 | **Failed** |
 | SS11-sagB-500-lump50 [cpu] | peak pond level in the sag (m) (allowance 50 mm/h) | 0.2049 | 0.4542 | ± 0.0410 | **Failed** |
@@ -321,7 +321,7 @@ Run `results/2026-11-17T19-13-18-241Z/`. 10 Passed, 4 Unsupported. Not yet run: 
 
 ## PV-SS13  A grate in a gutter on a grade
 
-Run `results/2026-11-17T19-30-22-646Z/`. 9 Failed, 9 Passed. Not yet run: SS13-s1-r50 [gpu], SS13-s1-r100 [gpu], SS13-s1-r200 [gpu], SS13-s2-r50 [gpu], SS13-s2-r100 [gpu], SS13-s2-r200 [gpu], SS13-s4-r50 [gpu], SS13-s4-r100 [gpu], SS13-s4-r200 [gpu].
+Run `results/2026-11-17T19-46-35-600Z/`. 9 Failed, 9 Passed. Not yet run: SS13-s1-r50 [gpu], SS13-s1-r100 [gpu], SS13-s1-r200 [gpu], SS13-s2-r50 [gpu], SS13-s2-r100 [gpu], SS13-s2-r200 [gpu], SS13-s4-r50 [gpu], SS13-s4-r100 [gpu], SS13-s4-r200 [gpu].
 
 | Case | Quantity | Expected | Measured | Limit | Status |
 |---|---|---|---|---|---|

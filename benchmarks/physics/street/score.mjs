@@ -213,7 +213,7 @@ function ss7(spec) {
     // the app's calls (app/map.js): openWater on the peak depth, then exposure with that mask and the footprint index
     const [bx0, by0, bx1, by1] = L.building.map(v => v / dx), fp = footprintIndex([[[[bx0, by0], [bx1, by0], [bx1, by1], [bx0, by1]]]], nx, ny);
     const open = openWater(depth, { nx, ny, dx, bld, road, minDepth: rule.minDepth });
-    const ex = exposure([{ id: 'house', cell: [(bx0 + bx1) / 2, (by0 + by1) / 2] }], { nx, ny, z, bld, maxWse: wse, maxDepth: depth }, s => s.cell, { fp, minDepth: rule.minDepth, counts: open.mask })[0];
+    const ex = exposure([{ id: 'house', cell: [(bx0 + bx1) / 2, (by0 + by1) / 2] }], { nx, ny, dx, z, bld, maxWse: wse, maxDepth: depth }, s => s.cell, { fp, minDepth: rule.minDepth, counts: open.mask })[0];
     const tag = `${c.id} ${c.what}`;
     if (ref.counts !== c.hand.counts || (c.hand.level != null && Math.abs(ref.level - c.hand.level) > 1e-9)) throw new Error(`PV-SS7 ${c.id}: the reference (${JSON.stringify(ref)}) disagrees with the hand answer in the spec (${JSON.stringify(c.hand)})`);
     hand[c.id] = c.hand;

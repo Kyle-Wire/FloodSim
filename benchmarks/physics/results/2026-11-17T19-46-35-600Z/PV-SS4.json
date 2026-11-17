@@ -1,0 +1,538 @@
+{
+ "id": "PV-SS4",
+ "spec": "benchmarks/physics/spec/PV-SS4.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-a [cpu]",
+   "quantity": "street level in the sag at 3600 s (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.15,
+   "sim": 0.15,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-a [cpu]",
+   "quantity": "water on the street at 3600 s (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 4.500000000000001,
+   "sim": 4.500062119221594,
+   "abs": 0.00006211922159327088,
+   "rel": 0.000013804271465171304,
+   "limit": 0.22500000000000006,
+   "criterion": {
+    "rel": 0.05
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-a [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -1.8158063699472747e-14,
+   "abs": -1.8158063699472747e-14,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-a [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 19.309,
+   "abs": 19.309,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-b [cpu]",
+   "quantity": "street level in the sag at 3600 s (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.15,
+   "sim": 0.15,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-b [cpu]",
+   "quantity": "water on the street at 3600 s (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 4.500000000000001,
+   "sim": 4.499950486921453,
+   "abs": -0.00004951307854828002,
+   "rel": -0.000011002906344062224,
+   "limit": 0.22500000000000006,
+   "criterion": {
+    "rel": 0.05
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-b [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -2.5658770001268997e-15,
+   "abs": -2.5658770001268997e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-b [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 16.82,
+   "abs": 16.82,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-c [cpu]",
+   "quantity": "street level in the sag at 3600 s (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.15,
+   "sim": 0.72598,
+   "abs": 0.5759799999999999,
+   "rel": 3.8398666666666665,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-c [cpu]",
+   "quantity": "water on the street at 3600 s (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 4.500000000000001,
+   "sim": 49.6452229211006,
+   "abs": 45.1452229211006,
+   "rel": 10.032271760244575,
+   "limit": 0.22500000000000006,
+   "criterion": {
+    "rel": 0.05
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-c [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -1.5743649909242498e-15,
+   "abs": -1.5743649909242498e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-c [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.096,
+   "abs": 0.096,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-d [cpu]",
+   "quantity": "pond level in the sag at 3600 s (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.4862495974682366,
+   "sim": 0.45097,
+   "abs": -0.03527959746823661,
+   "rel": -0.07255450215676773,
+   "limit": 0.014587487924047097,
+   "criterion": {
+    "abs": 0.014587487924047097
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-d [cpu]",
+   "quantity": "pond level in the sag at 7200 s (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.546563505038526,
+   "sim": 0.49137,
+   "abs": -0.05519350503852605,
+   "rel": -0.1009827852202382,
+   "limit": 0.01639690515115578,
+   "criterion": {
+    "abs": 0.01639690515115578
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-d [cpu]",
+   "quantity": "pipe flow at 7200 s (m³/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.021401051558165816,
+   "sim": 0.02181,
+   "abs": 0.0004089484418341831,
+   "rel": 0.019108801299912954,
+   "limit": 0.00042802103116331634,
+   "criterion": {
+    "rel": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-d [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -8.2156503822261085e-16,
+   "abs": -8.2156503822261085e-16,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS4",
+   "case": "SS4-d [cpu]",
+   "quantity": "SWMM continuity error (%)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 1.146,
+   "abs": 1.146,
+   "rel": null,
+   "limit": 0.5,
+   "criterion": {
+    "abs": 0.5
+   },
+   "status": "Failed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS4-a [cpu]": {
+   "exchange": "two-way",
+   "sagDepthEndM": 0.15,
+   "streetVolumeEndM3": 4.500062119221594,
+   "pipeFlowEndM3s": 0,
+   "nodeHeadEndM": 0.15,
+   "maxNodeHeadM": 0.15175950013666475,
+   "totals": {
+    "toNetwork": 0.004290613598248203,
+    "toSurface": 4.504352732819855,
+    "overflowReturned": 0,
+    "overflowLost": 0,
+    "roofToSewer": 0,
+    "backflow": 4.504354619976249,
+    "latOut": 4.504352732819855,
+    "extra": 0,
+    "outfallReturned": 0
+   },
+   "continuity": {
+    "externalInflow": 0.006,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0.005,
+    "flooding": 0,
+    "initialStored": 0,
+    "finalStored": 0,
+    "errorPct": 19.309
+   },
+   "swmmVersion": 52004
+  },
+  "SS4-b [cpu]": {
+   "exchange": "two-way",
+   "sagDepthEndM": 0.15,
+   "streetVolumeEndM3": 4.499950486921453,
+   "pipeFlowEndM3s": 0,
+   "nodeHeadEndM": 0.15,
+   "maxNodeHeadM": 0.1515158245821941,
+   "totals": {
+    "toNetwork": 0.015623993255263664,
+    "toSurface": 4.515574480176715,
+    "overflowReturned": 0,
+    "overflowLost": 0,
+    "roofToSewer": 0,
+    "backflow": 4.5155744753891875,
+    "latOut": 4.515574480176715,
+    "extra": 0,
+    "outfallReturned": 0
+   },
+   "continuity": {
+    "externalInflow": 0.006,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0.005,
+    "flooding": 0,
+    "initialStored": 0,
+    "finalStored": 0,
+    "errorPct": 16.82
+   },
+   "swmmVersion": 52004
+  },
+  "SS4-c [cpu]": {
+   "exchange": "spill at the rim",
+   "sagDepthEndM": 0.72598,
+   "streetVolumeEndM3": 49.6452229211006,
+   "pipeFlowEndM3s": -0.01428,
+   "nodeHeadEndM": 0,
+   "maxNodeHeadM": 0,
+   "totals": {
+    "toNetwork": 9.569422989907185,
+    "toSurface": 59.21464591100779,
+    "overflowReturned": 1257.9274337367287,
+    "overflowLost": 0,
+    "roofToSewer": 0,
+    "backflow": 0,
+    "latOut": 6.722671454240103e-8,
+    "extra": 0,
+    "outfallReturned": 0
+   },
+   "continuity": {
+    "externalInflow": 1.26,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0,
+    "flooding": 1.259,
+    "initialStored": 0,
+    "finalStored": 0,
+    "errorPct": 0.096
+   },
+   "swmmVersion": 52004
+  },
+  "SS4-d [cpu]": {
+   "exchange": "two-way",
+   "sagDepthEndM": 0.49137,
+   "streetVolumeEndM3": 27.746922151825185,
+   "pipeFlowEndM3s": 0.02181,
+   "nodeHeadEndM": 0.4867,
+   "maxNodeHeadM": 0.48670219197836206,
+   "totals": {
+    "toNetwork": 133.83271168422903,
+    "toSurface": 1.5796338360523796,
+    "overflowReturned": 0,
+    "overflowLost": 0,
+    "roofToSewer": 0,
+    "backflow": 1.5796338358012496,
+    "latOut": 1.5796338360523796,
+    "extra": 0,
+    "outfallReturned": 0
+   },
+   "continuity": {
+    "externalInflow": 0.137,
+    "dryWeatherInflow": 0,
+    "externalOutflow": 0.135,
+    "flooding": 0,
+    "initialStored": 0,
+    "finalStored": 0,
+    "errorPct": 1.146
+   },
+   "swmmVersion": 52004
+  }
+ },
+ "notRun": [
+  "SS4-a [gpu]",
+  "SS4-b [gpu]",
+  "SS4-c [gpu]",
+  "SS4-d [gpu]"
+ ],
+ "raw": {
+  "SS4-a [cpu]": {
+   "file": "street/raw/2026-11-17T20-00-fix-cpu/SS4-a.cpu.json",
+   "sha256": "1b4b5db0d3eb663b93af2fb536b68200549acd638571795c309d02e0b0ccfb19",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 3.9,
+   "steps": 18800,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS4-b [cpu]": {
+   "file": "street/raw/2026-11-17T20-00-fix-cpu/SS4-b.cpu.json",
+   "sha256": "62735a950b9014e369ca5c31fecc477bbc4f7ba8dd3fdff3a4a31fbed53ace33",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 3.4,
+   "steps": 18807,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS4-c [cpu]": {
+   "file": "street/raw/2026-11-17T20-00-fix-cpu/SS4-c.cpu.json",
+   "sha256": "a9ed11cf4a19c20075586e46f7599a6aefb3a970fd791843570bf84efa7d1819",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 5.477,
+   "steps": 31169,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  },
+  "SS4-d [cpu]": {
+   "file": "street/raw/2026-11-17T20-00-fix-cpu/SS4-d.cpu.json",
+   "sha256": "d21e800893f53be6d2d5447c21d119606e7413c8aa4d08662bb2dc849d149dfe",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 15.813,
+   "steps": 62031,
+   "grid": {
+    "nx": 100,
+    "ny": 4,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 400
+   }
+  }
+ },
+ "hand": {
+  "SS4-a": {
+   "rainOverAreaM3s": 0,
+   "equilibriumLevelM": 0.15,
+   "restVolumeM3": 4.500000000000001,
+   "levelM": {
+    "3600": 0.1499999890376218
+   },
+   "pipeFlowM3s": {
+    "3600": -0.0000035582063599076042
+   }
+  },
+  "SS4-b": {
+   "rainOverAreaM3s": 0,
+   "equilibriumLevelM": 0.15,
+   "restVolumeM3": 4.500000000000001,
+   "levelM": {
+    "3600": 0.1499999890376218
+   },
+   "pipeFlowM3s": {
+    "3600": -0.0000035582063599076042
+   }
+  },
+  "SS4-c": {
+   "rainOverAreaM3s": 0,
+   "equilibriumLevelM": 0.15,
+   "restVolumeM3": 4.500000000000001,
+   "levelM": {
+    "3600": 0.1499999890376218
+   },
+   "pipeFlowM3s": {
+    "3600": -0.0000035582063599076042
+   }
+  },
+  "SS4-d": {
+   "rainOverAreaM3s": 0.02222222222222222,
+   "equilibriumLevelM": 0.5775801057096578,
+   "restVolumeM3": 4.500000000000001,
+   "levelM": {
+    "3600": 0.4862495974682366,
+    "7200": 0.546563505038526
+   },
+   "pipeFlowM3s": {
+    "3600": 0.01970650589713137,
+    "7200": 0.021401051558165816
+   }
+  }
+ },
+ "freeOutfallComparison": {
+  "cpu": 0.04408,
+  "gpu": null
+ }
+}

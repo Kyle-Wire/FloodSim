@@ -62,5 +62,24 @@ const nodes = [
   check('no crest: the same as before', inletFlow(0.1, 2, 1, 1, o) === inletFlow(0.1, 2, 1, 1, o, 0) && inletFlow(0, 2, 1, 1, o) === 0 && inletFlow(0.1, 2, 2.05, 1, o) > 0);
 }
 
+{ // two-way exchange at a surcharged manhole (benchmarks/FINDINGS.md F14): a manhole of 1.2 m² over a pipe that carries
+  // K √(head above the outlet), under 0.2 m of street water. The rate must settle at what the pipe carries with the
+  // manhole at the street's level; the orifice law of the moment (follow: false) swings instead
+  const K = 0.05, A = 1.2, eta = 10.2, run = (follow) => {
+    const net = { nodes: [node('J0', 4, 4), node('O1', 10, 10, { outfall: true })], pipes: [], inlets: [{ node: 0, cell: 0, grates: 1 }], opts: DESIGN_DEFAULTS };
+    let H = 9, lat = 0; const Qp = () => K * Math.sqrt(Math.max(0, H - 8));
+    const swmm = { index: (k, name) => (k === 'NODE' ? (name === 'J0' ? 0 : 1) : -1), setLatFlow(i, q) { if (i === 0) lat = q; }, setOutfallStage() {},
+      stepTo(t, cb) { for (let k = 0; k < 4; k++) { H += (lat - Qp()) * 0.5 / A; cb(0.5); } }, node: (what, i) => (i !== 0 ? 0 : what === 'HEAD' ? H : what === 'INFLOW' ? Math.max(0, lat) + 1 : what === 'LATFLOW' ? lat : 0), link: () => 0 };
+    const cp = new Coupler({ rainRate: 0 }, net, swmm, new Float32Array(4).fill(10), { interval: 2, twoWay: true, follow });
+    let q = 0; const rates = [];
+    for (let n = 1; n <= 300; n++) { q = cp.step(Float64Array.of(q * 2), Float64Array.of(0.2), 2, 2 * n)[0]; rates.push(q); }
+    const last = rates.slice(-50);
+    return { q: last.at(-1), H, spread: Math.max(...last) - Math.min(...last) };
+  };
+  const f = run(true), e = run(false), loss = (f.q / (DESIGN_DEFAULTS.Co * DESIGN_DEFAULTS.inletArea)) ** 2 / (2 * 9.81); // the grate's own head loss at the settled rate
+  check('two-way exchange follows the street: the rate settles at what the pipe carries, the manhole at the street level less the grate\'s loss', Math.abs(f.q / (K * Math.sqrt(f.H - 8)) - 1) < 1e-3 && f.spread < 1e-4 && Math.abs(eta - loss - f.H) < 1e-3, `rate ${f.q.toFixed(5)}, head ${f.H.toFixed(4)} (street ${eta}, grate loss ${loss.toFixed(4)}), spread ${f.spread.toExponential(1)}`);
+  check('the orifice law of the moment (follow: false) swings on the same manhole', e.spread > 0.01, `spread ${e.spread.toFixed(4)} m³/s`);
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nall passed');
 process.exit(fails ? 1 : 0);
