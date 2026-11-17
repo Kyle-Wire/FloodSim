@@ -4,7 +4,8 @@ Made-up street cases whose answers are known before the model runs: by hand arit
 laboratory measurement. A family of the physics suite (`../README.md`), built 17 Nov 2026 at Kyle's instruction to
 test the urban hydraulics behind the home-buyer flood report.
 
-- **Short report:** [REPORT.md](REPORT.md). **Every scored row:** [RESULTS.md](RESULTS.md). **Findings:**
+- **Short report:** [REPORT.md](REPORT.md). **The three fixes, before and after:** [FIXES.md](FIXES.md). **Every scored
+  row:** [RESULTS.md](RESULTS.md). **Findings:**
   `../../FINDINGS.md`, F12–F24.
 - This family did not go through the three reviews `../milestone2/` sets for PVM2 tests, and it does not touch PVM2's
   held items (PV-TF1-R2, PV-RV1, production wiring). Its results are sandbox results. **Nothing here is called
@@ -16,6 +17,7 @@ node benchmarks/physics/street/exec-cpu.mjs --spec PV-SS1    run a spec's cases 
 node benchmarks/physics/street/run-browser.mjs --spec PV-SS1 the same on the GPU solver in headless Chrome or Edge
 node benchmarks/physics/run.mjs --only PV-SS1,PV-SS2         score the latest raw file of each case → ../results/<run-id>/
 node benchmarks/physics/street/report.mjs                    RESULTS.md from the latest scored run of each spec
+node benchmarks/physics/street/gatec-check.mjs               the three Gate C coupled cases on this code (GPU) → street/gatec-check/<stamp>/
 ```
 
 Run the sandbox with `--only`: a bare `run.mjs` runs every spec in the suite, PV-TF1 included.
@@ -58,6 +60,7 @@ manhole-to-street surcharge with exact answers (`../../gatec/coupled/`, 22 of 22
 | `raw/<stamp>/` | raw measurements, one file per case and executor, read-only, never overwritten |
 | `score.mjs` | the scorer `../run.mjs` loads; `report.mjs` writes `RESULTS.md` |
 | `diagnostics/` | unscored runs that explain a result; output in `diagnostics/out/` |
+| `gatec-check.html`, `gatec-check.mjs`, `gatec-check/` | the Gate C coupled cases run on this code without rewriting their filed results |
 | `lab/` | the laboratory data: `fetch.mjs` (downloads to `lab/data/`, git-ignored, MD5 checked), `reduce.py`, `rubinato2017-steady.json` |
 
 ## Registration, and what changed after it
@@ -91,8 +94,12 @@ manhole-to-street surcharge with exact answers (`../../gatec/coupled/`, 22 of 22
     some runs short. The complete runs of the same cases are in `raw/2026-11-17T19-07-cpu`, which the scorer uses.
   - **PV-SS13** was registered at 14:34 EST, after its nine runs had been made once as the diagnostic `gutter.mjs`. It is
     not blind and its spec says so.
-  - **Fixes are on another branch** (`claude/street-sandbox-fixes`, pull request 11) with their own raw files and
-    results. Nothing under `src/` is changed here.
+  - **The GPU rows** of all 108 cases ran on 17 Nov, 15:15 to 16:00 EST, on the code before the fixes
+    (`raw/2026-11-17T20-15-gpu`, scored in `results/2026-11-17T21-56-34-566Z`).
+  - **Three fixes to FloodSim** followed (FIXES.md). The coupled cases were run again on the fixed code, CPU and GPU
+    (`raw/2026-11-17T22-30-fix2-cpu`, `raw/2026-11-17T22-45-fix2-gpu`; an earlier CPU set from a first version of the
+    fix is in `raw/2026-11-17T20-00-fix-cpu`). The scorer reads the latest raw file of each case, so RESULTS.md is
+    the fixed code; the run before the fixes stays in its results folder.
 - No criterion was changed after a run.
 - The grade line of PV-SS3 follows HEC-22 §7.5 for friction (from the outlet upstream, Manning full flow) but starts
   from the pipe's own depth at the outlet, as SWMM's normal-depth outfall does, not from HEC-22's (d_c + D) / 2, and has
@@ -147,7 +154,5 @@ case from the paper: the flume's outlet weir setting is not published.
 - **The laboratory's unsteady tests and its sewer-to-surface tests** (S3, S4): in a coupled run the manhole head is a
   result, so they need the rig's surface, which the paper does not fix.
 - **The product's own copy of the wall rule** (`Climate Inspection/tools/gate2/wall.py`): not tested here.
-- **The subgrid modes on the detail cases:** whether a 4 m or 8 m subgrid run keeps a kerb, a crown and a hollow is the
-  open question of F22. GPU only.
 - **A true answer for a whole network.** PV-SS11's pipe rows are single streets.
 - **Green-Ampt infiltration, roofs to the sewer, real DEMs, real storms.**
