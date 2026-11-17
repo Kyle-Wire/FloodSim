@@ -1,0 +1,283 @@
+{
+ "id": "PV-SS10",
+ "title": "Street-to-sewer exchange against laboratory measurements",
+ "category": "validation",
+ "process": "water leaving a shallow surface flow down an open circular inlet into a free-flowing sewer (the weir regime), measured in the University of Sheffield rig",
+ "module": "street/score.mjs",
+ "executor": "node (no simulation: the exchange law of src/drainage.js at the measured depth)",
+ "equations": [
+  "FloodSim (src/drainage.js inletFlow, sewer below the street): Q = min( Cw P h^1.5 sqrt(2g) , Co A sqrt(2g h) )",
+  "the paper (Eq. 1, free weir): Q_e = (2/3) C_i pi D_M sqrt(2g) h_s^1.5, calibrated C_i 0.540 (0.493 to 0.587, Table 3; a regression slope with an intercept of -0.0001 m^3/s)",
+  "so FloodSim's Cw on the same weir length corresponds to (2/3) C_i = 0.36 (0.33 to 0.39)"
+ ],
+ "initialConditions": "steady tests, five-minute averages",
+ "boundaryConditions": "surface inflow Q1 5.7 to 10 l/s over a weir; no sewer inflow; the sewer flows part full, so the inlet discharges freely",
+ "geometry": "flume 8 x 4 m at 0.001, PVC, Manning n 0.009; open circular inlet (no lid or grate) of 0.240 m internal diameter flush with the bed, 0.478 m above the invert of a 0.075 m pipe; 1/6 scale; surface depth h_s measured 0.46 m upstream of the inlet centre",
+ "parameters": {
+  "cases": {
+   "value": {},
+   "unit": "-"
+  },
+  "inletDiameterM": {
+   "value": 0.24,
+   "unit": "m"
+  },
+  "appCoefficients": {
+   "value": {
+    "Cw": 0.5,
+    "Co": 0.6
+   },
+   "unit": "-, - (src/drainage.js DESIGN_DEFAULTS)"
+  },
+  "paperCi": {
+   "value": {
+    "expected": 0.54,
+    "lower": 0.493,
+    "upper": 0.587
+   },
+   "unit": "- (Table 3, scenario S1)"
+  },
+  "tests": {
+   "value": [
+    {
+     "test": 1,
+     "hsTableM": 0.0077,
+     "QeRawLs": 0.6859,
+     "QeSdLs": 0.0163,
+     "xiTableLs": 0.0056,
+     "p7RawMm": 11.452,
+     "Q1RawLs": 5.679
+    },
+    {
+     "test": 2,
+     "hsTableM": 0.0082,
+     "QeRawLs": 0.7691,
+     "QeSdLs": 0.0166,
+     "xiTableLs": 0.0152,
+     "p7RawMm": 11.94,
+     "Q1RawLs": 6.28
+    },
+    {
+     "test": 3,
+     "hsTableM": 0.0085,
+     "QeRawLs": 0.8281,
+     "QeSdLs": 0.0158,
+     "xiTableLs": 0.0216,
+     "p7RawMm": 12.232,
+     "Q1RawLs": 6.573
+    },
+    {
+     "test": 4,
+     "hsTableM": 0.0088,
+     "QeRawLs": 0.8808,
+     "QeSdLs": 0.0128,
+     "xiTableLs": 0.0235,
+     "p7RawMm": 12.48,
+     "Q1RawLs": 6.935
+    },
+    {
+     "test": 5,
+     "hsTableM": 0.009,
+     "QeRawLs": 0.9017,
+     "QeSdLs": 0.0141,
+     "xiTableLs": 0.0251,
+     "p7RawMm": 12.736,
+     "Q1RawLs": 7.254
+    },
+    {
+     "test": 6,
+     "hsTableM": 0.0092,
+     "QeRawLs": 0.9327,
+     "QeSdLs": 0.0143,
+     "xiTableLs": 0.0255,
+     "p7RawMm": 12.935,
+     "Q1RawLs": 7.459
+    },
+    {
+     "test": 7,
+     "hsTableM": 0.0094,
+     "QeRawLs": 0.9717,
+     "QeSdLs": 0.022,
+     "xiTableLs": 0.033,
+     "p7RawMm": 13.125,
+     "Q1RawLs": 7.689
+    },
+    {
+     "test": 8,
+     "hsTableM": 0.0097,
+     "QeRawLs": 1.0624,
+     "QeSdLs": 0.0171,
+     "xiTableLs": 0.04,
+     "p7RawMm": 13.391,
+     "Q1RawLs": 8.165
+    },
+    {
+     "test": 9,
+     "hsTableM": 0.0099,
+     "QeRawLs": 1.0968,
+     "QeSdLs": 0.013,
+     "xiTableLs": 0.0425,
+     "p7RawMm": 13.627,
+     "Q1RawLs": 8.45
+    },
+    {
+     "test": 10,
+     "hsTableM": 0.01,
+     "QeRawLs": 1.1086,
+     "QeSdLs": 0.0119,
+     "xiTableLs": 0.0401,
+     "p7RawMm": 13.754,
+     "Q1RawLs": 8.617
+    },
+    {
+     "test": 11,
+     "hsTableM": 0.0102,
+     "QeRawLs": 1.1366,
+     "QeSdLs": 0.0134,
+     "xiTableLs": 0.0413,
+     "p7RawMm": 13.897,
+     "Q1RawLs": 8.875
+    },
+    {
+     "test": 12,
+     "hsTableM": 0.0104,
+     "QeRawLs": 1.1464,
+     "QeSdLs": 0.0142,
+     "xiTableLs": 0.0507,
+     "p7RawMm": 14.132,
+     "Q1RawLs": 9.2
+    },
+    {
+     "test": 13,
+     "hsTableM": 0.0107,
+     "QeRawLs": 1.2156,
+     "QeSdLs": 0.0338,
+     "xiTableLs": 0.0536,
+     "p7RawMm": 14.384,
+     "Q1RawLs": 9.483
+    },
+    {
+     "test": 14,
+     "hsTableM": 0.0108,
+     "QeRawLs": 1.2025,
+     "QeSdLs": 0.0145,
+     "xiTableLs": 0.0528,
+     "p7RawMm": 14.485,
+     "Q1RawLs": 9.618
+    },
+    {
+     "test": 15,
+     "hsTableM": 0.011,
+     "QeRawLs": 1.2489,
+     "QeSdLs": 0.0131,
+     "xiTableLs": 0.0557,
+     "p7RawMm": 14.739,
+     "Q1RawLs": 10.022
+    }
+   ],
+   "unit": "h_s (m) from the paper's Table 2; Q_e (l/s) the mean of the raw Q4 series; its standard deviation; the paper's error xi (l/s); the raw P7 mean (mm); the raw Q1 mean (l/s)"
+  },
+  "grates2018": {
+   "value": [
+    [
+     "A",
+     0.115,
+     3.0364,
+     0.0145
+    ],
+    [
+     "B",
+     0.208,
+     1.252,
+     0.0031
+    ],
+    [
+     "C",
+     0.194,
+     1.388,
+     0.0079
+    ],
+    [
+     "D",
+     0.115,
+     2.3794,
+     0.0099
+    ],
+    [
+     "E",
+     0.135,
+     2.3794,
+     0.0099
+    ],
+    [
+     "F",
+     0.204,
+     2.2586,
+     0.0061
+    ],
+    [
+     "G",
+     0.157,
+     2.2586,
+     0.0061
+    ],
+    [
+     "H",
+     0.372,
+     0.5128,
+     0.0017
+    ],
+    [
+     "I",
+     0.264,
+     1.2428,
+     0.0067
+    ],
+    [
+     "J",
+     0.168,
+     1.8816,
+     0.0175
+    ]
+   ],
+   "unit": "grate, Cw (Table 3), effective perimeter Pv m and open area Ae m^2 (Table 1) of Rubinato et al. 2018; reported, not scored"
+  }
+ },
+ "solver": "src/drainage.js inletFlow with one opening of the rig's size (weir length pi D_M, area pi D_M^2 / 4) and the app's default coefficients (Cw 0.5, Co 0.6)",
+ "reference": {
+  "module": "none: the reference is the measurement",
+  "functions": [],
+  "sources": "Rubinato, Martins, Kesserwani, Leandro, Djordjevic, Shucksmith (2017) Experimental calibration and validation of sewer/surface flow exchange equations in steady and unsteady flow conditions, J. Hydrology 552:421-432, doi 10.1016/j.jhydrol.2017.06.024; data Zenodo record 1434156 (CC BY 4.0), reduced by street/lab/reduce.py. Reported beside it: Rubinato, Lee, Martins, Shucksmith (2018) Surface to sewer flow exchange through circular inlets during urban flood conditions, J. Hydroinformatics 20(3):564-576, doi 10.2166/hydro.2018.127 (Zenodo record 1464864, CC BY 4.0)",
+  "independence": "a laboratory measurement",
+  "crossCheck": "Q_e recomputed from the raw series (street/lab/rubinato2017-steady.json) agrees with the paper's Table 2 to 0.02 l/s"
+ },
+ "outputs": [
+  "per test: the exchange FloodSim's law gives at the measured depth, against the measured exchange",
+  "reported: the weir coefficient that fits the 15 tests in FloodSim's form; the same from the raw P7 depths; the equivalent coefficients of the ten grates of the 2018 paper on the inlet's outer circumference"
+ ],
+ "criteria": {
+  "exchangeRel": 0.1
+ },
+ "criteriaNotes": "10 %: the paper's own coefficient range is +/- 9 % and its flow error 1 to 5 %. Not a blind test: the spreadsheets' means and the paper's coefficient had been read, and a hand estimate made (the default over-predicts by about half), before this was registered.",
+ "conservation": "not applicable",
+ "resolution": "not applicable (no grid). In a model run the law sees the depth in the inlet's own 1 m cell; the laboratory depth is 0.46 m from the inlet's centre",
+ "assumptions": [
+  "h_s is the paper's Table 2 value. The raw P7 series reads 3.75 mm more in every S1 test; the paper does not say why, and the table is what its coefficients were fitted to"
+ ],
+ "limitations": [
+  "1/6 scale: at 8 to 11 mm depth viscous and surface-tension effects may lower the coefficient below its full-scale value",
+  "an open inlet, not a grate; one inlet size; depths of 8 to 11 mm only",
+  "the surface flow itself is not modelled: the flume's outlet weir setting for each test is not published, so the rig cannot be set up as a 2D case from the paper alone",
+  "sewer-to-surface exchange (the paper's S3, S4) is not scored: in a coupled run the manhole head is a result, not an input"
+ ],
+ "validRange": "the free-weir regime of an open circular inlet, h_s / D_M 0.03 to 0.05",
+ "scoring": "automated: street/score.mjs",
+ "criteriaRevisions": [
+  {
+   "revision": 1,
+   "date": "2026-11-17",
+   "hash": "3898fc1db9553f3a0e2b30c10eb48ae0f446e4bc822c77136d1c25a0ae37c8bf",
+   "why": "first registration; see criteriaNotes: not blind"
+  }
+ ]
+}

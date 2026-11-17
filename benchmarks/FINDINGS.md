@@ -310,3 +310,443 @@ itself is outside its range of validity, which is a physical-model qualification
   post-run README).
 
 **Status: open.**
+
+## Street sandbox findings (17 Nov 2026), appended; the text above is unchanged
+
+From the street sandbox, `physics/street/` (specs PV-SS1 to PV-SS10, registered 17 Nov 2026 before any case ran;
+`physics/spec/REGISTRATION-2026-11-17.sha256`). Scored results: `physics/street/RESULTS.md`. Diagnostics are unscored
+and kept in `physics/street/diagnostics/`. PV-SS10 was registered later the same day and is not a blind test.
+
+Sources opened on 17 Nov 2026: FHWA HEC-22, 3rd ed. (§4.4.4.1, §7.1.5, §7.5); SWMM 5.2.4 `dwflow.c` (getSlotWidth,
+getArea, getHydRad); Rubinato et al. 2017 and 2018. The kinematic-wave limit k > 20 of Woolhiser & Liggett (1967) is
+as quoted by Morris & Woolhiser (1980); the 1967 paper itself could not be opened.
+
+- The sandbox is not part of PVM2 and did not have PVM2's three reviews. Nothing below is a validation claim.
+- **CPU rows only so far.** They use the CPU surface solver with this suite's copy of the GPU inlet rule, the
+  production Coupler and SWMM. The GPU rows are not yet run. F14's wobble has to be confirmed on the GPU path before it
+  is acted on.
+- Severity here is judged for a home-buyer flood report: does it change the depth against a house, or whether the house
+  is flagged?
+
+| ID | Finding | Severity | Status | Rows affected (registered status kept) |
+|---|---|---|---|---|
+| F12 | At 2 m cells a 1 m gap between buildings closes; a yard that drains holds its rain | High | Explained | PV-SS6 yard-2: 2 Failed |
+| F13 | The model box: cut across a slope it reads low; cut through a hollow its edge holds water like a wall | High | Explained | PV-SS5 up-small: 1 Failed; down-small: 2 Passed by accident |
+| F14 | A surcharged pipe carries too much: SWMM's SLOT method, and the two-way exchange wobbles | High for ponding at a sag | Explained on the CPU path; GPU not yet run | PV-SS3 a: 4 Failed; PV-SS4 a, b, d: 10 Failed |
+| F15 | The default grate takes about half as much again as the Sheffield rig measured | Medium | Explained; one rig, 1/6 scale | PV-SS10: 15 Failed |
+| F16 | "Sized for the 10-yr storm" understates what the synthetic network carries | Medium (explains a production observation) | Documented | none: PV-SS3 d–f pass their bound |
+| F17 | The allowance without pipes removes 73–85 % of its nominal rate | Medium for areas without pipe data | Explained | PV-SS8 allowance: 5 Failed |
+| F18 | Spill-at-the-rim exchange, and EXTRAN with two-way exchange, give wrong answers without limit | Medium (neither is the default) | Explained | PV-SS3 b: 4 Failed; PV-SS4 c: 2 Failed |
+| F19 | A coarse grid's own cells misread narrow dips; the 1 m map made from it does not | Medium | Documented | PV-SS6 drive-2, drive-4: 2 Failed |
+| F20 | The wall rule steps two cells out, not 2 m | Low | Documented | PV-SS7 R12: 1 Failed |
+| F21 | A grate in a gutter on a grade takes about half of what HEC-22 gives | High on hillsides, if it holds | **Open: a diagnostic, not a registered case** | none |
+
+What passed is listed at the end.
+
+### F12. At 2 m a gap between houses closes
+
+**Evidence** (PV-SS6, rear yard: a terrace cut by a 1 m passage, the yard behind draining through it to the street).
+
+| Grid | Depth beside the rear wall at the end | True |
+|---|---|---|
+| 0.5 m | 0.00 m | 0 |
+| 1 m | 0.00 m | 0 |
+| 2 m, solver cells | **0.107 m** | 0 |
+| 2 m, on the 1 m map | **0.116 m** | 0 |
+| 4 m | 0.00 m | 0 |
+
+- The 2 m answer equals that grid's own arithmetic (0.1072 m): the yard holding its own 40 mm of rain and half the roof's.
+  So the solver is right on the ground it was given; the ground is wrong.
+- 0.107 m is over the 10 cm exposure threshold. The house is flagged at 2 m and not at 1 m.
+
+**Cause.** `src/terrain.js` coarsen makes a cell a wall when more than half of it is building. The passage sits across
+a 2 m cell boundary, so each 2 m cell along it is half building and half open: not more than half open, so a wall.
+Downscaling cannot reopen it. At 4 m the opposite happens: every cell across the house row is under half building, the
+row disappears, and the case passes for the wrong reason.
+
+**Production relevance.** South Street: 27 cm in a rear yard at 2 m against 9 cm at 1 m. This is the same mechanism,
+not yet checked on that run. Rowhouse blocks are full of 1 m passages.
+
+**Proposed fix (Kyle to decide).**
+1. Use 1 m for anything that reads water against a wall. Treat a plain 2 m or 4 m run as unfit for the wall rule.
+2. Or keep openings through coarsening: a cell or face is open if a connected path of open 1 m cells crosses it (the
+   subgrid mode's face tables may already do this; its cases are GPU only and not yet run).
+3. A check the app can run before a coarse run: count 1 m passages the coarse mask closes, and warn.
+
+### F13. The model box
+
+**Evidence** (PV-SS5; `diagnostics/edge-pond.mjs`).
+- **Cut across a slope.** A block 150 m below the divide. In a box that starts 120 m below the divide the block reads
+  3.8 mm against a true 10.1 mm: 38 % of the truth, the hand answer (30.5 / 150.5)^0.6. In the whole box it reads
+  10.1 mm.
+- **Cut through a hollow.** The registered row passed (0.209 m against a true 0.200 m), against the prediction written
+  with it. The diagnostic shows the pass is an accident:
+
+  | Storm | Small box | True |
+  |---|---|---|
+  | 40 mm | 0.105 m | 0.160 m |
+  | 80 mm (registered) | 0.209 m | 0.200 m |
+  | 160 mm | 0.340 m | 0.200 m |
+
+  Under 2 % of the rain left across the edge in all three.
+- A box cut 7 m below the rim reads the true depth (0.200 m, peak 0.212 m).
+
+**Cause.**
+- The app's edge (`bc: 'outflow'`) lets nothing in, so ground upslope of the box sends no water.
+- It passes water only on a water-surface slope toward the edge (beyond 1e-4). A level pond has none, so the edge holds
+  it like a wall. The depth is then set by the storm and by how much of the hollow is inside the box, not by the rim.
+
+**Production relevance.** Tract 353.02 lost 23–35 % of its rain across the edge. That water was running downhill off
+the box, which is right only if nothing downstream holds it back. And any pond that touches the edge is unreliable in
+either direction.
+
+**Proposed fix.**
+1. Draw the box from the terrain, not from a fixed size: it must hold everything that drains to the house, and the
+   rim of any hollow the house is in.
+2. Flag a result as edge-affected when the peak pond at the house touches the model edge, or when the house's
+   contributing area (from a wider DEM) crosses it.
+3. Do not read the share of rain leaving the edge as a loss: on a slope it is correct.
+
+### F14. A surcharged pipe carries too much
+
+**Evidence** (PV-SS3 a, PV-SS4 a, b, d; `diagnostics/slot-capacity.mjs`, `diagnostics/one-pipe.mjs`). One grate over one
+0.15 m pipe that cannot carry the rain; the outlet held at a level; the pond's level by hand from Manning's full-pipe
+friction and the grate's orifice.
+
+| Case | By hand | FloodSim (app settings) | Exchange every 0.5 s, SWMM ≤ 0.25 s |
+|---|---|---|---|
+| Rain above the pipe's capacity, pond at 7200 s | 0.199 m | **0.121 m** | 0.148 m |
+| The same with the outlet 0.15 m above the street | 0.547 m | **0.471 m** | 0.489 m |
+| No rain, outlet 0.15 m above the street | 0.150 m | 0.1445 m | 0.148 m |
+
+Two causes, separated:
+
+1. **SWMM's SLOT surcharge method (the app's default) counts the slot as flow area.** SWMM alone, a full pipe under a
+   held tailwater, loss against Manning's:
+
+   | Pipe | 0.5 m over the crown | 1.0 m | 1.5 m |
+   |---|---|---|---|
+   | 0.15 m | × 1.051 | × 1.092 | × 1.134 |
+   | 0.30 m | × 1.026 | × 1.047 | × 1.068 |
+   | 0.375 m | × 1.021 | × 1.038 | × 1.054 |
+   | 0.60 m | × 1.013 | × 1.024 | × 1.034 |
+
+   (Conveyance against Manning's.) EXTRAN gives × 1.0002 in every case. The slot is 1 % of the pipe's width, and its
+   area above the crown is added to the pipe's; the excess is about 0.9 × (0.01 D h) / (π D² / 4) for a mean
+   surcharge h. This answers F1's open question for SLOT in part: SLOT has its own, different, departure.
+2. **The two-way exchange wobbles.** With the app's 2 s exchange the rate set for the grate changed sign in 178 of the
+   last 300 exchanges; the manhole head swung by 3 cm (standard deviation), and its mean stood 2 cm **above** the
+   street water while water was, on average, going in. The pipe is driven harder than the street's level allows. With
+   the exchange four times as often the swing falls to 3 mm and the pond rises to the level Manning gives with the
+   slot's extra conveyance (0.148 m, 0.489 m).
+
+SWMM's continuity error is 0.8–1.2 % in these runs (limit 0.5 %), and 10–16 % when water comes back up the inlet
+(small volumes: about 1 m³).
+
+**Reading.** Both push the same way: too much water down the pipe, too little left on the street. Here the pond is
+39 % and 14 % too shallow. The size depends on pipe diameter and surcharge: small pipes under deep surcharge are worst.
+
+**Production relevance.** Any inlet whose pipe is the limit. The production networks rarely surcharge (F16), so this is
+not the main reason they flood little; where they do surcharge it biases low. The wobble is a property of the coupling
+and should be confirmed on the GPU path (not yet run).
+
+**Proposed fix.**
+1. Make the exchange stable: limit the rate set for an interval so the manhole's head cannot pass the street's level
+   within it (the rate that closes the head difference over the interval, given the node's storage), or exchange more
+   often with SWMM stepping at most half the interval. `diagnostics/one-pipe.mjs` shows the second works.
+2. SLOT: either accept a stated bias (the table above) or correct the conveyance when the head is above the crown.
+   EXTRAN is exact for the pipe but cannot be used with two-way exchange as it stands (F18).
+3. Add SWMM's continuity for surcharged manholes to the run checks: 0.5 % was exceeded in every surcharged case.
+
+### F15. The default grate against the Sheffield rig
+
+**Evidence** (PV-SS10; Rubinato et al. 2017, J. Hydrology 552:421–432, data Zenodo 1434156, CC BY 4.0). Fifteen steady
+tests of water leaving a shallow flow (8–11 mm) down an open 0.24 m inlet into a free-flowing sewer.
+
+- FloodSim's law with its default weir coefficient (0.5, no ⅔ factor) on the same weir length gives 1.13–1.93 l/s
+  where the rig measured 0.69–1.25 l/s: **54–65 % more** in all fifteen.
+- In FloodSim's form the tests fit a coefficient of **0.32**. The paper's own (⅔ × 0.540) is 0.36 (0.33–0.39).
+- Ten grated inlets in the same rig (Rubinato et al. 2018, J. Hydroinformatics 20(3):564–576; reported, not scored):
+  on the inlet's outer circumference their coefficients are 0.17–0.41, median 0.28.
+
+**Limits.**
+- One rig at 1/6 scale; at 8–11 mm the coefficient may be lower than at full scale.
+- The depth is the paper's Table 2 value. The raw depth series reads 3.75 mm more in every test, unexplained; with the
+  raw depths the fit would be 0.20.
+- The surface flow was not modelled: the flume's outlet weir setting is not published.
+
+**Production relevance.** Only where the grate is the limit: shallow water on a grade. In a sag the pond deepens until
+the pipe or the grate's orifice sets the flow, and the coefficient moves the depth by a centimetre. On a grade under
+sheet flow the default grate took 61–76 % of the water crossing its cell (`diagnostics/on-grade.mjs`), about what
+flows over a 0.6 m grate (1.0–1.3 ×), so the default is not far out there either.
+
+**Proposed fix.** Do not change the coefficient on this evidence alone. At the level of the law the default is about
+55 % high against the rig. In a model run on a kerbed grade the same grate takes about half of what HEC-22 gives (F21).
+The two point opposite ways because the law is applied to the depth in the grate's own cell, which the grate itself
+draws down. Settle F21 first, then set the coefficient. Kyle to decide.
+
+### F16. What "sized for the 10-yr storm" means
+
+**Evidence** (PV-SS3 d–f; the bowl neighbourhood, 1.2 ha draining to one crossing).
+- The pipe from the sag was sized for 0.070 m³/s. It carried 0.226, 0.232 and 0.236 m³/s in the 10-, 100- and 500-yr
+  storms: **3.2–3.4 times its design flow.**
+- SWMM's heads agree with a friction grade line worked by hand from those flows to 1 cm (the scored row, passed).
+  So the hydraulics are right; the label is what misleads.
+- By the grade line alone the network carries **1.75 times** its design flows before any manhole's head reaches the
+  ground. The 100- and 500-yr peak intensities are 1.6 and 2.1 times the 10-yr.
+
+**Cause.** Four choices in `src/drainage.js` synthNetwork each add capacity above the design flow:
+- full-flow Manning at no less than 0.5 % slope, rounded up to a standard size, never under 0.3 m;
+- 1.2 m of cover, all of which is head once the pipe surcharges, plus whatever stands on the street;
+- outlets that take any flow (a free outfall, or 100 m of pipe to a normal-depth outfall), with no tailwater;
+- no losses at manholes.
+
+And one that takes capacity away at a sag: each pipe is sized for the ground nearest its inlet (2,304 m² here), not for
+the ground that drains to it (12,288 m²).
+
+**Production relevance.** Tract 353.02: the sewer took about half the rain in every storm from 10- to 500-yr and SWMM
+reported no flooding. A network built this way will seldom flood from its pipes. What it leaves on the ground is water
+that never reached an inlet. That is a statement about the synthetic network, not evidence the tract would not flood.
+
+**Proposed fix.** For a screening product, do not present the synthetic network as a 10-yr sewer. Either size it so it
+carries its design flow and no more (no rounding up, a tailwater at the outlet, losses at manholes), or drop the pipes
+where there is no pipe data and use an allowance (F17). Kyle to decide; PV-SS8 puts numbers on the difference.
+
+### F17. Drainage without pipes
+
+**Evidence** (PV-SS8; `diagnostics/allowance.mjs`). The bowl neighbourhood, 60 min nested storms, CPU rows.
+
+| Storm | No drainage | Allowance 30 mm/h (app default) | Allowance 50 mm/h | Pipe network |
+|---|---|---|---|---|
+| 10-yr, peak depth at the sag | 0.485 m | 0.386 m | – | 0.279 m |
+| 100-yr | 0.572 m | 0.500 m | 0.457 m | 0.396 m |
+| 500-yr | 0.627 m | 0.568 m | 0.531 m | 0.478 m |
+| Houses exposed of 14 (10 / 100 / 500-yr) | 6 / 6 / 8 | 4 / 6 / 6 | – / 4 / 6 | 0 / 4 / 4 |
+
+- No drainage matches arithmetic to 0.03 mm (passed).
+- The allowance stood above its registered bound in all five cases (failed): by the peak it had removed 73–85 % of
+  allowance × area × time.
+
+**Cause of the allowance's shortfall.** `lumpedInfil` spreads the rate over open cells only (91 % of this scene; roofs
+shed their rain onto the ground but carry no allowance), and takes it only from street cells that have water.
+
+**Reading.**
+- Which column is nearest the truth cannot be read from this case. The pipe column itself reads low (F14), and the
+  bowl sends everything to one sag.
+- Against the pipes, no drainage is 15–21 cm deeper at the sag and an allowance of 50 mm/h 5–6 cm deeper. After the
+  storm they part completely: the pipes empty the sag, the allowance drains it slowly, nothing drains it with neither.
+
+**Proposed fix.** If the product is to run where there is no pipe data, make the allowance mean what it says (the rate
+over the whole area, roofs included), set it from the local design storm, and report the no-drainage run beside it as
+the upper bound. Kyle to decide.
+
+### F18. Two exchange settings that fail without limit
+
+Neither is the app's default (two-way exchange, SLOT). The product's headless runs should be checked to use the
+defaults.
+
+- **Spill at the rim** (`twoWay` off). A manhole that spills at its rim cannot feel the water standing over it. With
+  rain above the pipe's capacity the pond passed 0.60 m and was still rising at 2 h (by hand: 0.20 m, steady). With the
+  outlet 0.15 m above the street and no rain, 49.6 m³ stood on the street after 1 h and was still rising (by hand:
+  4.5 m³).
+- **EXTRAN with two-way exchange** (`swmmSurcharge` set to EXTRAN). The manhole head swings by 0.8–1.9 m, SWMM's
+  continuity error is −23 to −51 %, and water held above the street never came up the inlet (0.9 cm against 15 cm).
+
+**Proposed fix.** Remove both options, or guard them. Low cost.
+
+### F19. Coarse cells and the 1 m map
+
+**Evidence** (PV-SS6, driveway: a 1 m wide ramp dipping 0.9 m to a garage door, holding all the rain of its lot).
+
+| Grid | Solver's own cells | On the 1 m map | True |
+|---|---|---|---|
+| 0.5 m | 0.839 m | – | 0.839 m |
+| 1 m | 0.8015 m | – | 0.8017 m |
+| 2 m | **0.363 m** | 0.818 m | 0.802 m |
+| 4 m | **0.146 m** | 0.843 m | 0.802 m |
+
+Each grid matches its own arithmetic to 0.2 mm. The coarse cell is a mean bed, so it reads the dip shallow; the water
+level is right, and carrying it onto the 1 m ground recovers the depth to 2–4 cm.
+
+**Reading.** Depth against a house must always come from the 1 m map, never from the coarse cells. In the bowl (PV-SS9,
+CPU) a 2 m run with downscaling gave the same exposed houses as the 1 m run and wall depths within 0.4 mm, eight
+times faster; 4 m gave two more exposed houses of fourteen and wall depths 4.7 cm out, 73 times faster. Those two
+rows compare the solver with itself and are Not independently validated. The subgrid modes are GPU only, not yet run.
+
+### F20. The wall rule's reach
+
+`src/damage.js` exposure steps `ring = 2` cells out from the footprint. At 1 m that is the stated 2 m, and the rule
+passed all eleven hand cases. At 2 m cells it reaches 4 m (PV-SS7 R12, failed as predicted). The app calls it on the
+1 m grid only, so nothing in production is affected. If it is ever called on a coarser grid, pass the reach in metres.
+
+### F21. A grate in a gutter on a grade (diagnostic)
+
+**Evidence** (`physics/street/diagnostics/gutter.mjs`, unscored). Half a street 8 m wide, falling 1, 2 and 4 % along its
+length and 2 % toward a kerb; rain 50–200 mm/h, so 8–33 l/s reaches one default grate in the kerb cell. Against FHWA
+HEC-22 (3rd ed., §4.4.4.1, Eq. 4-16 to 4-21) for a 0.6 × 0.9 m grate in a uniform gutter:
+
+| Slope along the street | FloodSim takes | HEC-22, the flow over the grate only | HEC-22 with side flow |
+|---|---|---|---|
+| 1 % | 31–40 % | 54–78 % | 69–88 % |
+| 2 % | 29–37 % | 60–83 % | 69–89 % |
+| 4 % | 26–33 % | 66–89 % | 71–92 % |
+
+- **The gutter flow itself is right.** The kerb cell 5 m above the grate is as deep as HEC-22's triangular gutter
+  averaged over that cell, within 1.1 mm (4 %) in all nine runs (for example 26.1 mm against 36.2 − 10.0).
+- On a plane with no kerb (`diagnostics/on-grade.mjs`) the same grate took 61–76 % of the water crossing its cell.
+
+**Cause (likely, not isolated).** The weir law is applied to the depth in the grate's own cell. The grate draws that
+cell down (8–18 mm, against 18–37 mm just upstream), and the water crosses the cell at 0.4–1 m/s; the law has no term
+for water that arrives moving. HEC-22 takes all the flow that passes over a grate at these speeds.
+
+**Reading.** On a hillside FloodSim's grates take too little, not too much. What they miss runs on down the street;
+in a box cut across the slope it then leaves over the edge (F13).
+
+**Production relevance.** Tract 353.02: the sewer took 49–57 % of the rain in every storm and 23–35 % left across the
+edge. Both are what under-capture on a grade would give. Not checked on that run.
+
+**Status.** Open. One street shape; the model's 1 m cells against a formula for one grate size; unscored. It is the
+main case the sandbox does not yet register.
+
+**Proposed fix.** Register the case with HEC-22 as its reference. Then consider a capture rule for moving water: the
+flow crossing the grate's width times HEC-22's efficiency, in place of the weir law. Kyle to decide.
+
+### What passed
+
+- **A gutter's depth** (diagnostic, F21): within 1.1 mm of HEC-22's.
+- **Rain on a tilted street** (PV-SS1): outflow = rain × area to 0.004 %; depths within 0.2 mm; time to steady state
+  within 1 % at 1 % slope and 8 % at 2 % (limit 10 %).
+- **A hollow** (PV-SS2): fills to arithmetic (0.1200 m), spills at its rim, ends at the rim to 0.014 mm; a storm twice
+  as large ends at the same depth to 6e-8 m. This is the South Street behaviour (the same depth from 10- to 500-yr),
+  and it is right.
+- **A free outfall under a sag grate** (PV-SS3 c): the street stands at the grate's weir head, 29.3 mm, exactly.
+- **No drainage** (PV-SS8): the pond stands at the level the rain fills, to 0.03 mm.
+- **The wall rule at 1 m** (PV-SS7): 11 of 11 hand cases.
+- **Surface books:** 1e-13 or better in every CPU run.
+
+## Street sandbox, second set (17 Nov 2026, afternoon), appended
+
+After Kyle's direction relayed by the product session: 1 m stays the baseline and coarse-then-downscale must say whether
+street detail survives (PV-SS9 revision 2); surface-only is what most reports will use, so each drainage treatment is
+scored against a hand answer (PV-SS11); measures one owner can take get known-answer cases (PV-SS12). All three were
+registered before they ran. CPU rows; the GPU rows and the subgrid modes are not yet run.
+
+| ID | Finding | Severity | Status | Rows affected (registered status kept) |
+|---|---|---|---|---|
+| F22 | A coarse run loses the street crown at 2 m and the small hollow at 4 m; the kerb survives | High for any use of coarse runs | Explained | PV-SS9 detail: 4 Failed at 2 m and 4 m; 4 Passed at 1 m |
+| F23 | Surface only is exact where nothing drains and 0.4–0.6 m too deep at a sag a drain serves; an allowance is wrong both ways | High for areas without pipe data | Explained | PV-SS11: 26 Failed, 11 Passed |
+| F24 | Rain gardens, permeable paving and soil take exactly what their size says; four owner-scale measures cannot be represented | Medium (product scope) | Documented | PV-SS12: 10 Passed, 4 Unsupported |
+
+### F22. What survives a coarse run
+
+**Evidence** (PV-SS9 revision 2). A street with a 0.08 m crown and 0.15 m kerbs, rain on one side only; a 3 × 3 m hollow
+at the low point of a yard. Read on the 1 m map at the end.
+
+| | By hand | 1 m | 2 m, mapped to 1 m | 4 m, mapped to 1 m |
+|---|---|---|---|---|
+| Kerb: depth in the gutter | 0.050 m | 0.049 | 0.060 | 0.060 |
+| Kerb: depth on the lot behind it | 0 | 0.000 | 0.000 | 0.000 |
+| Crown: depth in the far gutter | 0 | 0.003 | **0.045** | **0.060** |
+| Hollow: depth of water in it | 0.098 m | 0.098 | **0.120** | **0.000** |
+
+- **1 m holds all three.**
+- **The kerb survives at 2 m and 4 m,** because the 1 m map puts the water level back on the 1 m ground.
+- **The crown does not.** A 2 m cell across the crown has a mean bed below the pond, so the water crosses; at 4 m the
+  two gutters stand at one level.
+- **The hollow** is 2.2 cm too deep at 2 m (limit 2 cm) and gone at 4 m: a 4 m cell's mean bed has no pit.
+
+**Reading.** Kyle's rule ("maintaining the streets, the curbs, the small hollows") is met at 1 m only. A plain coarse
+run is not a way to keep that detail, with or without the 1 m map. The subgrid modes carry 1 m storage in each cell and
+may do better; they are GPU only and not yet run.
+
+**Two setups of the hollow case were invalid and are kept.** First the lot's foot was closed and its pond drowned the
+hollow (my error). Then, with the foot open, the 1 m run filled the hollow to its rim (0.150 m against a hand 0.110 m):
+the cells beside the hollow shed part of their sheet flow sideways into it, which the hand answer did not allow for.
+Neither is exact, so the case was rebuilt with a catchment that cannot be argued about. Both are in the spec's
+`definitionRevisions`. **Observation, not scored:** on a plain slope a pit one to three cells wide takes water from
+the cells beside it as well as from above; how much is right is not known from this case.
+
+### F23. Surface only, an allowance, or pipes, against known answers
+
+**Evidence** (PV-SS11). Four streets whose true answer is worked by hand, 60 min design storms. Depths in metres.
+
+| Street | Storm | True | Pipe (FloodSim) | Surface only | Allowance 30 mm/h | Allowance 50 mm/h |
+|---|---|---|---|---|---|---|
+| Sag, drain keeps up: peak at the grate | 10-yr | 0.026 | 0.026 | **0.417** | **0.254** | **0.188** |
+| | 100-yr | 0.036 | 0.036 | **0.558** | **0.415** | **0.343** |
+| | 500-yr | 0.043 | 0.043 | **0.657** | **0.534** | **0.454** |
+| Sag, drain cannot keep up: peak pond | 10-yr | 0.043 | 0.039 | **0.417** | **0.254** | **0.188** |
+| | 100-yr | 0.135 | 0.115 | **0.558** | **0.415** | **0.343** |
+| | 500-yr | 0.205 | 0.188 | **0.657** | **0.534** | **0.454** |
+| Hollow with no drain: depth at the end | 10-yr | 0.200 | – | 0.200 | **0.064** | **0.007** |
+| | 100-yr | 0.200 | – | 0.200 | **0.169** | **0.097** |
+| | 500-yr | 0.200 | – | 0.200 | **0.173** | **0.151** |
+| Kerbed street on a grade: kerb cell | 100 mm/h | 0.0168 | **0.0219** | **0.0246** | 0.0204 | 0.0168 |
+
+Bold is outside the limit (2 cm or 20 %; 5 mm or 20 % on the grade).
+
+| Treatment | Inside the limit |
+|---|---|
+| Pipe network | 6 of 7 |
+| Surface only | 3 of 10 |
+| Allowance 30 mm/h | 1 of 10 |
+| Allowance 50 mm/h | 1 of 10 |
+
+**Reading.**
+- **Surface only is exact where nothing drains:** a hollow, a yard, any low ground without an inlet.
+- **At a low point that a drain serves it is far too deep:** 0.42–0.66 m where the truth is 3–20 cm. These sags are
+  closed, the worst case. In an open street the depth is capped by the height of the sag's rim (PV-SS2), so read a
+  surface-only depth as that cap.
+- **An allowance is not a better estimate.** It is still 0.15–0.49 m too deep at a served sag, and it drains a hollow
+  that nothing drains (0.007–0.173 m against 0.200 m). It is wrong in both directions.
+- **On a grade all four are within 8 mm.** Moving water is shallow whichever treatment is used.
+- **The pipe rows carry F14 and F21:** 8–14 % low at the failing sag, 5 mm high on the grade (the grate takes too
+  little).
+
+**What a report may say where there is no pipe data.** A surface-only run is an upper bound: it shows where water
+gathers and how deep it would stand if no drain took any. It cannot say that a low point floods, only that it would
+if its drains were absent or blocked. It can say that a low point with no way out (a hollow below its rim, a yard)
+holds water, and how much. An allowance should not be used to turn the bound into an estimate.
+
+**Limits.** Four made-up streets. No case has a true answer for a whole network. The true sags assume a clean grate on
+a clean pipe.
+
+### F24. Measures one owner can take
+
+**Evidence** (PV-SS12). A 10 × 10 m lot, the measure at its low edge.
+
+| Measure | By hand | FloodSim |
+|---|---|---|
+| Rain garden 4 m², 1.2 m³ of storage, 1.0 m³ of rain | all of it taken, ground dry | 0.999 m³ taken, 0.001 m³ left |
+| The same, 3.0 m³ of rain | 1.752 m³ left at 6 h | 1.7520 |
+| Permeable strip 10 m², 2.0 m³ of storage, 3.0 m³ of rain | 0.960 m³ left at 2 h | 0.9600 |
+| Bare soil 20 m² at 10 mm/h, 3.0 m³ of rain | 2.600 m³ left at 2 h | 2.6000 |
+| A roof whose rain is held, 30 mm of rain | 2.520 m³ on the ground (3.000 without) | 2.5200 (3.0000) |
+
+All ten rows pass. A storage measure holds its storage, plus what drains to the soil below, and no more.
+
+**Not representable as one owner's what-if (listed as Unsupported, not approximated):**
+- **A rain barrel or cistern on an existing house.** A cistern exists only for a building drawn in site design, and
+  its filling and overflow are timed in `app/map.js`, which a headless run does not reach.
+- **A French drain.** The nearest thing is a rain garden's underdrain to a sewer manhole (GPU only).
+- **Removing paving.** Site design can add paving or permeable paving; it cannot turn paving into soil. The solver's
+  infiltration at a soil's rate, which such a control would use, is exact.
+- **A green roof on one house.** Area-wide only.
+
+**Limits.** The rain garden here is storage with an intake rate; the ponding depression that site design digs is not
+in these cases. Green-Ampt infiltration is not tested.
+
+## Street sandbox, third set (17 Nov 2026, later), appended
+
+- **F21 is now scored** (PV-SS13, registered after its runs had been made once as a diagnostic; not blind). On the nine
+  streets the gutter's depth passes 9 of 9 (within 0.7 mm of FHWA HEC-22) and the grate's share fails 9 of 9: it takes
+  26–40 % of the flow reaching it where HEC-22 gives 69–91 %. F21's status: **Explained in part** (the likely cause
+  stands as written; not isolated).
+- **F14, corrections and a fix.** A fix for the wobble is proposed in pull request 11 (`physics/street/FIXES.md` on
+  that branch): the pond goes from 0.121 to 0.150 m (by hand 0.199 m; the rest is SLOT's), the held-outfall level from
+  0.1445 to 0.1500 m, the rate stops changing sign, and the answer no longer depends on the exchange interval. CPU
+  path only. **Correction:** SWMM's continuity error (0.8–1.2 %, and 10–19 % of a few cubic metres on return flow)
+  does not change with the fix, so it is not caused by the wobble as the text above suggests. It is SWMM's own
+  bookkeeping of surcharged nodes and return flow, and is open.
+- **F18 and F20** have fixes in the same pull request: EXTRAN with two-way exchange is refused, and the wall rule's
+  reach is in metres. The new exchange does not make EXTRAN usable.

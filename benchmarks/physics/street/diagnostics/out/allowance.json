@@ -1,0 +1,67 @@
+[
+ {
+  "case": "SS8-lump30-10",
+  "allowanceMmHr": 30,
+  "openShare": 0.9088541666666666,
+  "peakVolumeM3": 343.53095382184614,
+  "registeredBoundM3": 296.354816,
+  "openGroundBoundM3": 313.154816,
+  "removedByPeakM3": 249.77505170544083,
+  "allowanceTimesAreaByPeakM3": 337.92,
+  "shareOfAllowanceUsedByPeak": 0.7391543907002865,
+  "rainByPeakM3": 593.3060055272942,
+  "tPeakS": 3300
+ },
+ {
+  "case": "SS8-lump30-100",
+  "allowanceMmHr": 30,
+  "openShare": 0.9088541666666666,
+  "peakVolumeM3": 679.8478121533483,
+  "registeredBoundM3": 615.292928,
+  "openGroundBoundM3": 648.0010239999999,
+  "removedByPeakM3": 303.19218784664565,
+  "allowanceTimesAreaByPeakM3": 368.64000000000004,
+  "shareOfAllowanceUsedByPeak": 0.8224614470666385,
+  "rainByPeakM3": 983.0400000000027,
+  "tPeakS": 3600
+ },
+ {
+  "case": "SS8-lump30-500",
+  "allowanceMmHr": 30,
+  "openShare": 0.9088541666666666,
+  "peakVolumeM3": 975.4371957391453,
+  "registeredBoundM3": 921.6000000000001,
+  "openGroundBoundM3": 955.1999999999998,
+  "removedByPeakM3": 314.802804260855,
+  "allowanceTimesAreaByPeakM3": 368.64000000000004,
+  "shareOfAllowanceUsedByPeak": 0.8539572598221977,
+  "rainByPeakM3": 1290.239999999996,
+  "tPeakS": 3600
+ },
+ {
+  "case": "SS8-lump50-100",
+  "allowanceMmHr": 50,
+  "openShare": 0.9088541666666666,
+  "peakVolumeM3": 536.3775846696417,
+  "registeredBoundM3": 461.881344,
+  "openGroundBoundM3": 489.8813439999999,
+  "removedByPeakM3": 373.58274643299706,
+  "allowanceTimesAreaByPeakM3": 512,
+  "shareOfAllowanceUsedByPeak": 0.7296538016269474,
+  "rainByPeakM3": 909.9603311026419,
+  "tPeakS": 3000
+ },
+ {
+  "case": "SS8-lump50-500",
+  "allowanceMmHr": 50,
+  "openShare": 0.9088541666666666,
+  "peakVolumeM3": 805.9889230401889,
+  "registeredBoundM3": 708.0704000000001,
+  "openGroundBoundM3": 746.473088,
+  "removedByPeakM3": 484.25107695980745,
+  "allowanceTimesAreaByPeakM3": 614.4000000000001,
+  "shareOfAllowanceUsedByPeak": 0.7881690705726031,
+  "rainByPeakM3": 1290.2400000000168,
+  "tPeakS": 3600
+ }
+]

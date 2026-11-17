@@ -1,0 +1,426 @@
+{
+ "id": "PV-SS12",
+ "spec": "benchmarks/physics/spec/PV-SS12.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-under [cpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.0009585526534604654,
+   "abs": 0.0009585526534604654,
+   "rel": null,
+   "limit": 0.03,
+   "criterion": {
+    "abs": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-under [cpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 0.999041447346543,
+   "abs": -0.0009585526534570121,
+   "rel": -0.0009585526534570121,
+   "limit": 0.03,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-over [cpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1.752,
+   "sim": 1.7520044444444665,
+   "abs": 0.000004444444466455977,
+   "rel": 0.000002536783371264827,
+   "limit": 0.052559999999999996,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-over [cpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1.248,
+   "sim": 1.247995555555539,
+   "abs": -0.000004444444460904862,
+   "rel": -0.0000035612535744429983,
+   "limit": 0.03744,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-paving [cpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.9599999999999995,
+   "sim": 0.9600111111111093,
+   "abs": 0.000011111111109740612,
+   "rel": 0.000011574074072646477,
+   "limit": 0.028799999999999985,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-paving [cpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 2.0400000000000005,
+   "sim": 2.039988888888902,
+   "abs": -0.000011111111098305315,
+   "rel": -0.000005446623087404565,
+   "limit": 0.06120000000000001,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-soil [cpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 2.6,
+   "sim": 2.6000000000000285,
+   "abs": 2.842170943040401e-14,
+   "rel": 1.093142670400154e-14,
+   "limit": 0.078,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-soil [cpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.39999999999999997,
+   "sim": 0.3999999999999931,
+   "abs": -6.8833827526759706e-15,
+   "rel": -1.7208456881689926e-14,
+   "limit": 0.011999999999999999,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-roof-open [cpu]",
+   "quantity": "water on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 3,
+   "sim": 2.9999999999999964,
+   "abs": -3.552713678800501e-15,
+   "rel": -1.1842378929335002e-15,
+   "limit": 0.003,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": "the roof sheds onto the ground (control)"
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-roof-held [cpu]",
+   "quantity": "water on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 2.52,
+   "sim": 2.520000000000004,
+   "abs": 3.9968028886505635e-15,
+   "rel": 1.5860328923216523e-15,
+   "limit": 0.00252,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": "the roof holds its rain"
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "A rain barrel or cistern on an existing house",
+   "quantity": "no control: a cistern exists only for a building drawn in site design (src/design.js roof 'cistern'), and its filling and overflow are timed in app/map.js (roofHoldStages), which a headless run of src/ does not reach. SS12-roof-held tests only that a held roof sheds nothing",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": null,
+   "sim": null,
+   "abs": null,
+   "rel": null,
+   "limit": null,
+   "criterion": {},
+   "status": "Unsupported",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "A French drain",
+   "quantity": "no control: the nearest thing is a rain garden's underdrain to a sewer manhole (src/stormwater.js UnderdrainLinks, GPU kernel only). A trench drain to daylight or to a dry well is not represented",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": null,
+   "sim": null,
+   "abs": null,
+   "rel": null,
+   "limit": null,
+   "criterion": {},
+   "status": "Unsupported",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "Removing paving (bare soil in its place) as a what-if",
+   "quantity": "no control: site design can add paving or permeable paving but cannot turn paving into soil. SS12-soil tests the solver's infiltration at a soil's rate, which is what such a control would use",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": null,
+   "sim": null,
+   "abs": null,
+   "rel": null,
+   "limit": null,
+   "criterion": {},
+   "status": "Unsupported",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "A green roof on an existing house",
+   "quantity": "area-wide only (a share of all roofs holds the first 25 mm), timed in app/map.js; not one owner's roof",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": null,
+   "sim": null,
+   "abs": null,
+   "rel": null,
+   "limit": null,
+   "criterion": {},
+   "status": "Unsupported",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS12-garden-under [cpu]": {
+   "leftM3": 0.0009585526534604654,
+   "takenM3": 0.999041447346543,
+   "inTheStoreM3": 0.951045891790844,
+   "depthAtTheLowEdgeM": 0.00000590539221419076
+  },
+  "SS12-garden-over [cpu]": {
+   "leftM3": 1.7520044444444665,
+   "takenM3": 1.247995555555539,
+   "inTheStoreM3": 1.2,
+   "depthAtTheLowEdgeM": 0.07378504366686961
+  },
+  "SS12-paving [cpu]": {
+   "leftM3": 0.9600111111111093,
+   "takenM3": 2.039988888888902,
+   "inTheStoreM3": 1.9999999999999998,
+   "depthAtTheLowEdgeM": 0.05197693571644928
+  },
+  "SS12-soil [cpu]": {
+   "leftM3": 2.6000000000000285,
+   "takenM3": 0.3999999999999931,
+   "inTheStoreM3": 0,
+   "depthAtTheLowEdgeM": 0.09198970842646935
+  },
+  "SS12-roof-open [cpu]": {
+   "leftM3": 2.9999999999999964,
+   "takenM3": 0,
+   "inTheStoreM3": 0,
+   "depthAtTheLowEdgeM": 0.09999320301723409
+  },
+  "SS12-roof-held [cpu]": {
+   "leftM3": 2.520000000000004,
+   "takenM3": 0,
+   "inTheStoreM3": 0,
+   "depthAtTheLowEdgeM": 0.09039320280020748
+  }
+ },
+ "notRun": [
+  "SS12-garden-under [gpu]",
+  "SS12-garden-over [gpu]",
+  "SS12-paving [gpu]",
+  "SS12-soil [gpu]",
+  "SS12-roof-open [gpu]",
+  "SS12-roof-held [gpu]"
+ ],
+ "raw": {
+  "SS12-garden-under [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS12-garden-under.cpu.json",
+   "sha256": "e13d08d8dc85ac9bc9d71a12f845d9e12daca4b1afc3847de1f1496956276a39",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 1.211,
+   "steps": 25158,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-garden-over [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS12-garden-over.cpu.json",
+   "sha256": "5e8ae46035ac2a02d0740bc9d1ab875afe620f995a72fe83c8c87c2a92844773",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 5.658,
+   "steps": 78272,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-paving [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS12-paving.cpu.json",
+   "sha256": "ff1b097737af4ec2ec7cbb00a494c491d869889c254eb506d31a85ffcfd0c187",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 1.204,
+   "steps": 18049,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-soil [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS12-soil.cpu.json",
+   "sha256": "0156b72afe66437b791aba160c3b12d9f80ac11a67ddf4205632e4ae0b5df4b1",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 2.033,
+   "steps": 27249,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-roof-open [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS12-roof-open.cpu.json",
+   "sha256": "0df5f1472ace95d0350474ce37a151995ba504443e6678f3cb962077cf90f916",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 1.044,
+   "steps": 13037,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-roof-held [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS12-roof-held.cpu.json",
+   "sha256": "1564c09eb1c66e02a3d4a5c51fa02b5d7640e0258b78d9319e8b50abb1ce0f38",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 0.936,
+   "steps": 12388,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  }
+ },
+ "hand": {
+  "SS12-garden-under": {
+   "rainReachingTheGroundM3": 1,
+   "measureAreaM2": 4,
+   "storageM3": 1.2,
+   "fullAfterS": 11020.408163265307,
+   "canTakeByTheEndM3": 1.248,
+   "takenM3": 1,
+   "leftOnTheGroundM3": 0
+  },
+  "SS12-garden-over": {
+   "rainReachingTheGroundM3": 3,
+   "measureAreaM2": 4,
+   "storageM3": 1.2,
+   "fullAfterS": 11020.408163265307,
+   "canTakeByTheEndM3": 1.248,
+   "takenM3": 1.248,
+   "leftOnTheGroundM3": 1.752
+  },
+  "SS12-paving": {
+   "rainReachingTheGroundM3": 3,
+   "measureAreaM2": 10,
+   "storageM3": 2,
+   "fullAfterS": 721.4428857715432,
+   "canTakeByTheEndM3": 2.0400000000000005,
+   "takenM3": 2.0400000000000005,
+   "leftOnTheGroundM3": 0.9599999999999995
+  },
+  "SS12-soil": {
+   "rainReachingTheGroundM3": 3,
+   "soilAreaM2": 20,
+   "takenM3": 0.39999999999999997,
+   "leftOnTheGroundM3": 2.6
+  },
+  "SS12-roof-open": {
+   "rainReachingTheGroundM3": 3,
+   "takenM3": 0,
+   "leftOnTheGroundM3": 3
+  },
+  "SS12-roof-held": {
+   "rainReachingTheGroundM3": 2.52,
+   "takenM3": 0,
+   "leftOnTheGroundM3": 2.52
+  }
+ }
+}

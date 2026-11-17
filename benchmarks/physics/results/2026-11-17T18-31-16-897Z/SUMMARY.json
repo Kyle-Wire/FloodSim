@@ -1,0 +1,81 @@
+{
+ "runId": "2026-11-17T18-31-16-897Z",
+ "order": [
+  "PV-SS3",
+  "PV-SS8",
+  "PV-SS9"
+ ],
+ "timing": {
+  "PV-SS3": 9.2,
+  "PV-SS8": 0.1,
+  "PV-SS9": 0
+ },
+ "counts": {
+  "PV-SS3": {
+   "byStatus": {
+    "Failed": 8,
+    "Passed": 22
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Failed": 7,
+    "physical-model/Passed": 6,
+    "accounting/Passed": 15,
+    "accounting/Failed": 1,
+    "numerical/Passed": 1
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS8": {
+   "byStatus": {
+    "Passed": 11,
+    "Failed": 5
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 3,
+    "accounting/Passed": 8,
+    "physical-model/Failed": 5
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS9": {
+   "byStatus": {
+    "Passed": 2,
+    "Not independently validated": 4
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 2,
+    "numerical/Not independently validated": 4
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Failed": 13,
+   "Passed": 35,
+   "Not independently validated": 4
+  },
+  "byErrorTypeAndStatus": {
+   "physical-model/Failed": 12,
+   "physical-model/Passed": 6,
+   "accounting/Passed": 23,
+   "accounting/Failed": 1,
+   "numerical/Passed": 6,
+   "numerical/Not independently validated": 4
+  },
+  "deliberateFaults": {
+   "rows": 0,
+   "caught": 0
+  }
+ },
+ "invalidStatuses": 0
+}

@@ -1,0 +1,603 @@
+{
+ "id": "PV-SS9",
+ "spec": "benchmarks/physics/spec/PV-SS9.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [cpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5715605616569519,
+   "abs": 0.000023443753023766334,
+   "rel": 0.000041018776015361236,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [cpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00037796447300922755,
+   "abs": 0.00037796447300922755,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [cpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [cpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5780546739697456,
+   "abs": 0.006517556065817498,
+   "rel": 0.011403556937334487,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [cpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.04663076850566127,
+   "abs": 0.04663076850566127,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [cpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 0.8571428571428571,
+   "abs": -0.1428571428571429,
+   "rel": -0.1428571428571429,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: outside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-1 [cpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.0490291028063634,
+   "abs": -0.000970897193636612,
+   "rel": -0.019417943872732237,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-1 [cpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000009994914696524462,
+   "abs": 0.000009994914696524462,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-1 [cpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00282275002580918,
+   "abs": 0.00282275002580918,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-1 [cpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.11,
+   "sim": 0.1500206179586502,
+   "abs": 0.04002061795865021,
+   "rel": 0.36382379962409284,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-2 [cpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.060010287910699844,
+   "abs": 0.010010287910699835,
+   "rel": 0.20020575821399667,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-2 [cpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-2 [cpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.04494974762201309,
+   "abs": 0.04494974762201309,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-2 [cpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.11,
+   "sim": 0.12003633214367761,
+   "abs": 0.010036332143677607,
+   "rel": 0.09123938312434188,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4 [cpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.059995006769895554,
+   "abs": 0.009995006769895544,
+   "rel": 0.19990013539791085,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4 [cpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4 [cpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.059995006769895554,
+   "abs": 0.059995006769895554,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-4 [cpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.11,
+   "sim": 0.10028214752674103,
+   "abs": -0.009717852473258973,
+   "rel": -0.08834411339326338,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS9-2 [cpu]": {
+   "cells": 3072,
+   "wallSeconds": 56.403,
+   "steps": 22400,
+   "housesExposed": 6,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 465.186,
+   "timesFasterThan1m": 8.247540024466783,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.00496257149927489
+  },
+  "SS9-4 [cpu]": {
+   "cells": 768,
+   "wallSeconds": 6.388,
+   "steps": 10894,
+   "housesExposed": 8,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 465.186,
+   "timesFasterThan1m": 72.82185347526612,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.010587925512897018
+  },
+  "SS9-kerb-1 [cpu]": {
+   "wallSeconds": 1.473,
+   "cells": 384
+  },
+  "SS9-hollow-1 [cpu]": {
+   "wallSeconds": 2.546,
+   "cells": 256,
+   "deepestM": 0.15002062111400075
+  },
+  "SS9-kerb-2 [cpu]": {
+   "wallSeconds": 0.207,
+   "cells": 96
+  },
+  "SS9-hollow-2 [cpu]": {
+   "wallSeconds": 0.311,
+   "cells": 64,
+   "deepestM": 0.12003633379936218
+  },
+  "SS9-kerb-4 [cpu]": {
+   "wallSeconds": 0.016,
+   "cells": 24
+  },
+  "SS9-hollow-4 [cpu]": {
+   "wallSeconds": 0.022,
+   "cells": 16,
+   "deepestM": 0.10028214752674103
+  }
+ },
+ "notRun": [
+  "SS9-2 [gpu]",
+  "SS9-4 [gpu]",
+  "SS9-4s [gpu]",
+  "SS9-8s [gpu]",
+  "SS9-kerb-1 [gpu]",
+  "SS9-hollow-1 [gpu]",
+  "SS9-kerb-2 [gpu]",
+  "SS9-hollow-2 [gpu]",
+  "SS9-kerb-4 [gpu]",
+  "SS9-hollow-4 [gpu]",
+  "SS9-kerb-4s [gpu]",
+  "SS9-hollow-4s [gpu]",
+  "SS9-kerb-8s [gpu]",
+  "SS9-hollow-8s [gpu]"
+ ],
+ "raw": {
+  "SS9-2 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS9-2.cpu.json",
+   "sha256": "e873f16abcc9cfdd4b28b0c13dcd64ff37cfacf66df9bcb5504d8b50332e4782",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 56.403,
+   "steps": 22400,
+   "grid": {
+    "nx": 64,
+    "ny": 48,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 3072
+   }
+  },
+  "SS9-4 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS9-4.cpu.json",
+   "sha256": "e4d81ae3b350ab2669acc9a620056ca830d4c60398a4ce34c42abd5b797504bc",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 6.388,
+   "steps": 10894,
+   "grid": {
+    "nx": 32,
+    "ny": 24,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 768
+   }
+  },
+  "SS9-kerb-1 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS9-kerb-1.cpu.json",
+   "sha256": "30e7b5f9815c750f26442ddd2a82c48e2a4de41c608e0d0160b86d43cacca670",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 1.473,
+   "steps": 6442,
+   "grid": {
+    "nx": 24,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 384
+   }
+  },
+  "SS9-hollow-1 [cpu]": {
+   "file": "street/raw/2026-11-17T19-20-cpu/SS9-hollow-1.cpu.json",
+   "sha256": "147b12607a61ea79c9bbf0110a2bd86793408b7bb35680936b1c026e5e025185",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 2.546,
+   "steps": 15870,
+   "grid": {
+    "nx": 16,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 256
+   }
+  },
+  "SS9-kerb-2 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS9-kerb-2.cpu.json",
+   "sha256": "7b2da45eb601802a46a7233a9883da1b69276d4e7b56b229db23ef3ab87baf28",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 0.207,
+   "steps": 2583,
+   "grid": {
+    "nx": 12,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 96
+   }
+  },
+  "SS9-hollow-2 [cpu]": {
+   "file": "street/raw/2026-11-17T19-20-cpu/SS9-hollow-2.cpu.json",
+   "sha256": "b337b3955cad00c83aaf51ebd9050db217214266bb2048163d7cefd506d5d9ba",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 0.311,
+   "steps": 7885,
+   "grid": {
+    "nx": 8,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 64
+   }
+  },
+  "SS9-kerb-4 [cpu]": {
+   "file": "street/raw/2026-11-17T19-07-cpu/SS9-kerb-4.cpu.json",
+   "sha256": "d915f71619ef557a31f0e980e496f0186fe5e48e46cc82ee5c5134efea79d013",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 0.016,
+   "steps": 885,
+   "grid": {
+    "nx": 6,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 24
+   }
+  },
+  "SS9-hollow-4 [cpu]": {
+   "file": "street/raw/2026-11-17T19-20-cpu/SS9-hollow-4.cpu.json",
+   "sha256": "a0964287437c5e045585a6edf43c34b43322521082e5844252fae3bb0ba6d27d",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 0.022,
+   "steps": 2051,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 16
+   }
+  }
+ },
+ "hand": {
+  "SS9-2": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-4": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-4s": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-8s": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-kerb-1": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-1": {
+   "rainOnItsCatchmentM3": 0.99,
+   "depthM": 0.11,
+   "capacityM3": 1.3499999999999999
+  },
+  "SS9-kerb-2": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-2": {
+   "rainOnItsCatchmentM3": 0.99,
+   "depthM": 0.11,
+   "capacityM3": 1.3499999999999999
+  },
+  "SS9-kerb-4": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-4": {
+   "rainOnItsCatchmentM3": 0.99,
+   "depthM": 0.11,
+   "capacityM3": 1.3499999999999999
+  },
+  "SS9-kerb-4s": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-4s": {
+   "rainOnItsCatchmentM3": 0.99,
+   "depthM": 0.11,
+   "capacityM3": 1.3499999999999999
+  },
+  "SS9-kerb-8s": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-8s": {
+   "rainOnItsCatchmentM3": 0.99,
+   "depthM": 0.11,
+   "capacityM3": 1.3499999999999999
+  }
+ }
+}

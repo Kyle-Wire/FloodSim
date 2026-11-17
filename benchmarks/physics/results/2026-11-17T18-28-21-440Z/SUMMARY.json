@@ -1,0 +1,46 @@
+{
+ "runId": "2026-11-17T18-28-21-440Z",
+ "order": [
+  "PV-SS3"
+ ],
+ "timing": {
+  "PV-SS3": 9.3
+ },
+ "counts": {
+  "PV-SS3": {
+   "byStatus": {
+    "Failed": 8,
+    "Passed": 22
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Failed": 7,
+    "physical-model/Passed": 6,
+    "accounting/Passed": 15,
+    "accounting/Failed": 1,
+    "numerical/Passed": 1
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Failed": 8,
+   "Passed": 22
+  },
+  "byErrorTypeAndStatus": {
+   "physical-model/Failed": 7,
+   "physical-model/Passed": 6,
+   "accounting/Passed": 15,
+   "accounting/Failed": 1,
+   "numerical/Passed": 1
+  },
+  "deliberateFaults": {
+   "rows": 0,
+   "caught": 0
+  }
+ },
+ "invalidStatuses": 0
+}

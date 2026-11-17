@@ -1,0 +1,118 @@
+{
+ "runId": "2026-11-17T19-13-18-241Z",
+ "order": [
+  "PV-SS3",
+  "PV-SS8",
+  "PV-SS9",
+  "PV-SS11",
+  "PV-SS12"
+ ],
+ "timing": {
+  "PV-SS3": 9,
+  "PV-SS8": 0.1,
+  "PV-SS9": 0.1,
+  "PV-SS11": 30.4,
+  "PV-SS12": 1.7
+ },
+ "counts": {
+  "PV-SS3": {
+   "byStatus": {
+    "Failed": 8,
+    "Passed": 22
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Failed": 7,
+    "physical-model/Passed": 6,
+    "accounting/Passed": 15,
+    "accounting/Failed": 1,
+    "numerical/Passed": 1
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS8": {
+   "byStatus": {
+    "Passed": 11,
+    "Failed": 5
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 3,
+    "accounting/Passed": 8,
+    "physical-model/Failed": 5
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS9": {
+   "byStatus": {
+    "Passed": 9,
+    "Not independently validated": 4,
+    "Failed": 5
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 9,
+    "numerical/Not independently validated": 4,
+    "numerical/Failed": 5
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS11": {
+   "byStatus": {
+    "Passed": 11,
+    "Failed": 26
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Passed": 11,
+    "physical-model/Failed": 26
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS12": {
+   "byStatus": {
+    "Passed": 10,
+    "Unsupported": 4
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 10,
+    "physical-model/Unsupported": 4
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Failed": 44,
+   "Passed": 63,
+   "Not independently validated": 4,
+   "Unsupported": 4
+  },
+  "byErrorTypeAndStatus": {
+   "physical-model/Failed": 38,
+   "physical-model/Passed": 17,
+   "accounting/Passed": 23,
+   "accounting/Failed": 1,
+   "numerical/Passed": 23,
+   "numerical/Not independently validated": 4,
+   "numerical/Failed": 5,
+   "physical-model/Unsupported": 4
+  },
+  "deliberateFaults": {
+   "rows": 0,
+   "caught": 0
+  }
+ },
+ "invalidStatuses": 0
+}

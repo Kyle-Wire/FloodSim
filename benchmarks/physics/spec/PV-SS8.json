@@ -1,0 +1,270 @@
+{
+ "id": "PV-SS8",
+ "title": "Drainage treatments side by side",
+ "category": "integration",
+ "process": "the same neighbourhood and storms with the pipe network, with a design-standard allowance and no pipes, and with no drainage",
+ "module": "street/score.mjs",
+ "executor": "node (CPU surface solver) and browser (GPU); raw measurements in street/raw/, scored by run.mjs",
+ "dependsOn": [
+  "PV-SS3"
+ ],
+ "equations": [
+  "no drainage: every drop stays; at rest the pond stands at the level the rain volume fills, V = P A",
+  "allowance r (mm/h over the whole area, taken from wet street cells): the most that can stand on the ground at any time is sum over the storm of max(0, i - r) dt x A"
+ ],
+ "initialConditions": "dry",
+ "boundaryConditions": "surface closed on all sides",
+ "geometry": "the bowl neighbourhood of PV-SS3 (12,288 m^2)",
+ "parameters": {
+  "scenes": {
+   "value": {
+    "block": {
+     "kind": "block"
+    }
+   },
+   "unit": "m"
+  },
+  "depth60": {
+   "value": [
+    28,
+    33,
+    42,
+    50,
+    60,
+    70,
+    80,
+    92,
+    105,
+    118
+   ],
+   "unit": "mm in 60 min at 1, 2, 5, 10, 25, 50, 100, 200, 500, 1000 yr (made up; i(t) = a/(t + 10 min)^0.8)"
+  },
+  "cases": {
+   "value": {
+    "SS8-none-10": {
+     "scene": "block",
+     "rain": {
+      "ari": 10,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "keepFields": true
+    },
+    "SS8-none-100": {
+     "scene": "block",
+     "rain": {
+      "ari": 100,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "keepFields": true
+    },
+    "SS8-none-500": {
+     "scene": "block",
+     "rain": {
+      "ari": 500,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "keepFields": true
+    },
+    "SS8-lump30-10": {
+     "scene": "block",
+     "rain": {
+      "ari": 10,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "lumped",
+      "mmhr": 30
+     },
+     "keepFields": true
+    },
+    "SS8-lump30-100": {
+     "scene": "block",
+     "rain": {
+      "ari": 100,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "lumped",
+      "mmhr": 30
+     },
+     "keepFields": true
+    },
+    "SS8-lump30-500": {
+     "scene": "block",
+     "rain": {
+      "ari": 500,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "lumped",
+      "mmhr": 30
+     },
+     "keepFields": true
+    },
+    "SS8-lump50-100": {
+     "scene": "block",
+     "rain": {
+      "ari": 100,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "lumped",
+      "mmhr": 50
+     },
+     "keepFields": true
+    },
+    "SS8-lump50-500": {
+     "scene": "block",
+     "rain": {
+      "ari": 500,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "lumped",
+      "mmhr": 50
+     },
+     "keepFields": true
+    }
+   },
+   "unit": "60 min nested design storm at a return period (yr); times s; allowance mm/h"
+  },
+  "pipeCases": {
+   "value": {
+    "10": "SS3-d",
+    "100": "SS3-e",
+    "500": "SS3-f"
+   },
+   "unit": "PV-SS3 case per return period"
+  },
+  "wallRule": {
+   "value": {
+    "minDepth": 0.1,
+    "reach": 2,
+    "minArea": 200
+   },
+   "unit": "m, m, m^2"
+  }
+ },
+ "solver": "FloodSim surface solver with the app's settings (hdry 1e-5 m, hfront 1e-3 m, dtDry 2 s; MUSCL minmod, HLLC, SSP-RK2, CFL 0.48). cpu rows: src/solver-cpu.js (fp64). gpu rows: src/solver-gpu.js in Chrome WebGPU (fp32). Allowance: the app's lumped drainage (src/drainage.js lumpedInfil): 30 mm/h is the app's default, 50 mm/h is the made-up table's 10-yr 60 min depth. Pipes: the PV-SS3 network cases.",
+ "reference": {
+  "module": "references/street.mjs",
+  "functions": [
+   "levelForVolume",
+   "wallExposure"
+  ],
+  "sources": "conservation of volume",
+  "independence": "arithmetic on the storm and the terrain",
+  "crossCheck": "as PV-SS2"
+ },
+ "outputs": [
+  "no drainage: pond level at the sag at the end",
+  "allowance: the highest volume on the ground against its upper bound",
+  "reported for every treatment and storm: peak and end depth at the sag, houses exposed by the wall rule, the volume on the ground at its peak"
+ ],
+ "criteria": {
+  "noDrainLevelAbsM": 0.01,
+  "lumpedBoundRel": 0.02,
+  "booksRelCpu": 1e-9,
+  "booksRelGpu": 0.00001
+ },
+ "criteriaNotes": "No drainage is arithmetic: 1 cm. The allowance row is one-sided: the peak volume on the ground may not exceed the bound by more than 2 %. The pipe network has no hand answer here; its numbers are reported beside the others.",
+ "conservation": "surface books",
+ "resolution": "1 m cells",
+ "assumptions": [
+  "no infiltration other than the allowance"
+ ],
+ "limitations": [
+  "one made-up neighbourhood in a bowl: every drop that is not drained ends at one sag",
+  "which treatment is nearest the truth cannot be read from this case: only the two with hand answers are scored"
+ ],
+ "validRange": "the comparison of treatments on this scene",
+ "scoring": "automated: street/score.mjs builds rows with lib/score.mjs row(); one row set per executor (cpu, gpu), never merged; a case with no raw file is listed as not run and has no rows",
+ "criteriaRevisions": [
+  {
+   "revision": 1,
+   "date": "2026-11-17",
+   "hash": "484b291886dfd22f0b78e9fe2dcb68adc0435ee565b2bb7c7e1e6fe243b6d10e",
+   "why": "first registration, before any sandbox case was run"
+  }
+ ]
+}

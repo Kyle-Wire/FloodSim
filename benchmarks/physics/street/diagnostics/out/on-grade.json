@@ -1,0 +1,58 @@
+[
+ {
+  "rainMmHr": 25,
+  "takenM3s": 0.0003984350524842718,
+  "frontalFlowOf06mGrateM3s": 0.0003125,
+  "flowThroughItsCellM3s": 0.0005208333333333333,
+  "streetFlowAtGrateM3s": 0.004166666666666667,
+  "takenOverFrontal": 1.2749921679496696,
+  "takenOverCellFlow": 0.7649953007698018,
+  "shareOfStreetFlow": 0.09562441259622523,
+  "depthAtGrateM": 0.0020080602758904293,
+  "depthBesideM": 0.0033699729817160693,
+  "sheetFlowDepthM": 0.0034467154520161337,
+  "maxNodeHeadM": -1.237958178789814
+ },
+ {
+  "rainMmHr": 50,
+  "takenM3s": 0.0007462936632024705,
+  "frontalFlowOf06mGrateM3s": 0.000625,
+  "flowThroughItsCellM3s": 0.0010416666666666667,
+  "streetFlowAtGrateM3s": 0.008333333333333333,
+  "takenOverFrontal": 1.1940698611239526,
+  "takenOverCellFlow": 0.7164419166743716,
+  "shareOfStreetFlow": 0.08955523958429645,
+  "depthAtGrateM": 0.003050525859513541,
+  "depthBesideM": 0.005196676018212984,
+  "sheetFlowDepthM": 0.005224243710668228,
+  "maxNodeHeadM": -1.2323325972982682
+ },
+ {
+  "rainMmHr": 100,
+  "takenM3s": 0.0013888046354986565,
+  "frontalFlowOf06mGrateM3s": 0.00125,
+  "flowThroughItsCellM3s": 0.0020833333333333333,
+  "streetFlowAtGrateM3s": 0.016666666666666666,
+  "takenOverFrontal": 1.111043708398925,
+  "takenOverCellFlow": 0.6666262250393551,
+  "shareOfStreetFlow": 0.08332827812991939,
+  "depthAtGrateM": 0.004615241727870154,
+  "depthBesideM": 0.007923672176233874,
+  "sheetFlowDepthM": 0.007918472739747589,
+  "maxNodeHeadM": -1.2249170547553805
+ },
+ {
+  "rainMmHr": 200,
+  "takenM3s": 0.0025439981836826897,
+  "frontalFlowOf06mGrateM3s": 0.0025,
+  "flowThroughItsCellM3s": 0.004166666666666667,
+  "streetFlowAtGrateM3s": 0.03333333333333333,
+  "takenOverFrontal": 1.0175992734730759,
+  "takenOverCellFlow": 0.6105595640838456,
+  "shareOfStreetFlow": 0.0763199455104807,
+  "depthAtGrateM": 0.006909471893685682,
+  "depthBesideM": 0.012049274595697919,
+  "sheetFlowDepthM": 0.0120021603130964,
+  "maxNodeHeadM": -1.21511232523999
+ }
+]

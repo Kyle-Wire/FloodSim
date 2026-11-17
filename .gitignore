@@ -13,3 +13,6 @@ benchmarks/physics/results/**/*-raw-*.f64.gz
 
 # rating-curve screening: cached USGS API replies
 benchmarks/rating/.cache/
+
+# street sandbox: the laboratory spreadsheets and paper (re-fetched by benchmarks/physics/street/lab/fetch.mjs; Zenodo 1434156, CC BY 4.0)
+benchmarks/physics/street/lab/data/

@@ -1,0 +1,257 @@
+{
+ "id": "PV-SS12",
+ "title": "Measures one owner can take",
+ "category": "solver",
+ "process": "a rain garden, permeable paving, bare soil in place of paving, and a roof whose rain is held: each must take the volume its size says and no more",
+ "module": "street/score.mjs",
+ "executor": "node (CPU surface solver) and browser (GPU); raw measurements in street/raw/, scored by run.mjs",
+ "equations": [
+  "a storage measure under water takes water at its intake rate until its storage is full, loses it to the soil below at the soil's rate, and once full takes only what drains: intake(T) = rate x t_full + drain x (T - t_full), t_full = storage / (rate - drain)",
+  "water left on the ground at T = rain volume - area of the measure x intake(T), or nothing if the measure can hold it all",
+  "bare soil taking water at a constant rate f: left = rain volume - f x area x T, while it is under water",
+  "a held roof: the ground receives rain on the open ground only, P x (lot - roof)"
+ ],
+ "initialConditions": "dry; stores empty",
+ "boundaryConditions": "closed on all sides: what the measure does not take stays on the lot",
+ "geometry": "a 10 x 10 m lot falling east at 2 %, so everything gathers against the east edge. Rain garden: 4 m^2 at the low edge (x 9-10, y 3-7 m). Permeable strip: the 10 m^2 along the low edge. Bare soil: the 20 m^2 nearest the low edge. Roof: a 4 x 4 m house at the west side.",
+ "parameters": {
+  "scenes": {
+   "value": {
+    "lot": {
+     "kind": "lot10"
+    },
+    "lotHouse": {
+     "kind": "lot10",
+     "house": true
+    }
+   },
+   "unit": "m"
+  },
+  "nativeMmHr": {
+   "value": 2,
+   "unit": "mm/h: the soil below a measure (the app's compacted-fill default, src/terrain.js URBAN_FILL_RATE)"
+  },
+  "cases": {
+   "value": {
+    "SS12-garden-under": {
+     "scene": "lot",
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 21600,
+     "every": 300,
+     "probes": {
+      "pond": {
+       "kind": "box",
+       "x0": 9,
+       "x1": 10,
+       "y0": 0,
+       "y1": 10
+      }
+     },
+     "measure": {
+      "kind": "bioretention",
+      "box": {
+       "x0": 9,
+       "x1": 10,
+       "y0": 3,
+       "y1": 7
+      },
+      "rateMmHr": 100,
+      "store": 0.3
+     }
+    },
+    "SS12-garden-over": {
+     "scene": "lot",
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 21600,
+     "every": 300,
+     "probes": {
+      "pond": {
+       "kind": "box",
+       "x0": 9,
+       "x1": 10,
+       "y0": 0,
+       "y1": 10
+      }
+     },
+     "measure": {
+      "kind": "bioretention",
+      "box": {
+       "x0": 9,
+       "x1": 10,
+       "y0": 3,
+       "y1": 7
+      },
+      "rateMmHr": 100,
+      "store": 0.3
+     }
+    },
+    "SS12-paving": {
+     "scene": "lot",
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 7200,
+     "every": 300,
+     "probes": {
+      "pond": {
+       "kind": "box",
+       "x0": 9,
+       "x1": 10,
+       "y0": 0,
+       "y1": 10
+      }
+     },
+     "measure": {
+      "kind": "permeable",
+      "box": {
+       "x0": 9,
+       "x1": 10,
+       "y0": 0,
+       "y1": 10
+      },
+      "rateMmHr": 1000,
+      "store": 0.2
+     }
+    },
+    "SS12-soil": {
+     "scene": "lot",
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 7200,
+     "every": 300,
+     "probes": {
+      "pond": {
+       "kind": "box",
+       "x0": 9,
+       "x1": 10,
+       "y0": 0,
+       "y1": 10
+      }
+     },
+     "soil": {
+      "box": {
+       "x0": 8,
+       "x1": 10,
+       "y0": 0,
+       "y1": 10
+      },
+      "mmhr": 10
+     }
+    },
+    "SS12-roof-open": {
+     "scene": "lotHouse",
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "every": 300,
+     "probes": {
+      "pond": {
+       "kind": "box",
+       "x0": 9,
+       "x1": 10,
+       "y0": 0,
+       "y1": 10
+      }
+     }
+    },
+    "SS12-roof-held": {
+     "scene": "lotHouse",
+     "rain": {
+      "mmhr": 60,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "every": 300,
+     "probes": {
+      "pond": {
+       "kind": "box",
+       "x0": 9,
+       "x1": 10,
+       "y0": 0,
+       "y1": 10
+      }
+     },
+     "heldRoof": {
+      "retention": 0.05
+     }
+    }
+   },
+   "unit": "rain mm/h and min; times s; measure: intake mm/h and storage m per unit area (the app's values: src/gi.js GI.rainGarden, GI.pavement); soil rate mm/h; retention m of roof rain"
+  },
+  "unsupported": {
+   "value": [
+    {
+     "measure": "A rain barrel or cistern on an existing house",
+     "why": "no control: a cistern exists only for a building drawn in site design (src/design.js roof 'cistern'), and its filling and overflow are timed in app/map.js (roofHoldStages), which a headless run of src/ does not reach. SS12-roof-held tests only that a held roof sheds nothing"
+    },
+    {
+     "measure": "A French drain",
+     "why": "no control: the nearest thing is a rain garden's underdrain to a sewer manhole (src/stormwater.js UnderdrainLinks, GPU kernel only). A trench drain to daylight or to a dry well is not represented"
+    },
+    {
+     "measure": "Removing paving (bare soil in its place) as a what-if",
+     "why": "no control: site design can add paving or permeable paving but cannot turn paving into soil. SS12-soil tests the solver's infiltration at a soil's rate, which is what such a control would use"
+    },
+    {
+     "measure": "A green roof on an existing house",
+     "why": "area-wide only (a share of all roofs holds the first 25 mm), timed in app/map.js; not one owner's roof"
+    }
+   ],
+   "unit": "measures FloodSim cannot represent as one owner's what-if: listed, not approximated"
+  }
+ },
+ "solver": "FloodSim surface solver with the app's settings (hdry 1e-5 m, hfront 1e-3 m, dtDry 2 s; MUSCL minmod, HLLC, SSP-RK2, CFL 0.48). cpu rows: src/solver-cpu.js (fp64). gpu rows: src/solver-gpu.js in Chrome WebGPU (fp32). Rain garden and permeable paving: the app's drawn green-infrastructure layer (src/stormwater.js drawnGI) into the solver's store (gi). Bare soil: the solver's constant-rate infiltration. Held roof: src/terrain.js roofRouting with the roof in `held`.",
+ "reference": {
+  "module": "references/street.mjs",
+  "functions": [
+   "storeIntake",
+   "levelForVolume"
+  ],
+  "sources": "conservation of volume; the store as src/gi.js describes it (an intake rate into a fixed capacity that drains to the native soil)",
+  "independence": "arithmetic on the measure's size, rates and the rain",
+  "crossCheck": "refs.test.mjs: the closed-form intake against a stepped store"
+ },
+ "outputs": [
+  "water left on the ground at the end",
+  "water the measure took",
+  "reported: the depth against the low edge"
+ ],
+ "criteria": {
+  "volumeRel": 0.03,
+  "dryAbsM3": 0.03,
+  "roofRel": 0.001
+ },
+ "criteriaNotes": "3 % on volumes: the measure is not under water for the first minute or two. Dry means under 0.03 m^3 (1 % of the larger storm). A held roof is exact arithmetic: 0.1 %.",
+ "conservation": "surface books (reported)",
+ "resolution": "1 m cells",
+ "assumptions": [
+  "the measure sits where the lot's water gathers, so it is under water as long as any is left",
+  "no underdrain"
+ ],
+ "limitations": [
+  "a rain garden here is storage with an intake rate; its ponding depression (site design digs one) is not in these cases",
+  "Green-Ampt infiltration, which the app uses where it has soil data, is not tested: the soil case is constant-rate",
+  "one lot, one position for each measure"
+ ],
+ "validRange": "measures a few square metres in size on one lot",
+ "scoring": "automated: street/score.mjs builds rows with lib/score.mjs row(); one row set per executor (cpu, gpu), never merged; a case with no raw file is listed as not run and has no rows",
+ "criteriaRevisions": [
+  {
+   "revision": 1,
+   "date": "2026-11-17",
+   "hash": "34982e440d1bc965066c8fc79b2381174c3424cc8b6ebd9dd2f3e9a981639fe4",
+   "why": "first registration, before any PV-SS12 case ran"
+  }
+ ]
+}

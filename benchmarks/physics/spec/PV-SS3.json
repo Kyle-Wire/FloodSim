@@ -1,0 +1,365 @@
+{
+ "id": "PV-SS3",
+ "title": "One inlet and one pipe; a synthetic network under storms beyond its design",
+ "category": "integration",
+ "process": "rain above what a pipe can carry: the excess stays on the street. Then the app's synthetic network (sized for the 10-yr storm) under 100-yr and 500-yr rain",
+ "module": "street/score.mjs",
+ "executor": "node (CPU surface solver) and browser (GPU); raw measurements in street/raw/, scored by run.mjs",
+ "equations": [
+  "street pond: dV/dt = i A - Q(eta)",
+  "Q(eta) = min( free inlet: min(Cw P h^1.5 sqrt(2g), Co A sqrt(2g h)) ; pipe on the head: sqrt((eta - H_out) / (L/K^2 + 1/(2g Co^2 A^2))) ), K = A_pipe R^(2/3)/n (Manning, full pipe)",
+  "at equilibrium Q = i A: eta = H_out + L (Q/K)^2 + (Q/(Co A))^2 / 2g",
+  "network: the hydraulic grade line by friction only, from the outlet upstream, HGL_up = max(HGL_down + L (Q/K)^2, invert + normal depth) (FHWA HEC-22 ch. 7)"
+ ],
+ "initialConditions": "street dry; pipes dry (a held outlet level fills them from the outlet before the rain matters)",
+ "boundaryConditions": "surface: closed on all sides, so the sewer is the only way out. SS3-a, -b: the outlet held at 0.227 m below the sag (above the pipe crown). SS3-c: a free outfall. Network cases: the outlets the app writes (a 100 m continuation pipe to a normal-depth outfall where a street leaves the scene).",
+ "definitionRevisions": [
+  {
+   "date": "2026-11-17",
+   "why": "after registration and after the first CPU run of SS3-a, -b, -c: a probe on the grate's own cell (x 97-98, y 1-2 m) was added to these three cases. The registered output for SS3-c is the depth at the grate (its weir head); the first setup recorded only the mean over the 20 m^2 sag, which had been seen (0.044 m) when this was fixed. Criteria unchanged (same hash). SS3-c was run again; the first raw file is kept."
+  }
+ ],
+ "geometry": "one pipe: a 100 x 4 m street falling at 3 % into a level sag 5 m long (z 0), one grate (0.2 m^2, 2 m weir length, Cw 0.5, Co 0.6: the app's defaults) at (97.5, 1.5) m over a manhole 1.0 m deep, one 0.15 m pipe 20 m long at 0.5 %, n 0.013. Network: the bowl neighbourhood (terrain.mjs block: 128 x 96 m, three streets, 14 houses, falling at 0.8 % to the Main / East crossing), the network from synthNetwork with the app's defaults (design 10 yr, inlets every 60 m).",
+ "parameters": {
+  "scenes": {
+   "value": {
+    "sag": {
+     "kind": "sagStreet",
+     "L": 100,
+     "W": 4,
+     "S0": 0.03,
+     "n": 0.016,
+     "sag": 5
+    },
+    "block": {
+     "kind": "block"
+    }
+   },
+   "unit": "m, m/m, s m^-1/3"
+  },
+  "depth60": {
+   "value": [
+    28,
+    33,
+    42,
+    50,
+    60,
+    70,
+    80,
+    92,
+    105,
+    118
+   ],
+   "unit": "mm in 60 min at 1, 2, 5, 10, 25, 50, 100, 200, 500, 1000 yr (made up; i(t) = a/(t + 10 min)^0.8)"
+  },
+  "cases": {
+   "value": {
+    "SS3-a": {
+     "scene": "sag",
+     "rain": {
+      "mmhr": 200,
+      "minutes": 120
+     },
+     "tEnd": 7200,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 95,
+       "x1": 100
+      },
+      "inlet": {
+       "kind": "box",
+       "x0": 97,
+       "x1": 98,
+       "y0": 1,
+       "y1": 2
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       97.5,
+       1.5
+      ],
+      "invUp": -1,
+      "invOut": -1.1,
+      "L": 20,
+      "D": 0.15,
+      "stage": -0.227,
+      "twoWay": true
+     }
+    },
+    "SS3-b": {
+     "scene": "sag",
+     "rain": {
+      "mmhr": 200,
+      "minutes": 120
+     },
+     "tEnd": 7200,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 95,
+       "x1": 100
+      },
+      "inlet": {
+       "kind": "box",
+       "x0": 97,
+       "x1": 98,
+       "y0": 1,
+       "y1": 2
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       97.5,
+       1.5
+      ],
+      "invUp": -1,
+      "invOut": -1.1,
+      "L": 20,
+      "D": 0.15,
+      "stage": -0.227,
+      "twoWay": false
+     }
+    },
+    "SS3-c": {
+     "scene": "sag",
+     "rain": {
+      "mmhr": 200,
+      "minutes": 120
+     },
+     "tEnd": 7200,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 95,
+       "x1": 100
+      },
+      "inlet": {
+       "kind": "box",
+       "x0": 97,
+       "x1": 98,
+       "y0": 1,
+       "y1": 2
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       97.5,
+       1.5
+      ],
+      "invUp": -1,
+      "invOut": -1.1,
+      "L": 20,
+      "D": 0.15,
+      "outlet": "FREE",
+      "twoWay": true
+     }
+    },
+    "SS3-d": {
+     "scene": "block",
+     "rain": {
+      "ari": 10,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "network",
+      "designARI": 10,
+      "spacing": 60,
+      "nlcd": 23
+     },
+     "keepFields": true
+    },
+    "SS3-e": {
+     "scene": "block",
+     "rain": {
+      "ari": 100,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "network",
+      "designARI": 10,
+      "spacing": 60,
+      "nlcd": 23
+     },
+     "keepFields": true
+    },
+    "SS3-f": {
+     "scene": "block",
+     "rain": {
+      "ari": 500,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "network",
+      "designARI": 10,
+      "spacing": 60,
+      "nlcd": 23
+     },
+     "keepFields": true
+    },
+    "SS3-x2": {
+     "scene": "block",
+     "rain": {
+      "mmhr": 272,
+      "minutes": 30
+     },
+     "tEnd": 1800,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "network",
+      "designARI": 10,
+      "spacing": 60,
+      "nlcd": 23
+     }
+    },
+    "SS3-x4": {
+     "scene": "block",
+     "rain": {
+      "mmhr": 544,
+      "minutes": 30
+     },
+     "tEnd": 1800,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "drainage": {
+      "kind": "network",
+      "designARI": 10,
+      "spacing": 60,
+      "nlcd": 23
+     }
+    }
+   },
+   "unit": "rain mm/h and min, or a 60 min nested design storm at a return period; times s; levels m relative to the sag"
+  },
+  "grate": {
+   "value": {
+    "A": 0.2,
+    "P": 2,
+    "Cw": 0.5,
+    "Co": 0.6
+   },
+   "unit": "m^2, m, -, -"
+  },
+  "pipeN": {
+   "value": 0.013,
+   "unit": "s m^-1/3"
+  },
+  "scoreTimesS": {
+   "value": [
+    3600,
+    7200
+   ],
+   "unit": "s"
+  },
+  "earlyTimeS": {
+   "value": 1800,
+   "unit": "s"
+  }
+ },
+ "solver": "FloodSim surface solver with the app's settings (hdry 1e-5 m, hfront 1e-3 m, dtDry 2 s; MUSCL minmod, HLLC, SSP-RK2, CFL 0.48). cpu rows: src/solver-cpu.js (fp64). gpu rows: src/solver-gpu.js in Chrome WebGPU (fp32). Coupled cases: the production Coupler (src/coupler.js, exchange every 2 s) and EPA SWMM 5.2.4 (vendor/swmm-wasm) with the .inp the app writes (src/drainage.js toINP: dynamic wave, SLOT surcharge, variable step 0.75 up to 1 s, MIN_SURFAREA 1.2 m^2, inertial damping PARTIAL). SS3-a, -c and the network cases use two-way exchange (manholes pressurise; the app default). SS3-b uses spill at the rim (SWMM overflow handed back to the street).",
+ "reference": {
+  "module": "references/street.mjs",
+  "functions": [
+   "sagHistory",
+   "sagRating",
+   "sagLevelClosed",
+   "inletFree",
+   "pipeK",
+   "levelForVolume",
+   "hglTree",
+   "hglCapacityFactor"
+  ],
+  "sources": "Manning full-pipe friction (PV-P1 checks SWMM against it to 0.034 %); orifice and weir laws (Henderson 1966 sec. 6.2); FHWA HEC-22, Urban Drainage Design Manual, 3rd ed. (2009) ch. 7 for the grade-line method",
+  "independence": "the pond history integrates the rating by RK4 from the geometry, the rain and the grate and pipe constants; nothing is read from SWMM or the coupler",
+  "crossCheck": "refs.test.mjs: the closed-form equilibrium level against bisection on the rating; the pond history settles on it; two pipes in series against manningFullPipeLoss"
+ },
+ "outputs": [
+  "one pipe: pond level in the sag at 3600 s and 7200 s; pipe flow at 7200 s; water on the street at 1800 s",
+  "free outfall: pond depth at 7200 s (the grate's weir head)",
+  "network: highest manhole head against the friction grade line from the simulated peak pipe flows; reported, unscored: the share of the rain the sewer takes, peak and end depth at the sag, manholes surcharged to the ground, water returned to the street, and the multiple of its design flows the network carries before a grade line reaches the ground",
+  "surface books and SWMM continuity"
+ ],
+ "criteria": {
+  "pondLevelAbsM": 0.005,
+  "pondLevelRel": 0.03,
+  "pipeFlowRel": 0.02,
+  "streetVolumeRel": 0.05,
+  "freeInletDepthAbsM": 0.005,
+  "freeInletDepthRel": 0.2,
+  "hglBoundAbsM": 0.1,
+  "booksRelCpu": 1e-9,
+  "booksRelGpu": 0.00001,
+  "swmmContinuityPct": 0.5
+ },
+ "criteriaNotes": "Pond level: 5 mm or 3 % of the reference pond depth. The reference pond receives the rain at once; the street takes about 2 min to deliver it, which is why the early check (1800 s) is on volume at 5 %. SWMM continuity 0.5 % is the Gate C limit. The network's grade-line row is one-sided: SWMM's highest head at a manhole may not stand more than 0.10 m above the friction grade line computed from the peak flows SWMM itself carried (peaks need not coincide, so the reference is an upper bound).",
+ "conservation": "surface books; SWMM continuity; what the coupler moved is the same volume on both sides",
+ "resolution": "1 m cells; exchange every 2 s; SWMM step up to 1 s",
+ "assumptions": [
+  "no junction, entrance or exit losses beyond the grate's orifice (SWMM has none unless given)",
+  "SS3-b is scored against the same physical answer as SS3-a: a manhole that spills at its rim cannot carry the head of the water standing over it"
+ ],
+ "limitations": [
+  "the network cases have no exact answer: their scored row is a bound, the rest is reported",
+  "the made-up rain table stands in for Atlas 14",
+  "CPU rows use this suite's copy of the GPU inlet rule (exec-cpu.mjs)"
+ ],
+ "validRange": "a sag inlet under ponded water; a single full pipe to a held outlet level; the synthetic network as the app builds it by default",
+ "scoring": "automated: street/score.mjs builds rows with lib/score.mjs row(); one row set per executor (cpu, gpu), never merged; a case with no raw file is listed as not run and has no rows",
+ "criteriaRevisions": [
+  {
+   "revision": 1,
+   "date": "2026-11-17",
+   "hash": "b59558777ae5d8947103dc4d1a86f20a879e180cf939d8131059deb87c79e2e6",
+   "why": "first registration, before any sandbox case was run"
+  }
+ ]
+}

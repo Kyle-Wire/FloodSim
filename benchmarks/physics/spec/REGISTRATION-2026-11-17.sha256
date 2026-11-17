@@ -1,0 +1,33 @@
+# SHA-256 of the street sandbox specs, references, scorer and run code at criteria registration, 2026-11-17T13:11:27-05:00, before any
+# sandbox case was run on any solver. Later changes to a spec are recorded in its definitionRevisions (criteria hashes unchanged).
+6c132451d1a30d2078e01a4a22569055f06e25420680637a875ebe6d88df517e *spec/PV-SS1.json
+aa4e4f9ef5a3c3b35a8c02ddf414daebf9664a858c83e55563954379a51e4289 *spec/PV-SS2.json
+420a398a1af8f4bfb4295d08e2ebe07ec33c0d87e22b37e309a88d58629b8f65 *spec/PV-SS3.json
+7cdc6619087c676f305d65b0af37cf0e52d79a4de150481b688a0756fe4a1cbd *spec/PV-SS4.json
+4e8bc29008ed5fb6e91e87791e3e6ee103d9f32da617fbc4d2b2763ec7ef3783 *spec/PV-SS5.json
+b1b0b05e899223f90d6e76b039d8f0cabc6731f4e664d3084d512ed1e37ea618 *spec/PV-SS6.json
+ed2a1d188beacad924f8520e9699c09d47f935b602dcbc30e85b90f20a292e81 *spec/PV-SS7.json
+7d6a17df542319b60da203eb463e1c6a2b6933f66a3c13789e5622c5b971b968 *spec/PV-SS8.json
+f40ad1445fbedac91be9a7dbfe098806be2a82c14788585c4e075e3131d26496 *spec/PV-SS9.json
+b902ec93b6229b590f3d1a694433feb93c77c15634101f8a70bc7fd057e54d0f *references/street.mjs
+bdf7bd509c504aa376fa8bfe333cd691276580d4feb29c590812b3d1646b11b8 *references/refs.test.mjs
+d7a88f62955a602cd853fef561a30ceae70887d1939ccb8b23b24a55fe43c9c4 *street/score.mjs
+288facbf62b8a1816ba0bd37455a84d02f5e630131059622773bac384cbede43 *street/terrain.mjs
+c57de436effcc085037ff7deafdcf71637546c3689226de7df2245eea50d094f *street/cases.mjs
+73d75d91e462dd0248a47ba663b856a810210ad67541f05a3db74369c2720b78 *street/harness.mjs
+254b05462699d3f59ffad453163aa47ce1e3717b793c19d1306ea7d5a24c42ac *street/exec-cpu.mjs
+83408ff67787a9dfaf941e05fde903874177787a3ecd1f35524e8b232ac4f732 *spec/PV-SS10.json
+# Added 2026-11-17T14:06:26-05:00, before any of these cases ran: PV-SS9 revision 2 (detail cases), PV-SS11, PV-SS12, and the files changed for them.
+84592fb111045b672dad3e96edbaf741bd43cd939fc78fdafcf1b4f8de5d19aa *spec/PV-SS9.json
+5d5f5765ea18342ffe97f043ba5036cfa8dfd7e6b48d09be53b4b7eaede0491d *spec/PV-SS11.json
+5f7133222d0be3a2fa44c2dc0139570c75b4e474c56f6a06ad1e2a3f60ad6c73 *spec/PV-SS12.json
+7780a16304ab47885f52af223f2ebf88fb26b836483028ea9b8e228f7f6e1a19 *references/street.mjs
+59b671d61010bac5d8a30a5bb700413adb6ba23eed51a8707399ee6427d1b0ae *references/refs.test.mjs
+550e4d6acc7e4888dffe1717862415ebbcdd37739a0f317169baae24e0f1a3d3 *street/score.mjs
+389bc06556c5920e353e501fbb935f0f784d43f5dd47b69b6c7c77a9833cfe75 *street/terrain.mjs
+35f333c03b64caee7c157f1c1866c77c4ce40ae35e2c970007dfa76510d74ea6 *street/cases.mjs
+a172a017a9c8037ee9e229305b5634f667f9c57e23486604a1992a751a5e3035 *street/harness.mjs
+9b44f108e492785f119cd053c64b65427181d72b2b4f89a509dcb3211629d60f *street/exec-cpu.mjs
+# Added 2026-11-17T14:30:02-05:00: PV-SS13 (not blind; see its criteriaNotes), before its registered runs.
+13eec2ff70cd4e0189a7e8ecde10b667a0f8365241bb1be951174dc272c90a11 *spec/PV-SS13.json
+c7f1aa14a6f1a13ddf7d3a87efb955d1a5c5aafaa03615c2402ae86ff32ef110 *street/score.mjs

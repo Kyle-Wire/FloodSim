@@ -1,0 +1,487 @@
+{
+ "id": "PV-SS7",
+ "spec": "benchmarks/physics/spec/PV-SS7.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS7",
+   "case": "R1 15 cm at the wall, joined to street water",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R1 15 cm at the wall, joined to street water",
+   "quantity": "wall level (m)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 10.15,
+   "sim": 10.15,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.000001,
+   "criterion": {
+    "abs": 0.000001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R2 15 cm pond of 100 m^2 against the wall, not joined to the street",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R3 15 cm pond of exactly 200 m^2, not joined to the street",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R3 15 cm pond of exactly 200 m^2, not joined to the street",
+   "quantity": "wall level (m)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 10.15,
+   "sim": 10.15,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.000001,
+   "criterion": {
+    "abs": 0.000001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R4 15 cm pond of 199 m^2, not joined to the street",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R5 9.9 cm at the wall, joined to street water",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R6 exactly 10 cm at the wall, joined to street water",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R6 exactly 10 cm at the wall, joined to street water",
+   "quantity": "wall level (m)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 10.1,
+   "sim": 10.1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.000001,
+   "criterion": {
+    "abs": 0.000001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R7 15 cm joined to the street, 3 m from the wall",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R8 15 cm joined to the street, on the second cell from the wall (1-2 m)",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R8 15 cm joined to the street, on the second cell from the wall (1-2 m)",
+   "quantity": "wall level (m)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 10.15,
+   "sim": 10.15,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.000001,
+   "criterion": {
+    "abs": 0.000001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R9 a 100 m^2 pond that touches street water only corner to corner",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R10 two street-joined strips at different levels: the higher one",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R10 two street-joined strips at different levels: the higher one",
+   "quantity": "wall level (m)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 10.3,
+   "sim": 10.3,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.000001,
+   "criterion": {
+    "abs": 0.000001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R11 50 cm against the wall, linked to the street only by 5 cm of water",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS7",
+   "case": "R12 at 2 m cells: 15 cm joined to the street on the cell 2-4 m from the wall",
+   "quantity": "water counts against the building (1 yes, 0 no)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 1,
+   "abs": 1,
+   "rel": null,
+   "limit": 0,
+   "criterion": {
+    "abs": 0
+   },
+   "status": "Failed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "R1": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 4,
+   "level": 10.15,
+   "referenceCells": 4,
+   "enclosed": {
+    "cells": 0,
+    "patches": 0,
+    "area": 0
+   }
+  },
+  "R2": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 0,
+   "level": null,
+   "referenceCells": 0,
+   "enclosed": {
+    "cells": 100,
+    "patches": 1,
+    "area": 100
+   }
+  },
+  "R3": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 24,
+   "level": 10.15,
+   "referenceCells": 24,
+   "enclosed": {
+    "cells": 0,
+    "patches": 0,
+    "area": 0
+   }
+  },
+  "R4": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 0,
+   "level": null,
+   "referenceCells": 0,
+   "enclosed": {
+    "cells": 199,
+    "patches": 1,
+    "area": 199
+   }
+  },
+  "R5": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 0,
+   "level": null,
+   "referenceCells": 0,
+   "enclosed": {
+    "cells": 0,
+    "patches": 0,
+    "area": 0
+   }
+  },
+  "R6": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 4,
+   "level": 10.1,
+   "referenceCells": 4,
+   "enclosed": {
+    "cells": 0,
+    "patches": 0,
+    "area": 0
+   }
+  },
+  "R7": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 0,
+   "level": null,
+   "referenceCells": 0,
+   "enclosed": {
+    "cells": 0,
+    "patches": 0,
+    "area": 0
+   }
+  },
+  "R8": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 10,
+   "level": 10.15,
+   "referenceCells": 10,
+   "enclosed": {
+    "cells": 0,
+    "patches": 0,
+    "area": 0
+   }
+  },
+  "R9": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 0,
+   "level": null,
+   "referenceCells": 0,
+   "enclosed": {
+    "cells": 100,
+    "patches": 1,
+    "area": 100
+   }
+  },
+  "R10": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 14,
+   "level": 10.3,
+   "referenceCells": 14,
+   "enclosed": {
+    "cells": 0,
+    "patches": 0,
+    "area": 0
+   }
+  },
+  "R11": {
+   "dx": 1,
+   "footprintFound": "footprint",
+   "wetCells": 0,
+   "level": null,
+   "referenceCells": 0,
+   "enclosed": {
+    "cells": 8,
+    "patches": 1,
+    "area": 8
+   }
+  },
+  "R12": {
+   "dx": 2,
+   "footprintFound": "footprint",
+   "wetCells": 6,
+   "level": 10.15,
+   "referenceCells": 0,
+   "enclosed": {
+    "cells": 0,
+    "patches": 0,
+    "area": 0
+   }
+  }
+ },
+ "notRun": [],
+ "raw": {},
+ "hand": {
+  "R1": {
+   "counts": true,
+   "level": 10.15
+  },
+  "R2": {
+   "counts": false
+  },
+  "R3": {
+   "counts": true,
+   "level": 10.15
+  },
+  "R4": {
+   "counts": false
+  },
+  "R5": {
+   "counts": false
+  },
+  "R6": {
+   "counts": true,
+   "level": 10.1
+  },
+  "R7": {
+   "counts": false
+  },
+  "R8": {
+   "counts": true,
+   "level": 10.15
+  },
+  "R9": {
+   "counts": false
+  },
+  "R10": {
+   "counts": true,
+   "level": 10.3
+  },
+  "R11": {
+   "counts": false
+  },
+  "R12": {
+   "counts": false
+  }
+ }
+}

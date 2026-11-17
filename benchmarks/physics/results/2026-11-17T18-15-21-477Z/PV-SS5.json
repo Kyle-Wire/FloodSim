@@ -1,0 +1,302 @@
+{
+ "id": "PV-SS5",
+ "spec": "benchmarks/physics/spec/PV-SS5.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-up-large [cpu]",
+   "quantity": "depth at the block against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.010113544515725732,
+   "sim": 0.010123954014069299,
+   "abs": 0.00001040949834356722,
+   "rel": 0.0010292631161489727,
+   "limit": 0.0005056772257862866,
+   "criterion": {
+    "abs": 0.0005056772257862866
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-up-small [cpu]",
+   "quantity": "depth at the block against this box's own slope length (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.0038811586347837334,
+   "sim": 0.003819863880293411,
+   "abs": -0.00006129475449032258,
+   "rel": -0.01579290110457906,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-up-small [cpu]",
+   "quantity": "depth at the block against the true depth (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.010113544515725732,
+   "sim": 0.003819863880293411,
+   "abs": -0.006293680635432321,
+   "rel": -0.622302163761297,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Failed",
+   "note": "the box is cut below the divide"
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-large [cpu]",
+   "quantity": "depth at the block at the end against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20001393785136162,
+   "abs": 0.000013937851361611742,
+   "rel": 0.00006968925680805871,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-large [cpu]",
+   "quantity": "peak depth at the block against the true peak (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.21195,
+   "abs": 0.005472114883786627,
+   "rel": 0.026502183905587368,
+   "limit": 0.008,
+   "criterion": {
+    "abs": 0.008
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-ok [cpu]",
+   "quantity": "depth at the block at the end against the true depth (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20001393757299532,
+   "abs": 0.00001393757299530951,
+   "rel": 0.00006968786497654755,
+   "limit": 0.020000000000000004,
+   "criterion": {
+    "abs": 0.020000000000000004
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-ok [cpu]",
+   "quantity": "peak depth at the block against the true peak (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.21195,
+   "abs": 0.005472114883786627,
+   "rel": 0.026502183905587368,
+   "limit": 0.02064778851162134,
+   "criterion": {
+    "abs": 0.02064778851162134
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-small [cpu]",
+   "quantity": "depth at the block at the end against the true depth (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20944502366548556,
+   "abs": 0.009445023665485552,
+   "rel": 0.04722511832742776,
+   "limit": 0.020000000000000004,
+   "criterion": {
+    "abs": 0.020000000000000004
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-small [cpu]",
+   "quantity": "peak depth at the block against the true peak (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.20945,
+   "abs": 0.002972114883786625,
+   "rel": 0.014394349700520273,
+   "limit": 0.02064778851162134,
+   "criterion": {
+    "abs": 0.02064778851162134
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS5-up-large [cpu]": {
+   "edgeShareOfRain": 0.8194548986546193
+  },
+  "SS5-up-small [cpu]": {
+   "edgeShareOfRain": 0.9125692385376951
+  },
+  "SS5-down-large [cpu]": {
+   "edgeShareOfRain": 0.5761324524411195,
+   "box": [
+    0,
+    60
+   ]
+  },
+  "SS5-down-ok [cpu]": {
+   "edgeShareOfRain": 0.46794375505982055,
+   "box": [
+    0,
+    48
+   ]
+  },
+  "SS5-down-small [cpu]": {
+   "edgeShareOfRain": 0.018148349222598694,
+   "box": [
+    20,
+    36
+   ]
+  }
+ },
+ "notRun": [
+  "SS5-up-large [gpu]",
+  "SS5-up-small [gpu]",
+  "SS5-down-large [gpu]",
+  "SS5-down-ok [gpu]",
+  "SS5-down-small [gpu]"
+ ],
+ "raw": {
+  "SS5-up-large [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS5-up-large.cpu.json",
+   "sha256": "3ce3cea1febf389e7c2ec695023f1c0cce2033fbbef73488890404b7bd4e75c3",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 2.95,
+   "steps": 3232,
+   "grid": {
+    "nx": 200,
+    "ny": 6,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1200
+   }
+  },
+  "SS5-up-small [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS5-up-small.cpu.json",
+   "sha256": "a0606cdac86c9291bc523604092b8d9bf17694257daef4af5be681fb74b3dc4c",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 0.599,
+   "steps": 2285,
+   "grid": {
+    "nx": 60,
+    "ny": 6,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 360
+   }
+  },
+  "SS5-down-large [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS5-down-large.cpu.json",
+   "sha256": "d2c2bbd6d498b3231db05e2a3c346e8275775467068c318f12f2cfb4d9c7518a",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 17.606,
+   "steps": 58801,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS5-down-ok [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS5-down-ok.cpu.json",
+   "sha256": "8d3135a294575c15c56aeb51033a5e2f9d8f62d4c5a96ded768bbe2285bfbb5d",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 13.807,
+   "steps": 58801,
+   "grid": {
+    "nx": 48,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 480
+   }
+  },
+  "SS5-down-small [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS5-down-small.cpu.json",
+   "sha256": "71e758006c652070657505968bcca5e98ff4a6fb6632c30d120bf0524b50ae60",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 4.572,
+   "steps": 57287,
+   "grid": {
+    "nx": 16,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 160
+   }
+  }
+ },
+ "hand": {
+  "SS5-up-large": {
+   "trueDepthM": 0.010113544515725732,
+   "thisBoxDepthM": 0.010113544515725732,
+   "shareOfTrue": 1
+  },
+  "SS5-up-small": {
+   "trueDepthM": 0.010113544515725732,
+   "thisBoxDepthM": 0.0038811586347837334,
+   "shareOfTrue": 0.3837584962175081
+  },
+  "SS5-down-large": {
+   "trueEndDepthM": 0.2,
+   "truePeakDepthM": 0.20647788511621337
+  },
+  "SS5-down-ok": {
+   "trueEndDepthM": 0.2,
+   "truePeakDepthM": 0.20647788511621337
+  },
+  "SS5-down-small": {
+   "trueEndDepthM": 0.2,
+   "truePeakDepthM": 0.20647788511621337
+  }
+ }
+}

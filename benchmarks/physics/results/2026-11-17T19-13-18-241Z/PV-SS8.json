@@ -1,0 +1,581 @@
+{
+ "id": "PV-SS8",
+ "spec": "benchmarks/physics/spec/PV-SS8.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-none-10 [cpu]",
+   "quantity": "pond depth at the sag at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.48528914285714264,
+   "sim": 0.48526,
+   "abs": -0.000029142857142616663,
+   "rel": -0.000060052563655221964,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-none-10 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -6.291263806209268e-15,
+   "abs": -6.291263806209268e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-none-100 [cpu]",
+   "quantity": "pond depth at the sag at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.57152,
+   "abs": -0.000017117903928109968,
+   "rel": -0.00002995064255999447,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-none-100 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -2.7755575615629257e-15,
+   "abs": -2.7755575615629257e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-none-500 [cpu]",
+   "quantity": "pond depth at the sag at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.6268177601060325,
+   "sim": 0.6268,
+   "abs": -0.000017760106032493894,
+   "rel": -0.000028333763276729098,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-none-500 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -7.75393858468354e-15,
+   "abs": -7.75393858468354e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump30-10 [cpu]",
+   "quantity": "highest volume on the ground against its upper bound (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 296.35481599999997,
+   "sim": 343.53095382184614,
+   "abs": 47.17613782184617,
+   "rel": 0.15918802487706551,
+   "limit": 5.9270963199999995,
+   "criterion": {
+    "rel": 0.02
+   },
+   "status": "Failed",
+   "note": "one-sided bound: Σ max(0, i − allowance) Δt × area"
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump30-10 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -1.2813824075882044e-14,
+   "abs": -1.2813824075882044e-14,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump30-100 [cpu]",
+   "quantity": "highest volume on the ground against its upper bound (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 615.2929279999998,
+   "sim": 679.8478121533483,
+   "abs": 64.55488415334844,
+   "rel": 0.10491731859032265,
+   "limit": 12.305858559999997,
+   "criterion": {
+    "rel": 0.02
+   },
+   "status": "Failed",
+   "note": "one-sided bound: Σ max(0, i − allowance) Δt × area"
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump30-100 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -2.775557561562884e-15,
+   "abs": -2.775557561562884e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump30-500 [cpu]",
+   "quantity": "highest volume on the ground against its upper bound (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 921.5999999999998,
+   "sim": 975.4371957391453,
+   "abs": 53.8371957391455,
+   "rel": 0.05841709607112143,
+   "limit": 18.431999999999995,
+   "criterion": {
+    "rel": 0.02
+   },
+   "status": "Failed",
+   "note": "one-sided bound: Σ max(0, i − allowance) Δt × area"
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump30-500 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 1.6741458307839715e-15,
+   "abs": 1.6741458307839715e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump50-100 [cpu]",
+   "quantity": "highest volume on the ground against its upper bound (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 461.881344,
+   "sim": 536.3775846696417,
+   "abs": 74.49624066964168,
+   "rel": 0.16128869814157654,
+   "limit": 9.23762688,
+   "criterion": {
+    "rel": 0.02
+   },
+   "status": "Failed",
+   "note": "one-sided bound: Σ max(0, i − allowance) Δt × area"
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump50-100 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -8.789265611615853e-15,
+   "abs": -8.789265611615853e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump50-500 [cpu]",
+   "quantity": "highest volume on the ground against its upper bound (m³)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 708.0704000000001,
+   "sim": 805.9889230401889,
+   "abs": 97.9185230401888,
+   "rel": 0.1382892478490681,
+   "limit": 14.161408000000002,
+   "criterion": {
+    "rel": 0.02
+   },
+   "status": "Failed",
+   "note": "one-sided bound: Σ max(0, i − allowance) Δt × area"
+  },
+  {
+   "benchmark": "PV-SS8",
+   "case": "SS8-lump50-500 [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -1.171902081548761e-14,
+   "abs": -1.171902081548761e-14,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS8-none-10 [cpu]": {
+   "treatment": "no drainage",
+   "returnPeriod": 10,
+   "sagDepthPeakM": 0.48526,
+   "sagDepthEndM": 0.48526,
+   "streetVolumePeakM3": 614.3999999999994,
+   "streetVolumeEndM3": 614.3999999999915,
+   "removedShareOfRain": 0,
+   "housesExposed": 6,
+   "houses": 14
+  },
+  "SS8-none-100 [cpu]": {
+   "treatment": "no drainage",
+   "returnPeriod": 100,
+   "sagDepthPeakM": 0.57153,
+   "sagDepthEndM": 0.57152,
+   "streetVolumePeakM3": 983.0399999999927,
+   "streetVolumeEndM3": 983.0399999999851,
+   "removedShareOfRain": 0,
+   "housesExposed": 6,
+   "houses": 14
+  },
+  "SS8-none-500 [cpu]": {
+   "treatment": "no drainage",
+   "returnPeriod": 500,
+   "sagDepthPeakM": 0.62681,
+   "sagDepthEndM": 0.6268,
+   "streetVolumePeakM3": 1290.2400000000182,
+   "streetVolumeEndM3": 1290.2400000000052,
+   "removedShareOfRain": 0,
+   "housesExposed": 8,
+   "houses": 14
+  },
+  "SS8-lump30-10 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "returnPeriod": 10,
+   "sagDepthPeakM": 0.38616,
+   "sagDepthEndM": 0.347,
+   "streetVolumePeakM3": 343.53095382184614,
+   "streetVolumeEndM3": 249.6358174440568,
+   "removedShareOfRain": 0.5936917033788001,
+   "housesExposed": 4,
+   "houses": 14
+  },
+  "SS8-lump30-100 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "returnPeriod": 100,
+   "sagDepthPeakM": 0.49977,
+   "sagDepthEndM": 0.47398,
+   "streetVolumePeakM3": 679.8478121533483,
+   "streetVolumeEndM3": 575.4047307984597,
+   "removedShareOfRain": 0.41466803914544587,
+   "housesExposed": 6,
+   "houses": 14
+  },
+  "SS8-lump30-500 [cpu]": {
+   "treatment": "allowance 30 mm/h",
+   "returnPeriod": 500,
+   "sagDepthPeakM": 0.56758,
+   "sagDepthEndM": 0.5464,
+   "streetVolumePeakM3": 975.4371957391453,
+   "streetVolumeEndM3": 861.8660314497205,
+   "removedShareOfRain": 0.3320110743352236,
+   "housesExposed": 6,
+   "houses": 14
+  },
+  "SS8-lump50-100 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "returnPeriod": 100,
+   "sagDepthPeakM": 0.4569,
+   "sagDepthEndM": 0.40157,
+   "streetVolumePeakM3": 536.3775846696417,
+   "streetVolumeEndM3": 367.19259123590564,
+   "removedShareOfRain": 0.6264723803345585,
+   "housesExposed": 4,
+   "houses": 14
+  },
+  "SS8-lump50-500 [cpu]": {
+   "treatment": "allowance 50 mm/h",
+   "returnPeriod": 500,
+   "sagDepthPeakM": 0.5308,
+   "sagDepthEndM": 0.48982,
+   "streetVolumePeakM3": 805.9889230401889,
+   "streetVolumeEndM3": 630.821111971443,
+   "removedShareOfRain": 0.5110823474923659,
+   "housesExposed": 6,
+   "houses": 14
+  }
+ },
+ "notRun": [
+  "SS8-none-10 [gpu]",
+  "SS8-none-100 [gpu]",
+  "SS8-none-500 [gpu]",
+  "SS8-lump30-10 [gpu]",
+  "SS8-lump30-100 [gpu]",
+  "SS8-lump30-500 [gpu]",
+  "SS8-lump50-100 [gpu]",
+  "SS8-lump50-500 [gpu]"
+ ],
+ "raw": {
+  "SS8-none-10 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS8-none-10.cpu.json",
+   "sha256": "1e3fab9db23b8c660f1712747012ff658a5734e339b2cbee19e186f1ee1e4e1a",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 385.735,
+   "steps": 41470,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS8-none-100 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS8-none-100.cpu.json",
+   "sha256": "6fcb059bec1ec0f3ae970d909786521605a07b2018dc3b7072164c873d5d4d83",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 465.186,
+   "steps": 45549,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS8-none-500 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS8-none-500.cpu.json",
+   "sha256": "8b8986fc4841934ba42bef57ad0b163ef774b94edcbef2677f5daeb35accf09c",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 492.746,
+   "steps": 48004,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS8-lump30-10 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS8-lump30-10.cpu.json",
+   "sha256": "3372ab23b25f24eef76fe35ee7bb4cfda463b78e86894494aa61b413e4510cd1",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 295.603,
+   "steps": 33842,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS8-lump30-100 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS8-lump30-100.cpu.json",
+   "sha256": "ac60918a938fea934d2ba6afed1e37749c822ea982e5fd4ba0fc791f387540f4",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 381.378,
+   "steps": 40138,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS8-lump30-500 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS8-lump30-500.cpu.json",
+   "sha256": "27d8cab234a873447c1d258f8b62fdb22b2cf8153a4997cae7135d3431bbf07d",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 437.463,
+   "steps": 43684,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS8-lump50-100 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS8-lump50-100.cpu.json",
+   "sha256": "ebc9467e43e370323537195f007ed3daabd23624053f0746f8a87f12441bf7af",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 328.846,
+   "steps": 37059,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  },
+  "SS8-lump50-500 [cpu]": {
+   "file": "street/raw/2026-11-17T18-20-cpu/SS8-lump50-500.cpu.json",
+   "sha256": "8ed1cbafd9284664e1aeb3f2ff7e50b50bef6a98878be67e98dcafeb39dc44f3",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v24.16.0",
+   "adapter": null,
+   "wallSeconds": 406.316,
+   "steps": 41086,
+   "grid": {
+    "nx": 128,
+    "ny": 96,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 12288
+   }
+  }
+ },
+ "hand": {
+  "SS8-none-10": {
+   "rainM3": 614.4000000000001,
+   "restLevelM": 0.5012891428571427,
+   "sagDepthAtRestM": 0.48528914285714264
+  },
+  "SS8-none-100": {
+   "rainM3": 983.04,
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS8-none-500": {
+   "rainM3": 1290.24,
+   "restLevelM": 0.6428177601060325,
+   "sagDepthAtRestM": 0.6268177601060325
+  },
+  "SS8-lump30-10": {
+   "rainM3": 614.4000000000001,
+   "peakVolumeBoundM3": 296.35481599999997
+  },
+  "SS8-lump30-100": {
+   "rainM3": 983.04,
+   "peakVolumeBoundM3": 615.2929279999998
+  },
+  "SS8-lump30-500": {
+   "rainM3": 1290.24,
+   "peakVolumeBoundM3": 921.5999999999998
+  },
+  "SS8-lump50-100": {
+   "rainM3": 983.04,
+   "peakVolumeBoundM3": 461.881344
+  },
+  "SS8-lump50-500": {
+   "rainM3": 1290.24,
+   "peakVolumeBoundM3": 708.0704000000001
+  }
+ },
+ "pipes": {
+  "SS3-d [cpu]": {
+   "treatment": "pipe network",
+   "returnPeriod": 10,
+   "sagDepthPeakM": 0.27927,
+   "sagDepthEndM": 0.00077,
+   "streetVolumePeakM3": 201.72801895890495,
+   "streetVolumeEndM3": 0.30038707847711305,
+   "sewerShareOfRain": 0.9995110887394519,
+   "housesExposed": 0,
+   "houses": 14
+  },
+  "SS3-e [cpu]": {
+   "treatment": "pipe network",
+   "returnPeriod": 100,
+   "sagDepthPeakM": 0.39575,
+   "sagDepthEndM": 0.00091,
+   "streetVolumePeakM3": 405.10785351580006,
+   "streetVolumeEndM3": 0.3167827988320685,
+   "sewerShareOfRain": 0.999677751872933,
+   "housesExposed": 4,
+   "houses": 14
+  },
+  "SS3-f [cpu]": {
+   "treatment": "pipe network",
+   "returnPeriod": 500,
+   "sagDepthPeakM": 0.47824,
+   "sagDepthEndM": 0.28628,
+   "streetVolumePeakM3": 614.6649328696011,
+   "streetVolumeEndM3": 147.28856507065203,
+   "sewerShareOfRain": 0.8858440560898238,
+   "housesExposed": 4,
+   "houses": 14
+  }
+ }
+}

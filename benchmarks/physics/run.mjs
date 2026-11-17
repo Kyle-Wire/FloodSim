@@ -1,6 +1,6 @@
 // The physics verification runner (generalised from benchmarks/culvert/run-all.mjs).
 //   node benchmarks/physics/run.mjs              run every spec; write results/<run-id>/ (new, then read-only)
-//   node benchmarks/physics/run.mjs --only PV-C1 run one spec (and what it depends on)
+//   node benchmarks/physics/run.mjs --only PV-C1 run one spec (and what it depends on); a comma list runs several
 //   node benchmarks/physics/run.mjs --hash       print each spec's criteria hash (for a revision entry), run nothing
 // Order: the reference self-tests (a failure stops the run); spec validation (a criteria change without a revision
 // entry stops the run); each benchmark; then the result files, MANIFEST.json and SHA256SUMS, made read-only. A run
@@ -39,7 +39,7 @@ if (bad) { console.log('spec validation failed: run stopped'); process.exit(3); 
 
 // 3. benchmarks (dependencies first)
 const order = []; const add = (id) => { if (order.includes(id)) return; for (const d of specs[id].dependsOn ?? []) add(d); order.push(id); };
-for (const id of only ? [only] : Object.keys(specs).sort()) add(id);
+for (const id of only ? only.split(',') : Object.keys(specs).sort()) { if (!specs[id]) { console.log('no such spec: ' + id); process.exit(3); } add(id); }
 const results = {}, timing = {};
 for (const id of order) {
   const s = specs[id], t0 = Date.now();

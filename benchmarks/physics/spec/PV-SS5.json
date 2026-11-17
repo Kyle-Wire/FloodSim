@@ -1,0 +1,180 @@
+{
+ "id": "PV-SS5",
+ "title": "The same block in a small box and a large one",
+ "category": "convergence",
+ "process": "how the answer at a block depends on where the model box is cut: upslope of it, and downslope of it through a hollow",
+ "module": "street/score.mjs",
+ "executor": "node (CPU surface solver) and browser (GPU); raw measurements in street/raw/, scored by run.mjs",
+ "equations": [
+  "upslope cut: the depth at the block is the kinematic depth for the length of slope above it that is inside the box, h = (i x / alpha)^(3/5); a box cut x_box below the divide reads (x_box / x_true)^(3/5) of the true depth",
+  "downslope cut: a hollow holds water to its rim only if the rim is inside the box (PV-SS2)"
+ ],
+ "initialConditions": "dry",
+ "boundaryConditions": "the app's edge on all four sides of every box: free outfall",
+ "geometry": "up: a plane 200 x 6 m at 2 %, n 0.016; the block at 150 m from the divide; boxes [0, 200) m and [120, 180) m. down: the PV-SS2 street; the block is the hollow's floor at 30-36 m; boxes [0, 60) m (whole), [0, 48) m (cut below the rim) and [20, 36) m (cut through the hollow and across its catchment)",
+ "parameters": {
+  "scenes": {
+   "value": {
+    "planeC": {
+     "kind": "plane",
+     "L": 200,
+     "W": 6,
+     "S0": 0.02,
+     "n": 0.016
+    },
+    "hollow": {
+     "kind": "hollowStreet",
+     "W": 10,
+     "S0": 0.02,
+     "n": 0.015,
+     "up": 30,
+     "hollow": 10,
+     "depth": 0.2,
+     "rim": 1,
+     "down": 19
+    }
+   },
+   "unit": "m, m/m, s m^-1/3"
+  },
+  "cases": {
+   "value": {
+    "SS5-up-large": {
+     "scene": "planeC",
+     "bc": "app",
+     "rain": {
+      "mmhr": 100,
+      "minutes": 25
+     },
+     "tEnd": 1500,
+     "every": 10,
+     "probes": {
+      "block": {
+       "kind": "column",
+       "x": 150.5
+      }
+     }
+    },
+    "SS5-up-small": {
+     "scene": "planeC",
+     "sceneArgs": {
+      "x0": 120,
+      "x1": 180
+     },
+     "bc": "app",
+     "rain": {
+      "mmhr": 100,
+      "minutes": 25
+     },
+     "tEnd": 1500,
+     "every": 10,
+     "probes": {
+      "block": {
+       "kind": "column",
+       "x": 150.5
+      }
+     }
+    },
+    "SS5-down-large": {
+     "scene": "hollow",
+     "bc": "app",
+     "rain": {
+      "mmhr": 80,
+      "minutes": 60
+     },
+     "tEnd": 10800,
+     "probes": {
+      "block": {
+       "kind": "box",
+       "x0": 30,
+       "x1": 36
+      }
+     }
+    },
+    "SS5-down-ok": {
+     "scene": "hollow",
+     "sceneArgs": {
+      "x0": 0,
+      "x1": 48
+     },
+     "bc": "app",
+     "rain": {
+      "mmhr": 80,
+      "minutes": 60
+     },
+     "tEnd": 10800,
+     "probes": {
+      "block": {
+       "kind": "box",
+       "x0": 30,
+       "x1": 36
+      }
+     }
+    },
+    "SS5-down-small": {
+     "scene": "hollow",
+     "sceneArgs": {
+      "x0": 20,
+      "x1": 36
+     },
+     "bc": "app",
+     "rain": {
+      "mmhr": 80,
+      "minutes": 60
+     },
+     "tEnd": 10800,
+     "probes": {
+      "block": {
+       "kind": "box",
+       "x0": 30,
+       "x1": 36
+      }
+     }
+    }
+   },
+   "unit": "rain mm/h and min; times s; x in the scene's own metres"
+  }
+ },
+ "solver": "FloodSim surface solver with the app's settings (hdry 1e-5 m, hfront 1e-3 m, dtDry 2 s; MUSCL minmod, HLLC, SSP-RK2, CFL 0.48). cpu rows: src/solver-cpu.js (fp64). gpu rows: src/solver-gpu.js in Chrome WebGPU (fp32).",
+ "reference": {
+  "module": "references/street.mjs",
+  "functions": [
+   "kwDepth",
+   "rimHead"
+  ],
+  "sources": "as PV-SS1 and PV-SS2",
+  "independence": "the true answer is the hand answer for the whole terrain",
+  "crossCheck": "as PV-SS1 and PV-SS2"
+ },
+ "outputs": [
+  "up: steady depth at the block in each box against the true depth, and in the small box against the depth its own slope length gives",
+  "down: end and peak depth at the block in each box against the true depths",
+  "reported: the share of the rain that leaves across the edge in each box"
+ ],
+ "criteria": {
+  "depthRel": 0.05,
+  "depthAbsM": 0.0005,
+  "boxChangeRel": 0.1,
+  "boxChangeAbsM": 0.005,
+  "finalDepthAbsM": 0.003,
+  "peakHeadAbsM": 0.008
+ },
+ "criteriaNotes": "The large boxes are held to the PV-SS1 and PV-SS2 limits. A small box passes if the block reads within 10 % (or 5 mm) of the true depth. Predicted before running: SS5-up-small fails (the hand answer is 38 % of the true depth) and SS5-down-small fails (its edge drains the hollow); SS5-down-ok passes.",
+ "conservation": "surface books (reported)",
+ "resolution": "1 m cells",
+ "assumptions": [
+  "the free-outfall edge lets nothing in"
+ ],
+ "limitations": [
+  "two idealised cuts; a real box is cut on all sides at once"
+ ],
+ "validRange": "rain-fed flooding (no river); boxes cut across a slope or through a hollow",
+ "scoring": "automated: street/score.mjs builds rows with lib/score.mjs row(); one row set per executor (cpu, gpu), never merged; a case with no raw file is listed as not run and has no rows",
+ "criteriaRevisions": [
+  {
+   "revision": 1,
+   "date": "2026-11-17",
+   "hash": "a4f1b3ddccbd10c8fff7499c124b7522b8d71d1c37bf91aadc98ac7b9a6561d5",
+   "why": "first registration, before any sandbox case was run"
+  }
+ ]
+}
