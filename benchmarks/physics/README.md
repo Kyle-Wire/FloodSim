@@ -180,7 +180,7 @@ These are the roadmap in `docs/specs/physics-verification.md` §4, not started.
 
 ## Street sandbox (17 Nov 2026)
 
-A separate family, PV-SS1 to PV-SS12: made-up street cases with hand answers, and one laboratory comparison. It
+A separate family, PV-SS1 to PV-SS13: made-up street cases with hand answers, and one laboratory comparison. It
 covers part of roadmap stages 3 (rain on an idealised surface, wetting and drying) and 4 (surface-to-pipe and
 pipe-to-surface exchange), on the CPU surface solver and, once run, the GPU. It was registered and run at Kyle's
 instruction without PVM2's three reviews, so its results are sandbox results, not PVM2 results.

@@ -1,4 +1,4 @@
-# Street sandbox (PV-SS1 … PV-SS12)
+# Street sandbox (PV-SS1 … PV-SS13)
 
 Made-up street cases whose answers are known before the model runs: by hand arithmetic, a closed form, or a
 laboratory measurement. A family of the physics suite (`../README.md`), built 17 Nov 2026 at Kyle's instruction to
@@ -35,6 +35,7 @@ Run the sandbox with `--only`: a bare `run.mjs` runs every spec in the suite, PV
 | PV-SS9 | 9 Coarse run then downscale: do a kerb, a crown and a small hollow survive? (revision 2) | a gutter pond below its kerb and crown; a hollow holding its yard's rain; the bowl's end level |
 | PV-SS10 | laboratory | 15 steady tests of the Sheffield rig (Rubinato et al. 2017): the exchange into the sewer at a measured depth |
 | PV-SS11 | 8, made thorough: surface only, an allowance, or pipes, each against a known answer | a sag whose drain keeps up, a sag whose drain cannot, a hollow with no drain, a kerbed street on a grade (FHWA HEC-22) |
+| PV-SS13 | found missing: a grate in a gutter on a grade | the gutter's depth and the share of the flow the grate takes, by FHWA HEC-22 (not blind: first run as a diagnostic) |
 | PV-SS12 | measures one owner can take | a rain garden, a permeable strip, bare soil and a held roof take the volume their size says; four measures FloodSim cannot represent are listed as Unsupported |
 
 Kyle's nine cases are all here; none was dropped. PV-SS9 revision 2, PV-SS11 and PV-SS12 follow his direction of the
@@ -88,6 +89,10 @@ manhole-to-street surcharge with exact answers (`../../gatec/coupled/`, 22 of 22
     `…T19-14-04-695Z`. Criteria unchanged.
   - **Two stray raw folders** (`raw/2026-11-17T19-06-39-084Z`, `…-190Z`) are from a launch with a shell slip that cut
     some runs short. The complete runs of the same cases are in `raw/2026-11-17T19-07-cpu`, which the scorer uses.
+  - **PV-SS13** was registered at 14:34 EST, after its nine runs had been made once as the diagnostic `gutter.mjs`. It is
+    not blind and its spec says so.
+  - **Fixes are on another branch** (`claude/street-sandbox-fixes`, pull request 11) with their own raw files and
+    results. Nothing under `src/` is changed here.
 - No criterion was changed after a run.
 - The grade line of PV-SS3 follows HEC-22 §7.5 for friction (from the outlet upstream, Manning full flow) but starts
   from the pipe's own depth at the outlet, as SWMM's normal-depth outfall does, not from HEC-22's (d_c + D) / 2, and has
@@ -136,8 +141,7 @@ case from the paper: the flume's outlet weir setting is not published.
 
 ## Not covered
 
-- **A grate in a gutter on a grade** as a registered case (FHWA HEC-22 §4.4.4.1). `gutter.mjs` and `on-grade.mjs` are
-  first looks, unscored. This is the main missing case: Tract 353.02's sewer share is set by it (F21).
+- **More than one gutter shape** for PV-SS13: one cross slope, one street width, one grate size.
 - **Kerbs, crowns and gutters** in any case: every street here is a plane or a bowl.
 - **EA Tests 8A and 8B:** the inputs are still not public (`../../ea/TEST8.md`).
 - **The laboratory's unsteady tests and its sewer-to-surface tests** (S3, S4): in a coupled run the manhole head is a

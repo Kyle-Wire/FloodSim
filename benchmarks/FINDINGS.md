@@ -735,3 +735,18 @@ All ten rows pass. A storage measure holds its storage, plus what drains to the 
 
 **Limits.** The rain garden here is storage with an intake rate; the ponding depression that site design digs is not
 in these cases. Green-Ampt infiltration is not tested.
+
+## Street sandbox, third set (17 Nov 2026, later), appended
+
+- **F21 is now scored** (PV-SS13, registered after its runs had been made once as a diagnostic; not blind). On the nine
+  streets the gutter's depth passes 9 of 9 (within 0.7 mm of FHWA HEC-22) and the grate's share fails 9 of 9: it takes
+  26–40 % of the flow reaching it where HEC-22 gives 69–91 %. F21's status: **Explained in part** (the likely cause
+  stands as written; not isolated).
+- **F14, corrections and a fix.** A fix for the wobble is proposed in pull request 11 (`physics/street/FIXES.md` on
+  that branch): the pond goes from 0.121 to 0.150 m (by hand 0.199 m; the rest is SLOT's), the held-outfall level from
+  0.1445 to 0.1500 m, the rate stops changing sign, and the answer no longer depends on the exchange interval. CPU
+  path only. **Correction:** SWMM's continuity error (0.8–1.2 %, and 10–19 % of a few cubic metres on return flow)
+  does not change with the fix, so it is not caused by the wobble as the text above suggests. It is SWMM's own
+  bookkeeping of surcharged nodes and return flow, and is open.
+- **F18 and F20** have fixes in the same pull request: EXTRAN with two-way exchange is refused, and the wall rule's
+  reach is in metres. The new exchange does not make EXTRAN usable.

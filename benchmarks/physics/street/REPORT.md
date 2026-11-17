@@ -1,11 +1,15 @@
 # Street sandbox: report (17 Nov 2026)
 
-Twelve test families, each with its answer and pass rule fixed before it ran. Every row is in
+Thirteen test families, each with its answer and pass rule fixed before it ran. Every row is in
 [RESULTS.md](RESULTS.md); the evidence for each finding is in `../../FINDINGS.md` (F12–F24). Nothing here is called
 validated.
 
 **The GPU rows are not yet run.** Everything below is the CPU surface solver with the production coupler and SWMM. The
 GPU was still in use by the production runs.
+
+**Fixes.** Three small ones are in a separate pull request, [Kyle-Wire/FloodSim#11](https://github.com/Kyle-Wire/FloodSim/pull/11), measured
+before and after (`FIXES.md` on that branch): a stable two-way exchange, the wall rule's reach in metres, and a guard
+on EXTRAN. This branch changes nothing under `src/`, and the numbers below are without those fixes.
 
 ## The short answer
 
@@ -18,8 +22,8 @@ GPU was still in use by the production runs.
   hollow, a yard). At a low point a drain serves it reads 0.42–0.66 m where the truth is 3–20 cm. An allowance does
   not fix this: it is still far too deep there and it drains hollows that nothing drains (F23).
 - **"Too much down the drains" holds only where a pipe is the limit:** a pond that should be 20 cm reads 12 cm (F14).
-  **On a grade it is the other way round:** the default grate takes about half of what the FHWA manual gives (F21,
-  a diagnostic). And the synthetic network is not a 10-yr sewer: it carries 1.75 times its design flows before a
+  **On a grade it is the other way round:** the default grate takes 26–40 % of the flow where the FHWA manual gives
+  69–91 % (F21, case 13). And the synthetic network is not a 10-yr sewer: it carries 1.75 times its design flows before a
   manhole reaches the ground (F16).
 - **The model box** cuts off water upslope and holds a pond at its edge (F13).
 - **Owner-scale measures:** a rain garden, permeable paving and bare soil take exactly what their size says. A rain
@@ -55,7 +59,8 @@ GPU was still in use by the production runs.
 | 11 | An allowance (30 and 50 mm/h) against the same | **Passed** 1 of 10 each | | |
 | 12 | Rain garden, permeable strip, bare soil, held roof | **Passed** (10 of 10) | 1.752, 0.960, 2.600, 2.520 m³ left on the lot | 1.7520, 0.9600, 2.6000, 2.5200 |
 | 12 | Rain barrel on an existing house, French drain, removing paving, one house's green roof | **Unsupported** | | no control for one owner's measure |
-| – | A grate in a gutter on a grade (diagnostic, unscored) | – | HEC-22: 69–92 % of the flow taken | 26–40 % |
+| 13 | A gutter on a grade: its depth | **Passed** (9 of 9) | 11.0–35.9 mm (HEC-22) | within 0.7 mm |
+| 13 | The grate in that gutter: share of the flow it takes | **Failed** (9 of 9) | 69–91 % (HEC-22) | 26–40 % |
 | 6, 9 | 4 m and 8 m subgrid modes | not yet run (GPU only) | | |
 
 All rows are CPU rows.
@@ -91,10 +96,11 @@ rim. On the bowl neighbourhood (case 8) no drainage was 15–21 cm deeper at the
 2. **F12. A 2 m grid closes 1 m gaps between houses.** A yard that drains reads 10.7 cm, over the threshold.
 3. **F23. Surface only is an upper bound; an allowance is wrong both ways.**
 4. **F13. The model box.** Cut across a slope it reads 38 % of the true depth. Its edge holds a pond like a wall.
-5. **F21. Grates on a grade take about half of what HEC-22 gives.** A diagnostic; if it holds, hillsides shed too much
-   water downhill.
+5. **F21. Grates on a grade take under half of what HEC-22 gives,** so hillsides shed too much water downhill. The
+   gutter flow itself matches HEC-22 to 0.7 mm.
 6. **F14. A surcharged pipe carries too much.** SWMM's SLOT method adds 2–13 % by pipe size; the two-way exchange
-   wobbles and adds more. Ponds at a sag read 8–39 % shallow.
+   wobbles and adds more. Ponds at a sag read 8–39 % shallow. The wobble is fixed in pull request 11 (0.121 → 0.150 m
+   against 0.199 by hand); SLOT's share is inside SWMM and remains.
 7. **F16. "Sized for the 10-yr storm" is not a 10-yr sewer.**
 8. **F24. Four owner-scale measures cannot be represented.** The ones that can are exact.
 9. **F17. The allowance removes 73–85 % of its nominal rate.**
@@ -112,20 +118,19 @@ For you to decide; nothing under `src/` was touched.
 2. **Where there is no pipe data, run surface only and say so,** in the words above. Drop the allowance from the
    product. Report a street low point's depth as a ceiling.
 3. **Draw the model box from the terrain,** and flag a house whose pond touches the edge.
-4. **Register a grate-in-a-gutter case against HEC-22, then fix capture on a grade.** Leave the weir coefficient
-   alone until then.
-5. **Stabilise the two-way exchange** (cap the rate so the manhole head cannot pass the street level in one interval,
-   or exchange every 0.5 s). Confirm on the GPU first.
+4. **Fix capture on a grade,** against case 13. It needs the speed of the water at the grate, which the exchange does
+   not carry, so it touches the GPU kernels. Leave the weir coefficient alone until then.
+5. **Merge the stable two-way exchange** (pull request 11) once the Gate C coupled cases have run on the GPU.
 6. **Stop calling the synthetic network a 10-yr sewer.**
 7. **Owner what-ifs: offer a rain garden and permeable paving now** (both exact here). A rain barrel, a French drain
    and removing paving each need a control built first; until then leave them out and do not approximate them.
-8. **Remove or guard** spill-at-the-rim and EXTRAN-with-two-way.
+8. **EXTRAN with two-way exchange is refused** in pull request 11. Spill-at-the-rim is left as it is: document it, or
+   remove the option.
 
 ## Not done
 
 - The GPU rows of every case, and the 4 m and 8 m subgrid modes, which run on the GPU only. One command,
   `node benchmarks/physics/street/run-browser.mjs`, then score.
-- A registered grate-in-a-gutter case. The diagnostic is one street shape against a formula for one grate size.
 - A true answer for a whole network: no case has one, so the pipe network is checked only on single streets.
 - The Sheffield rig as a full 2D case: the paper does not give the flume's outlet setting.
 - The South Street and tract runs were not re-examined; F12, F13 and F21 name the mechanisms to look for there.
