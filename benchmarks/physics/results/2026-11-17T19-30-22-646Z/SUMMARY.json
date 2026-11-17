@@ -1,0 +1,40 @@
+{
+ "runId": "2026-11-17T19-30-22-646Z",
+ "order": [
+  "PV-SS13"
+ ],
+ "timing": {
+  "PV-SS13": 0.1
+ },
+ "counts": {
+  "PV-SS13": {
+   "byStatus": {
+    "Failed": 9,
+    "Passed": 9
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Failed": 9,
+    "numerical/Passed": 9
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Failed": 9,
+   "Passed": 9
+  },
+  "byErrorTypeAndStatus": {
+   "physical-model/Failed": 9,
+   "numerical/Passed": 9
+  },
+  "deliberateFaults": {
+   "rows": 0,
+   "caught": 0
+  }
+ },
+ "invalidStatuses": 0
+}

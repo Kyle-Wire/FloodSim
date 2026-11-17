@@ -16,6 +16,7 @@ Written by `report.mjs` from the latest scored run of each spec. Statuses are ne
 | PV-SS10 | Street-to-sewer exchange against laboratory measurements | 0 | 15 | – | – |
 | PV-SS11 | Surface only, an allowance, or pipes: each against a known answer | 11 | 26 | – | 37 case-executor pairs |
 | PV-SS12 | Measures one owner can take | 10 | 0 | 4 Unsupported | 6 case-executor pairs |
+| PV-SS13 | A grate in a gutter on a grade | 9 | 9 | – | 9 case-executor pairs |
 
 ## PV-SS1  Rain on a tilted street
 
@@ -317,3 +318,28 @@ Run `results/2026-11-17T19-13-18-241Z/`. 10 Passed, 4 Unsupported. Not yet run: 
 | A French drain | no control: the nearest thing is a rain garden's underdrain to a sewer manhole (src/stormwater.js UnderdrainLinks, GPU kernel only). A trench drain to daylight or to a dry well is not represented | – | – | – | **Unsupported** |
 | Removing paving (bare soil in its place) as a what-if | no control: site design can add paving or permeable paving but cannot turn paving into soil. SS12-soil tests the solver's infiltration at a soil's rate, which is what such a control would use | – | – | – | **Unsupported** |
 | A green roof on an existing house | area-wide only (a share of all roofs holds the first 25 mm), timed in app/map.js; not one owner's roof | – | – | – | **Unsupported** |
+
+## PV-SS13  A grate in a gutter on a grade
+
+Run `results/2026-11-17T19-30-22-646Z/`. 9 Failed, 9 Passed. Not yet run: SS13-s1-r50 [gpu], SS13-s1-r100 [gpu], SS13-s1-r200 [gpu], SS13-s2-r50 [gpu], SS13-s2-r100 [gpu], SS13-s2-r200 [gpu], SS13-s4-r50 [gpu], SS13-s4-r100 [gpu], SS13-s4-r200 [gpu].
+
+| Case | Quantity | Expected | Measured | Limit | Status |
+|---|---|---|---|---|---|
+| SS13-s1-r50 [cpu] | share of the flow reaching the grate that it takes (HEC-22; its frontal share alone is 0.78) | 0.8802 | 0.3992 | ± 0.1000 | **Failed** |
+| SS13-s1-r50 [cpu] | depth in the kerb cell 5 m above the grate (m) | 0.0173 | 0.0179 | ± 0.0020 | Passed |
+| SS13-s1-r100 [cpu] | share of the flow reaching the grate that it takes (HEC-22; its frontal share alone is 0.66) | 0.7910 | 0.3650 | ± 0.1000 | **Failed** |
+| SS13-s1-r100 [cpu] | depth in the kerb cell 5 m above the grate (m) | 0.0254 | 0.0261 | ± 0.0025 | Passed |
+| SS13-s1-r200 [cpu] | share of the flow reaching the grate that it takes (HEC-22; its frontal share alone is 0.54) | 0.6893 | 0.3124 | ± 0.1000 | **Failed** |
+| SS13-s1-r200 [cpu] | depth in the kerb cell 5 m above the grate (m) | 0.0359 | 0.0366 | ± 0.0036 | Passed |
+| SS13-s2-r50 [cpu] | share of the flow reaching the grate that it takes (HEC-22; its frontal share alone is 0.83) | 0.8918 | 0.3678 | ± 0.1000 | **Failed** |
+| SS13-s2-r50 [cpu] | depth in the kerb cell 5 m above the grate (m) | 0.0140 | 0.0144 | ± 0.0020 | Passed |
+| SS13-s2-r100 [cpu] | share of the flow reaching the grate that it takes (HEC-22; its frontal share alone is 0.72) | 0.7976 | 0.3358 | ± 0.1000 | **Failed** |
+| SS13-s2-r100 [cpu] | depth in the kerb cell 5 m above the grate (m) | 0.0211 | 0.0215 | ± 0.0021 | Passed |
+| SS13-s2-r200 [cpu] | share of the flow reaching the grate that it takes (HEC-22; its frontal share alone is 0.60) | 0.6904 | 0.2900 | ± 0.1000 | **Failed** |
+| SS13-s2-r200 [cpu] | depth in the kerb cell 5 m above the grate (m) | 0.0303 | 0.0305 | ± 0.0030 | Passed |
+| SS13-s4-r50 [cpu] | share of the flow reaching the grate that it takes (HEC-22; its frontal share alone is 0.89) | 0.9146 | 0.3245 | ± 0.1000 | **Failed** |
+| SS13-s4-r50 [cpu] | depth in the kerb cell 5 m above the grate (m) | 0.0110 | 0.0116 | ± 0.0020 | Passed |
+| SS13-s4-r100 [cpu] | share of the flow reaching the grate that it takes (HEC-22; its frontal share alone is 0.78) | 0.8206 | 0.2925 | ± 0.1000 | **Failed** |
+| SS13-s4-r100 [cpu] | depth in the kerb cell 5 m above the grate (m) | 0.0173 | 0.0174 | ± 0.0020 | Passed |
+| SS13-s4-r200 [cpu] | share of the flow reaching the grate that it takes (HEC-22; its frontal share alone is 0.66) | 0.7106 | 0.2568 | ± 0.1000 | **Failed** |
+| SS13-s4-r200 [cpu] | depth in the kerb cell 5 m above the grate (m) | 0.0254 | 0.0251 | ± 0.0025 | Passed |
