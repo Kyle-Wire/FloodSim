@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>Gate C coupled cases, for the street sandbox's fix check</title>
+<pre id="log">The three coupled cases with exact answers (benchmarks/gatec/coupled), run here without touching their filed results. Driven by gatec-check.mjs.
+</pre>
+<script type="module">
+// The same runCase the Gate C page uses (benchmarks/gatec/coupled/coupled.mjs), on the code of this checkout. The
+// result goes back to node, which files it under street/gatec-check/<stamp>/: benchmarks/gatec/results is not written.
+import { runCase } from '../../gatec/coupled/coupled.mjs';
+const adapter = await navigator.gpu?.requestAdapter({ powerPreference: 'high-performance' });
+let device = null;
+if (adapter) { device = await adapter.requestDevice({ requiredLimits: { maxStorageBuffersPerShaderStage: Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10) } }); device.onuncapturederror = (e) => console.log('GPU error: ' + e.error.message); }
+else console.log('No WebGPU adapter');
+window.__adapter = () => (adapter ? { vendor: adapter.info?.vendor, architecture: adapter.info?.architecture } : null);
+window.__gatec = async (id, twoWay, opts = {}) => JSON.stringify(await runCase(device, id, twoWay, opts));
+window.__ready = true;
+</script>

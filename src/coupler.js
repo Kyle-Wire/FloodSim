@@ -22,8 +22,10 @@
 // took up) plus half of what would bring its head to the street's level less the grate's own loss, kept between
 // what the grate takes freely and what the orifice law returns. At rest that is exactly the pipes' flow with the
 // manhole at the street's level. Below a surcharge the sum always exceeds the free rate, so nothing changes there.
-// The node area assumed is half SWMM's minimum: an area taken too small only slows the approach, one taken more
-// than about 1.7 times too large would swing.
+// The node area assumed is SWMM's minimum node area (MIN_SURFAREA, which the caller passes): a node is never smaller
+// than that. An area taken too small only slows the approach; one taken more than about 1.7 times too large would
+// swing, so a caller that sets a smaller MIN_SURFAREA in the .inp must pass it here. (A first version took half the
+// minimum for safety; its slower start left the A12-010 books 0.004 points outside their limit.)
 import { inletFlow, inletOptions, returnsHere, posKey } from './drainage.js';
 
 const FOLLOW_GAIN = 0.5;   // share of the head gap closed each interval
@@ -41,7 +43,7 @@ export class Coupler {
     // follow: with twoWay, a manhole's exchange follows the street level (see the top of this file); false = the
     // orifice law on the head difference of the moment, as before. nodeArea: SWMM's MIN_SURFAREA (m²)
     this.follow = twoWay && follow;
-    this.nodeArea = 0.5 * nodeArea; // m²: the manhole's own storage, taken on the small side (see the top of this file)
+    this.nodeArea = nodeArea; // m²: the manhole's own storage, the least a SWMM node has (see the top of this file)
     this.Hprev = new Float64Array(net.nodes.length).fill(NaN);
     // twoWay: inlet manholes pressurise (give them a large surcharge depth in the .inp) and water returns through the
     // inlet on the head difference, as HEC-RAS does, instead of spilling at the rim. Return flow per manhole is capped by

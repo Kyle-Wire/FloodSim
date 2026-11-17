@@ -1,0 +1,222 @@
+[
+ {
+  "case": "A12-010",
+  "exchange": "spill at the rim",
+  "id": "exchange_flow",
+  "what": "manhole outflow onto the street, last 5 min (m³/s)",
+  "value": 0.4999999438847105,
+  "expected": 0.5,
+  "ok": true,
+  "tol": "±1 %"
+ },
+ {
+  "case": "A12-010",
+  "exchange": "spill at the rim",
+  "id": "street_depth P1",
+  "what": "street depth at x = 100.5 m, t = 1800 s (m)",
+  "value": 0.07767976820468903,
+  "expected": 0.07768,
+  "ok": true,
+  "tol": "±3 mm"
+ },
+ {
+  "case": "A12-010",
+  "exchange": "spill at the rim",
+  "id": "street_depth P2",
+  "what": "street depth at x = 150.5 m, t = 1800 s (m)",
+  "value": 0.07767970860004425,
+  "expected": 0.07768,
+  "ok": true,
+  "tol": "±3 mm"
+ },
+ {
+  "case": "A12-010",
+  "exchange": "spill at the rim",
+  "id": "water_balance",
+  "what": "combined books: surface + pipes against what came in and went out (%)",
+  "value": -0.48649835317960166,
+  "expected": 0,
+  "ok": true,
+  "tol": "±0.5 %"
+ },
+ {
+  "case": "A12-010",
+  "exchange": "two-way",
+  "id": "exchange_flow",
+  "what": "manhole outflow onto the street, last 5 min (m³/s)",
+  "value": 0.4999820098777612,
+  "expected": 0.5,
+  "ok": true,
+  "tol": "±1 %"
+ },
+ {
+  "case": "A12-010",
+  "exchange": "two-way",
+  "id": "street_depth P1",
+  "what": "street depth at x = 100.5 m, t = 1800 s (m)",
+  "value": 0.07767827808856964,
+  "expected": 0.07768,
+  "ok": true,
+  "tol": "±3 mm"
+ },
+ {
+  "case": "A12-010",
+  "exchange": "two-way",
+  "id": "street_depth P2",
+  "what": "street depth at x = 150.5 m, t = 1800 s (m)",
+  "value": 0.07767830416560173,
+  "expected": 0.07768,
+  "ok": true,
+  "tol": "±3 mm"
+ },
+ {
+  "case": "A12-010",
+  "exchange": "two-way",
+  "id": "water_balance",
+  "what": "combined books: surface + pipes against what came in and went out (%)",
+  "value": -0.5042661946892951,
+  "expected": 0,
+  "ok": false,
+  "tol": "±0.5 %"
+ },
+ {
+  "case": "A12-011",
+  "exchange": "spill at the rim",
+  "id": "final_level P1",
+  "what": "yard level at (5, 5), t = 7200 s (m)",
+  "value": 0.05450417287647724,
+  "expected": 0.05,
+  "ok": true,
+  "tol": "±1 cm"
+ },
+ {
+  "case": "A12-011",
+  "exchange": "spill at the rim",
+  "id": "final_level P2",
+  "what": "yard level at (25, 25), t = 7200 s (m)",
+  "value": 0.054504843428730965,
+  "expected": 0.05,
+  "ok": true,
+  "tol": "±1 cm"
+ },
+ {
+  "case": "A12-011",
+  "exchange": "spill at the rim",
+  "id": "discharged_volume",
+  "what": "volume out of the outfall (m³)",
+  "value": 220.85678477184135,
+  "expected": 225,
+  "ok": true,
+  "tol": "±2 %"
+ },
+ {
+  "case": "A12-011",
+  "exchange": "spill at the rim",
+  "id": "water_balance",
+  "what": "combined books: surface + pipes against what came in and went out (%)",
+  "value": -0.03326148908283279,
+  "expected": 0,
+  "ok": true,
+  "tol": "±0.5 %"
+ },
+ {
+  "case": "A12-011",
+  "exchange": "two-way",
+  "id": "final_level P1",
+  "what": "yard level at (5, 5), t = 7200 s (m)",
+  "value": 0.054618220776319504,
+  "expected": 0.05,
+  "ok": true,
+  "tol": "±1 cm"
+ },
+ {
+  "case": "A12-011",
+  "exchange": "two-way",
+  "id": "final_level P2",
+  "what": "yard level at (25, 25), t = 7200 s (m)",
+  "value": 0.05461825802922249,
+  "expected": 0.05,
+  "ok": true,
+  "tol": "±1 cm"
+ },
+ {
+  "case": "A12-011",
+  "exchange": "two-way",
+  "id": "discharged_volume",
+  "what": "volume out of the outfall (m³)",
+  "value": 220.61665610313747,
+  "expected": 225,
+  "ok": true,
+  "tol": "±2 %"
+ },
+ {
+  "case": "A12-011",
+  "exchange": "two-way",
+  "id": "water_balance",
+  "what": "combined books: surface + pipes against what came in and went out (%)",
+  "value": -0.08429747141270515,
+  "expected": 0,
+  "ok": true,
+  "tol": "±0.5 %"
+ },
+ {
+  "case": "A12-012",
+  "exchange": "spill at the rim",
+  "id": "discharged_volume",
+  "what": "volume out of the outfall (m³)",
+  "value": 180.44124017267123,
+  "expected": 180,
+  "ok": true,
+  "tol": "±2 %"
+ },
+ {
+  "case": "A12-012",
+  "exchange": "spill at the rim",
+  "id": "surface_empty",
+  "what": "water left on the surface, t = 10800 s (m³)",
+  "value": 0.00397593935003519,
+  "expected": 0,
+  "ok": true,
+  "tol": "≤ 1.8 m³"
+ },
+ {
+  "case": "A12-012",
+  "exchange": "spill at the rim",
+  "id": "water_balance",
+  "what": "combined books: surface + pipes against what came in and went out (%)",
+  "value": 0.24734228445625786,
+  "expected": 0,
+  "ok": true,
+  "tol": "±0.5 %"
+ },
+ {
+  "case": "A12-012",
+  "exchange": "two-way",
+  "id": "discharged_volume",
+  "what": "volume out of the outfall (m³)",
+  "value": 180.03995672005337,
+  "expected": 180,
+  "ok": true,
+  "tol": "±2 %"
+ },
+ {
+  "case": "A12-012",
+  "exchange": "two-way",
+  "id": "surface_empty",
+  "what": "water left on the surface, t = 10800 s (m³)",
+  "value": 0.003973962151779718,
+  "expected": 0,
+  "ok": true,
+  "tol": "≤ 1.8 m³"
+ },
+ {
+  "case": "A12-012",
+  "exchange": "two-way",
+  "id": "water_balance",
+  "what": "combined books: surface + pipes against what came in and went out (%)",
+  "value": 0.02440593455841548,
+  "expected": 0,
+  "ok": true,
+  "tol": "±0.5 %"
+ }
+]
