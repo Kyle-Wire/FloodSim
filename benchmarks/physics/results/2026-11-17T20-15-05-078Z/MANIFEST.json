@@ -1,0 +1,108 @@
+{
+ "runId": "2026-11-17T20-15-05-078Z",
+ "written": "2026-11-17T20:15:05.140Z",
+ "node": "v24.16.0",
+ "platform": "win32 x64",
+ "git": {
+  "commit": "b30101b538e6a226db8ed2b55f8d9e22244f894e",
+  "dirty": true,
+  "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "statusSha256": "0b53a018c1b38eac19e31a3098cdb3d1f89400a2fbc824ea5a03e9b3aaffd5e6"
+ },
+ "swmm": {
+  "version": null,
+  "wasmSha256": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ },
+ "specs": {
+  "PV-SS1": {
+   "file": "benchmarks/physics/spec/PV-SS1.json",
+   "sha256": "6c132451d1a30d2078e01a4a22569055f06e25420680637a875ebe6d88df517e",
+   "criteriaSha256": "6ee49ee7ba370ca567410017b177a6fb65675d4bb7063146b6eb6931c9ffa5c0",
+   "criteriaRevision": 1
+  }
+ },
+ "references": {
+  "selfTests": 98,
+  "observations": [
+   {
+    "D": 0.3,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030934485647501217,
+    "swameeJain": 0.031031161868034007,
+    "relDiff": 0.003125192435213466
+   },
+   {
+    "D": 0.3,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.03682107586552344,
+    "swameeJain": 0.037474663408566845,
+    "relDiff": 0.01775036518298417
+   },
+   {
+    "D": 0.9,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030900141599101403,
+    "swameeJain": 0.030991807114608003,
+    "relDiff": 0.002966507943422049
+   },
+   {
+    "D": 0.9,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.0330191741448169,
+    "swameeJain": 0.03337204342638299,
+    "relDiff": 0.010686799131270196
+   },
+   {
+    "D": 1.8,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030891547580919776,
+    "swameeJain": 0.03098195459902438,
+    "relDiff": 0.0029265940098269915
+   },
+   {
+    "D": 1.8,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.03197484501515128,
+    "swameeJain": 0.032210276341372274,
+    "relDiff": 0.007363016962535292
+   }
+  ]
+ },
+ "inputs": {
+  "benchmarks/physics/lib/score.mjs": "fcea0691fae11c9d650928b535ec7704eb9f27bbd85d801cb17bedbc9826afdf",
+  "benchmarks/physics/references/geometry.mjs": "5b71bd7a7064e150c34616f493f3acf4f31fdce65869d0fdf0630eb4305f34fe",
+  "benchmarks/physics/references/gvf.mjs": "f6d843bb420d5eddaa038fe435e2f50e82fecece0c65560ca4fce03fba2c3d40",
+  "benchmarks/physics/references/manning.mjs": "2072ad001392631d86da0440e4eeba21c1dc1c766b5f2224d0194db3cc023a7f",
+  "benchmarks/physics/references/pipe.mjs": "eaef141adbdf9552f467d38f6c9e8c2d6aed7940c746319cf3f9fbbc8bf24631",
+  "benchmarks/physics/references/refs.test.mjs": "59b671d61010bac5d8a30a5bb700413adb6ba23eed51a8707399ee6427d1b0ae",
+  "benchmarks/physics/references/street.mjs": "7780a16304ab47885f52af223f2ebf88fb26b836483028ea9b8e228f7f6e1a19",
+  "benchmarks/physics/references/volume.mjs": "f7832863de7a1a6df190ead05bcffe409846a4806e2465eee417dcca9d25fdbd",
+  "benchmarks/physics/references/weir.mjs": "d51262054ee3c350e4f475797188ff3fd4f6891c17cc7957a0a320de153517e3",
+  "benchmarks/physics/run.mjs": "d63b74bf97a0b9455f84b70a7bf7369e574dafc584a94de3008b1d384df66e84",
+  "benchmarks/physics/street/cases.mjs": "35f333c03b64caee7c157f1c1866c77c4ce40ae35e2c970007dfa76510d74ea6",
+  "benchmarks/physics/street/score.mjs": "dcb5f5cd269f56a3efb71efac98184b0126643028ad662ed3b369be0602e3591",
+  "benchmarks/physics/street/terrain.mjs": "0e361e9d725605340662010a40c9f0c1e8ed09e1d34e78793ab60bac7852a0ab",
+  "src/cso.js": "f59ca007f08c9ca80558bed349a34199634205aaeaf2b738b9b22d0805eebb11",
+  "src/damage-curves.js": "3715d46258cf7201b15325803727bab7e781386c8ba560631d7457ecfc196796",
+  "src/damage.js": "50779b3d7079236eaa1af6311b61f867b42c33ee508e548892c081d0472560b6",
+  "src/drainage.js": "5671c30536393d44beda0319266944a3166351595cb7da7b3f374a04ec1abbde",
+  "src/geo.js": "da5e8e92f70ee2c7d40afd5172c683a7f620d869391ce6c55da39fc30de6efaa",
+  "src/gi.js": "8f6f93184fe6862729f3c7c605e3e1b6827bb669960ec865ad0bee44f48619b5",
+  "src/ingest.js": "fff943b37f4421cb57dc8194b1a25a928b066027785e78af3abb99619f372f79",
+  "src/scour.js": "fbd8271bef7aa7aa72aa4d48f3758484e7e7d8c8f756c18950e235862d36f70f",
+  "src/sediment.js": "73daa12e6bd0bff4c7c3522f08c832f435e2b400328150ce4ee87c49a960dab3",
+  "src/soil.js": "04d7c2428048959073a523215d48793c51bf6050107155a1eb0ba59327c1c179",
+  "src/storm.js": "090ac0beebc5bb5d957f739b967027bd8bfc8ca2f1b0600fd27ca8015b835668",
+  "src/stormwater.js": "092f9b8fb61ec195392823284a266485440269e313a533f6f21fb9f8f114de02",
+  "src/subgrid.js": "3b5da0026c8268465d8ec2db9e6507e2780742834855aecc1024b1fb364db64d",
+  "src/terrain.js": "3cd0c0f310eeab5414a36567bc0774e7a79933734d2ab374a15df175b3938e8c",
+  "vendor/swmm-wasm/swmm.mjs": "91dc0e872abda2fbf28196077cbc04ef0800242491e0a97005dd5f5fba3ceb96",
+  "vendor/swmm-wasm/swmm.wasm": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ }
+}
