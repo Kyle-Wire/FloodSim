@@ -105,7 +105,7 @@ export async function fetchOSM([w, s, e, n], fetcher) {
   }
   if (!r) throw new Error(`Overpass unavailable (${why.join(', ')})`);
   const els = (await r.json()).elements;
-  const buildings = [], roads = [], waterways = [], culverts = [];
+  const buildings = [], roads = [], waterways = [], culverts = [], bridges = [];
   const ring = (g) => g.map(p => [p.lon, p.lat]);
   for (const el of els) {
     const t = el.tags || {};
@@ -115,10 +115,14 @@ export async function fetchOSM([w, s, e, n], fetcher) {
       if (rings.length) buildings.push({ rings, height: bldHeight(t), id: el.id });
     } else if (t.highway && el.geometry && ROAD_WIDTH[t.highway] && !t.bridge && !t.tunnel && t.covered !== 'yes') {
       roads.push({ line: ring(el.geometry), width: Number.parseFloat(t.width) || ROAD_WIDTH[t.highway], kind: t.highway, ...(t.name ? { name: t.name } : {}) });
+    } else if ((t.highway || t.railway) && el.geometry?.length > 1 && t.bridge && !/^(no|low_water_crossing)$/.test(t.bridge)) { // a low-water crossing is a ford with pipes: a real control, not an opening
+      // a road or railway on a bridge: the lidar base specification removes the deck, so the ground under it is open.
+      // Kept so a fill the terrain still has under a mapped bridge can be cut (src/channels.js breachChannels)
+      bridges.push({ line: ring(el.geometry), width: Number.parseFloat(t.width) || ROAD_WIDTH[t.highway] || 8, kind: t.highway ?? t.railway, ...(t.name ? { name: t.name } : {}) });
     } else if (t.waterway && el.geometry && !t.tunnel) waterways.push({ line: ring(el.geometry), kind: t.waterway, name: t.name });
     else if (t.waterway && el.geometry && /culvert|yes/.test(t.tunnel) && el.geometry.length > 1) culverts.push({ line: ring(el.geometry), kind: t.waterway, id: el.id ?? null, tags: { diameter: t.diameter, width: t.width, height: t.height, material: t.material } });
   }
-  return { buildings, roads, waterways, culverts };
+  return { buildings, roads, waterways, culverts, bridges };
 }
 
 function bldHeight(t) {

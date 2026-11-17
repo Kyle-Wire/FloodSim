@@ -23,7 +23,8 @@ import { Coupler } from '../src/coupler.js';
 import { fetchUtility, utilityFor } from '../src/utilities.js';
 import { describeSource, fetchFeatures, detectPipeFields, pipeRecords, pointRecords } from '../src/linked.js';
 import { realNetwork } from '../src/network-real.js';
-import { breachChannels, culvertLinks, culvertDiameter } from '../src/channels.js';
+import { breachChannels, culvertLinks, culvertDiameter, bridgeMask } from '../src/channels.js';
+import { closedCrossings, crossingNote, joinLines } from '../src/crossings.js';
 import { fromOSM, detectStructureFields, structureRecords, joinStructures } from '../src/assets.js';
 import { CulvertLinks, LinkHub } from '../src/links.js';
 import { GroundwaterReturn, streamCells } from '../src/groundwater.js';
@@ -649,10 +650,19 @@ $('buildBtn').onclick = async () => {
     const lCond = log('Conditioning terrain');
     await new Promise(r => setTimeout(r, 0));
     const f = buildFine(fine, dem, osm, nlcd, soils, { curb });
-    f.channels = breachChannels(fine, f, osm.waterways.filter(w => /river|stream|brook|canal|ditch|drain/.test(w.kind))); // embankments over unmapped crossings
+    // Mapped ways that continue into each other are walked as one stream: a crossing is often its own short way on top
+    // of the fill, with no rise inside any one way (South Branch Pennsauken Creek, RT-1, 16 Nov 2026).
+    const streams = joinLines(osm.waterways.filter(w => /river|stream|brook|canal|ditch|drain/.test(w.kind)));
+    f.bridge = bridgeMask(fine, f, osm.bridges);
+    f.channels = breachChannels(fine, f, streams); // embankments over unmapped crossings, fills left under mapped bridges
+    f.channels.lines = streams;
+    // what is still closed after that: listed, not changed (src/crossings.js)
+    f.crossings = closedCrossings(fine, f, f.channels.paths.map((p, n) => ({ path: p, line: streams[n].line, name: streams[n].name, kind: streams[n].kind })),
+      { culverts: osm.culverts.map(cv => ({ line: cv.line, D: culvertDiameter(cv.tags, cv.kind), sized: Number.parseFloat(cv.tags?.diameter) > 0 || Number.parseFloat(cv.tags?.width) > 0 })) });
     lCond.set('Terrain conditioned', 'ok', `${fmtArea(f.stats.buildingArea)} buildings as walls · ${fmtArea(f.stats.roadArea)} streets` + (curb ? ` burned ${curb * 100} cm` : ' (lidar curbs kept as surveyed)')
       + ` · ${osm.culverts.length} mapped culverts linked · ${f.channels.snapped} mapped streams moved onto the 1 m thalweg (mean ${f.channels.offset.toFixed(1)} m off the line)`
-      + ` · ${f.channels.breaches} road embankments and ${f.channels.fills} channel humps breached`);
+      + ` · ${f.channels.breaches} road embankments, ${f.channels.bridges} fills under mapped bridges and ${f.channels.fills} channel humps breached`);
+    { const note = crossingNote(f.crossings); if (note) log(note, 'warn', 'The model will pond water behind these until it spills. Give the crossing its culvert or bridge opening (Infrastructure layer), or read results upstream of it with that in mind. node tools/crossings.mjs lists them.'); }
     const nfhl = await femaP;
     model = { fine, f, base: f, dem, osm, nlcd, soils, curb, atlas14, util, linked, site: [clon, clat], poly: S.poly };
     renderInletTypes(); // the types in this area's inlet data, and the standard for where it is
@@ -739,7 +749,7 @@ function setTiers() {
     ['Boundaries', 'all edges free outfall: water leaves, nothing enters (no upstream inflow yet)'],
     ['Rivers', 'hydro-flattened lidar, no bathymetry'],
     ['Green infrastructure', giLabel()],
-    ['Culverts & channels', `${osm.culverts.length} OSM culverts as links (barrel from diameter/width tags, else ${'stream 1.2 m, ditch 0.6 m'}); mapped streams snapped to the 1 m thalweg (least-cost path within 15 m, ${model.f.channels.snapped} lines, mean ${model.f.channels.offset.toFixed(1)} m off the mapped line); along it, ${model.f.channels.breaches} road embankments (≤ 30 m long, ≤ 4 m high) where streams cross roads with no mapped culvert and ${model.f.channels.fills} channel humps with no road (0.5–2 m crest across the whole valley floor, ≤ 40 m long) breached to grade, 3 m wide`],
+    ['Culverts & channels', `${osm.culverts.length} OSM culverts as links, flow by FHWA HDS-5 inlet and outlet control (barrel from diameter/width tags, else assumed: ${'stream 1.2 m, ditch 0.6 m'}); mapped streams snapped to the 1 m thalweg (least-cost path within 15 m, ${model.f.channels.snapped} lines, mean ${model.f.channels.offset.toFixed(1)} m off the mapped line); along it, ${model.f.channels.breaches} road embankments (≤ 4 m high; ≤ 30 m long, or ≤ 60 m where the fill closes the valley) where streams cross roads with no mapped culvert, ${model.f.channels.bridges} fills left under mapped bridges (≤ 80 m, ≤ 8 m) and ${model.f.channels.fills} channel humps with no road (0.5–2 m crest across the whole valley floor, ≤ 40 m long) breached to grade, 3 m wide; still closed after that: ${model.f.crossings.closed.length} crossings${model.f.crossings.closed.length ? ` (water must pond up to ${model.f.crossings.closed[0].pond.toFixed(1)} m to pass)` : ''}, and ${model.f.crossings.culverts.filter(x => !x.culvert.sized).length} culverts through a fill with an assumed size (docs/CROSSINGS.md)`],
     ['Storm', stormLabel(currentStorm())],
     ['Extent', `${fine.nx} × ${fine.ny} m, EPSG:${fine.epsg}`],
   ];

@@ -109,6 +109,8 @@ export function bankStations(pts) {
 }
 
 /** Broad-crested weir flow from level H1 to H2 (m³/s, negative = from 2 to 1), crest z, length L; Villemonte submergence. */
+export { culvertFlow } from './culvert.js';
+import { culvertFlow } from './culvert.js';
 export function weirFlow(H1, H2, crest, L, Cw = 1.7) {
   const s = H1 >= H2 ? 1 : -1, up = Math.max(H1, H2), dn = Math.min(H1, H2), hu = up - crest;
   if (hu <= 0 || L <= 0) return 0;
@@ -120,11 +122,12 @@ export function weirFlow(H1, H2, crest, L, Cw = 1.7) {
 const circArea = (D, y) => { const yy = Math.min(Math.max(y, 0), D), th = 2 * Math.acos(1 - 2 * yy / D); return D * D / 8 * (th - Math.sin(th)); };
 
 /**
+ * The routine used before src/culvert.js (FHWA HDS-5) replaced it on 16 Nov 2026: kept for comparison, called by nothing.
  * Flow through a circular culvert from level H1 to H2 (m³/s, signed). The smaller of inlet control (critical flow at
  * 2/3 of the upstream head, area capped at the barrel) and barrel control (entrance + exit + friction losses on the
  * head difference, area at the mean of the end depths, full once either end is submerged).
  */
-export function culvertFlow(H1, H2, { inv, D, len, n = 0.015, Ke = 0.5 }) {
+export function culvertFlowSimple(H1, H2, { inv, D, len, n = 0.015, Ke = 0.5 }) {
   const s = H1 >= H2 ? 1 : -1, up = Math.max(H1, H2), dn = Math.min(H1, H2), hu = up - inv;
   if (hu <= 0) return 0;
   const yc = Math.min((2 / 3) * hu, D), inlet = circArea(D, yc) * Math.sqrt(2 * G * Math.max(0, hu - yc));

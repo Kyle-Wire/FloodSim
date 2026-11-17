@@ -5,11 +5,12 @@
 // its hydraulics give (the solver never removes more than the cell holds), the hub measures what was actually removed,
 // and exactly that volume is delivered at the downstream cell over the next interval. Flow reverses when the tailwater
 // is higher. The one-interval lag (seconds) is the price of exact mass.
-import { culvertFlow } from './river.js';
+import { culvertFlow } from './culvert.js'; // FHWA HDS-5 inlet and outlet control
 
 /**
  * @param culverts [{ a, b, inv, D, len, n }] — surface cell indices of the two ends (a upstream as mapped), the barrel
- *                 invert (m), diameter (m), length (m) and Manning's n
+ *                 invert (m), diameter (m), length (m) and Manning's n. A record may instead carry what src/culvert.js
+ *                 takes: shape ('circle' | 'box'), rise, span, barrels, invUp, invDn, inlet (an HDS-5 entrance)
  * @param zs       solver bed elevations (absolute, m)
  */
 export class CulvertLinks {
