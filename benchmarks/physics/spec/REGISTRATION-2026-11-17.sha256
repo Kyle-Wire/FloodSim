@@ -28,3 +28,6 @@ c57de436effcc085037ff7deafdcf71637546c3689226de7df2245eea50d094f *street/cases.m
 35f333c03b64caee7c157f1c1866c77c4ce40ae35e2c970007dfa76510d74ea6 *street/cases.mjs
 a172a017a9c8037ee9e229305b5634f667f9c57e23486604a1992a751a5e3035 *street/harness.mjs
 9b44f108e492785f119cd053c64b65427181d72b2b4f89a509dcb3211629d60f *street/exec-cpu.mjs
+# Added 2026-11-17T14:30:02-05:00: PV-SS13 (not blind; see its criteriaNotes), before its registered runs.
+13eec2ff70cd4e0189a7e8ecde10b667a0f8365241bb1be951174dc272c90a11 *spec/PV-SS13.json
+c7f1aa14a6f1a13ddf7d3a87efb955d1a5c5aafaa03615c2402ae86ff32ef110 *street/score.mjs

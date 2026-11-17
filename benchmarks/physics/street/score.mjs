@@ -352,6 +352,20 @@ function ss12(spec, specs) {
   return out;
 }
 
+// ---------------------------------------------------------------- PV-SS13: a grate in a gutter on a grade, against FHWA HEC-22
+function ss13(spec) {
+  const C = spec.criteria, P = spec.parameters, G = P.hec22Grate.value;
+  return collect(spec, Object.keys(P.cases.value), ({ e, r }, R, ran) => {
+    const s = sceneOf(spec, e), i = e.rain.mmhr * MMHR, Q = i * s.W * G.x, g = st.grateEfficiency(Q, s.n, s.Sx, s.SL, G.W, G.L), dAbove = st.kerbCellDepth(st.gutterSpread(i * s.W * P.aboveX.value, s.n, s.Sx, s.SL), s.Sx);
+    const hand = { flowReachingTheGrateLs: 1000 * Q, spreadM: g.T, velocityMs: g.V, frontalShare: g.Eo, efficiency: g.E, kerbCellDepthAboveM: dAbove };
+    if (!ran) return { hand };
+    const S = r.series, b = S.at(-1), a = at(S, b.t - 300), taken = (b.toNetwork - a.toNetwork) / (b.t - a.t);
+    R('share of the flow reaching the grate that it takes', 'physical-model', g.E, taken / Q, { abs: C.efficiencyAbs }, { note: `HEC-22; its frontal share alone is ${g.Eo.toFixed(2)}` });
+    R('depth in the kerb cell 5 m above the grate (m)', 'numerical', dAbove, r.probes.find(p => p.id === 'above').final.mean, lim(C.gutterDepthAbsM, C.gutterDepthRel, dAbove));
+    return { hand, report: { takenLs: 1000 * taken, share: taken / Q, hec22: g.E, hec22FrontalOnly: g.Eo, depthInGrateCellM: r.probes.find(p => p.id === 'grate').final.mean } };
+  });
+}
+
 // ---------------------------------------------------------------- PV-SS10: the exchange law against the Sheffield rig
 function ss10(spec) {
   const P = spec.parameters, D = P.inletDiameterM.value, o = { inletPerim: Math.PI * D, inletArea: Math.PI * D * D / 4, ...P.appCoefficients.value }, k = o.inletPerim * Math.sqrt(2 * 9.81), rows = [], T = P.tests.value;
@@ -362,7 +376,7 @@ function ss10(spec) {
   return { rows, cases: { coefficients: hand }, notRun: [], raw: {}, hand: { coefficients: hand } };
 }
 
-const SCORERS = { 'PV-SS10': ss10, 'PV-SS11': ss11, 'PV-SS12': ss12, 'PV-SS1': ss1, 'PV-SS2': ss2, 'PV-SS3': ss3, 'PV-SS4': ss4, 'PV-SS5': ss5, 'PV-SS6': ss6, 'PV-SS7': ss7, 'PV-SS8': ss8, 'PV-SS9': ss9 };
+const SCORERS = { 'PV-SS10': ss10, 'PV-SS11': ss11, 'PV-SS12': ss12, 'PV-SS13': ss13, 'PV-SS1': ss1, 'PV-SS2': ss2, 'PV-SS3': ss3, 'PV-SS4': ss4, 'PV-SS5': ss5, 'PV-SS6': ss6, 'PV-SS7': ss7, 'PV-SS8': ss8, 'PV-SS9': ss9 };
 export async function run(spec, specs) { const f = SCORERS[spec.id]; if (!f) throw new Error('no scorer for ' + spec.id); return f(spec, specs); }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]) && process.argv.includes('--expect')) {
