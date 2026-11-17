@@ -1,0 +1,113 @@
+{
+ "runId": "2026-11-17T19-46-35-600Z",
+ "order": [
+  "PV-SS3",
+  "PV-SS4",
+  "PV-SS8",
+  "PV-SS11",
+  "PV-SS13"
+ ],
+ "timing": {
+  "PV-SS3": 10,
+  "PV-SS4": 12.1,
+  "PV-SS8": 0.1,
+  "PV-SS11": 33.5,
+  "PV-SS13": 0
+ },
+ "counts": {
+  "PV-SS3": {
+   "byStatus": {
+    "Failed": 8,
+    "Passed": 22
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Failed": 7,
+    "physical-model/Passed": 6,
+    "accounting/Passed": 15,
+    "accounting/Failed": 1,
+    "numerical/Passed": 1
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS4": {
+   "byStatus": {
+    "Passed": 10,
+    "Failed": 7
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Passed": 5,
+    "accounting/Passed": 5,
+    "accounting/Failed": 3,
+    "physical-model/Failed": 4
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS8": {
+   "byStatus": {
+    "Passed": 11,
+    "Failed": 5
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 3,
+    "accounting/Passed": 8,
+    "physical-model/Failed": 5
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS11": {
+   "byStatus": {
+    "Passed": 11,
+    "Failed": 26
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Passed": 11,
+    "physical-model/Failed": 26
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS13": {
+   "byStatus": {
+    "Failed": 9,
+    "Passed": 9
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Failed": 9,
+    "numerical/Passed": 9
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Failed": 55,
+   "Passed": 63
+  },
+  "byErrorTypeAndStatus": {
+   "physical-model/Failed": 51,
+   "physical-model/Passed": 22,
+   "accounting/Passed": 28,
+   "accounting/Failed": 4,
+   "numerical/Passed": 13
+  },
+  "deliberateFaults": {
+   "rows": 0,
+   "caught": 0
+  }
+ },
+ "invalidStatuses": 0
+}

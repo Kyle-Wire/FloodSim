@@ -415,6 +415,9 @@ export function toINP(net, fine, { durationS = 7200, routingStep = 1, surcharge 
   for (const [k, ok] of Object.entries(ROUTING_CHOICES)) if (!ok.includes(r[k])) throw new Error(`toINP: ${k} must be one of ${ok.join(', ')}, not ${r[k]}`);
   for (const k of ['routingStep', 'variableStep', 'minSurfArea', 'headTol', 'maxTrials', 'minSlope']) if (!(Number.isFinite(r[k]) && r[k] >= 0)) throw new Error(`toINP: ${k} must be a number ≥ 0, not ${r[k]}`);
   if (!(r.routingStep > 0 && r.minSurfArea > 0 && r.headTol > 0 && r.maxTrials >= 1)) throw new Error('toINP: the routing step, node area, head tolerance and trials must be above 0');
+  // EXTRAN cannot carry sealed, surcharged manholes that exchange with the street: their heads swing by metres and SWMM's
+  // continuity error reaches tens of per cent (benchmarks/FINDINGS.md F18)
+  if (pressurise && r.surcharge === 'EXTRAN') throw new Error('toINP: EXTRAN cannot be used with two-way exchange (pressurise); use SLOT, or turn two-way exchange off');
   // pressurise: manholes surcharge above their rims (30 m) instead of spilling; water comes back up through the inlets on
   // the head difference (Coupler twoWay), as HEC-RAS does
   const surDepth = pressurise ? 30 : (net.opts.surDepth ?? 0);

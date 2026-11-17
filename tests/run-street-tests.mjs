@@ -28,7 +28,7 @@ const o = { L: 20, K: st.pipeK(0.15, 0.013), Co: 0.6, A: 0.2, Cw: 0.5, P: 2 };
 check('PV-SS3: the pond that carries 22.2 l/s to an outlet held 0.227 m below the sag stands at 0.2006 m', near(st.sagLevelClosed(200 / 3.6e6 * 400, -0.227, o), 0.20058, 1e-5));
 check('PV-SS2: the rim head at 80 mm/h over 400 m² and a 10 m rim is 6.5 mm', near(st.rimHead(80 / 3.6e6 * 400 / 10), 0.00648, 1e-5));
 const r7 = await run(JSON.parse(JSON.stringify(specs['PV-SS7'])), specs);
-check('PV-SS7: the rule as written agrees with every hand answer in the spec; src/damage.js agrees on the eleven 1 m cases', r7.rows.filter(x => !/^R12 /.test(x.case)).every(x => x.status === 'Passed'), `${r7.rows.filter(x => x.status === 'Passed').length} of ${r7.rows.length} rows pass`);
+check('PV-SS7: the rule as written agrees with every hand answer in the spec; src/damage.js agrees on all twelve cases', r7.rows.every(x => x.status === 'Passed'), `${r7.rows.filter(x => x.status === 'Passed').length} of ${r7.rows.length} rows pass`);
 console.log(`NOTE  finding F20: at 2 m cells the wall rule ${r7.rows.filter(x => /^R12 /.test(x.case)).every(x => x.status === 'Passed') ? 'reaches 2 m' : 'reaches 4 m, not 2 m'}`);
 
 console.log(fails ? `\n${fails} FAILED` : '\nall passed');
