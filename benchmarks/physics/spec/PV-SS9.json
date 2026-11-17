@@ -1,0 +1,188 @@
+{
+ "id": "PV-SS9",
+ "title": "Coarse run then downscale",
+ "category": "convergence",
+ "process": "a coarse run mapped onto the 1 m ground against a straight 1 m run of the same case: how much faster, how much worse",
+ "module": "street/score.mjs",
+ "executor": "node (CPU surface solver) and browser (GPU); raw measurements in street/raw/, scored by run.mjs",
+ "dependsOn": [
+  "PV-SS8"
+ ],
+ "equations": [
+  "at rest the pond stands at the level the rain volume fills on the 1 m ground, whatever grid ran",
+  "the 1 m map of a coarse run: the water surface carried onto the 1 m ground (src/downscale.js), or the subgrid tables' level (src/subgrid.js)"
+ ],
+ "initialConditions": "dry",
+ "boundaryConditions": "surface closed on all sides; no drainage",
+ "geometry": "the bowl neighbourhood, 100-yr storm, no drainage (PV-SS8 case none-100 is the 1 m run)",
+ "parameters": {
+  "scenes": {
+   "value": {
+    "block": {
+     "kind": "block"
+    }
+   },
+   "unit": "m"
+  },
+  "depth60": {
+   "value": [
+    28,
+    33,
+    42,
+    50,
+    60,
+    70,
+    80,
+    92,
+    105,
+    118
+   ],
+   "unit": "mm in 60 min at 1, 2, 5, 10, 25, 50, 100, 200, 500, 1000 yr (made up; i(t) = a/(t + 10 min)^0.8)"
+  },
+  "cases": {
+   "value": {
+    "SS9-2": {
+     "scene": "block",
+     "grid": {
+      "F": 2
+     },
+     "rain": {
+      "ari": 100,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "keepFields": true
+    },
+    "SS9-4": {
+     "scene": "block",
+     "grid": {
+      "F": 4
+     },
+     "rain": {
+      "ari": 100,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "keepFields": true
+    },
+    "SS9-4s": {
+     "scene": "block",
+     "grid": {
+      "F": 4,
+      "subgrid": true
+     },
+     "rain": {
+      "ari": 100,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "keepFields": true
+    },
+    "SS9-8s": {
+     "scene": "block",
+     "grid": {
+      "F": 8,
+      "subgrid": true
+     },
+     "rain": {
+      "ari": 100,
+      "minutes": 60
+     },
+     "tEnd": 5400,
+     "probes": {
+      "sag": {
+       "kind": "box",
+       "x0": 94,
+       "x1": 98,
+       "y0": 46,
+       "y1": 50
+      }
+     },
+     "keepFields": true
+    }
+   },
+   "unit": "grid: F m cells with downscaling, or the subgrid mode"
+  },
+  "base": {
+   "value": "SS8-none-100",
+   "unit": "the 1 m run"
+  },
+  "wallRule": {
+   "value": {
+    "minDepth": 0.1,
+    "reach": 2,
+    "minArea": 200
+   },
+   "unit": "m, m, m^2"
+  }
+ },
+ "solver": "FloodSim surface solver with the app's settings (hdry 1e-5 m, hfront 1e-3 m, dtDry 2 s; MUSCL minmod, HLLC, SSP-RK2, CFL 0.48). cpu rows: src/solver-cpu.js (fp64). gpu rows: src/solver-gpu.js in Chrome WebGPU (fp32). 2 m, 4 m: coarsen and downscale. 4s, 8s: the subgrid speed and screening modes (GPU only).",
+ "reference": {
+  "module": "references/street.mjs",
+  "functions": [
+   "levelForVolume",
+   "wallExposure"
+  ],
+  "sources": "conservation of volume",
+  "independence": "the end level is arithmetic; the peak has no hand answer, so the 1 m run stands in and those rows are Not independently validated",
+  "crossCheck": "as PV-SS2"
+ },
+ "outputs": [
+  "end pond level on the 1 m map against the arithmetic level",
+  "peak wall depth at each house against the 1 m run (root mean square over the houses)",
+  "houses exposed (10 cm rule) against the 1 m run",
+  "reported: wall time against the 1 m run on the same executor"
+ ],
+ "criteria": {
+  "finalLevelAbsM": 0.01,
+  "houseDepthRmseM": 0.05,
+  "exposureAgreement": 0.9
+ },
+ "criteriaNotes": "End level: 1 cm. Against the 1 m run: 5 cm root mean square on the wall depths and nine houses in ten given the same exposed / not exposed answer; these rows carry the status Not independently validated because the reference is the same solver.",
+ "conservation": "surface books (reported)",
+ "resolution": "1 m; 2 m and 4 m with downscaling; 4 m and 8 m subgrid",
+ "assumptions": [
+  "the 1 m run is the best available answer for the peak"
+ ],
+ "limitations": [
+  "one scene, one storm, no drainage",
+  "CPU wall times say little about the GPU: the speed-up that matters is the gpu rows'"
+ ],
+ "validRange": "ponding in a bowl; not sheet flow on a hillside",
+ "scoring": "automated: street/score.mjs builds rows with lib/score.mjs row(); one row set per executor (cpu, gpu), never merged; a case with no raw file is listed as not run and has no rows",
+ "criteriaRevisions": [
+  {
+   "revision": 1,
+   "date": "2026-11-17",
+   "hash": "06874c70da0d39cc2f2189030492fa02593a5409272c439a1d24ea60d2b1c2bd",
+   "why": "first registration, before any sandbox case was run"
+  }
+ ]
+}

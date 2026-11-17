@@ -1,0 +1,18 @@
+# SHA-256 of the street sandbox specs, references, scorer and run code at criteria registration, 2026-11-17T13:11:27-05:00, before any
+# sandbox case was run on any solver. Later changes to a spec are recorded in its definitionRevisions (criteria hashes unchanged).
+6c132451d1a30d2078e01a4a22569055f06e25420680637a875ebe6d88df517e *spec/PV-SS1.json
+aa4e4f9ef5a3c3b35a8c02ddf414daebf9664a858c83e55563954379a51e4289 *spec/PV-SS2.json
+420a398a1af8f4bfb4295d08e2ebe07ec33c0d87e22b37e309a88d58629b8f65 *spec/PV-SS3.json
+7cdc6619087c676f305d65b0af37cf0e52d79a4de150481b688a0756fe4a1cbd *spec/PV-SS4.json
+4e8bc29008ed5fb6e91e87791e3e6ee103d9f32da617fbc4d2b2763ec7ef3783 *spec/PV-SS5.json
+b1b0b05e899223f90d6e76b039d8f0cabc6731f4e664d3084d512ed1e37ea618 *spec/PV-SS6.json
+ed2a1d188beacad924f8520e9699c09d47f935b602dcbc30e85b90f20a292e81 *spec/PV-SS7.json
+7d6a17df542319b60da203eb463e1c6a2b6933f66a3c13789e5622c5b971b968 *spec/PV-SS8.json
+f40ad1445fbedac91be9a7dbfe098806be2a82c14788585c4e075e3131d26496 *spec/PV-SS9.json
+b902ec93b6229b590f3d1a694433feb93c77c15634101f8a70bc7fd057e54d0f *references/street.mjs
+bdf7bd509c504aa376fa8bfe333cd691276580d4feb29c590812b3d1646b11b8 *references/refs.test.mjs
+d7a88f62955a602cd853fef561a30ceae70887d1939ccb8b23b24a55fe43c9c4 *street/score.mjs
+288facbf62b8a1816ba0bd37455a84d02f5e630131059622773bac384cbede43 *street/terrain.mjs
+c57de436effcc085037ff7deafdcf71637546c3689226de7df2245eea50d094f *street/cases.mjs
+73d75d91e462dd0248a47ba663b856a810210ad67541f05a3db74369c2720b78 *street/harness.mjs
+254b05462699d3f59ffad453163aa47ce1e3717b793c19d1306ea7d5a24c42ac *street/exec-cpu.mjs

@@ -1,0 +1,327 @@
+{
+ "id": "PV-SS6",
+ "title": "Cell size: a driveway dip and a rear yard",
+ "category": "convergence",
+ "process": "the depth of water beside a house at 0.5, 1, 2 and 4 m cells and in the 4 m and 8 m subgrid modes",
+ "module": "street/score.mjs",
+ "executor": "node (CPU surface solver) and browser (GPU); raw measurements in street/raw/, scored by run.mjs",
+ "equations": [
+  "still water: the level a volume stands at over the terrain, sum max(0, eta - z) A = V",
+  "driveway: V = P x the whole scene (everything drains to the dip); in the dip alone V = w d^2 / (2 S)",
+  "rear yard: with its 1 m passage open the yard drains to the street, depth 0 at rest; with the passage closed it holds its own rain",
+  "a coarser grid's bed is the mean of the open 1 m ground in each cell; a cell more than half building is a wall"
+ ],
+ "initialConditions": "dry",
+ "boundaryConditions": "closed on all sides; roof rain lands on the cells beside the building (the app default)",
+ "geometry": "driveway: 16 x 16 m, a house row across the north half, the lot falling at 2 % from both sides to a 1 m driveway that dips at 15 % for 6 m to the garage door (0.9 m below the lot). rear yard: 16 x 16 m, a house row cut by a 1 m passage at x 7-8 m, the yard behind falling at 1 % to the passage, the street in front 0.3 m lower. Both defined at 0.5 m; the 1 m ground is its mean.",
+ "parameters": {
+  "scenes": {
+   "value": {
+    "driveway": {
+     "kind": "driveway"
+    },
+    "rearYard": {
+     "kind": "rearYard"
+    }
+   },
+   "unit": "m"
+  },
+  "cases": {
+   "value": {
+    "SS6-drive-1": {
+     "scene": "driveway",
+     "grid": {
+      "F": 1
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2
+      }
+     }
+    },
+    "SS6-drive-2": {
+     "scene": "driveway",
+     "grid": {
+      "F": 2
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2
+      }
+     }
+    },
+    "SS6-drive-4": {
+     "scene": "driveway",
+     "grid": {
+      "F": 4
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2
+      }
+     }
+    },
+    "SS6-drive-05": {
+     "scene": "driveway",
+     "grid": {
+      "native": true
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2
+      }
+     }
+    },
+    "SS6-drive-4s": {
+     "scene": "driveway",
+     "grid": {
+      "F": 4,
+      "subgrid": true
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2
+      }
+     }
+    },
+    "SS6-drive-8s": {
+     "scene": "driveway",
+     "grid": {
+      "F": 8,
+      "subgrid": true
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 10
+     },
+     "tEnd": 2400,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2
+      }
+     }
+    },
+    "SS6-yard-1": {
+     "scene": "rearYard",
+     "grid": {
+      "F": 1
+     },
+     "rain": {
+      "mmhr": 80,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2,
+       "box": {
+        "x0": 0,
+        "x1": 16,
+        "y0": 10,
+        "y1": 16
+       }
+      }
+     }
+    },
+    "SS6-yard-2": {
+     "scene": "rearYard",
+     "grid": {
+      "F": 2
+     },
+     "rain": {
+      "mmhr": 80,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2,
+       "box": {
+        "x0": 0,
+        "x1": 16,
+        "y0": 10,
+        "y1": 16
+       }
+      }
+     }
+    },
+    "SS6-yard-4": {
+     "scene": "rearYard",
+     "grid": {
+      "F": 4
+     },
+     "rain": {
+      "mmhr": 80,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2,
+       "box": {
+        "x0": 0,
+        "x1": 16,
+        "y0": 10,
+        "y1": 16
+       }
+      }
+     }
+    },
+    "SS6-yard-05": {
+     "scene": "rearYard",
+     "grid": {
+      "native": true
+     },
+     "rain": {
+      "mmhr": 80,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2,
+       "box": {
+        "x0": 0,
+        "x1": 16,
+        "y0": 10,
+        "y1": 16
+       }
+      }
+     }
+    },
+    "SS6-yard-4s": {
+     "scene": "rearYard",
+     "grid": {
+      "F": 4,
+      "subgrid": true
+     },
+     "rain": {
+      "mmhr": 80,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2,
+       "box": {
+        "x0": 0,
+        "x1": 16,
+        "y0": 10,
+        "y1": 16
+       }
+      }
+     }
+    },
+    "SS6-yard-8s": {
+     "scene": "rearYard",
+     "grid": {
+      "F": 8,
+      "subgrid": true
+     },
+     "rain": {
+      "mmhr": 80,
+      "minutes": 30
+     },
+     "tEnd": 3600,
+     "probes": {
+      "wall": {
+       "kind": "wall",
+       "reach": 2,
+       "box": {
+        "x0": 0,
+        "x1": 16,
+        "y0": 10,
+        "y1": 16
+       }
+      }
+     }
+    }
+   },
+   "unit": "rain mm/h and min; times s; grid: native 0.5 m, F m cells from the 1 m ground, subgrid = the speed / screening mode"
+  },
+  "wallReachM": {
+   "value": 2,
+   "unit": "m"
+  }
+ },
+ "solver": "FloodSim surface solver with the app's settings (hdry 1e-5 m, hfront 1e-3 m, dtDry 2 s; MUSCL minmod, HLLC, SSP-RK2, CFL 0.48). cpu rows: src/solver-cpu.js (fp64). gpu rows: src/solver-gpu.js in Chrome WebGPU (fp32). 2 m and 4 m: the app's coarsening (src/terrain.js coarsen) and its downscaling to 1 m (src/downscale.js). 4s, 8s: the subgrid mode (src/subgrid.js; GPU only).",
+ "reference": {
+  "module": "references/street.mjs",
+  "functions": [
+   "levelForVolume",
+   "blockMean",
+   "pondCells"
+  ],
+  "sources": "conservation of volume",
+  "independence": "the true answer comes from the 0.5 m ground and the rain depth; each grid's own answer from its block-mean ground, built here and not by the app",
+  "crossCheck": "refs.test.mjs: level for a volume two ways; the block mean and its wall rule"
+ },
+ "outputs": [
+  "depth beside the house at the end: the deepest open cell within 2 m of the wall",
+  "for each grid: against the true depth (the 0.5 m ground's level less the 1 m ground), on the solver's own cells and on the 1 m map the app would draw",
+  "for each grid where it is plain arithmetic: against that grid's own answer (the driveway at every plain grid; the rear yard at 2 m, where the passage closes)",
+  "reported: whether the house crosses the 10 cm exposure threshold"
+ ],
+ "criteria": {
+  "truthAbsM": 0.02,
+  "truthRel": 0.1,
+  "gridArithmeticAbsM": 0.01,
+  "exposureThresholdM": 0.1
+ },
+ "criteriaNotes": "A grid passes if the depth beside the house is within 2 cm or 10 % of the true depth. Against its own arithmetic the solver is held to 1 cm. The scene is made so the passage sits across a 2 m cell boundary; a passage that lines up with the grid would stay open. The yard storm (40 mm) was chosen before any run so that a yard holding its own rain stands above the 10 cm exposure threshold.",
+ "conservation": "surface books (reported)",
+ "resolution": "0.5, 1, 2, 4 m; 4 m and 8 m subgrid",
+ "assumptions": [
+  "no infiltration; roofs drain to the ground beside them"
+ ],
+ "limitations": [
+  "two made-up lots; one passage position",
+  "the peak is reported, not scored: it has no hand answer"
+ ],
+ "validRange": "features one cell wide at 1 m",
+ "scoring": "automated: street/score.mjs builds rows with lib/score.mjs row(); one row set per executor (cpu, gpu), never merged; a case with no raw file is listed as not run and has no rows",
+ "criteriaRevisions": [
+  {
+   "revision": 1,
+   "date": "2026-11-17",
+   "hash": "917849e2c4b11f435d7552c6c916d48b65fedd54c09f4200f424362d48b9ad58",
+   "why": "first registration, before any sandbox case was run"
+  }
+ ]
+}

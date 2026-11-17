@@ -12,6 +12,7 @@ import * as gvf from './gvf.mjs';
 import * as pipe from './pipe.mjs';
 import * as weir from './weir.mjs';
 import * as vol from './volume.mjs';
+import * as st from './street.mjs';
 
 export function selfTest() {
   const checks = [], observations = [], check = (name, ok, detail = '') => checks.push({ name, ok: !!ok, detail });
@@ -67,6 +68,56 @@ export function selfTest() {
   }
   { const T = [{ A: 100 }, { A: 60 }], h = 0.37, V0 = 160 * h + 50 * geo.area(CIRC, h), he = vol.equilibriumDepth(T, CIRC, 50, V0);
     check('equilibrium depth: V(h) round trip (1e-9 m)', Math.abs(he - h) < 1e-9, `${he}`); }
+
+  // street sandbox (street.mjs): closed forms against a second route
+  {
+    const i = 100 / 3.6e6, L = 100, n = 0.015, S0 = 0.01, tc = st.kwTc(i, L, n, S0), num = st.kwNumeric(i, L, n, S0, { nx: 800 });
+    check('kinematic wave: steady depth at the foot, closed form = upwind scheme (1 %)', rel(num.depth(L - 1e-6), st.kwDepth(i, L - L / 1600, n, S0)) < 0.01, `${num.depth(L - 1e-6)} vs ${st.kwDepth(i, L, n, S0)}`);
+    check('kinematic wave: time to 50 % and 90 % of steady outflow, closed form = upwind scheme (2 %)', rel(num.t50, st.kwTimeTo(0.5, tc)) < 0.02 && rel(num.t90, st.kwTimeTo(0.9, tc)) < 0.02, `${num.t50}, ${num.t90} vs ${st.kwTimeTo(0.5, tc)}, ${st.kwTimeTo(0.9, tc)}`);
+    check('kinematic wave: steady storage (m/(m+1)) h_L L = quadrature of the depth profile (1e-4)', (() => { let s = 0; const N = 200000; for (let k = 0; k < N; k++) s += st.kwDepth(i, (k + 0.5) * L / N, n, S0) * L / N; return rel(s, st.kwStorage(i, L, n, S0)) < 1e-4; })());
+    check('kinematic wave: Manning carries i·x at the steady depth', rel(st.kwAlpha(n, S0) * Math.pow(st.kwDepth(i, 60, n, S0), 5 / 3), i * 60) < 1e-12);
+  }
+  {
+    const z = [0.3, -0.2, 0.05, -0.2, 0, 0.11, 0.4, -0.05], A = 2.5;
+    for (const V of [0.01, 0.4, 1.7, 9]) check(`still water: level for ${V} m³, bisection = sorted beds (1e-9 m) and V(level) round trip`, Math.abs(st.levelForVolume(z, A, V) - st.levelForVolumeSorted(z, A, V)) < 1e-9 && rel(st.volumeBelow(z, A, st.levelForVolume(z, A, V)), V) < 1e-9);
+    const bm = st.blockMean([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], 4, 4, 2, [0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    check('block mean: open cells only; a block more than half building is a wall', bm[0] === 3.5 && Number.isNaN(bm[1]) && bm[2] === 11.5 && bm[3] === 13.5, Array.from(bm).join(' '));
+    check('rim: head over a frictionless crest is 1.5 critical depths; Froude 1 at the crest', rel(st.rimHead(0.001), 1.5 * Math.cbrt(1e-6 / man.G)) < 1e-12 && rel(0.001 / st.criticalDepthUnit(0.001) / Math.sqrt(man.G * st.criticalDepthUnit(0.001)), 1) < 1e-12);
+  }
+  {
+    const o = { L: 20, K: st.pipeK(0.15, 0.013), Co: 0.6, A: 0.2, Cw: 0.5, P: 2 }, Q = 0.02222;
+    check('pipe conveyance: K √S = Manning full flow (1e-12)', rel(st.pipeK(0.15, 0.013) * Math.sqrt(0.005), man.manningQ({ shape: 'circle', D: 0.15 }, 0.15, 0.013, 0.005)) < 1e-12);
+    check('one inlet, one pipe: level for Q, closed form = bisection on the rating (1e-9 m)', Math.abs(st.sagLevelClosed(Q, -0.227, o) - st.sagLevelFor(Q, 0, -0.227, o)) < 1e-9, `${st.sagLevelClosed(Q, -0.227, o)} vs ${st.sagLevelFor(Q, 0, -0.227, o)}`);
+    check('one inlet, one pipe: pipe loss in the closed form = manningFullPipeLoss', rel(st.sagLevelClosed(Q, 0, { ...o, Co: 1e9 }), man.manningFullPipeLoss(0.15, Q, 0.013, 20)) < 1e-9);
+    const hist = st.sagHistory({ inflow: () => Q, stage: (V) => V / 30, zs: 0, Hout: -0.227, o, tEnd: 40000, every: 40000 });
+    check('one inlet, one pipe: the pond history settles at the level that carries the inflow (1e-4 m)', Math.abs(hist.at(-1).eta - st.sagLevelClosed(Q, -0.227, o)) < 1e-4, `${hist.at(-1).eta}`);
+    { const up = st.sagHistory({ inflow: () => 0, stage: (V) => V / 30, zs: 0, Hout: 0.15, o, tEnd: 20000, every: 20000 });
+      check('one inlet, one pipe: an outlet held above a dry street fills it to the outlet level (1e-4 m)', Math.abs(up.at(-1).eta - 0.15) < 1e-4 && rel(st.sagSubmergedQ(0, 0.15, o), -st.sagSubmergedQ(0.15, 0, o)) < 1e-12, String(up.at(-1).eta)); }
+    check('free inlet: weir below the crossover depth, orifice above', st.inletFree(0.02, o) === o.Cw * o.P * 0.02 ** 1.5 * Math.sqrt(2 * man.G) && st.inletFree(0.5, o) === o.Co * o.A * Math.sqrt(2 * man.G * 0.5));
+  }
+  {
+    // two pipes in series to an outlet held at the crown: the HGL adds each pipe's full-flow loss
+    const nodes = [{ ground: 2 }, { ground: 1.9 }, { ground: 0 }], P = (from, to, invUp, invDn, Q) => ({ from, to, L: 50, D: 0.3, n: 0.013, invUp, invDn, Q });
+    const pipes = [P(0, 1, 0.5, 0.25, 0.08), P(1, 2, 0.25, 0, 0.12)], r = st.hglTree(nodes, pipes, new Map([[2, 0.3]]));
+    const h1 = 0.3 + man.manningFullPipeLoss(0.3, 0.12, 0.013, 50), h0 = h1 + man.manningFullPipeLoss(0.3, 0.08, 0.013, 50);
+    check('HGL: two full pipes in series = the sum of their Manning losses (1e-12 m)', Math.abs(r.hgl[1] - h1) < 1e-12 && Math.abs(r.hgl[0] - h0) < 1e-12, `${r.hgl[0]} vs ${h0}`);
+    const f = st.hglCapacityFactor(nodes, pipes, new Map([[2, 0.3]])), at = st.hglTree(nodes, pipes.map(p => ({ ...p, Q: p.Q * f })), new Map([[2, 0.3]]));
+    check('HGL capacity factor: at the factor the highest HGL is at the ground (1e-6 m)', Math.abs(Math.max(...at.over)) < 1e-6, `${f} → ${Math.max(...at.over)}`);
+    check('HGL: a part-full pipe below a free outlet stands at normal depth', (() => { const q = [P(0, 1, 0.5, 0.25, 0.01)], rr = st.hglTree(nodes, q, new Map([[1, null]])); return Math.abs(rr.hgl[0] - 0.5 - man.normalDepthBisect({ shape: 'circle', D: 0.3 }, 0.01, 0.013, 0.005)) < 1e-9; })());
+    check('rational method: 1 ha at C·i = 36 mm/h is 0.1 m³/s', rel(st.rationalQ(1e4, 36), 0.1) < 1e-12);
+  }
+  {
+    // wall rule: a 12 × 8 grid, building on columns 4–7 of rows 2–5, the street along row 7
+    const nx = 12, ny = 8, N = nx * ny, bld = new Uint8Array(N), road = new Uint8Array(N), fp = new Uint8Array(N), depth = new Float64Array(N), wse = new Float64Array(N);
+    for (let j = 2; j < 6; j++) for (let i = 4; i < 8; i++) { bld[j * nx + i] = 1; fp[j * nx + i] = 1; }
+    for (let i = 0; i < nx; i++) road[7 * nx + i] = 1;
+    const put = (i, j, d) => { depth[j * nx + i] = d; wse[j * nx + i] = 10 + d; }, ex = () => st.wallExposure({ depth, wse, bld, road, fp, nx, ny, dx: 1 });
+    put(5, 6, 0.15); put(5, 7, 0.15);
+    const a = ex(); put(5, 7, 0);
+    const b = ex(); put(5, 6, 0); put(0, 7, 0.3); put(1, 7, 0.3);
+    const c = ex();
+    check('wall rule: water at the wall joined to street water counts; cut off from the street it does not; water 3 m away does not', a.counts && Math.abs(a.level - 10.15) < 1e-12 && !b.counts && !c.counts, JSON.stringify([a, b, c]));
+  }
 
   // independence: no reference imports from outside references/
   const dir = path.dirname(fileURLToPath(import.meta.url)), bad = [];

@@ -1,0 +1,322 @@
+{
+ "id": "PV-SS7",
+ "title": "The wall-exposure rule",
+ "category": "solver",
+ "process": "which water counts against a building, and the level it is given",
+ "module": "street/score.mjs",
+ "executor": "node (CPU surface solver) and browser (GPU); raw measurements in street/raw/, scored by run.mjs",
+ "equations": [
+  "water counts where it is at least 10 cm deep on an open cell within 2 m of the building and its 4-connected wet patch touches a street cell or covers at least 200 m^2",
+  "the wall level is the highest water level among the cells that count"
+ ],
+ "initialConditions": "not a simulation: hand-made depth grids",
+ "boundaryConditions": "none",
+ "geometry": "a 40 x 40 m lot grid at 1 m with one 8 x 8 m building and a street along the south edge; one case on the same lot at 2 m cells",
+ "parameters": {
+  "cases": {
+   "value": {},
+   "unit": "-"
+  },
+  "lot": {
+   "value": {
+    "nx": 40,
+    "ny": 40,
+    "dx": 1,
+    "ground": 10,
+    "building": [
+     16,
+     16,
+     24,
+     24
+    ],
+    "streetRows": [
+     0,
+     6
+    ]
+   },
+   "unit": "cells, m, m, m (x0, y0, x1, y1), m"
+  },
+  "ruleCases": {
+   "value": [
+    {
+     "id": "R1",
+     "what": "15 cm at the wall, joined to street water",
+     "water": [
+      [
+       19,
+       0,
+       21,
+       16,
+       0.15
+      ]
+     ],
+     "hand": {
+      "counts": true,
+      "level": 10.15
+     }
+    },
+    {
+     "id": "R2",
+     "what": "15 cm pond of 100 m^2 against the wall, not joined to the street",
+     "water": [
+      [
+       24,
+       14,
+       34,
+       24,
+       0.15
+      ]
+     ],
+     "hand": {
+      "counts": false
+     }
+    },
+    {
+     "id": "R3",
+     "what": "15 cm pond of exactly 200 m^2, not joined to the street",
+     "water": [
+      [
+       24,
+       10,
+       34,
+       30,
+       0.15
+      ]
+     ],
+     "hand": {
+      "counts": true,
+      "level": 10.15
+     }
+    },
+    {
+     "id": "R4",
+     "what": "15 cm pond of 199 m^2, not joined to the street",
+     "water": [
+      [
+       24,
+       10,
+       34,
+       30,
+       0.15
+      ],
+      [
+       33,
+       29,
+       34,
+       30,
+       0
+      ]
+     ],
+     "hand": {
+      "counts": false
+     }
+    },
+    {
+     "id": "R5",
+     "what": "9.9 cm at the wall, joined to street water",
+     "water": [
+      [
+       19,
+       0,
+       21,
+       16,
+       0.099
+      ]
+     ],
+     "hand": {
+      "counts": false
+     }
+    },
+    {
+     "id": "R6",
+     "what": "exactly 10 cm at the wall, joined to street water",
+     "water": [
+      [
+       19,
+       0,
+       21,
+       16,
+       0.1
+      ]
+     ],
+     "hand": {
+      "counts": true,
+      "level": 10.1
+     }
+    },
+    {
+     "id": "R7",
+     "what": "15 cm joined to the street, 3 m from the wall",
+     "water": [
+      [
+       27,
+       0,
+       29,
+       24,
+       0.15
+      ]
+     ],
+     "hand": {
+      "counts": false
+     }
+    },
+    {
+     "id": "R8",
+     "what": "15 cm joined to the street, on the second cell from the wall (1-2 m)",
+     "water": [
+      [
+       25,
+       0,
+       26,
+       24,
+       0.15
+      ]
+     ],
+     "hand": {
+      "counts": true,
+      "level": 10.15
+     }
+    },
+    {
+     "id": "R9",
+     "what": "a 100 m^2 pond that touches street water only corner to corner",
+     "water": [
+      [
+       24,
+       14,
+       34,
+       24,
+       0.15
+      ],
+      [
+       34,
+       0,
+       36,
+       14,
+       0.15
+      ]
+     ],
+     "hand": {
+      "counts": false
+     }
+    },
+    {
+     "id": "R10",
+     "what": "two street-joined strips at different levels: the higher one",
+     "water": [
+      [
+       19,
+       0,
+       21,
+       16,
+       0.15
+      ],
+      [
+       25,
+       0,
+       26,
+       24,
+       0.3
+      ]
+     ],
+     "hand": {
+      "counts": true,
+      "level": 10.3
+     }
+    },
+    {
+     "id": "R11",
+     "what": "50 cm against the wall, linked to the street only by 5 cm of water",
+     "water": [
+      [
+       19,
+       6,
+       21,
+       12,
+       0.05
+      ],
+      [
+       19,
+       12,
+       21,
+       16,
+       0.5
+      ],
+      [
+       19,
+       0,
+       21,
+       6,
+       0.15
+      ]
+     ],
+     "hand": {
+      "counts": false
+     }
+    },
+    {
+     "id": "R12",
+     "what": "at 2 m cells: 15 cm joined to the street on the cell 2-4 m from the wall",
+     "dx": 2,
+     "water": [
+      [
+       26,
+       0,
+       28,
+       24,
+       0.15
+      ]
+     ],
+     "hand": {
+      "counts": false
+     }
+    }
+   ],
+   "unit": "water boxes [x0, y0, x1, y1, depth] in m, later boxes overwrite earlier ones; hand: the answer by the rule as written"
+  },
+  "rule": {
+   "value": {
+    "minDepth": 0.1,
+    "reach": 2,
+    "minArea": 200
+   },
+   "unit": "m, m, m^2"
+  }
+ },
+ "solver": "src/damage.js openWater and exposure, called as app/map.js calls them (ring 2 cells, minDepth 0.10 m, the patch filter on)",
+ "reference": {
+  "module": "references/street.mjs",
+  "functions": [
+   "wallExposure"
+  ],
+  "sources": "the rule as stated in src/damage.js and in the product brief",
+  "independence": "written from the stated rule with union-find patches and a reach in metres; src/damage.js floods patches from a stack and steps a ring in cells",
+  "crossCheck": "refs.test.mjs: three hand cases"
+ },
+ "outputs": [
+  "per case: whether the building is exposed, and the wall level"
+ ],
+ "criteria": {
+  "levelAbsM": 0.000001
+ },
+ "criteriaNotes": "A decision is right or wrong; a level is exact to round-off. Predicted before running: R12 fails (src/damage.js steps two cells out whatever the cell size; the app only calls it at 1 m).",
+ "conservation": "not applicable",
+ "resolution": "1 m; one case at 2 m",
+ "assumptions": [
+  "the peak-depth grid is the input, as in the app"
+ ],
+ "limitations": [
+  "the rule joins patches on the peak grid: water that was never joined at one moment can count as joined",
+  "the product's own Python copy of the rule (Climate Inspection tools/gate2/wall.py) is not tested here"
+ ],
+ "validRange": "the rule's logic on a 1 m grid",
+ "scoring": "automated: street/score.mjs builds rows with lib/score.mjs row(); one row set per executor (cpu, gpu), never merged; a case with no raw file is listed as not run and has no rows",
+ "criteriaRevisions": [
+  {
+   "revision": 1,
+   "date": "2026-11-17",
+   "hash": "f4a6dba852d5a6284e0c55024a1dccb294c63c9d77797805483d5b52e7598af7",
+   "why": "first registration, before any sandbox case was run"
+  }
+ ]
+}
