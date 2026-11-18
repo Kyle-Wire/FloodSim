@@ -4,6 +4,7 @@ Made-up street cases whose answers are known before the model runs: by hand arit
 laboratory measurement. A family of the physics suite (`../README.md`), built 17 Nov 2026 at Kyle's instruction to
 test the urban hydraulics behind the home-buyer flood report.
 
+- **Continuing this work:** [HANDOFF.md](HANDOFF.md) (where it stands, what to do next, what it is for).
 - **Short report:** [REPORT.md](REPORT.md). **The three fixes, before and after:** [FIXES.md](FIXES.md). **Every scored
   row:** [RESULTS.md](RESULTS.md). **Findings:**
   `../../FINDINGS.md`, F12–F24.
