@@ -1,0 +1,1998 @@
+{
+ "id": "PV-SS14",
+ "spec": "benchmarks/physics/spec/PV-SS14.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s1-r50 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8801998622925626,
+   "sim": 0.7911705159094986,
+   "abs": -0.08902934638306403,
+   "rel": -0.10114673973156368,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.78"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s1-r50 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.017284806410995442,
+   "sim": 0.017901080599442523,
+   "abs": 0.0006162741884470808,
+   "rel": 0.03565409839100357,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s1-r50 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8801998622925626,
+   "sim": 0.7911834217268143,
+   "abs": -0.08901644056574831,
+   "rel": -0.10113207736013125,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.78"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s1-r50 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.017284806410995442,
+   "sim": 0.017903195694088936,
+   "abs": 0.0006183892830934935,
+   "rel": 0.03577646566525127,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s1-r100 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7909896715577379,
+   "sim": 0.7330104215255785,
+   "abs": -0.057979250032159424,
+   "rel": -0.0732996297132146,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.66"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s1-r100 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02537253569289778,
+   "sim": 0.026054512730371116,
+   "abs": 0.0006819770374733372,
+   "rel": 0.026878552688931072,
+   "limit": 0.0025372535692897782,
+   "criterion": {
+    "abs": 0.0025372535692897782
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s1-r200 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.6893368058184723,
+   "sim": 0.601163437676341,
+   "abs": -0.08817336814213139,
+   "rel": -0.12791043129844235,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.54"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s1-r200 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.03585761989651143,
+   "sim": 0.03654913584876428,
+   "abs": 0.0006915159522528497,
+   "rel": 0.019285048875207888,
+   "limit": 0.003585761989651143,
+   "criterion": {
+    "abs": 0.003585761989651143
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s2-r50 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8918251745541743,
+   "sim": 0.8324492992894958,
+   "abs": -0.05937587526467847,
+   "rel": -0.06657793136907199,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.83"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s2-r50 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.013963387931769274,
+   "sim": 0.014376085861888408,
+   "abs": 0.00041269793011913455,
+   "rel": 0.029555716143943183,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s2-r100 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7976210683494366,
+   "sim": 0.7380113369532427,
+   "abs": -0.059609731396193855,
+   "rel": -0.07473439928003371,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.72"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s2-r100 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02106658636938958,
+   "sim": 0.02151855161545927,
+   "abs": 0.000451965246069691,
+   "rel": 0.021454128264767704,
+   "limit": 0.002106658636938958,
+   "criterion": {
+    "abs": 0.002106658636938958
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s2-r100 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7976210683494366,
+   "sim": 0.738020878824265,
+   "abs": -0.05960018952517154,
+   "rel": -0.07472243636756695,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.72"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s2-r100 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02106658636938958,
+   "sim": 0.021518537774682045,
+   "abs": 0.0004519514052924653,
+   "rel": 0.02145347126334455,
+   "limit": 0.002106658636938958,
+   "criterion": {
+    "abs": 0.002106658636938958
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s2-r200 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.6903877698648841,
+   "sim": 0.6194397412388326,
+   "abs": -0.07094802862605154,
+   "rel": -0.1027654772041179,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.60"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s2-r200 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.030275306287856962,
+   "sim": 0.03045655777717348,
+   "abs": 0.0001812514893165182,
+   "rel": 0.005986776404280866,
+   "limit": 0.0030275306287856963,
+   "criterion": {
+    "abs": 0.0030275306287856963
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s4-r50 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9146420104840809,
+   "sim": 0.8288818148275253,
+   "abs": -0.08576019565655557,
+   "rel": -0.09376367439230827,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.89"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s4-r50 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.011046290470913949,
+   "sim": 0.011579497273454238,
+   "abs": 0.000533206802540289,
+   "rel": 0.048270213783014215,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s4-r100 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8206137970672529,
+   "sim": 0.7510035274093945,
+   "abs": -0.06961026965785844,
+   "rel": -0.0848270768863926,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.78"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s4-r100 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.017284806410995442,
+   "sim": 0.017398887560628237,
+   "abs": 0.00011408114963279425,
+   "rel": 0.006600082576581443,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s4-r200 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7106498764167674,
+   "sim": 0.6334891653811128,
+   "abs": -0.07716071103565458,
+   "rel": -0.10857767459935919,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.66"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s4-r200 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02537253569289778,
+   "sim": 0.025085186980194057,
+   "abs": -0.0002873487127037222,
+   "rel": -0.011325187051925447,
+   "limit": 0.0025372535692897782,
+   "criterion": {
+    "abs": 0.0025372535692897782
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s4-r200 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7106498764167674,
+   "sim": 0.6334898809883867,
+   "abs": -0.0771599954283807,
+   "rel": -0.10857666762349437,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.66"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-a-s4-r200 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02537253569289778,
+   "sim": 0.025085147470235825,
+   "abs": -0.0002873882226619544,
+   "rel": -0.011326744245842145,
+   "limit": 0.0025372535692897782,
+   "criterion": {
+    "abs": 0.0025372535692897782
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s05-r60 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9028570062680367,
+   "sim": 0.8185233239898644,
+   "abs": -0.08433368227817228,
+   "rel": -0.09340757361651977,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.77"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s05-r60 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.026086528731487237,
+   "sim": 0.02790006882029261,
+   "abs": 0.0018135400888053752,
+   "rel": 0.06952017677294016,
+   "limit": 0.002608652873148724,
+   "criterion": {
+    "abs": 0.002608652873148724
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s05-r60 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9028570062680367,
+   "sim": 0.8178055483465461,
+   "abs": -0.0850514579214906,
+   "rel": -0.0942025784050247,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.77"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s05-r60 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.026086528731487237,
+   "sim": 0.027819044888019562,
+   "abs": 0.0017325161565323252,
+   "rel": 0.06641420843552578,
+   "limit": 0.002608652873148724,
+   "criterion": {
+    "abs": 0.002608652873148724
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s05-r60 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9028570062680367,
+   "sim": 0.39248978854804756,
+   "abs": -0.5103672177199892,
+   "rel": -0.5652802317274961,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.77"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s05-r60 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.026086528731487237,
+   "sim": 0.02782058385556142,
+   "abs": 0.0017340551240741832,
+   "rel": 0.06647320315872943,
+   "limit": 0.002608652873148724,
+   "criterion": {
+    "abs": 0.002608652873148724
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s05-r150 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7968020776795781,
+   "sim": 0.7319315344292544,
+   "abs": -0.06487054325032371,
+   "rel": -0.0814136221120779,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.62"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s05-r150 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.04290827823606703,
+   "sim": 0.04513016744020778,
+   "abs": 0.0022218892041407506,
+   "rel": 0.05178229692453884,
+   "limit": 0.004290827823606703,
+   "criterion": {
+    "abs": 0.004290827823606703
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s05-r150 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7968020776795781,
+   "sim": 0.731935496707231,
+   "abs": -0.0648665809723471,
+   "rel": -0.08140864938661996,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.62"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s05-r150 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.04290827823606703,
+   "sim": 0.0451301708817482,
+   "abs": 0.0022218926456811713,
+   "rel": 0.05178237713144908,
+   "limit": 0.004290827823606703,
+   "criterion": {
+    "abs": 0.004290827823606703
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s05-r150 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7968020776795781,
+   "sim": 0.3495000638314432,
+   "abs": -0.4473020138481349,
+   "rel": -0.5613715455546423,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.62"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s05-r150 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.04290827823606703,
+   "sim": 0.04515456012900417,
+   "abs": 0.0022462818929371436,
+   "rel": 0.052350781370877904,
+   "limit": 0.004290827823606703,
+   "criterion": {
+    "abs": 0.004290827823606703
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s15-r60 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9158714768178084,
+   "sim": 0.8604153847654822,
+   "abs": -0.05545609205232627,
+   "rel": -0.06055008094040468,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.86"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s15-r60 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.018446517192803616,
+   "sim": 0.019423495283224027,
+   "abs": 0.0009769780904204106,
+   "rel": 0.05296273980659887,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s15-r60 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9158714768178084,
+   "sim": 0.8604348086619394,
+   "abs": -0.05543666815586901,
+   "rel": -0.06052887283757703,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.86"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s15-r60 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.018446517192803616,
+   "sim": 0.019425176084041595,
+   "abs": 0.0009786588912379796,
+   "rel": 0.05305385732217112,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s15-r60 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9158714768178084,
+   "sim": 0.3501928442262666,
+   "abs": -0.5656786325915418,
+   "rel": -0.6176397528581082,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.86"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s15-r60 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.018446517192803616,
+   "sim": 0.01941998044270973,
+   "abs": 0.000973463249906114,
+   "rel": 0.05277219757699751,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s15-r150 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.796553178678199,
+   "sim": 0.7629984656706559,
+   "abs": -0.03355471300754309,
+   "rel": -0.04212488745977238,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.71"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s15-r150 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.03214027403692427,
+   "sim": 0.0335544873218424,
+   "abs": 0.0014142132849181283,
+   "rel": 0.04400128272999206,
+   "limit": 0.0032140274036924275,
+   "criterion": {
+    "abs": 0.0032140274036924275
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s15-r150 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.796553178678199,
+   "sim": 0.762994135107031,
+   "abs": -0.03355904357116801,
+   "rel": -0.04213032408816184,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.71"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s15-r150 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.03214027403692427,
+   "sim": 0.03355449065566063,
+   "abs": 0.0014142166187363567,
+   "rel": 0.04400138645711724,
+   "limit": 0.0032140274036924275,
+   "criterion": {
+    "abs": 0.0032140274036924275
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s15-r150 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.796553178678199,
+   "sim": 0.31683201643804937,
+   "abs": -0.4797211622401496,
+   "rel": -0.602246246805768,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.71"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s15-r150 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.03214027403692427,
+   "sim": 0.033555467728151406,
+   "abs": 0.0014151936912271332,
+   "rel": 0.044031786711005994,
+   "limit": 0.0032140274036924275,
+   "criterion": {
+    "abs": 0.0032140274036924275
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s30-r60 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.936847440615004,
+   "sim": 0.8485750000405627,
+   "abs": -0.08827244057444128,
+   "rel": -0.09422285502161787,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.91"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s30-r60 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.014381534752819763,
+   "sim": 0.015472148768684392,
+   "abs": 0.0010906140158646292,
+   "rel": 0.07583432746291521,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s30-r60 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.936847440615004,
+   "sim": 0.848099353739322,
+   "abs": -0.08874808687568203,
+   "rel": -0.09473056447421402,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.91"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s30-r60 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.014381534752819763,
+   "sim": 0.01546249259263277,
+   "abs": 0.0010809578398130078,
+   "rel": 0.07516289870252313,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s30-r60 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.936847440615004,
+   "sim": 0.3125154809249168,
+   "abs": -0.6243319596900871,
+   "rel": -0.6664179594494462,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.91"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s30-r60 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.014381534752819763,
+   "sim": 0.015459784516164777,
+   "abs": 0.0010782497633450138,
+   "rel": 0.07497459637495249,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s30-r150 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8181538131964774,
+   "sim": 0.7632171440598037,
+   "abs": -0.05493666913667372,
+   "rel": -0.06714711616638377,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.77"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s30-r150 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.026401821106617648,
+   "sim": 0.027098083086705433,
+   "abs": 0.0006962619800877853,
+   "rel": 0.026371740694556348,
+   "limit": 0.002640182110661765,
+   "criterion": {
+    "abs": 0.002640182110661765
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s30-r150 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8181538131964774,
+   "sim": 0.7632193329885899,
+   "abs": -0.05493448020788749,
+   "rel": -0.06714444071740228,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.77"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-b-s30-r150 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.026401821106617648,
+   "sim": 0.02709917724132538,
+   "abs": 0.0006973561347077308,
+   "rel": 0.026413183086561313,
+   "limit": 0.002640182110661765,
+   "criterion": {
+    "abs": 0.002640182110661765
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s30-r150 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8181538131964774,
+   "sim": 0.2795300852778726,
+   "abs": -0.5386237279186048,
+   "rel": -0.6583404235619639,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.77"
+  },
+  {
+   "benchmark": "PV-SS14",
+   "case": "SS14-c-s30-r150 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.026401821106617648,
+   "sim": 0.027095510678785288,
+   "abs": 0.0006936895721676405,
+   "rel": 0.0262743077216657,
+   "limit": 0.002640182110661765,
+   "criterion": {
+    "abs": 0.002640182110661765
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS14-a-s1-r50 [cpu]": {
+   "takenLs": 6.637041550129682,
+   "share": 0.7911705159094986,
+   "hec22": 0.8801998622925626,
+   "hec22FrontalOnly": 0.775661222019741,
+   "depthInGrateCellM": 0.0006600024375275353,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s1-r50 [gpu]": {
+   "takenLs": 6.637149815597165,
+   "share": 0.7911834217268143,
+   "hec22": 0.8801998622925626,
+   "hec22FrontalOnly": 0.775661222019741,
+   "depthInGrateCellM": 0.0006388372275978327,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s1-r100 [cpu]": {
+   "takenLs": 12.298285961151372,
+   "share": 0.7330104215255785,
+   "hec22": 0.7909896715577379,
+   "hec22FrontalOnly": 0.6576324847405798,
+   "depthInGrateCellM": 0.0016239419648916955,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s1-r200 [cpu]": {
+   "takenLs": 20.17237313091722,
+   "share": 0.601163437676341,
+   "hec22": 0.6893368058184723,
+   "hec22FrontalOnly": 0.5444036899644755,
+   "depthInGrateCellM": 0.004315239021386603,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s2-r50 [cpu]": {
+   "takenLs": 6.983324677372993,
+   "share": 0.8324492992894958,
+   "hec22": 0.8918251745541743,
+   "hec22FrontalOnly": 0.8326684441286959,
+   "depthInGrateCellM": 0.00031106035298591604,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s2-r100 [cpu]": {
+   "takenLs": 12.382190208882182,
+   "share": 0.7380113369532427,
+   "hec22": 0.7976210683494366,
+   "hec22FrontalOnly": 0.7166979878756061,
+   "depthInGrateCellM": 0.0014519862535616495,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s2-r100 [gpu]": {
+   "takenLs": 12.38235030027378,
+   "share": 0.738020878824265,
+   "hec22": 0.7976210683494366,
+   "hec22FrontalOnly": 0.7166979878756061,
+   "depthInGrateCellM": 0.0014519956894218922,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s2-r200 [cpu]": {
+   "takenLs": 20.785644650458604,
+   "share": 0.6194397412388326,
+   "hec22": 0.6903877698648841,
+   "hec22FrontalOnly": 0.5998657234825692,
+   "depthInGrateCellM": 0.003574835168422876,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s4-r50 [cpu]": {
+   "takenLs": 6.953397446608684,
+   "share": 0.8288818148275253,
+   "hec22": 0.9146420104840809,
+   "hec22FrontalOnly": 0.8853883264151149,
+   "depthInGrateCellM": 0.00024251154859047139,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s4-r100 [cpu]": {
+   "takenLs": 12.600170293202062,
+   "share": 0.7510035274093945,
+   "hec22": 0.8206137970672529,
+   "hec22FrontalOnly": 0.775661222019741,
+   "depthInGrateCellM": 0.0009517376500635382,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s4-r200 [cpu]": {
+   "takenLs": 21.25708088278845,
+   "share": 0.6334891653811128,
+   "hec22": 0.7106498764167674,
+   "hec22FrontalOnly": 0.6576324847405798,
+   "depthInGrateCellM": 0.0027563760547463343,
+   "swmmVersion": 52004
+  },
+  "SS14-a-s4-r200 [gpu]": {
+   "takenLs": 21.257104895388085,
+   "share": 0.6334898809883867,
+   "hec22": 0.7106498764167674,
+   "hec22FrontalOnly": 0.6576324847405798,
+   "depthInGrateCellM": 0.0027564004994928837,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s05-r60 [cpu]": {
+   "takenLs": 10.299751826872457,
+   "share": 0.8185233239898644,
+   "hec22": 0.9028570062680367,
+   "hec22FrontalOnly": 0.7739143520879022,
+   "depthInGrateCellM": 0.0007097685240074682,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s05-r60 [gpu]": {
+   "takenLs": 10.290719816694036,
+   "share": 0.8178055483465461,
+   "hec22": 0.9028570062680367,
+   "hec22FrontalOnly": 0.7739143520879022,
+   "depthInGrateCellM": 0.0007185253780335188,
+   "swmmVersion": 52004
+  },
+  "SS14-c-s05-r60 [cpu]": {
+   "takenLs": 4.938829839229597,
+   "share": 0.39248978854804756,
+   "hec22": 0.9028570062680367,
+   "hec22FrontalOnly": 0.7739143520879022,
+   "depthInGrateCellM": 0.010746869072574874,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s05-r150 [cpu]": {
+   "takenLs": 23.02534618725363,
+   "share": 0.7319315344292544,
+   "hec22": 0.7968020776795781,
+   "hec22FrontalOnly": 0.618498237854529,
+   "depthInGrateCellM": 0.0023551428204834322,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s05-r150 [gpu]": {
+   "takenLs": 23.025470833914973,
+   "share": 0.731935496707231,
+   "hec22": 0.7968020776795781,
+   "hec22FrontalOnly": 0.618498237854529,
+   "depthInGrateCellM": 0.0023551287595182657,
+   "swmmVersion": 52004
+  },
+  "SS14-c-s05-r150 [cpu]": {
+   "takenLs": 10.994689508030817,
+   "share": 0.3495000638314432,
+   "hec22": 0.7968020776795781,
+   "hec22FrontalOnly": 0.618498237854529,
+   "depthInGrateCellM": 0.01832820179561894,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s15-r60 [cpu]": {
+   "takenLs": 10.826893591632315,
+   "share": 0.8604153847654822,
+   "hec22": 0.9158714768178084,
+   "hec22FrontalOnly": 0.8626271170812614,
+   "depthInGrateCellM": 0.0002548756634133192,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s15-r60 [gpu]": {
+   "takenLs": 10.827138008996068,
+   "share": 0.8604348086619394,
+   "hec22": 0.9158714768178084,
+   "hec22FrontalOnly": 0.8626271170812614,
+   "depthInGrateCellM": 0.0002556949621066451,
+   "swmmVersion": 52004
+  },
+  "SS14-c-s15-r60 [cpu]": {
+   "takenLs": 4.406593289847187,
+   "share": 0.3501928442262666,
+   "hec22": 0.9158714768178084,
+   "hec22FrontalOnly": 0.8626271170812614,
+   "depthInGrateCellM": 0.009959206819972501,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s15-r150 [cpu]": {
+   "takenLs": 24.002660065889383,
+   "share": 0.7629984656706559,
+   "hec22": 0.796553178678199,
+   "hec22FrontalOnly": 0.7114320128313212,
+   "depthInGrateCellM": 0.0017208184171915032,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s15-r150 [gpu]": {
+   "takenLs": 24.00252383357535,
+   "share": 0.762994135107031,
+   "hec22": 0.796553178678199,
+   "hec22FrontalOnly": 0.7114320128313212,
+   "depthInGrateCellM": 0.001720815896987915,
+   "swmmVersion": 52004
+  },
+  "SS14-c-s15-r150 [cpu]": {
+   "takenLs": 9.967007183780302,
+   "share": 0.31683201643804937,
+   "hec22": 0.796553178678199,
+   "hec22FrontalOnly": 0.7114320128313212,
+   "depthInGrateCellM": 0.01717151985693876,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s30-r60 [cpu]": {
+   "takenLs": 10.677902083843746,
+   "share": 0.8485750000405627,
+   "hec22": 0.936847440615004,
+   "hec22FrontalOnly": 0.911799055632912,
+   "depthInGrateCellM": 0.0003194744647402039,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s30-r60 [gpu]": {
+   "takenLs": 10.671916867886466,
+   "share": 0.848099353739322,
+   "hec22": 0.936847440615004,
+   "hec22FrontalOnly": 0.911799055632912,
+   "depthInGrateCellM": 0.0002385275438427925,
+   "swmmVersion": 52004
+  },
+  "SS14-c-s30-r60 [cpu]": {
+   "takenLs": 3.9324864683052025,
+   "share": 0.3125154809249168,
+   "hec22": 0.936847440615004,
+   "hec22FrontalOnly": 0.911799055632912,
+   "depthInGrateCellM": 0.009236750622544494,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s30-r150 [cpu]": {
+   "takenLs": 24.00953932354799,
+   "share": 0.7632171440598037,
+   "hec22": 0.8181538131964774,
+   "hec22FrontalOnly": 0.770472381963389,
+   "depthInGrateCellM": 0.0013048841591872759,
+   "swmmVersion": 52004
+  },
+  "SS14-b-s30-r150 [gpu]": {
+   "takenLs": 24.009608183599386,
+   "share": 0.7632193329885899,
+   "hec22": 0.8181538131964774,
+   "hec22FrontalOnly": 0.770472381963389,
+   "depthInGrateCellM": 0.0013159440131857991,
+   "swmmVersion": 52004
+  },
+  "SS14-c-s30-r150 [cpu]": {
+   "takenLs": 8.793550599366409,
+   "share": 0.2795300852778726,
+   "hec22": 0.8181538131964774,
+   "hec22FrontalOnly": 0.770472381963389,
+   "depthInGrateCellM": 0.01579548757116242,
+   "swmmVersion": 52004
+  }
+ },
+ "notRun": [
+  "SS14-a-s1-r100 [gpu]",
+  "SS14-a-s1-r200 [gpu]",
+  "SS14-a-s2-r50 [gpu]",
+  "SS14-a-s2-r200 [gpu]",
+  "SS14-a-s4-r50 [gpu]",
+  "SS14-a-s4-r100 [gpu]",
+  "SS14-c-s05-r60 [gpu]",
+  "SS14-c-s05-r150 [gpu]",
+  "SS14-c-s15-r60 [gpu]",
+  "SS14-c-s15-r150 [gpu]",
+  "SS14-c-s30-r60 [gpu]",
+  "SS14-c-s30-r150 [gpu]"
+ ],
+ "raw": {
+  "SS14-a-s1-r50 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-a-s1-r50.cpu.json",
+   "sha256": "881b2bb1b48b9496a3bcd077bb8d384cf3219e2061270f40e92a22b261730dd9",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 2.478,
+   "steps": 3498,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s1-r50 [gpu]": {
+   "file": "street/raw/ss14-gpu/SS14-a-s1-r50.gpu.json",
+   "sha256": "51c4c01312f25842f8f1a1ea05186582fe74825f9a9dabeed7d216274b66ee55",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": "",
+    "fallback": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+   },
+   "wallSeconds": 259.557,
+   "steps": 3502,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s1-r100 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-a-s1-r100.cpu.json",
+   "sha256": "a51fadf66491e4fa03de47a9af05f001746758768a8fb70f5d74ff61f9519d52",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 3.851,
+   "steps": 4500,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s1-r200 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-a-s1-r200.cpu.json",
+   "sha256": "ebcd7bad4d81b1cf633c4e51196596ebbf04c0509c121ea0f5acc79913c829e7",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 5.084,
+   "steps": 5699,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s2-r50 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-a-s2-r50.cpu.json",
+   "sha256": "0eab2cb62ba77fdb4cb9adb5ba14df06c9bd33de8bc28da2104ff7402ed9e45e",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 3.183,
+   "steps": 4578,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s2-r100 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-a-s2-r100.cpu.json",
+   "sha256": "994492a8df0ec1537b0b16409bd531c64d88a3db33270ec20138ec297d3c834e",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 4.487,
+   "steps": 5081,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s2-r100 [gpu]": {
+   "file": "street/raw/ss14-gpu/SS14-a-s2-r100.gpu.json",
+   "sha256": "043767511bf464f89eb9b20a80cda3d992f344524017946471bfe0a6adb2c114",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": "",
+    "fallback": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+   },
+   "wallSeconds": 198.76,
+   "steps": 5081,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s2-r200 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-a-s2-r200.cpu.json",
+   "sha256": "25ae57cb1d4cd1b81739ecd0b13afd6de67fa1b423eb12e306e80f0d1bffb17c",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 5.615,
+   "steps": 6286,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s4-r50 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-a-s4-r50.cpu.json",
+   "sha256": "46d82720ad1339d3e77bac3be0d064e327f3574b9db2762a806827c10dc883d3",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 3.368,
+   "steps": 5165,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s4-r100 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-a-s4-r100.cpu.json",
+   "sha256": "674f1a3f9f5f77ced5070a70dd9885fc94ad131f9f95ac8c1d090fdd274525ff",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 4.609,
+   "steps": 5665,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s4-r200 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-a-s4-r200.cpu.json",
+   "sha256": "320ea3fdca84584bab17888670fbfc65d6e9aafe6030685c73aadceafe3519e4",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 6.343,
+   "steps": 6883,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-a-s4-r200 [gpu]": {
+   "file": "street/raw/ss14-gpu/SS14-a-s4-r200.gpu.json",
+   "sha256": "7a13f6479efbc3c34a36057791182074c39437cf3a8c3dc63b3e9c4bef786a5e",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": "",
+    "fallback": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+   },
+   "wallSeconds": 203.099,
+   "steps": 6883,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS14-b-s05-r60 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-b-s05-r60.cpu.json",
+   "sha256": "6abc500ad1760dc8252a22989870dbb959a7f16213f9e29b0c4548e9847ab585",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 4.7,
+   "steps": 4898,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s05-r60 [gpu]": {
+   "file": "street/raw/ss14-gpu/SS14-b-s05-r60.gpu.json",
+   "sha256": "4c31618e3ba19539f639792534f0b546fe0ba1cdeaee9a01c3e9f1f10b60df49",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": "",
+    "fallback": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+   },
+   "wallSeconds": 234.107,
+   "steps": 4898,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-c-s05-r60 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-c-s05-r60.cpu.json",
+   "sha256": "7ea1343fbebe25e7b565235f9ef35846f49711c75655542516e8900e2e478c08",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 4.294,
+   "steps": 4385,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s05-r150 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-b-s05-r150.cpu.json",
+   "sha256": "7960b4d545f052bb60e7df63af410e387a44b647da439a473f6e9e3e8650c5b1",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 8.018,
+   "steps": 6758,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s05-r150 [gpu]": {
+   "file": "street/raw/ss14-gpu/SS14-b-s05-r150.gpu.json",
+   "sha256": "4a69dfa4de51f1a1f38f32ccf1cfc7c42d645b584adb2c5a436b3dbdb99f2cb4",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": "",
+    "fallback": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+   },
+   "wallSeconds": 258.803,
+   "steps": 6758,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-c-s05-r150 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-c-s05-r150.cpu.json",
+   "sha256": "c039219430ef602df73c99600b4e5c18259616bd586d64309496a78d826e87a6",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 6.132,
+   "steps": 5358,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s15-r60 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-b-s15-r60.cpu.json",
+   "sha256": "d42f803917fc20452b6755466376e0bf7f25481ec7d9a26fdadcb9f80d6c5b37",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 6.862,
+   "steps": 7380,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s15-r60 [gpu]": {
+   "file": "street/raw/ss14-gpu/SS14-b-s15-r60.gpu.json",
+   "sha256": "54887f26ca2038d6571e990f8eafc9bc677b34090f203bfd0de70b6fcebd1b05",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": "",
+    "fallback": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+   },
+   "wallSeconds": 189.691,
+   "steps": 7382,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-c-s15-r60 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-c-s15-r60.cpu.json",
+   "sha256": "c0cc6fe312007e525c890276c1d26f68f90cffd3c005a2a46d7b191383fe1627",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 3.741,
+   "steps": 3903,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s15-r150 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-b-s15-r150.cpu.json",
+   "sha256": "47aff2072cd6c8935ac38f194d529b69045a4912882ce5283164284171527863",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 8.899,
+   "steps": 7978,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s15-r150 [gpu]": {
+   "file": "street/raw/ss14-gpu/SS14-b-s15-r150.gpu.json",
+   "sha256": "f6596bc9d2b0f925127ddccec9e34da7e73b603b52803f5739b59cbcb183a4fe",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": "",
+    "fallback": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+   },
+   "wallSeconds": 191.615,
+   "steps": 7978,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-c-s15-r150 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-c-s15-r150.cpu.json",
+   "sha256": "d5bf919883f14cc0909c8403346c7f23b1c3c0c54a12a2da384e0d7659e46e4c",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 5.737,
+   "steps": 5156,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s30-r60 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-b-s30-r60.cpu.json",
+   "sha256": "d29190b48680b9b53ff86a9740601731a9057a9591d95b0e4c491a033161f4d9",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 7.974,
+   "steps": 8217,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s30-r60 [gpu]": {
+   "file": "street/raw/ss14-gpu/SS14-b-s30-r60.gpu.json",
+   "sha256": "23207555c4b3d42d78584c0620aba3d19101161817e1ae2ad48c83d5734a88ee",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": "",
+    "fallback": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+   },
+   "wallSeconds": 172.721,
+   "steps": 8143,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-c-s30-r60 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-c-s30-r60.cpu.json",
+   "sha256": "b0e3013749f74069debf2628ae2ab1a8e1f17f3f547df76fec47d359f90d25bf",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 3.765,
+   "steps": 3938,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s30-r150 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-b-s30-r150.cpu.json",
+   "sha256": "b871af8287788f4ed5234a9a77542ad8dbd94be58d728ad115f8c8712e33c5c8",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 9.733,
+   "steps": 8854,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-b-s30-r150 [gpu]": {
+   "file": "street/raw/ss14-gpu/SS14-b-s30-r150.gpu.json",
+   "sha256": "29df60c2bb7707a1a15280d91ffbdf94c3691a1a27035d112bf6cb425f3689cb",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": "",
+    "fallback": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+   },
+   "wallSeconds": 177.819,
+   "steps": 8856,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  },
+  "SS14-c-s30-r150 [cpu]": {
+   "file": "street/raw/ss14-cpu/SS14-c-s30-r150.cpu.json",
+   "sha256": "f4f05eab175c0df85421b68ae6c6e4851ecf2bd356b9d78690f8c5bf8fdd556c",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 6.02,
+   "steps": 5188,
+   "grid": {
+    "nx": 100,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1000
+   }
+  }
+ },
+ "hand": {
+  "SS14-a-s1-r50": {
+   "flowReachingTheGrateLs": 8.38888888888889,
+   "spreadM": 1.3997037866569606,
+   "velocityMs": 0.42818570786468474,
+   "frontalShare": 0.775661222019741,
+   "efficiency": 0.8801998622925626,
+   "kerbCellDepthAboveM": 0.017284806410995442
+  },
+  "SS14-a-s1-r100": {
+   "flowReachingTheGrateLs": 16.77777777777778,
+   "spreadM": 1.814602288439003,
+   "velocityMs": 0.5095320766061713,
+   "frontalShare": 0.6576324847405798,
+   "efficiency": 0.7909896715577379,
+   "kerbCellDepthAboveM": 0.02537253569289778
+  },
+  "SS14-a-s1-r200": {
+   "flowReachingTheGrateLs": 33.55555555555556,
+   "spreadM": 2.3524845017905647,
+   "velocityMs": 0.6063325616011529,
+   "frontalShare": 0.5444036899644755,
+   "efficiency": 0.6893368058184723,
+   "kerbCellDepthAboveM": 0.03585761989651143
+  },
+  "SS14-a-s2-r50": {
+   "flowReachingTheGrateLs": 8.38888888888889,
+   "spreadM": 1.2293158442828567,
+   "velocityMs": 0.5551079969740449,
+   "frontalShare": 0.8326684441286959,
+   "efficiency": 0.8918251745541743,
+   "kerbCellDepthAboveM": 0.013963387931769274
+  },
+  "SS14-a-s2-r100": {
+   "flowReachingTheGrateLs": 16.77777777777778,
+   "spreadM": 1.5937081584796067,
+   "velocityMs": 0.6605669578496585,
+   "frontalShare": 0.7166979878756061,
+   "efficiency": 0.7976210683494366,
+   "kerbCellDepthAboveM": 0.02106658636938958
+  },
+  "SS14-a-s2-r200": {
+   "flowReachingTheGrateLs": 33.55555555555556,
+   "spreadM": 2.0661132012710355,
+   "velocityMs": 0.7860609254079161,
+   "frontalShare": 0.5998657234825692,
+   "efficiency": 0.6903877698648841,
+   "kerbCellDepthAboveM": 0.030275306287856962
+  },
+  "SS14-a-s4-r50": {
+   "flowReachingTheGrateLs": 8.38888888888889,
+   "spreadM": 1.0796694696484677,
+   "velocityMs": 0.7196524373529914,
+   "frontalShare": 0.8853883264151149,
+   "efficiency": 0.9146420104840809,
+   "kerbCellDepthAboveM": 0.011046290470913949
+  },
+  "SS14-a-s4-r100": {
+   "flowReachingTheGrateLs": 16.77777777777778,
+   "spreadM": 1.3997037866569606,
+   "velocityMs": 0.8563714157293695,
+   "frontalShare": 0.775661222019741,
+   "efficiency": 0.8206137970672529,
+   "kerbCellDepthAboveM": 0.017284806410995442
+  },
+  "SS14-a-s4-r200": {
+   "flowReachingTheGrateLs": 33.55555555555556,
+   "spreadM": 1.814602288439003,
+   "velocityMs": 1.0190641532123426,
+   "frontalShare": 0.6576324847405798,
+   "efficiency": 0.7106498764167674,
+   "kerbCellDepthAboveM": 0.02537253569289778
+  },
+  "SS14-b-s05-r60": {
+   "flowReachingTheGrateLs": 12.58333333333333,
+   "spreadM": 1.4051524739882897,
+   "velocityMs": 0.42487143882833656,
+   "frontalShare": 0.7739143520879022,
+   "efficiency": 0.9028570062680367,
+   "kerbCellDepthAboveM": 0.026086528731487237
+  },
+  "SS14-c-s05-r60": {
+   "flowReachingTheGrateLs": 12.58333333333333,
+   "spreadM": 1.4051524739882897,
+   "velocityMs": 0.42487143882833656,
+   "frontalShare": 0.7739143520879022,
+   "efficiency": 0.9028570062680367,
+   "kerbCellDepthAboveM": 0.026086528731487237
+  },
+  "SS14-b-s05-r150": {
+   "flowReachingTheGrateLs": 31.458333333333332,
+   "spreadM": 1.980453519439154,
+   "velocityMs": 0.5347061049324462,
+   "frontalShare": 0.618498237854529,
+   "efficiency": 0.7968020776795781,
+   "kerbCellDepthAboveM": 0.04290827823606703
+  },
+  "SS14-c-s05-r150": {
+   "flowReachingTheGrateLs": 31.458333333333332,
+   "spreadM": 1.980453519439154,
+   "velocityMs": 0.5347061049324462,
+   "frontalShare": 0.618498237854529,
+   "efficiency": 0.7968020776795781,
+   "kerbCellDepthAboveM": 0.04290827823606703
+  },
+  "SS14-b-s15-r60": {
+   "flowReachingTheGrateLs": 12.58333333333333,
+   "spreadM": 1.1438653454250738,
+   "velocityMs": 0.6411426037606919,
+   "frontalShare": 0.8626271170812614,
+   "efficiency": 0.9158714768178084,
+   "kerbCellDepthAboveM": 0.018446517192803616
+  },
+  "SS14-c-s15-r60": {
+   "flowReachingTheGrateLs": 12.58333333333333,
+   "spreadM": 1.1438653454250738,
+   "velocityMs": 0.6411426037606919,
+   "frontalShare": 0.8626271170812614,
+   "efficiency": 0.9158714768178084,
+   "kerbCellDepthAboveM": 0.018446517192803616
+  },
+  "SS14-b-s15-r150": {
+   "flowReachingTheGrateLs": 31.458333333333332,
+   "spreadM": 1.6121895602415957,
+   "velocityMs": 0.8068861143232533,
+   "frontalShare": 0.7114320128313212,
+   "efficiency": 0.796553178678199,
+   "kerbCellDepthAboveM": 0.03214027403692427
+  },
+  "SS14-c-s15-r150": {
+   "flowReachingTheGrateLs": 31.458333333333332,
+   "spreadM": 1.6121895602415957,
+   "velocityMs": 0.8068861143232533,
+   "frontalShare": 0.7114320128313212,
+   "efficiency": 0.796553178678199,
+   "kerbCellDepthAboveM": 0.03214027403692427
+  },
+  "SS14-b-s30-r60": {
+   "flowReachingTheGrateLs": 12.58333333333333,
+   "spreadM": 1.0046209821405239,
+   "velocityMs": 0.8311893181189366,
+   "frontalShare": 0.911799055632912,
+   "efficiency": 0.936847440615004,
+   "kerbCellDepthAboveM": 0.014381534752819763
+  },
+  "SS14-c-s30-r60": {
+   "flowReachingTheGrateLs": 12.58333333333333,
+   "spreadM": 1.0046209821405239,
+   "velocityMs": 0.8311893181189366,
+   "frontalShare": 0.911799055632912,
+   "efficiency": 0.936847440615004,
+   "kerbCellDepthAboveM": 0.014381534752819763
+  },
+  "SS14-b-s30-r150": {
+   "flowReachingTheGrateLs": 31.458333333333332,
+   "spreadM": 1.4159354209692696,
+   "velocityMs": 1.0460623194123513,
+   "frontalShare": 0.770472381963389,
+   "efficiency": 0.8181538131964774,
+   "kerbCellDepthAboveM": 0.026401821106617648
+  },
+  "SS14-c-s30-r150": {
+   "flowReachingTheGrateLs": 31.458333333333332,
+   "spreadM": 1.4159354209692696,
+   "velocityMs": 1.0460623194123513,
+   "frontalShare": 0.770472381963389,
+   "efficiency": 0.8181538131964774,
+   "kerbCellDepthAboveM": 0.026401821106617648
+  }
+ }
+}

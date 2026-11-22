@@ -1,0 +1,14 @@
+{
+ "depthOnly": {
+  "kerbDepthM": 0.021870505975353595,
+  "toNetworkM3": 4.431635679896552
+ },
+ "capture": {
+  "kerbDepthM": 0.017841560336420394,
+  "toNetworkM3": 9.813379508371538
+ },
+ "reference": {
+  "kerbDepthM": 0.016761494562718634,
+  "limit": "PV-SS11 limit ±0.005 m"
+ }
+}

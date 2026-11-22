@@ -1,0 +1,220 @@
+{
+ "runId": "2026-11-22T17-45-25-193Z",
+ "written": "2026-11-22T17:45:25.240Z",
+ "node": "v22.23.5",
+ "platform": "linux x64",
+ "git": {
+  "commit": "fa980cbaccfa03d6a6b1359c8fea8e4f90b9b432",
+  "dirty": false,
+  "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ },
+ "swmm": {
+  "version": 52004,
+  "wasmSha256": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ },
+ "specs": {
+  "PV-C1": {
+   "file": "benchmarks/physics/spec/PV-C1.json",
+   "sha256": "c1d11cb42475f5d3475b5d2f5157a70a0c886ba8da2704019f1f5a7e250bd172",
+   "criteriaSha256": "5070c9826ee3f4f8cc9112927f0ff0e996332e65b501dfefe1d2eaf766a80d24",
+   "criteriaRevision": 1
+  },
+  "PV-P1": {
+   "file": "benchmarks/physics/spec/PV-P1.json",
+   "sha256": "e1f89cf43677cc110a126c86adbfe72cc20cd1b8e323e3262dadcbd1678616e8",
+   "criteriaSha256": "787c7b2afdcb17fdee576eb8d1ca5627687e3c7a9714de34b25479e26a25408f",
+   "criteriaRevision": 1
+  },
+  "PV-SS1": {
+   "file": "benchmarks/physics/spec/PV-SS1.json",
+   "sha256": "6c132451d1a30d2078e01a4a22569055f06e25420680637a875ebe6d88df517e",
+   "criteriaSha256": "6ee49ee7ba370ca567410017b177a6fb65675d4bb7063146b6eb6931c9ffa5c0",
+   "criteriaRevision": 1
+  },
+  "PV-SS10": {
+   "file": "benchmarks/physics/spec/PV-SS10.json",
+   "sha256": "83408ff67787a9dfaf941e05fde903874177787a3ecd1f35524e8b232ac4f732",
+   "criteriaSha256": "3898fc1db9553f3a0e2b30c10eb48ae0f446e4bc822c77136d1c25a0ae37c8bf",
+   "criteriaRevision": 1
+  },
+  "PV-SS11": {
+   "file": "benchmarks/physics/spec/PV-SS11.json",
+   "sha256": "5d5f5765ea18342ffe97f043ba5036cfa8dfd7e6b48d09be53b4b7eaede0491d",
+   "criteriaSha256": "82c286619343cd7ccc1d7c9aa6a4c3ef21791f6655fb861d2a40548911608344",
+   "criteriaRevision": 1
+  },
+  "PV-SS12": {
+   "file": "benchmarks/physics/spec/PV-SS12.json",
+   "sha256": "5f7133222d0be3a2fa44c2dc0139570c75b4e474c56f6a06ad1e2a3f60ad6c73",
+   "criteriaSha256": "34982e440d1bc965066c8fc79b2381174c3424cc8b6ebd9dd2f3e9a981639fe4",
+   "criteriaRevision": 1
+  },
+  "PV-SS13": {
+   "file": "benchmarks/physics/spec/PV-SS13.json",
+   "sha256": "13eec2ff70cd4e0189a7e8ecde10b667a0f8365241bb1be951174dc272c90a11",
+   "criteriaSha256": "232822c605076c3ef3742168740cfef09c9b77d8976ac2929a37fb50d13ad2f2",
+   "criteriaRevision": 1
+  },
+  "PV-SS2": {
+   "file": "benchmarks/physics/spec/PV-SS2.json",
+   "sha256": "aa4e4f9ef5a3c3b35a8c02ddf414daebf9664a858c83e55563954379a51e4289",
+   "criteriaSha256": "1d3a6a1a228b5c6156bd3acbecf5145548641b1e4673f3ff951bc231ee8af01d",
+   "criteriaRevision": 1
+  },
+  "PV-SS3": {
+   "file": "benchmarks/physics/spec/PV-SS3.json",
+   "sha256": "7ea3e8378556d86df0a94fffae00e820487ac5a245d53d8ff2714435e99a2582",
+   "criteriaSha256": "b59558777ae5d8947103dc4d1a86f20a879e180cf939d8131059deb87c79e2e6",
+   "criteriaRevision": 1
+  },
+  "PV-SS4": {
+   "file": "benchmarks/physics/spec/PV-SS4.json",
+   "sha256": "7cdc6619087c676f305d65b0af37cf0e52d79a4de150481b688a0756fe4a1cbd",
+   "criteriaSha256": "829257d594b892fb161a9b219dae05eaeb8f1c48f23190a21808a49ca2a07ba9",
+   "criteriaRevision": 1
+  },
+  "PV-SS5": {
+   "file": "benchmarks/physics/spec/PV-SS5.json",
+   "sha256": "4e8bc29008ed5fb6e91e87791e3e6ee103d9f32da617fbc4d2b2763ec7ef3783",
+   "criteriaSha256": "a4f1b3ddccbd10c8fff7499c124b7522b8d71d1c37bf91aadc98ac7b9a6561d5",
+   "criteriaRevision": 1
+  },
+  "PV-SS6": {
+   "file": "benchmarks/physics/spec/PV-SS6.json",
+   "sha256": "b1b0b05e899223f90d6e76b039d8f0cabc6731f4e664d3084d512ed1e37ea618",
+   "criteriaSha256": "917849e2c4b11f435d7552c6c916d48b65fedd54c09f4200f424362d48b9ad58",
+   "criteriaRevision": 1
+  },
+  "PV-SS7": {
+   "file": "benchmarks/physics/spec/PV-SS7.json",
+   "sha256": "ed2a1d188beacad924f8520e9699c09d47f935b602dcbc30e85b90f20a292e81",
+   "criteriaSha256": "f4a6dba852d5a6284e0c55024a1dccb294c63c9d77797805483d5b52e7598af7",
+   "criteriaRevision": 1
+  },
+  "PV-SS8": {
+   "file": "benchmarks/physics/spec/PV-SS8.json",
+   "sha256": "7d6a17df542319b60da203eb463e1c6a2b6933f66a3c13789e5622c5b971b968",
+   "criteriaSha256": "484b291886dfd22f0b78e9fe2dcb68adc0435ee565b2bb7c7e1e6fe243b6d10e",
+   "criteriaRevision": 1
+  },
+  "PV-SS9": {
+   "file": "benchmarks/physics/spec/PV-SS9.json",
+   "sha256": "57a20dcf461e39dd1d2fdde2884adb2b89b0b114ede9b055471e8b5dd1fbdb21",
+   "criteriaSha256": "e8303a24876b29b9c9acbcf2e8b552f5302acf9b1c4ef581f305d3314b5655ad",
+   "criteriaRevision": 2
+  },
+  "PV-TF1": {
+   "file": "benchmarks/physics/spec/PV-TF1.json",
+   "sha256": "320a92b1b4e19598911cd92dfca7d8541d6c48c3559afe1a07427260c3eff2fc",
+   "criteriaSha256": "193cad1fe639f61b7191c5af74ce232b35e32872559d694ead6e984aabf52dd4",
+   "criteriaRevision": 1
+  },
+  "PV-U1": {
+   "file": "benchmarks/physics/spec/PV-U1.json",
+   "sha256": "67616a2679c3dd29575755cec111c0a1a7483a1fa4c24fa842a888bbdd5e6f15",
+   "criteriaSha256": "6ce9c78165ceb3bc298d73a23fb8622a77517aac7a34d66fa2a68f211b754d4b",
+   "criteriaRevision": 1
+  },
+  "PV-X1": {
+   "file": "benchmarks/physics/spec/PV-X1.json",
+   "sha256": "debe8a526b32e650e0c17e6dce84e9f1fd13275827c100fb58ebf80e8874640e",
+   "criteriaSha256": "c14a52c09d17a2bd0a05931cc5ef73d7c5eacc91441c8c8454ffa6bc0427ed0f",
+   "criteriaRevision": 1
+  }
+ },
+ "references": {
+  "selfTests": 98,
+  "observations": [
+   {
+    "D": 0.3,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030934485647501217,
+    "swameeJain": 0.031031161868034007,
+    "relDiff": 0.003125192435213466
+   },
+   {
+    "D": 0.3,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.03682107586552344,
+    "swameeJain": 0.037474663408566845,
+    "relDiff": 0.01775036518298417
+   },
+   {
+    "D": 0.9,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030900141599101403,
+    "swameeJain": 0.030991807114608003,
+    "relDiff": 0.002966507943422049
+   },
+   {
+    "D": 0.9,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.0330191741448169,
+    "swameeJain": 0.03337204342638299,
+    "relDiff": 0.010686799131270196
+   },
+   {
+    "D": 1.8,
+    "eps": 0.00001,
+    "Re": 10000,
+    "colebrook": 0.030891547580919776,
+    "swameeJain": 0.03098195459902438,
+    "relDiff": 0.0029265940098269915
+   },
+   {
+    "D": 1.8,
+    "eps": 0.0013,
+    "Re": 10000,
+    "colebrook": 0.03197484501515128,
+    "swameeJain": 0.032210276341372274,
+    "relDiff": 0.007363016962535292
+   }
+  ]
+ },
+ "inputs": {
+  "benchmarks/physics/channels/pv-u1.mjs": "86588849e76775f4add8e4a467c4f33903cf030e59d850991bef0b602ef64b52",
+  "benchmarks/physics/conservation/pv-c1.mjs": "05e10047a0b124eb236f185bdb90a0b448fa7e92e69abf28da2e577255f05cab",
+  "benchmarks/physics/lib/score.mjs": "06171fb1c33260a6ec103f0cd8f9d268e81f5598c4cd3bfed2605cc57512d3e1",
+  "benchmarks/physics/lib/swmm-run.mjs": "370bd6ca55adfda46d4c67289f2dd431f4d05df865a333bda06dfd3e5cdc3b7e",
+  "benchmarks/physics/pipes/pv-p1.mjs": "6219e8203c1a9ac6ac1185c24c42701c1792cd828eff4a98187082333722fd64",
+  "benchmarks/physics/references/geometry.mjs": "dd2d0bf7481b4f3425c60d457962410c534b601d088425a694eb0f795e6b6884",
+  "benchmarks/physics/references/gvf.mjs": "1ea2c0d066e395fae9867e418422e067319b071dd74e3abb3a3664f7cb4fc992",
+  "benchmarks/physics/references/manning.mjs": "151c9511a74af29a26564b68e18df7ca7c9f75c5bea74bb57002e114e5f84079",
+  "benchmarks/physics/references/pipe.mjs": "dc9385d146e0c80c3074f0c5df13205e8389f69526f4acbf19ca0283d0cb0cfa",
+  "benchmarks/physics/references/refs.test.mjs": "cceb16bf176cf5b06d0880630e76433ccbef78aef449f7f3e2389c9d6ff74d2f",
+  "benchmarks/physics/references/street.mjs": "7780a16304ab47885f52af223f2ebf88fb26b836483028ea9b8e228f7f6e1a19",
+  "benchmarks/physics/references/volume.mjs": "2ccd04bbd6ac06d7f22cd1a169e8ea5dc569f79061460c24a515231e1bb49692",
+  "benchmarks/physics/references/weir.mjs": "07978a58eb34643e20114f2f03cf73e3e81390134c08fa4bd72654d3b5f5b501",
+  "benchmarks/physics/run.mjs": "e34e2b0fe61107c96d9bd91215e57a2a8eeefa87d3890998138ade26485b4fd8",
+  "benchmarks/physics/selftest/pv-x1.mjs": "26cf3ab21a712bcb6934b237900de463c86f91a0666e21d6b8112041afc2de23",
+  "benchmarks/physics/street/cases.mjs": "35f333c03b64caee7c157f1c1866c77c4ce40ae35e2c970007dfa76510d74ea6",
+  "benchmarks/physics/street/score.mjs": "86493040fc46ee4ee9e8b68df3389ddf44bb3c101c13c3673c59bc4737dfb85d",
+  "benchmarks/physics/street/terrain.mjs": "0e361e9d725605340662010a40c9f0c1e8ed09e1d34e78793ab60bac7852a0ab",
+  "benchmarks/physics/transient/pv-tf1.mjs": "6eff747f72b33f301c01f634adf9caa76d7fb8f5747779dc5fdef1c766b172f1",
+  "src/barriers.js": "080f391416e1edb1cb59d9fb45b724d5478cdc67bc4f8da3db4211d2654c9183",
+  "src/cso.js": "77fc4468545e78037e7e40bca2affb93d11a89056ede37fb2cbd705a5b9e9cd7",
+  "src/damage-curves.js": "a957780df8eda72c7233b13da34f7082121c465c24b780ba53268ce77313b637",
+  "src/damage.js": "d3d21e77b92253da2819d727098b730950a77bdd0a63405e7b3150c8ddf5676b",
+  "src/drainage.js": "1397ec8587cb9de72fcb8e328f169672eb611c8b5a310c5eac66874f8ce07708",
+  "src/geo.js": "e4e8485d8ac1ec8466ab489c8b4ae8504cbac2a80749d9e51147f0abe5def151",
+  "src/gi.js": "b0eb2df7683f93479d295a30656c697c122f6e9583cc214430650bbcdd127222",
+  "src/hazard.js": "02d5dfc4f522d5705fce8e83d617029f1eb0814d8a4211c87dcbe3408e31ef7f",
+  "src/ingest.js": "efd1d50a586da0ddbc13299aa5bdb46fe786f7260f2ea95dfba9681b0eef0ea5",
+  "src/scour.js": "3b7ac2293cc219ed7a6641750237f648cabef170f7db0c1a1b6c303b18b16920",
+  "src/sediment.js": "45f3f4778d881a6ba5349fe096e9abbed1add13fd234ad7d0a1c0e29013dd14c",
+  "src/soil.js": "b9036aa01ea90ca35001f54384735634aa17d9641ed57b34c51947edd5504f1d",
+  "src/solver-cpu.js": "fd980414e026fa9dd5659e9948da58337d4404d45e1d6f80c78b66b2c2314b33",
+  "src/storm.js": "2e629349a964a584388947387f51c776b2a6855145e990931633ec3e7ca6cd6e",
+  "src/stormwater.js": "39bfc8f6fcc71ef294eabfe06687d7bb92b9a2b64bd33bc757f292de38ea8f78",
+  "src/subgrid.js": "6e2f9f76a38d65890978974df89836cb64d75ab1d70655b08099e2dea4612f6c",
+  "src/swmm.js": "15d7b7f284e905702b14d2ad0101297e45d7bf0b4ed41f1e87b41e5fba54aaef",
+  "src/terrain.js": "e7aefc7cbeb6fdb7ac7d4a0c2a95d50e226365e106f4ecabc64294e2ab59b7fe",
+  "vendor/swmm-wasm/swmm.mjs": "93124a41986ba9e14a4df841bfb65f82c71ba45c93b0541e678601eb91bd9b86",
+  "vendor/swmm-wasm/swmm.wasm": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ }
+}
