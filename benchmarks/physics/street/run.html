@@ -10,7 +10,7 @@ import { buildCase, caseIds } from './cases.mjs';
 import { runCase } from './harness.mjs';
 const out = document.getElementById('log'), log = (s) => { out.textContent += s + '\n'; console.log(s); };
 const specs = {};
-for (let k = 1; k <= 13; k++) { const r = await fetch(`../spec/PV-SS${k}.json`, { cache: 'no-store' }); if (r.ok) { const s = await r.json(); specs[s.id] = s; } }
+for (let k = 1; k <= 30; k++) { const r = await fetch(`../spec/PV-SS${k}.json`, { cache: 'no-store' }); if (r.ok) { const s = await r.json(); specs[s.id] = s; } }
 const adapter = await navigator.gpu?.requestAdapter({ powerPreference: 'high-performance' });
 let device = null, info = null;
 if (!adapter) log('No WebGPU adapter');

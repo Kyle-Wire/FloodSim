@@ -179,7 +179,7 @@ export class GPUSolver {
       U: mk(N * 16), U0: mk(N * 16), S: mk(N * 16), W: mk(N * 16),
       FX: mk(N * 36), FY: mk(N * 36), A: mk(N * 16), DT: mk(64), RED: mk(4),
       OUT: mk(this.nx * this.ny * 8), TH: mk(N * 4), RF: mk(N * 4),
-      INC: mk(this.INCh.byteLength), INQ: mk(this.INCh.length * 4), INX: mk(this.INCh.length * 16), STG: mk(N * 4),
+      INC: mk(this.INCh.byteLength), INQ: mk(this.INCh.length * 4), INX: mk(this.INCh.length * 16), INA: mk(this.INCh.length * 16), STG: mk(N * 4),
       // local time stepping: two lists per level, then the tile levels (two slots) and speeds
       TF: mk(this.tiles * 4), TS: mk(this.tiles * 4), TL: mk(this.tiles * 4 * (this.lts ? 2 * (this.lts + 1) + 3 : 2) + 8 * (this.lts + 1)), TC: mk(8 * (this.lts + 1)), // TL: the lists, then their lengths (tlTail)
       TA: mk(24 * (this.lts + 1), GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST),
@@ -191,6 +191,7 @@ export class GPUSolver {
       DT: mk(16, GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST),
       OUT: mk(this.nx * this.ny * 8, GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST),
       INX: mk(this.INCh.length * 16, GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST),
+      INA: mk(this.INCh.length * 16, GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST),
       BQ: mk(this.BFh.length * 48, GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST),
     };
     d.queue.writeBuffer(this.buf.S, 0, this.Sh);
@@ -216,13 +217,13 @@ export class GPUSolver {
     const mod = d.createShaderModule({ code: KERNELS_WGSL });
     this.module = mod;
     const B = [this.buf.params, this.buf.U, this.buf.U0, this.buf.S, this.buf.W, this.buf.FX, this.buf.FY, this.buf.A, this.buf.DT, this.buf.RED, this.buf.OUT, this.buf.TH, this.buf.RF, this.buf.INC, this.buf.INQ, this.buf.INX, this.buf.STG,
-      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP, this.buf.SE0, this.buf.BK, this.buf.BR, this.buf.LF, this.buf.CL, this.buf.UDC, this.buf.UDX];
+      this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP, this.buf.SE0, this.buf.BK, this.buf.BR, this.buf.LF, this.buf.CL, this.buf.UDC, this.buf.UDX, this.buf.INA];
     const uses = {
       prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27, 32], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
       sgPrim: [0, 1, 4, 16, 28], sgFluxX: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgFluxY: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgUpdate: [0, 1, 3, 5, 6, 7, 8, 11],
       sgHazard: [0, 1, 5, 6, 7, 8, 27, 28, 32], sgDt: [0, 1, 9, 28], sgPack: [0, 1, 5, 6, 10, 28], sgExchange: [0, 1, 8, 13, 14, 15, 28],
       update: [0, 1, 2, 3, 5, 6, 7, 8, 11], theta: [0, 1, 2, 3, 5, 6, 8, 11], sources: [0, 1, 3, 7, 8, 12, 22, 23, 31],
-      dtReduce: [0, 1, 3, 9], dtFinal: [0, 8, 9], pack: [0, 1, 10], exchange: [0, 1, 8, 13, 14, 15],
+      dtReduce: [0, 1, 3, 9], dtFinal: [0, 8, 9], pack: [0, 1, 10], exchange: [0, 1, 8, 13, 14, 15, 43],
       tileClear: [0, 17, 20], tileWet: [0, 1, 12, 17], tileList: [0, 17, 18, 19, 20], tileArgs: [0, 19, 20, 21],
     };
     const T = (u) => [...u, 19];
@@ -554,17 +555,23 @@ export class GPUSolver {
   /** Exchange rates per inlet (m³/s, + = surface into network), held until the next call. */
   setInletRates(q) { this.device.queue.writeBuffer(this.buf.INQ, 0, q instanceof Float32Array ? q : Float32Array.from(q)); }
 
-  /** Volume exchanged per inlet since the last call (m³) and current inlet depths (m); resets the accumulators. */
+  /**
+   * Volume exchanged per inlet since the last call (m³) and current inlet depths (m); resets the accumulators.
+   * `app`: per inlet, 4 floats from the latest step: frontal and side flow arriving at the cell (m³/s), the frontal
+   * cell's depth (m) and its axis (0 x, 1 y), for drainage.js grateCapture (F21). Zero under the subgrid speed mode.
+   */
   async readInlets() {
     const M = this.nInlets, enc = this.device.createCommandEncoder();
     enc.copyBufferToBuffer(this.buf.INX, 0, this.read.INX, 0, M * 16);
+    enc.copyBufferToBuffer(this.buf.INA, 0, this.read.INA, 0, M * 16);
     enc.clearBuffer(this.buf.INX, 0, M * 16);
     this.device.queue.submit([enc.finish()]);
-    await this.read.INX.mapAsync(GPUMapMode.READ, 0, M * 16);
+    await Promise.all([this.read.INX.mapAsync(GPUMapMode.READ, 0, M * 16), this.read.INA.mapAsync(GPUMapMode.READ, 0, M * 16)]);
     const a = new Float32Array(this.read.INX.getMappedRange(0, M * 16).slice(0)); this.read.INX.unmap();
+    const app = new Float32Array(this.read.INA.getMappedRange(0, M * 16).slice(0)); this.read.INA.unmap();
     const vol = new Float64Array(M), h = new Float32Array(M);
     for (let m = 0; m < M; m++) { vol[m] = a[4 * m] - a[4 * m + 2]; h[m] = a[4 * m + 1]; this.vol.exchanged += vol[m]; }
-    return { vol, h };
+    return { vol, h, app };
   }
 
   async _readDT() {

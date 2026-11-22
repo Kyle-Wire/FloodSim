@@ -29,6 +29,7 @@ override STAGE: u32 = 0u;
 @group(0) @binding(13) var<storage, read> INC: array<u32>;        // drainage inlets: padded cell index
 @group(0) @binding(14) var<storage, read> INQ: array<f32>;        // inlet exchange rate, m3/s (+ = surface into network)
 @group(0) @binding(15) var<storage, read_write> INX: array<vec4f>; // volume exchanged since last read (m3), latest depth (m), Kahan residual of x
+@group(0) @binding(43) var<storage, read_write> INA: array<vec4f>; // flow arriving at each inlet cell (F21): frontal m3/s, side m3/s, depth of the frontal cell m, its axis (0 x, 1 y)
 @group(0) @binding(16) var<storage, read> STG: array<f32>;         // 1 on ghost cells that see the external water level (P.stage)
 // active tiles (8×8 interior cells): wet flags, always-active flags, the two tile lists, their counts, indirect args
 @group(0) @binding(17) var<storage, read_write> TF: array<atomic<u32>>; // per tile: 1 if any cell holds water this step
@@ -586,10 +587,30 @@ fn exchangeAt(m: u32) {
   }
   x.y = q.x;
   INX[m] = x;
+  approachAt(m, c);
   // the peak depth is tracked in sources, before this, and not here: water an inlet gives back (a surcharged manhole)
   // arrives one step's worth at a time, and right after it lands the cell holds that step's lump, gone once the next
   // flux spreads it (an operator-splitting spike that shrinks with the step); the next step's sources sees the spread
   // water. The run's peak grid takes the solver's peaks only (app/map.js), not the frames read back after this
+}
+
+// The water arriving at an inlet cell (F21), for a grate law that sees moving water (drainage.js grateCapture): each
+// interior neighbour's cell discharge toward the cell; the largest is the frontal (approach) flow along the street, the
+// rest arrives from the side. Reported only: it changes no water. A wall ghost is skipped (its mirrored discharge is not
+// an inflow). CPU twin: benchmarks/physics/street/exec-cpu.mjs readInlets.
+fn approachAt(m: u32, c: i32) {
+  let NX = i32(P.NX); let i = c % NX; let j = c / NX;
+  var f = vec4f(0.0);
+  if (i - 1 >= GH) { f.x = max(0.0, U[c - 1].y); }
+  if (i + 1 < i32(P.nx) + GH) { f.y = max(0.0, -U[c + 1].y); }
+  if (j - 1 >= GH) { f.z = max(0.0, U[c - NX].z); }
+  if (j + 1 < i32(P.ny) + GH) { f.w = max(0.0, -U[c + NX].z); }
+  var fm = f.x; var nb = c - 1; var ax = 0.0;
+  if (f.y > fm) { fm = f.y; nb = c + 1; }
+  if (f.z > fm) { fm = f.z; nb = c - NX; ax = 1.0; }
+  if (f.w > fm) { fm = f.w; nb = c + NX; ax = 1.0; }
+  let hn = select(0.0, U[nb].x, fm > 0.0);
+  INA[m] = vec4f(fm * P.dx, (f.x + f.y + f.z + f.w - fm) * P.dx, hn, ax);
 }
 
 // ---- active tiles. Faces (and theta) run on wet tiles grown by 2, the update on wet tiles grown by 1: water moves

@@ -66,10 +66,10 @@ export class LinkHub {
     this.q = new Float32Array(o); this.tNext = interval;
   }
   async exchange() {
-    const { vol, h } = await this.solver.readInlets();
+    const { vol, h, app } = await this.solver.readInlets();
     for (let i = 0; i < this.members.length; i++) {
       const m = this.members[i], o = this.offsets[i];
-      const r = await m.step(vol.subarray(o, o + m.count), h.subarray(o, o + m.count), this.interval, this.tNext);
+      const r = await m.step(vol.subarray(o, o + m.count), h.subarray(o, o + m.count), this.interval, this.tNext, app ? app.subarray(4 * o, 4 * (o + m.count)) : null);
       this.q.set(r, o);
     }
     this.solver.setInletRates(this.q);

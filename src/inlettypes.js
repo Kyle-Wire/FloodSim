@@ -14,11 +14,11 @@ const r2 = (x) => Math.round(x * 100) / 100;
  * drawing (named in `basis`). The first five are the generic kinds the Inlet hydraulics select offers.
  */
 export const INLET_KINDS = Object.freeze({
-  typical: { label: 'Typical street grate', v: [0.2, 2, 0.5, 0.6], basis: 'A 0.6 × 0.35 m street grate. The model’s default.' },
+  typical: { label: 'Typical street grate', v: [0.2, 2, 0.32, 0.6], basis: 'A 0.6 × 0.35 m street grate. The model’s default (weir coefficient fitted to the Sheffield rig, F15).' },
   hec22: { label: 'Street grate, FHWA HEC-22 coefficients', v: [0.2, 2, 0.37, 0.67], basis: 'The same grate with the FHWA HEC-22 grate coefficients (weir 1.66 SI, orifice 0.67). Takes a little less while the water is shallow.' },
   small: { label: 'Small yard or alley grate', v: [0.1, 1.4, 0.5, 0.6], basis: 'About 0.4 × 0.3 m, as in yards, alleys and parking lots.' },
   large: { label: 'Double grate', v: [0.4, 3, 0.5, 0.6], basis: 'Two street grates side by side.' },
-  curb: { label: 'Curb opening (a slot in the curb)', v: [0.2, 1.5, 0.28, 0.67], basis: 'A 1.5 m opening about 13 cm high in the face of the curb, with the HEC-22 curb-opening weir coefficient (1.25 SI).' },
+  curb: { noCapture: true, label: 'Curb opening (a slot in the curb)', v: [0.2, 1.5, 0.28, 0.67], basis: 'A 1.5 m opening about 13 cm high in the face of the curb, with the HEC-22 curb-opening weir coefficient (1.25 SI).' },
   // NCDOT Roadway Standard Drawings, Drainage Box Depths table (rev. 4/24/2026): total clear orifice opening of each grate
   // and, for drop inlets, the weir length. HEC-22 coefficients: grate weir 1.66 SI (Cw 0.37), curb opening 1.25 SI (0.28), orifice 0.67.
   ncdotCB: { label: 'NCDOT catch basin, Type E grate (840.03)', v: [r2(3.1 * FT2), 2.1, 0.37, 0.67], est: 'weir length',
@@ -27,11 +27,11 @@ export const INLET_KINDS = Object.freeze({
     basis: 'Two 840.03 grates end to end: 6.2 ft² (0.58 m²). The weir length, 3.0 m, is estimated: the long side and both ends.' },
   ncdotDI: { label: 'NCDOT drop inlet grate (840.16)', v: [r2(3.7 * FT2), r2(8.6 * FT), 0.37, 0.67],
     basis: 'Clear opening 3.7 ft² (0.34 m²) and weir length 8.6 ft (2.62 m), NCDOT 840.16, open on all sides.' },
-  ncdotCI: { label: 'NCDOT open-throat curb inlet, 6" throat (840.04/.05)', v: [r2(2.15 * FT2), 1.4, 0.28, 0.67], est: 'opening and weir length',
+  ncdotCI: { noCapture: true, label: 'NCDOT open-throat curb inlet, 6" throat (840.04/.05)', v: [r2(2.15 * FT2), 1.4, 0.28, 0.67], est: 'opening and weir length',
     basis: 'Throat opening 1.8–2.5 ft² for the 6" throat (NCDOT 840.04/.05); 2.15 ft² (0.20 m²) used. The 1.4 m length of the throat is estimated.' },
-  ncdotElong: { label: 'NCDOT elongated throat curb inlet, 8" throat', v: [r2(3.3 * FT2), 1.5, 0.28, 0.67], est: 'opening and weir length',
+  ncdotElong: { noCapture: true, label: 'NCDOT elongated throat curb inlet, 8" throat', v: [r2(3.3 * FT2), 1.5, 0.28, 0.67], est: 'opening and weir length',
     basis: 'Throat opening 2.3–3.3 ft² for the 8" throat (NCDOT 840.04/.05); the top of the range, 3.3 ft² (0.31 m²), for the longer throat. The 1.5 m length is estimated.' },
-  ncdotSlab: { label: 'NCDOT slab-top drop inlet, per open side', v: [0.15, 1.0, 0.28, 0.67], est: 'all four values', perSide: true,
+  ncdotSlab: { noCapture: true, label: 'NCDOT slab-top drop inlet, per open side', v: [0.15, 1.0, 0.28, 0.67], est: 'all four values', perSide: true,
     basis: 'A slab-top drop inlet takes water through openings in its sides under the slab. Per open side, estimated: 0.15 m² and 1.0 m of opening, with the curb-opening weir coefficient. Multiplied by the number of open sides in the type (SlabDI 1–4).' },
 });
 
@@ -87,7 +87,8 @@ export function defaultStandard(lon, lat) {
 export function kindHydraulics(kind, sides = 1) {
   const k = INLET_KINDS[kind]; if (!k) return null;
   const n = k.perSide ? sides : 1;
-  return { inletArea: r2(k.v[0] * n), inletPerim: r2(k.v[1] * n), Cw: k.v[2], Co: k.v[3] };
+  // a curb opening or slab inlet is not a grate: HEC-22's grate capture (drainage.js grateCapture) does not apply
+  return { inletArea: r2(k.v[0] * n), inletPerim: r2(k.v[1] * n), Cw: k.v[2], Co: k.v[3], ...(k.noCapture ? { capture: null } : {}) };
 }
 
 /**

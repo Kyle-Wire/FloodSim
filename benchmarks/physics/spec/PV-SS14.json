@@ -1,0 +1,1129 @@
+{
+ "id": "PV-SS14",
+ "title": "A grate on a grade with the moving-water law (F21), on two gutter shapes",
+ "category": "integration",
+ "process": "the same gutter and grate as PV-SS13, with the coupler option capture: hec22 (drainage.js grateCapture), and a second gutter shape not seen before",
+ "module": "street/score.mjs",
+ "executor": "node (CPU surface solver) and browser (GPU); raw measurements in street/raw/, scored by run.mjs",
+ "equations": [
+  "gutter (FHWA HEC-22 Eq. 4-2): Q = (0.376 / n) Sx^1.67 SL^0.5 T^2.67; depth at the kerb T Sx; mean depth over the first metre Sx (T - 0.5)",
+  "grate on a grade (Eq. 4-16, 4-19, 4-20): frontal share Eo = 1 - (1 - W/T)^2.67, side interception Rs = 1 / (1 + 0.0828 V^1.8 / (Sx L^2.3)), efficiency E = Eo + Rs (1 - Eo), with all the frontal flow taken (velocities below splash-over)",
+  "flow reaching the grate at steady state: rain x street width x distance from the top"
+ ],
+ "initialConditions": "dry",
+ "boundaryConditions": "kerb and the other three sides: walls, except the foot of the street, a free-outfall edge; the grate sits on a 0.45 m pipe to a free outfall that never limits it",
+ "geometry": "a: the PV-SS13 street (half street 100 x 8 m, Sx 2 %, n 0.016, SL 1, 2, 4 %, rain 50, 100, 200 mm/h). b and c: a second shape, half street 100 x 10 m, Sx 3 %, n 0.015, SL 0.5, 1.5, 3 %, rain 60 and 150 mm/h; b with the capture law, c without it (the control). One grate in the kerb cell at 75.5 m, 0.6 x 0.9 m for HEC-22 and for the capture law; 1 m cells",
+ "parameters": {
+  "scenes": {
+   "value": {
+    "gutter": {
+     "kind": "gutterStreet",
+     "L": 100,
+     "W": 8,
+     "SL": 0.02,
+     "Sx": 0.02,
+     "n": 0.016
+    }
+   },
+   "unit": "m, m/m, s m^-1/3"
+  },
+  "hec22Grate": {
+   "value": {
+    "W": 0.6,
+    "L": 0.9,
+    "x": 75.5
+   },
+   "unit": "m wide, m long, m from the top of the street"
+  },
+  "aboveX": {
+   "value": 70.5,
+   "unit": "m: the kerb cell whose depth is scored"
+  },
+  "cases": {
+   "value": {
+    "SS14-a-s1-r50": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.01
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 50,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-a-s1-r100": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.01
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 100,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-a-s1-r200": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.01
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 200,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-a-s2-r50": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.02
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 50,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-a-s2-r100": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.02
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 100,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-a-s2-r200": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.02
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 200,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-a-s4-r50": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.04
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 50,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-a-s4-r100": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.04
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 100,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-a-s4-r200": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.04
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 200,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-b-s05-r60": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.005,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-c-s05-r60": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.005,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true
+     }
+    },
+    "SS14-b-s05-r150": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.005,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 150,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-c-s05-r150": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.005,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 150,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true
+     }
+    },
+    "SS14-b-s15-r60": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.015,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-c-s15-r60": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.015,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true
+     }
+    },
+    "SS14-b-s15-r150": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.015,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 150,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-c-s15-r150": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.015,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 150,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true
+     }
+    },
+    "SS14-b-s30-r60": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.03,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-c-s30-r60": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.03,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 60,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true
+     }
+    },
+    "SS14-b-s30-r150": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.03,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 150,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true,
+      "opts": {
+       "capture": "hec22",
+       "grateW": 0.6,
+       "grateL": 0.9
+      }
+     }
+    },
+    "SS14-c-s30-r150": {
+     "scene": "gutter",
+     "sceneArgs": {
+      "SL": 0.03,
+      "W": 10,
+      "Sx": 0.03,
+      "n": 0.015
+     },
+     "bc": {
+      "east": "outflow"
+     },
+     "rain": {
+      "mmhr": 150,
+      "minutes": 20
+     },
+     "tEnd": 1200,
+     "every": 60,
+     "probes": {
+      "grate": {
+       "kind": "box",
+       "x0": 75,
+       "x1": 76,
+       "y0": 0,
+       "y1": 1
+      },
+      "above": {
+       "kind": "box",
+       "x0": 70,
+       "x1": 71,
+       "y0": 0,
+       "y1": 1
+      }
+     },
+     "drainage": {
+      "kind": "pipe",
+      "inlet": [
+       75.5,
+       0.5
+      ],
+      "invUp": -1.5,
+      "invOut": -1.6,
+      "L": 20,
+      "D": 0.45,
+      "outlet": "FREE",
+      "twoWay": true
+     }
+    }
+   },
+   "unit": "slope along the street %, rain mm/h for 20 min"
+  }
+ },
+ "solver": "FloodSim surface solver with the app's settings (hdry 1e-5 m, hfront 1e-3 m, dtDry 2 s; MUSCL minmod, HLLC, SSP-RK2, CFL 0.48). cpu rows: src/solver-cpu.js (fp64). gpu rows: src/solver-gpu.js in Chrome WebGPU (fp32). The grate through the production Coupler and SWMM, two-way exchange (the app default). Cases a and b set the inlet option capture: hec22 (grateW 0.6, grateL 0.9, no splash-over speed); c does not.",
+ "reference": {
+  "module": "references/street.mjs",
+  "functions": [
+   "gutterSpread",
+   "grateEfficiency",
+   "kerbCellDepth"
+  ],
+  "sources": "FHWA HEC-22, Urban Drainage Design Manual, 3rd ed. (2009), sec. 4.3.2 and 4.4.4.1 (opened 17 Nov 2026)",
+  "independence": "the manual's equations from the street's shape, the rain and a grate size; nothing from the solver or the coupler",
+  "crossCheck": "refs.test.mjs: the spread against Manning strip by strip; the frontal share against the strip flow over the grate's width"
+ },
+ "outputs": [
+  "the share of the flow reaching the grate that it takes (mean over the last 300 s)",
+  "the depth in the kerb cell 5 m above the grate at the end",
+  "reported: HEC-22's frontal share alone, the depth in the grate's own cell"
+ ],
+ "criteria": {
+  "efficiencyAbs": 0.1,
+  "gutterDepthAbsM": 0.002,
+  "gutterDepthRel": 0.1
+ },
+ "criteriaNotes": "Registered 22 Nov 2026 before any of these runs. The law (drainage.js grateCapture, the solver approach flows, the coupler taking the larger of it and the weir/orifice law) was written from HEC-22 and the solver code without running it on any gutter. Case a is the PV-SS13 street: the law has not seen it, but the failure it fixes was found there. Cases b are blind: a second cross slope, street width, roughness and range of slopes and rains. Cases c are the control and are expected to fail as PV-SS13 does (the weir law alone). Pass rule as PV-SS13: within 10 points of HEC-22 efficiency, kerb cell within 2 mm or 10 %. The fix is adopted only if every a and b row passes on cpu and gpu; the gutter depth rows must stay passed. Hand answers for b at registration: s05 r60: Q 12.6 l/s, T 1.41 m, V 0.42 m/s, E 0.903; s05 r150: Q 31.5 l/s, T 1.98 m, V 0.53 m/s, E 0.797; s15 r60: Q 12.6 l/s, T 1.14 m, V 0.64 m/s, E 0.916; s15 r150: Q 31.5 l/s, T 1.61 m, V 0.81 m/s, E 0.797; s30 r60: Q 12.6 l/s, T 1.00 m, V 0.83 m/s, E 0.937; s30 r150: Q 31.5 l/s, T 1.42 m, V 1.05 m/s, E 0.818",
+ "conservation": "surface books (reported)",
+ "resolution": "1 m cells: the gutter's triangular section is one cell's mean bed",
+ "assumptions": [
+  "a 0.6 x 0.9 m grate in a uniform gutter section; the app's default grate has no stated width or length, only an area and a weir length",
+  "frontal flow all taken (the highest velocity here is 1.0 m/s)",
+  "the capture law reads the frontal cell as a gutter section with the cell bed's cross slope; frontal flow is the largest neighbour discharge toward the grate cell"
+ ],
+ "limitations": [
+  "two cross slopes, two street widths, one grate size",
+  "sheet flow feeds the gutter along its whole length: a real street also has a crown",
+  "HEC-22's equations are fits to laboratory tests of grates, with their own scatter",
+  "the law is not exercised on a sag, at a ponded grate or under the subgrid speed mode (approach flows are zero there, so the weir law governs)"
+ ],
+ "validRange": "a grate on a continuous grade of 0.5 to 4 % in a uniform gutter",
+ "scoring": "automated: street/score.mjs builds rows with lib/score.mjs row(); one row set per executor (cpu, gpu), never merged; a case with no raw file is listed as not run and has no rows",
+ "criteriaRevisions": [
+  {
+   "revision": 1,
+   "date": "2026-11-22",
+   "hash": "232822c605076c3ef3742168740cfef09c9b77d8976ac2929a37fb50d13ad2f2",
+   "why": "first registration, before any run of the capture law; b is blind, a is the PV-SS13 street"
+  }
+ ]
+}

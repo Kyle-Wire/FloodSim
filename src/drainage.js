@@ -31,7 +31,10 @@ export const DESIGN_DEFAULTS = {
   fallbackIntensity: 100, // mm/hr when Atlas 14 is unavailable
   inletArea: 0.2,       // m², one grate opening (≈ 0.6 × 0.35 m clear)
   inletPerim: 2.0,      // m, weir length of one grate
-  Cw: 0.5, Co: 0.6,     // weir and orifice coefficients
+  Cw: 0.32, Co: 0.6,    // weir and orifice coefficients. Cw was 0.5 until 22 Nov 2026: 1.55 times too much on the
+                        // Sheffield rig (F15, PV-SS10 fit; benchmarks/physics/street/FIXES-2.md)
+  capture: 'hec22',     // a grate on a grade also takes HEC-22's share of the water arriving moving (F21, grateCapture);
+  grateW: 0.6, grateL: 0.9, // null = the depth law alone. The grate's size for it (m, a 2 × 3 ft grate)
   continuation: 100,    // m of off-site pipe beyond each boundary outlet (stands in for the downstream sewer)
   grateMerge: 12,       // m: real grates closer than this along a street share a manhole
   surDepth: 0,          // open manholes when the coupler takes water in only: a full node overflows (SWMM 'flooding') and the
@@ -521,7 +524,9 @@ export function inletOptions(parts, base) {
     const o = hyd ? { ...base, ...hyd } : base;
     n += g; A += o.inletArea * g; P += o.inletPerim * g; CwP += o.Cw * o.inletPerim * g; CoA += o.Co * o.inletArea * g;
   }
-  return n > 0 ? { ...base, inletArea: A / n, inletPerim: P / n, Cw: P > 0 ? CwP / P : base.Cw, Co: A > 0 ? CoA / A : base.Co } : base;
+  // a point whose openings all keep the depth law (curb openings, slab inlets) does not take HEC-22's grate capture
+  const capture = parts.every(p => p[1] && p[1].capture === null) ? null : base.capture;
+  return n > 0 ? { ...base, inletArea: A / n, inletPerim: P / n, Cw: P > 0 ? CwP / P : base.Cw, Co: A > 0 ? CoA / A : base.Co, capture } : base;
 }
 
 export function inletFlow(h, zs, Hn, nInlets, o = DESIGN_DEFAULTS, crest = 0) {
@@ -536,6 +541,39 @@ export function inletFlow(h, zs, Hn, nInlets, o = DESIGN_DEFAULTS, crest = 0) {
   }
   const dH = eta - Hn; // submerged inlet: inflow on the head difference, none once the network is at street level
   return dH > 0 ? o.Co * A * Math.sqrt(2 * G * dH) : 0;
+}
+
+/**
+ * F21: what a grate on a grade takes of the water arriving moving (FHWA HEC-22, 3rd ed., sec. 4.4.4.1, Eq. 4-16 to
+ * 4-20), for `capture: 'hec22'` (default off: inletFlow alone). inletFlow sees only the depth in the grate's cell, so
+ * on a grade most of the gutter flow runs over the grate. Here the frontal flow arriving along the street is split
+ * across the frontal cell as a gutter section (depth falling by Sx per metre from the kerb, Manning strip discharge
+ * ∝ d^(5/3), the integral behind Eq. 4-16): the share within the grate's width W is taken at Rf (1 below the
+ * splash-over speed, else 1 − 0.295 (V − Vo), Eq. 4-18 SI); the rest of it and the flow arriving from the side are
+ * taken at the side ratio Rs = 1 / (1 + 0.0828 V^1.8 / (Sx L^2.3)) (Eq. 4-19 SI). The coupler takes the larger of this
+ * and inletFlow, so ponded water (no approach speed) keeps the weir and orifice law.
+ * @param a   [frontal m³/s, side m³/s, frontal cell depth m, axis] (solver readInlets `app`)
+ * @param Sx  the cell's cross slope to that axis (m/m)   @param dx cell size (m)   @param nInlets grates at the point
+ * @param o   { grateW, grateL (m), splashV (m/s, null = never) } → m³/s
+ */
+export function grateCapture(a, Sx, dx, nInlets, o) {
+  const [Qf, Qs, hf] = a; if (!nInlets || !(Qf + Qs > 0) || !(hf > 0)) return 0;
+  const open = 1 - Math.min(0.95, o.clog ?? 0), W = Math.min(dx, (o.grateW ?? 0.6) * nInlets * open), L = o.grateL ?? 0.9;
+  const V = Qf / (dx * hf), Eo = cellFrontalShare(hf, Sx, W, dx);
+  const Rf = o.splashV != null && V > o.splashV ? Math.max(0, 1 - 0.295 * (V - o.splashV)) : 1;
+  const Rs = 1 / (1 + 0.0828 * Math.pow(V, 1.8) / (Math.max(Sx, 1e-3) * Math.pow(L, 2.3)));
+  return Rf * Eo * Qf + Rs * ((1 - Eo) * Qf + Qs);
+}
+
+/** Share of a cell's flow within W of its kerb side: mean depth hm over the cell, bed falling Sx per metre toward the kerb. */
+export function cellFrontalShare(hm, Sx, W, dx) {
+  if (W >= dx) return 1;
+  if (!(Sx > 1e-4)) return W / dx;
+  // depth at the kerb dk, wetted width T within the cell (a triangle narrower than the cell, or a trapezoid)
+  let dk, T; if (hm >= Sx * dx / 2) { dk = hm + Sx * dx / 2; T = dx; } else { T = Math.sqrt(2 * hm * dx / Sx); dk = Sx * T; }
+  if (W >= T) return 1;
+  const F = (y) => (Math.pow(dk, 8 / 3) - Math.pow(Math.max(0, dk - Sx * y), 8 / 3)); // ∝ ∫0^y d^(5/3)
+  return F(W) / F(T);
 }
 
 // ------------------------------------------------------------------ tier 3

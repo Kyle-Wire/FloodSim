@@ -376,7 +376,7 @@ function ss10(spec) {
   return { rows, cases: { coefficients: hand }, notRun: [], raw: {}, hand: { coefficients: hand } };
 }
 
-const SCORERS = { 'PV-SS10': ss10, 'PV-SS11': ss11, 'PV-SS12': ss12, 'PV-SS13': ss13, 'PV-SS1': ss1, 'PV-SS2': ss2, 'PV-SS3': ss3, 'PV-SS4': ss4, 'PV-SS5': ss5, 'PV-SS6': ss6, 'PV-SS7': ss7, 'PV-SS8': ss8, 'PV-SS9': ss9 };
+const SCORERS = { 'PV-SS10': ss10, 'PV-SS11': ss11, 'PV-SS12': ss12, 'PV-SS13': ss13, 'PV-SS14': ss13, 'PV-SS1': ss1, 'PV-SS2': ss2, 'PV-SS3': ss3, 'PV-SS4': ss4, 'PV-SS5': ss5, 'PV-SS6': ss6, 'PV-SS7': ss7, 'PV-SS8': ss8, 'PV-SS9': ss9 };
 export async function run(spec, specs) { const f = SCORERS[spec.id]; if (!f) throw new Error('no scorer for ' + spec.id); return f(spec, specs); }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]) && process.argv.includes('--expect')) {
