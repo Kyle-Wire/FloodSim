@@ -1,0 +1,1390 @@
+{
+ "id": "PV-SS6",
+ "spec": "benchmarks/physics/spec/PV-SS6.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-1 [cpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.8014633429124138,
+   "abs": -0.00020332375425291538,
+   "rel": -0.0002536263046813913,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-1 [cpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.8014633429124138,
+   "abs": -0.00020332375425291538,
+   "rel": -0.0002536263046813913,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-1 [gpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.8014600276947021,
+   "abs": -0.00020663897196460113,
+   "rel": -0.0002577617113903548,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-1 [gpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.8014600276947021,
+   "abs": -0.00020663897196460113,
+   "rel": -0.0002577617113903548,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-2 [cpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.3632366888147345,
+   "abs": -0.4384299778519323,
+   "rel": -0.5468981012706016,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Failed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-2 [cpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.8182367086410522,
+   "abs": 0.016570041974385497,
+   "rel": 0.020669491028339496,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Passed",
+   "note": "the app's downscaling"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-2 [cpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.3633333333333334,
+   "sim": 0.3632366888147345,
+   "abs": -0.00009664451859892065,
+   "rel": -0.0002659940878869375,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-2 [gpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.36323580145835876,
+   "abs": -0.438430865208308,
+   "rel": -0.5468992081600514,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Failed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-2 [gpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.8182358145713806,
+   "abs": 0.016569147904713866,
+   "rel": 0.02066837576471584,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Passed",
+   "note": "the app's downscaling"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-2 [gpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.3633333333333334,
+   "sim": 0.36323580145835876,
+   "abs": -0.00009753187497463234,
+   "rel": -0.0002684363531411899,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-4 [cpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.1455950085415248,
+   "abs": -0.656071658125142,
+   "rel": -0.8183846047299068,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Failed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-4 [cpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.8430950045585632,
+   "abs": 0.04142833789189648,
+   "rel": 0.05167776036411203,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Passed",
+   "note": "the app's downscaling"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-4 [cpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.14562500000000003,
+   "sim": 0.1455950085415248,
+   "abs": -0.000029991458475236987,
+   "rel": -0.0002059499294436874,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-4 [gpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.14559486508369446,
+   "abs": -0.6560718015829723,
+   "rel": -0.8183847836793833,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Failed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-4 [gpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.8430948853492737,
+   "abs": 0.04142821868260693,
+   "rel": 0.05167761166229554,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Passed",
+   "note": "the app's downscaling"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-4 [gpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.14562500000000003,
+   "sim": 0.14559486508369446,
+   "abs": -0.00003013491630557419,
+   "rel": -0.0002069350475919257,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-05 [cpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8391666666666666,
+   "sim": 0.8389625864330151,
+   "abs": -0.00020408023365148242,
+   "rel": -0.0002431939229213296,
+   "limit": 0.08391666666666667,
+   "criterion": {
+    "abs": 0.08391666666666667
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-05 [cpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8391666666666666,
+   "sim": 0.8389625864330151,
+   "abs": -0.00020408023365148242,
+   "rel": -0.0002431939229213296,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-05 [gpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8391666666666666,
+   "sim": 0.8389555811882019,
+   "abs": -0.00021108547846471204,
+   "rel": -0.0002515417816858535,
+   "limit": 0.08391666666666667,
+   "criterion": {
+    "abs": 0.08391666666666667
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-05 [gpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8391666666666666,
+   "sim": 0.8389555811882019,
+   "abs": -0.00021108547846471204,
+   "rel": -0.0002515417816858535,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-4s [gpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.7067334651947021,
+   "abs": -0.0949332014719646,
+   "rel": -0.11841979393592257,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Failed",
+   "note": "the subgrid tables' 1 m depth"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-drive-8s [gpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.8016666666666667,
+   "sim": 0.6144134998321533,
+   "abs": -0.18725316683451343,
+   "rel": -0.23357983388920592,
+   "limit": 0.08016666666666668,
+   "criterion": {
+    "abs": 0.08016666666666668
+   },
+   "status": "Failed",
+   "note": "the subgrid tables' 1 m depth"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-1 [cpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00000999962781915717,
+   "abs": 0.00000999962781915717,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-1 [cpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00000999962781915717,
+   "abs": 0.00000999962781915717,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-1 [gpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000009998643690778408,
+   "abs": 0.000009998643690778408,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-1 [gpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000009998643690778408,
+   "abs": 0.000009998643690778408,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-2 [cpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.10717347882930742,
+   "abs": 0.10717347882930742,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-2 [cpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.11592347174882889,
+   "abs": 0.11592347174882889,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "the app's downscaling"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-2 [cpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.10717391304347823,
+   "sim": 0.10717347882930742,
+   "abs": -4.3421417081357383e-7,
+   "rel": -0.0000040514912489704665,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-2 [gpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.10717348009347916,
+   "abs": 0.10717348009347916,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-2 [gpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.11592347919940948,
+   "abs": 0.11592347919940948,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "the app's downscaling"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-2 [gpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.10717391304347823,
+   "sim": 0.10717348009347916,
+   "abs": -4.329499990740615e-7,
+   "rel": -0.000004039695731725525,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-4 [cpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00002046815344735202,
+   "abs": 0.00002046815344735202,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-4 [cpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "the app's downscaling"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-4 [cpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00002046815344735202,
+   "abs": 0.00002046815344735202,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-4 [gpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000020470823073992506,
+   "abs": 0.000020470823073992506,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-4 [gpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "the app's downscaling"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-4 [gpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000020470823073992506,
+   "abs": 0.000020470823073992506,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-05 [cpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000009999866916924728,
+   "abs": 0.000009999866916924728,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-05 [cpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000009999866916924728,
+   "abs": 0.000009999866916924728,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-05 [gpu]",
+   "quantity": "depth beside the house at the end, solver cells, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000009998610039474443,
+   "abs": 0.000009998610039474443,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "resolution: the solver's own cells"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-05 [gpu]",
+   "quantity": "depth beside the house at the end against this grid's own arithmetic (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000009998610039474443,
+   "abs": 0.000009998610039474443,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-4s [gpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.010006471537053585,
+   "abs": 0.010006471537053585,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": "the subgrid tables' 1 m depth"
+  },
+  {
+   "benchmark": "PV-SS6",
+   "case": "SS6-yard-8s [gpu]",
+   "quantity": "depth beside the house at the end, on the 1 m map, against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.030018653720617294,
+   "abs": 0.030018653720617294,
+   "rel": null,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": "the subgrid tables' 1 m depth"
+  }
+ ],
+ "cases": {
+  "SS6-drive-1 [cpu]": {
+   "endDepthM": 0.8014633429124138,
+   "peakDepthM": 0.8014633430207617,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-drive-1 [gpu]": {
+   "endDepthM": 0.8014600276947021,
+   "peakDepthM": 0.8014601469039917,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-drive-2 [cpu]": {
+   "endDepthM": 0.8182367086410522,
+   "peakDepthM": 0.8182367086410522,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-drive-2 [gpu]": {
+   "endDepthM": 0.8182358145713806,
+   "peakDepthM": 0.8182358145713806,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-drive-4 [cpu]": {
+   "endDepthM": 0.8430950045585632,
+   "peakDepthM": 0.8430950045585632,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-drive-4 [gpu]": {
+   "endDepthM": 0.8430948853492737,
+   "peakDepthM": 0.8430948853492737,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-drive-05 [cpu]": {
+   "endDepthM": 0.8389625864330151,
+   "peakDepthM": 0.8389625864330151,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-drive-05 [gpu]": {
+   "endDepthM": 0.8389555811882019,
+   "peakDepthM": 0.8389556407928467,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-drive-4s [gpu]": {
+   "endDepthM": 0.7067334651947021,
+   "peakDepthM": 0.7067334651947021,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-drive-8s [gpu]": {
+   "endDepthM": 0.6144134998321533,
+   "peakDepthM": 0.6144134998321533,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": true
+  },
+  "SS6-yard-1 [cpu]": {
+   "endDepthM": 0.00000999962781915717,
+   "peakDepthM": 0.012599422180537743,
+   "exposedAtEnd": false,
+   "exposedAtPeak": false,
+   "trulyExposedAtEnd": false
+  },
+  "SS6-yard-1 [gpu]": {
+   "endDepthM": 0.000009998643690778408,
+   "peakDepthM": 0.012599420733749866,
+   "exposedAtEnd": false,
+   "exposedAtPeak": false,
+   "trulyExposedAtEnd": false
+  },
+  "SS6-yard-2 [cpu]": {
+   "endDepthM": 0.11592347174882889,
+   "peakDepthM": 0.11592350155115128,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": false
+  },
+  "SS6-yard-2 [gpu]": {
+   "endDepthM": 0.11592347919940948,
+   "peakDepthM": 0.11592350155115128,
+   "exposedAtEnd": true,
+   "exposedAtPeak": true,
+   "trulyExposedAtEnd": false
+  },
+  "SS6-yard-4 [cpu]": {
+   "endDepthM": 0,
+   "peakDepthM": 0,
+   "exposedAtEnd": false,
+   "exposedAtPeak": false,
+   "trulyExposedAtEnd": false
+  },
+  "SS6-yard-4 [gpu]": {
+   "endDepthM": 0,
+   "peakDepthM": 0,
+   "exposedAtEnd": false,
+   "exposedAtPeak": false,
+   "trulyExposedAtEnd": false
+  },
+  "SS6-yard-05 [cpu]": {
+   "endDepthM": 0.000009999866916924728,
+   "peakDepthM": 0.013089731043041517,
+   "exposedAtEnd": false,
+   "exposedAtPeak": false,
+   "trulyExposedAtEnd": false
+  },
+  "SS6-yard-05 [gpu]": {
+   "endDepthM": 0.000009998610039474443,
+   "peakDepthM": 0.013089660555124283,
+   "exposedAtEnd": false,
+   "exposedAtPeak": false,
+   "trulyExposedAtEnd": false
+  },
+  "SS6-yard-4s [gpu]": {
+   "endDepthM": 0.010006471537053585,
+   "peakDepthM": 0.01941797323524952,
+   "exposedAtEnd": false,
+   "exposedAtPeak": false,
+   "trulyExposedAtEnd": false
+  },
+  "SS6-yard-8s [gpu]": {
+   "endDepthM": 0.030018653720617294,
+   "peakDepthM": 0.0330200232565403,
+   "exposedAtEnd": false,
+   "exposedAtPeak": false,
+   "trulyExposedAtEnd": false
+  }
+ },
+ "notRun": [],
+ "raw": {
+  "SS6-drive-1 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS6-drive-1.cpu.json",
+   "sha256": "181c37f600ad93c2fba43ad61faa20301a7b8440c089d97d91741efa69cb81de",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 3.929,
+   "steps": 26085,
+   "grid": {
+    "nx": 16,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 256
+   }
+  },
+  "SS6-drive-1 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-drive-1.gpu.json",
+   "sha256": "e898e6f973db04941b85c2b426ae62d71c0be553e835aa0b887eaa965f9db10c",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 16.083,
+   "steps": 26085,
+   "grid": {
+    "nx": 16,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 256
+   }
+  },
+  "SS6-drive-2 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS6-drive-2.cpu.json",
+   "sha256": "bd16966b714c0a9e52db650ed145159e46bd7490184284aa54b00b133c8c7557",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 0.443,
+   "steps": 8743,
+   "grid": {
+    "nx": 8,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 64
+   }
+  },
+  "SS6-drive-2 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-drive-2.gpu.json",
+   "sha256": "0dc7971306441878eae0c31f3ebdadc99b9d352257ec1fa03e338de871226300",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 5.826,
+   "steps": 8743,
+   "grid": {
+    "nx": 8,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 64
+   }
+  },
+  "SS6-drive-4 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS6-drive-4.cpu.json",
+   "sha256": "abc402028a30716cb19ba680fcff01d5b341cdd5c987bac8410d53062aed90ce",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 0.083,
+   "steps": 2736,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 16
+   }
+  },
+  "SS6-drive-4 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-drive-4.gpu.json",
+   "sha256": "72d213e9ff0e945e24b36e7458e6640a02400e013886379af310084cddd2c296",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 2.801,
+   "steps": 2736,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 16
+   }
+  },
+  "SS6-drive-05 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS6-drive-05.cpu.json",
+   "sha256": "8cb074a4261e1db39c7cf1026d006bb3a5079f909e6e3491d434ee9cbef4dbec",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 29.959,
+   "steps": 53585,
+   "grid": {
+    "nx": 32,
+    "ny": 32,
+    "dx": 0.5,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1024
+   }
+  },
+  "SS6-drive-05 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-drive-05.gpu.json",
+   "sha256": "49a6f109ffb0e0fc5e7f33358e4db8f9b13295bb235b26776be8b4fbde498ae8",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 33.79,
+   "steps": 53585,
+   "grid": {
+    "nx": 32,
+    "ny": 32,
+    "dx": 0.5,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1024
+   }
+  },
+  "SS6-drive-4s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-drive-4s.gpu.json",
+   "sha256": "7b8bae62d0817353c95cd9e2002353e8f4b024ed07499f64336442d635283d6d",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 2.461,
+   "steps": 1165,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": true,
+    "cells": 16
+   }
+  },
+  "SS6-drive-8s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-drive-8s.gpu.json",
+   "sha256": "d3fe3ccf72fa1d5fe2d41bc27de006a6edd9b1856ea681e806a99e77160aed5b",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 1.192,
+   "steps": 289,
+   "grid": {
+    "nx": 2,
+    "ny": 2,
+    "dx": 8,
+    "F": 8,
+    "subgrid": true,
+    "cells": 4
+   }
+  },
+  "SS6-yard-1 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS6-yard-1.cpu.json",
+   "sha256": "ac64c1235b097c6cb3c5847b0740914ef994cc412fc88e3a8d4805cd365f70ea",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 4.306,
+   "steps": 17716,
+   "grid": {
+    "nx": 16,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 256
+   }
+  },
+  "SS6-yard-1 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-yard-1.gpu.json",
+   "sha256": "2c34291d169969f8f091afb06966c67475cc823d5029cb6e1df20c41424a2f65",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 12.635,
+   "steps": 17716,
+   "grid": {
+    "nx": 16,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 256
+   }
+  },
+  "SS6-yard-2 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS6-yard-2.cpu.json",
+   "sha256": "b784016b3015a6a8c034b79aa044b4a63e0f1ff3d0a4271016c1958e27c8b500",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 0.432,
+   "steps": 7302,
+   "grid": {
+    "nx": 8,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 64
+   }
+  },
+  "SS6-yard-2 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-yard-2.gpu.json",
+   "sha256": "a0a278eb6cab67dd2c3f49187d134a6974a75e6c9b44646645c83b8d34c2135a",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 6.22,
+   "steps": 7302,
+   "grid": {
+    "nx": 8,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 64
+   }
+  },
+  "SS6-yard-4 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS6-yard-4.cpu.json",
+   "sha256": "03c214bccf371b942e43d72faafd77ec786df471a99a09d5e0f13badb8c5dabe",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 0.11,
+   "steps": 4517,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 16
+   }
+  },
+  "SS6-yard-4 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-yard-4.gpu.json",
+   "sha256": "6e2199b482a0baf88ab6bac07eed86c981d1cfcd03be5fd08cf448954562d6cb",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 4.356,
+   "steps": 4517,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 16
+   }
+  },
+  "SS6-yard-05 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS6-yard-05.cpu.json",
+   "sha256": "a4f7b05fd2af8b9b3d51022c910fa96578086625a017a9a0220be52d0ba7520e",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 34.388,
+   "steps": 35796,
+   "grid": {
+    "nx": 32,
+    "ny": 32,
+    "dx": 0.5,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1024
+   }
+  },
+  "SS6-yard-05 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-yard-05.gpu.json",
+   "sha256": "892f8dfaa1f7e2d46db7eab6e5bc3798579e0f5ba6ab4013b5506a370cd95d17",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 23.058,
+   "steps": 35796,
+   "grid": {
+    "nx": 32,
+    "ny": 32,
+    "dx": 0.5,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1024
+   }
+  },
+  "SS6-yard-4s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-yard-4s.gpu.json",
+   "sha256": "7b9083443ee60eb5c89b30d1c2b08cd3a48ad82a3e1e3f3e4ecd78625f25f7cb",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 1.536,
+   "steps": 2041,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": true,
+    "cells": 16
+   }
+  },
+  "SS6-yard-8s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS6-yard-8s.gpu.json",
+   "sha256": "4e08980f33dbdacd651204d41145a190e186be53431c7efd53c8c84ebb8b9766",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 1.672,
+   "steps": 919,
+   "grid": {
+    "nx": 2,
+    "ny": 2,
+    "dx": 8,
+    "F": 8,
+    "subgrid": true,
+    "cells": 4
+   }
+  }
+ },
+ "hand": {
+  "SS6-drive-1": {
+   "rainVolumeM3": 2.56,
+   "trueLevelM": 0.0766666666666666,
+   "trueDepth1mM": 0.8016666666666667,
+   "trueDepthHalfMetreM": 0.8391666666666666,
+   "thisGridOwnAnswerM": 0.8016666666666667
+  },
+  "SS6-drive-2": {
+   "rainVolumeM3": 2.56,
+   "trueLevelM": 0.0766666666666666,
+   "trueDepth1mM": 0.8016666666666667,
+   "trueDepthHalfMetreM": 0.8391666666666666,
+   "thisGridOwnAnswerM": 0.3633333333333334
+  },
+  "SS6-drive-4": {
+   "rainVolumeM3": 2.56,
+   "trueLevelM": 0.0766666666666666,
+   "trueDepth1mM": 0.8016666666666667,
+   "trueDepthHalfMetreM": 0.8391666666666666,
+   "thisGridOwnAnswerM": 0.14562500000000003
+  },
+  "SS6-drive-05": {
+   "rainVolumeM3": 2.56,
+   "trueLevelM": 0.0766666666666666,
+   "trueDepth1mM": 0.8016666666666667,
+   "trueDepthHalfMetreM": 0.8391666666666666,
+   "thisGridOwnAnswerM": 0.8391666666666666
+  },
+  "SS6-drive-4s": {
+   "rainVolumeM3": 2.56,
+   "trueLevelM": 0.0766666666666666,
+   "trueDepth1mM": 0.8016666666666667,
+   "trueDepthHalfMetreM": 0.8391666666666666,
+   "thisGridOwnAnswerM": null
+  },
+  "SS6-drive-8s": {
+   "rainVolumeM3": 2.56,
+   "trueLevelM": 0.0766666666666666,
+   "trueDepth1mM": 0.8016666666666667,
+   "trueDepthHalfMetreM": 0.8391666666666666,
+   "thisGridOwnAnswerM": null
+  },
+  "SS6-yard-1": {
+   "rainVolumeM3": 10.24,
+   "trueLevelM": null,
+   "trueDepth1mM": 0,
+   "trueDepthHalfMetreM": 0,
+   "thisGridOwnAnswerM": 0
+  },
+  "SS6-yard-2": {
+   "rainVolumeM3": 10.24,
+   "trueLevelM": null,
+   "trueDepth1mM": 0,
+   "trueDepthHalfMetreM": 0,
+   "thisGridOwnAnswerM": 0.10717391304347823
+  },
+  "SS6-yard-4": {
+   "rainVolumeM3": 10.24,
+   "trueLevelM": null,
+   "trueDepth1mM": 0,
+   "trueDepthHalfMetreM": 0,
+   "thisGridOwnAnswerM": 0
+  },
+  "SS6-yard-05": {
+   "rainVolumeM3": 10.24,
+   "trueLevelM": null,
+   "trueDepth1mM": 0,
+   "trueDepthHalfMetreM": 0,
+   "thisGridOwnAnswerM": 0
+  },
+  "SS6-yard-4s": {
+   "rainVolumeM3": 10.24,
+   "trueLevelM": null,
+   "trueDepth1mM": 0,
+   "trueDepthHalfMetreM": 0,
+   "thisGridOwnAnswerM": null
+  },
+  "SS6-yard-8s": {
+   "rainVolumeM3": 10.24,
+   "trueLevelM": null,
+   "trueDepth1mM": 0,
+   "trueDepthHalfMetreM": 0,
+   "thisGridOwnAnswerM": null
+  }
+ }
+}

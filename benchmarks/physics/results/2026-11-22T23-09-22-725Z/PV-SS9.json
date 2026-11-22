@@ -1,0 +1,1543 @@
+{
+ "id": "PV-SS9",
+ "spec": "benchmarks/physics/spec/PV-SS9.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [cpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5715605616569519,
+   "abs": 0.000023443753023766334,
+   "rel": 0.000041018776015361236,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [cpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00037796447300922755,
+   "abs": 0.00037796447300922755,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [cpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [gpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5715606063604355,
+   "abs": 0.000023488456507347877,
+   "rel": 0.00004109699225395916,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [gpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00037796447300922755,
+   "abs": 0.00037796447300922755,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-2 [gpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [cpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5780546739697456,
+   "abs": 0.006517556065817498,
+   "rel": 0.011403556937334487,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [cpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.04663076850566127,
+   "abs": 0.04663076850566127,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [cpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 0.8571428571428571,
+   "abs": -0.1428571428571429,
+   "rel": -0.1428571428571429,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: outside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [gpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5780546963214874,
+   "abs": 0.006517578417559289,
+   "rel": 0.011403596045453785,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [gpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.04663076850566127,
+   "abs": 0.04663076850566127,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4 [gpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 0.8571428571428571,
+   "abs": -0.1428571428571429,
+   "rel": -0.1428571428571429,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: outside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4s [gpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5707121938467026,
+   "abs": -0.0008249240572255623,
+   "rel": -0.0014433429280164914,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4s [gpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.0027255405754769866,
+   "abs": 0.0027255405754769866,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-4s [gpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-8s [gpu]",
+   "quantity": "pond depth at the sag at the end, on the 1 m map (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.5715371179039281,
+   "sim": 0.5706588476896286,
+   "abs": -0.0008782702142995369,
+   "rel": -0.0015366809727433463,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-8s [gpu]",
+   "quantity": "peak wall depth at the houses against the 1 m run, root mean square (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.011338934190276817,
+   "abs": 0.011338934190276817,
+   "rel": null,
+   "limit": 0.05,
+   "criterion": {
+    "abs": 0.05
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.05 m: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-8s [gpu]",
+   "quantity": "houses given the same exposed / not exposed answer as the 1 m run (share)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 1,
+   "abs": 0,
+   "rel": 0,
+   "limit": 0.09999999999999998,
+   "criterion": {
+    "abs": 0.09999999999999998
+   },
+   "status": "Not independently validated",
+   "note": "the reference is the same solver at 1 m; limit 0.9: inside"
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-1 [cpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.0490291028063634,
+   "abs": -0.000970897193636612,
+   "rel": -0.019417943872732237,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-1 [cpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000009994914696524462,
+   "abs": 0.000009994914696524462,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-1 [cpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.00282275002580918,
+   "abs": 0.00282275002580918,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-1 [gpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.04902905598282814,
+   "abs": -0.0009709440171718695,
+   "rel": -0.019418880343437386,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-1 [gpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000009998962013924029,
+   "abs": 0.000009998962013924029,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-1 [gpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.002822748851031065,
+   "abs": 0.002822748851031065,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-1 [cpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.09777777777777778,
+   "sim": 0.097592351223093,
+   "abs": -0.00018542655468478664,
+   "rel": -0.0018964079456398632,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-1 [gpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.09777777777777778,
+   "sim": 0.09759254505236943,
+   "abs": -0.0001852327254083519,
+   "rel": -0.0018944256007672351,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-2 [cpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.060010287910699844,
+   "abs": 0.010010287910699835,
+   "rel": 0.20020575821399667,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-2 [cpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-2 [cpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.04494974762201309,
+   "abs": 0.04494974762201309,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-2 [gpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.06001028046011925,
+   "abs": 0.010010280460119238,
+   "rel": 0.20020560920238473,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-2 [gpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-2 [gpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.04494975507259369,
+   "abs": 0.04494975507259369,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-2 [cpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.09777777777777778,
+   "sim": 0.12002243101596832,
+   "abs": 0.02224465323819054,
+   "rel": 0.22750213539058506,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-2 [gpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.09777777777777778,
+   "sim": 0.12002244591712952,
+   "abs": 0.022244668139351734,
+   "rel": 0.22750228778882453,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4 [cpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.059995006769895554,
+   "abs": 0.009995006769895544,
+   "rel": 0.19990013539791085,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4 [cpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4 [cpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.059995006769895554,
+   "abs": 0.059995006769895554,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4 [gpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.05999499931931496,
+   "abs": 0.009994999319314947,
+   "rel": 0.1998999863862989,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4 [gpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4 [gpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.05999499931931496,
+   "abs": 0.05999499931931496,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-4 [cpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.09777777777777778,
+   "sim": 0,
+   "abs": -0.09777777777777778,
+   "rel": -1,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-4 [gpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.09777777777777778,
+   "sim": 0,
+   "abs": -0.09777777777777778,
+   "rel": -1,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4s [gpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.03999234363436699,
+   "abs": -0.01000765636563302,
+   "rel": -0.20015312731266038,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4s [gpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-4s [gpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-4s [gpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.09777777777777778,
+   "sim": 0.0689627155661583,
+   "abs": -0.028815062211619488,
+   "rel": -0.2946994998915629,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-8s [gpu]",
+   "quantity": "kerb: depth in the gutter the rain fell beside (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.05000000000000001,
+   "sim": 0.046666666865348816,
+   "abs": -0.003333333134651194,
+   "rel": -0.06666666269302386,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-8s [gpu]",
+   "quantity": "kerb: depth on the lot behind the kerb (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0,
+   "abs": 0,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-kerb-8s [gpu]",
+   "quantity": "crown: depth in the far gutter (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.010000000707805157,
+   "abs": 0.010000000707805157,
+   "rel": null,
+   "limit": 0.01,
+   "criterion": {
+    "abs": 0.01
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS9",
+   "case": "SS9-hollow-8s [gpu]",
+   "quantity": "hollow: depth of water in it (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.09777777777777778,
+   "sim": 0.07092706859111786,
+   "abs": -0.026850709186659924,
+   "rel": -0.2746095257726583,
+   "limit": 0.02,
+   "criterion": {
+    "abs": 0.02
+   },
+   "status": "Failed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS9-2 [cpu]": {
+   "cells": 3072,
+   "wallSeconds": 82.418,
+   "steps": 22400,
+   "housesExposed": 6,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 629.133,
+   "timesFasterThan1m": 7.633441723895266,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.00496257149927489
+  },
+  "SS9-2 [gpu]": {
+   "cells": 3072,
+   "wallSeconds": 16.603,
+   "steps": 22400,
+   "housesExposed": 6,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 33.463,
+   "timesFasterThan1m": 2.0154791302776607,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.00496257149927489
+  },
+  "SS9-4 [cpu]": {
+   "cells": 768,
+   "wallSeconds": 7.678,
+   "steps": 10894,
+   "housesExposed": 8,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 629.133,
+   "timesFasterThan1m": 81.93969783797864,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.010587925512897018
+  },
+  "SS9-4 [gpu]": {
+   "cells": 768,
+   "wallSeconds": 9.672,
+   "steps": 10894,
+   "housesExposed": 8,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 33.463,
+   "timesFasterThan1m": 3.459780810587262,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.010587925512897018
+  },
+  "SS9-4s [gpu]": {
+   "cells": 768,
+   "wallSeconds": 5.983,
+   "steps": 5415,
+   "housesExposed": 6,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 33.463,
+   "timesFasterThan1m": 5.593013538358683,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.005368819120625773
+  },
+  "SS9-8s [gpu]": {
+   "cells": 192,
+   "wallSeconds": 2.605,
+   "steps": 2588,
+   "housesExposed": 6,
+   "housesExposedAt1m": 6,
+   "baseWallSeconds": 33.463,
+   "timesFasterThan1m": 12.845681381957775,
+   "baseCells": 12288,
+   "peakDepthRmseOverOpenCellsM": 0.006421158972653003
+  },
+  "SS9-kerb-1 [cpu]": {
+   "wallSeconds": 2.113,
+   "cells": 384
+  },
+  "SS9-kerb-1 [gpu]": {
+   "wallSeconds": 4.815,
+   "cells": 384
+  },
+  "SS9-hollow-1 [cpu]": {
+   "wallSeconds": 2.763,
+   "cells": 256,
+   "deepestM": 0.09759237254401026
+  },
+  "SS9-hollow-1 [gpu]": {
+   "wallSeconds": 9.786,
+   "cells": 256,
+   "deepestM": 0.09759256988763809
+  },
+  "SS9-kerb-2 [cpu]": {
+   "wallSeconds": 0.247,
+   "cells": 96
+  },
+  "SS9-kerb-2 [gpu]": {
+   "wallSeconds": 3.248,
+   "cells": 96
+  },
+  "SS9-hollow-2 [cpu]": {
+   "wallSeconds": 0.494,
+   "cells": 64,
+   "deepestM": 0.12002243101596832
+  },
+  "SS9-hollow-2 [gpu]": {
+   "wallSeconds": 7.6,
+   "cells": 64,
+   "deepestM": 0.12002244591712952
+  },
+  "SS9-kerb-4 [cpu]": {
+   "wallSeconds": 0.024,
+   "cells": 24
+  },
+  "SS9-kerb-4 [gpu]": {
+   "wallSeconds": 1.774,
+   "cells": 24
+  },
+  "SS9-hollow-4 [cpu]": {
+   "wallSeconds": 0.011,
+   "cells": 16,
+   "deepestM": 0
+  },
+  "SS9-hollow-4 [gpu]": {
+   "wallSeconds": 2.641,
+   "cells": 16,
+   "deepestM": 0
+  },
+  "SS9-kerb-4s [gpu]": {
+   "wallSeconds": 1.274,
+   "cells": 24
+  },
+  "SS9-hollow-4s [gpu]": {
+   "wallSeconds": 1.839,
+   "cells": 16,
+   "deepestM": 0.0689627155661583
+  },
+  "SS9-kerb-8s [gpu]": {
+   "wallSeconds": 1.207,
+   "cells": 6
+  },
+  "SS9-hollow-8s [gpu]": {
+   "wallSeconds": 1.864,
+   "cells": 4,
+   "deepestM": 0.07092706859111786
+  }
+ },
+ "notRun": [],
+ "raw": {
+  "SS9-2 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS9-2.cpu.json",
+   "sha256": "dcd210623cb2785d951a9115070fa98a6b47970449cab2785592615ee26d0a09",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 82.418,
+   "steps": 22400,
+   "grid": {
+    "nx": 64,
+    "ny": 48,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 3072
+   }
+  },
+  "SS9-2 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-2.gpu.json",
+   "sha256": "719309b01431d95b6c572c6b80e809ba959d5cdfa1a0f8f05a48d97306e429b0",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 16.603,
+   "steps": 22400,
+   "grid": {
+    "nx": 64,
+    "ny": 48,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 3072
+   }
+  },
+  "SS9-4 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS9-4.cpu.json",
+   "sha256": "04ae1da0efe2e1b1e0f46a5d70f78ca0eea8d91805573ff1a31ce529c2d59985",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 7.678,
+   "steps": 10894,
+   "grid": {
+    "nx": 32,
+    "ny": 24,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 768
+   }
+  },
+  "SS9-4 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-4.gpu.json",
+   "sha256": "7816ca7a330cdacf132b25a6628d3fb888627087a90f5c83a89ca03b335c8c47",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 9.672,
+   "steps": 10894,
+   "grid": {
+    "nx": 32,
+    "ny": 24,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 768
+   }
+  },
+  "SS9-4s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-4s.gpu.json",
+   "sha256": "631f2db523269cd4e8a7fa1c03c76e79ed6c257a6f99fb6e50372530e52ac7f7",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 5.983,
+   "steps": 5415,
+   "grid": {
+    "nx": 32,
+    "ny": 24,
+    "dx": 4,
+    "F": 4,
+    "subgrid": true,
+    "cells": 768
+   }
+  },
+  "SS9-8s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-8s.gpu.json",
+   "sha256": "92a6bdb6b63994a74368c829566618359e4959d4941d422c37d355767998f7fe",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 2.605,
+   "steps": 2588,
+   "grid": {
+    "nx": 16,
+    "ny": 12,
+    "dx": 8,
+    "F": 8,
+    "subgrid": true,
+    "cells": 192
+   }
+  },
+  "SS9-kerb-1 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS9-kerb-1.cpu.json",
+   "sha256": "744705fd4e0982aba0a7e949f5591843487b90861e8ca1b5310c7309c51cda49",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 2.113,
+   "steps": 6442,
+   "grid": {
+    "nx": 24,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 384
+   }
+  },
+  "SS9-kerb-1 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-kerb-1.gpu.json",
+   "sha256": "32cde1fb4cbbb3c1c2af366f6b0261129cda1a817529d18c4f9215f8b2d77eec",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 4.815,
+   "steps": 6442,
+   "grid": {
+    "nx": 24,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 384
+   }
+  },
+  "SS9-hollow-1 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS9-hollow-1.cpu.json",
+   "sha256": "559ebe3933bc41b61320230144ed608b5bbebaf17245b46c91f8ec667daeef11",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 2.763,
+   "steps": 13669,
+   "grid": {
+    "nx": 16,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 256
+   }
+  },
+  "SS9-hollow-1 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-hollow-1.gpu.json",
+   "sha256": "bf14235e69fdc102aa735252ee832ade6c9abc964da176297432409935483a8c",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 9.786,
+   "steps": 13669,
+   "grid": {
+    "nx": 16,
+    "ny": 16,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 256
+   }
+  },
+  "SS9-kerb-2 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS9-kerb-2.cpu.json",
+   "sha256": "0201e0e9cd126756e36c7da2aa7f9c1e284558ea4528432dc89d60a26dd3c065",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 0.247,
+   "steps": 2583,
+   "grid": {
+    "nx": 12,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 96
+   }
+  },
+  "SS9-kerb-2 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-kerb-2.gpu.json",
+   "sha256": "75d45a6aeef400cb32cf2983bb7dbcf74aa950a1a0d1b71dd17057c63764459c",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 3.248,
+   "steps": 2583,
+   "grid": {
+    "nx": 12,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 96
+   }
+  },
+  "SS9-hollow-2 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS9-hollow-2.cpu.json",
+   "sha256": "28cbc9a7f0be1f9fa5a0dea0095c92b932a365966cbf1cc2836993a7a586b9f6",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 0.494,
+   "steps": 7770,
+   "grid": {
+    "nx": 8,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 64
+   }
+  },
+  "SS9-hollow-2 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-hollow-2.gpu.json",
+   "sha256": "8a455b74ba44b87bf8b8753d9cb5c265064602f753e9a313f1dfe4290475f340",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 7.6,
+   "steps": 7770,
+   "grid": {
+    "nx": 8,
+    "ny": 8,
+    "dx": 2,
+    "F": 2,
+    "subgrid": false,
+    "cells": 64
+   }
+  },
+  "SS9-kerb-4 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS9-kerb-4.cpu.json",
+   "sha256": "be5f2bad4b43e9b26f0e5b9a07ab927323710745f1fadbec672ea236ba51de41",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 0.024,
+   "steps": 885,
+   "grid": {
+    "nx": 6,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 24
+   }
+  },
+  "SS9-kerb-4 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-kerb-4.gpu.json",
+   "sha256": "38f2f8ab796eee7aed2209b519ed5c9a2cf1f5a41514e4ceab6e32863fb0312f",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 1.774,
+   "steps": 885,
+   "grid": {
+    "nx": 6,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 24
+   }
+  },
+  "SS9-hollow-4 [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS9-hollow-4.cpu.json",
+   "sha256": "2ce8df1ce058ff11a60ec39ba4f98faed0a5988349dbd1ebe0ab379ebf02dec3",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 0.011,
+   "steps": 534,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 16
+   }
+  },
+  "SS9-hollow-4 [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-hollow-4.gpu.json",
+   "sha256": "b76d98560d15e46dc3eb125f56c5f86dea9ba80e45c5d7d74a061321caa912de",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 2.641,
+   "steps": 534,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": false,
+    "cells": 16
+   }
+  },
+  "SS9-kerb-4s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-kerb-4s.gpu.json",
+   "sha256": "c591e29264b360c3bfe44141ffa383810088076217c7c791837011306c4dbb7f",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 1.274,
+   "steps": 433,
+   "grid": {
+    "nx": 6,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": true,
+    "cells": 24
+   }
+  },
+  "SS9-hollow-4s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-hollow-4s.gpu.json",
+   "sha256": "d6c2b92961f4dc188977a05eeebe117a7552e1b780daeb8c7b513ab2faf39a63",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 1.839,
+   "steps": 1051,
+   "grid": {
+    "nx": 4,
+    "ny": 4,
+    "dx": 4,
+    "F": 4,
+    "subgrid": true,
+    "cells": 16
+   }
+  },
+  "SS9-kerb-8s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-kerb-8s.gpu.json",
+   "sha256": "f7fe4c9f0ebda882ba9b81c4a81420721183dd22e760628c74ed58cd0bd66b9f",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 1.207,
+   "steps": 187,
+   "grid": {
+    "nx": 3,
+    "ny": 2,
+    "dx": 8,
+    "F": 8,
+    "subgrid": true,
+    "cells": 6
+   }
+  },
+  "SS9-hollow-8s [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS9-hollow-8s.gpu.json",
+   "sha256": "ddacebdb94060bb79a4a30080720dc6b5b61e91ec25875640013792d862ea40b",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 1.864,
+   "steps": 284,
+   "grid": {
+    "nx": 2,
+    "ny": 2,
+    "dx": 8,
+    "F": 8,
+    "subgrid": true,
+    "cells": 4
+   }
+  }
+ },
+ "hand": {
+  "SS9-2": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-4": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-4s": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-8s": {
+   "restLevelM": 0.5875371179039282,
+   "sagDepthAtRestM": 0.5715371179039281
+  },
+  "SS9-kerb-1": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-1": {
+   "rainOnItsCatchmentM3": 0.88,
+   "depthM": 0.09777777777777778,
+   "capacityM3": 1.3499999999999999
+  },
+  "SS9-kerb-2": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-2": {
+   "rainOnItsCatchmentM3": 0.88,
+   "depthM": 0.09777777777777778,
+   "capacityM3": 1.3499999999999999
+  },
+  "SS9-kerb-4": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-4": {
+   "rainOnItsCatchmentM3": 0.88,
+   "depthM": 0.09777777777777778,
+   "capacityM3": 1.3499999999999999
+  },
+  "SS9-kerb-4s": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-4s": {
+   "rainOnItsCatchmentM3": 0.88,
+   "depthM": 0.09777777777777778,
+   "capacityM3": 1.3499999999999999
+  },
+  "SS9-kerb-8s": {
+   "rainOnTheSouthSideM3": 2.16,
+   "pondLevelM": 0.06000000000000001,
+   "gutterDepthM": 0.05000000000000001,
+   "crownM": 0.08,
+   "crownCellM": 0.07,
+   "kerbM": 0.15,
+   "lotBehindKerbM": 0,
+   "farGutterM": 0
+  },
+  "SS9-hollow-8s": {
+   "rainOnItsCatchmentM3": 0.88,
+   "depthM": 0.09777777777777778,
+   "capacityM3": 1.3499999999999999
+  }
+ }
+}

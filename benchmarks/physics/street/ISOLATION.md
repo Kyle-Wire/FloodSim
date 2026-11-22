@@ -65,6 +65,7 @@ reads, so CHI would move its pin with a decision line, and PV-SS10 (F15) should 
 
 ## Next, in order
 
-1. Kyle decides whether `capture: 'hec22'` becomes the default; then rescore PV-SS10 with it on and settle F15.
+1. Done 22 Nov 2026: `capture: 'hec22'` is the default (FIXES-3.md). F15's Cw 0.32 failed its rule on SS3-x2's SWMM
+   continuity (FIXES-2.md); find why less inflow raises SWMM's routing error there, with F14, before trying it again.
 2. F14's SWMM continuity on return flow (PV-SS4): isolate in a one-manhole SWMM case with no surface.
 3. F13: draw the model box from the terrain (`src/watershed.js`, PV-SS5).
