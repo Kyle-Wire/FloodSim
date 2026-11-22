@@ -1,0 +1,1193 @@
+{
+ "id": "PV-SS13",
+ "spec": "benchmarks/physics/spec/PV-SS13.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r50 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8801998622925626,
+   "sim": 0.7911907656994165,
+   "abs": -0.08900909659314615,
+   "rel": -0.10112373383167052,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.78"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r50 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.017284806410995442,
+   "sim": 0.017910171175927386,
+   "abs": 0.000625364764931944,
+   "rel": 0.03618002713262259,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r50 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8801998622925626,
+   "sim": 0.39916066877661116,
+   "abs": -0.4810391935159515,
+   "rel": -0.5465113255789884,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.78"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r50 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.017284806410995442,
+   "sim": 0.01789563149213791,
+   "abs": 0.0006108250811424666,
+   "rel": 0.035338844220661934,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r100 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7909896715577379,
+   "sim": 0.7330103660162633,
+   "abs": -0.05797930554147457,
+   "rel": -0.07329969989025627,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.66"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r100 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02537253569289778,
+   "sim": 0.026054486348227924,
+   "abs": 0.0006819506553301449,
+   "rel": 0.026877512897579052,
+   "limit": 0.0025372535692897782,
+   "criterion": {
+    "abs": 0.0025372535692897782
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r100 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7909896715577379,
+   "sim": 0.3650417425076089,
+   "abs": -0.425947929050129,
+   "rel": -0.5384999885160159,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.66"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r100 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02537253569289778,
+   "sim": 0.026053255423903465,
+   "abs": 0.0006807197310056863,
+   "rel": 0.02682899885312731,
+   "limit": 0.0025372535692897782,
+   "criterion": {
+    "abs": 0.0025372535692897782
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r200 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.6893368058184723,
+   "sim": 0.6011634376763565,
+   "abs": -0.08817336814211585,
+   "rel": -0.12791043129841978,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.54"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r200 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.03585761989651143,
+   "sim": 0.03654913584874553,
+   "abs": 0.0006915159522341008,
+   "rel": 0.019285048874685018,
+   "limit": 0.003585761989651143,
+   "criterion": {
+    "abs": 0.003585761989651143
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r200 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.6893368058184723,
+   "sim": 0.3123612772559989,
+   "abs": -0.37697552856247346,
+   "rel": -0.5468669674686498,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.54"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s1-r200 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.03585761989651143,
+   "sim": 0.03655314818024635,
+   "abs": 0.0006955282837349253,
+   "rel": 0.01939694507728866,
+   "limit": 0.003585761989651143,
+   "criterion": {
+    "abs": 0.003585761989651143
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r50 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8918251745541743,
+   "sim": 0.8325431370083857,
+   "abs": -0.059282037545788646,
+   "rel": -0.06647271151032924,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.83"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r50 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.013963387931769274,
+   "sim": 0.014403108475711432,
+   "abs": 0.000439720543942158,
+   "rel": 0.03149096380411469,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r50 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8918251745541743,
+   "sim": 0.3678289712876982,
+   "abs": -0.5239962032664761,
+   "rel": -0.5875548461932835,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.83"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r50 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.013963387931769274,
+   "sim": 0.01441248506307602,
+   "abs": 0.0004490971313067457,
+   "rel": 0.03216247614842579,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r100 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7976210683494366,
+   "sim": 0.7380113369532434,
+   "abs": -0.05960973139619319,
+   "rel": -0.07473439928003288,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.72"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r100 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02106658636938958,
+   "sim": 0.021518551615459253,
+   "abs": 0.00045196524606967367,
+   "rel": 0.02145412826476688,
+   "limit": 0.002106658636938958,
+   "criterion": {
+    "abs": 0.002106658636938958
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r100 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7976210683494366,
+   "sim": 0.33580807442406796,
+   "abs": -0.4618129939253686,
+   "rel": -0.5789879583810705,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.72"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r100 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02106658636938958,
+   "sim": 0.021514952182769775,
+   "abs": 0.0004483658133801957,
+   "rel": 0.021283268466868725,
+   "limit": 0.002106658636938958,
+   "criterion": {
+    "abs": 0.002106658636938958
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r200 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.6903877698648841,
+   "sim": 0.6194397412388326,
+   "abs": -0.07094802862605154,
+   "rel": -0.1027654772041179,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.60"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r200 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.030275306287856962,
+   "sim": 0.030456557777173463,
+   "abs": 0.00018125148931650084,
+   "rel": 0.0059867764042802925,
+   "limit": 0.0030275306287856963,
+   "criterion": {
+    "abs": 0.0030275306287856963
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r200 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.6903877698648841,
+   "sim": 0.29003236045951447,
+   "abs": -0.4003554094053697,
+   "rel": -0.5798993361132734,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.60"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s2-r200 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.030275306287856962,
+   "sim": 0.03045457974076271,
+   "abs": 0.00017927345290574825,
+   "rel": 0.005921441428245849,
+   "limit": 0.0030275306287856963,
+   "criterion": {
+    "abs": 0.0030275306287856963
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r50 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9146420104840809,
+   "sim": 0.8287006430051551,
+   "abs": -0.08594136747892578,
+   "rel": -0.09396175388165331,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.89"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r50 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.011046290470913949,
+   "sim": 0.011514660186416479,
+   "abs": 0.0004683697155025302,
+   "rel": 0.04240063365487239,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r50 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9146420104840809,
+   "sim": 0.32385514114308017,
+   "abs": -0.5907868693410008,
+   "rel": -0.6459214234302693,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.89"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r50 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.011046290470913949,
+   "sim": 0.011478391475975513,
+   "abs": 0.0004321010050615647,
+   "rel": 0.039117295186047514,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r100 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8206137970672529,
+   "sim": 0.7510039522405104,
+   "abs": -0.06960984482674248,
+   "rel": -0.08482655918718078,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.78"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r100 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.017284806410995442,
+   "sim": 0.017402874069584504,
+   "abs": 0.00011806765858906124,
+   "rel": 0.006830719175075889,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r100 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8206137970672529,
+   "sim": 0.29251546673103745,
+   "abs": -0.5280983303362154,
+   "rel": -0.6435406426549949,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.78"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r100 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.017284806410995442,
+   "sim": 0.017386987805366516,
+   "abs": 0.00010218139437107379,
+   "rel": 0.005911630824286976,
+   "limit": 0.002,
+   "criterion": {
+    "abs": 0.002
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r200 [cpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7106498764167674,
+   "sim": 0.6334891653811118,
+   "abs": -0.07716071103565558,
+   "rel": -0.10857767459936059,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Passed",
+   "note": "HEC-22; its frontal share alone is 0.66"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r200 [cpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02537253569289778,
+   "sim": 0.025085186980194043,
+   "abs": -0.0002873487127037361,
+   "rel": -0.011325187051925995,
+   "limit": 0.0025372535692897782,
+   "criterion": {
+    "abs": 0.0025372535692897782
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r200 [gpu]",
+   "quantity": "share of the flow reaching the grate that it takes",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7106498764167674,
+   "sim": 0.2567726090266708,
+   "abs": -0.45387726739009654,
+   "rel": -0.6386791617816534,
+   "limit": 0.1,
+   "criterion": {
+    "abs": 0.1
+   },
+   "status": "Failed",
+   "note": "HEC-22; its frontal share alone is 0.66"
+  },
+  {
+   "benchmark": "PV-SS13",
+   "case": "SS13-s4-r200 [gpu]",
+   "quantity": "depth in the kerb cell 5 m above the grate (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.02537253569289778,
+   "sim": 0.02507874183356762,
+   "abs": -0.00029379385933015964,
+   "rel": -0.011579207647440524,
+   "limit": 0.0025372535692897782,
+   "criterion": {
+    "abs": 0.0025372535692897782
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS13-s1-r50 [cpu]": {
+   "takenLs": 6.637211423367327,
+   "share": 0.7911907656994165,
+   "hec22": 0.8801998622925626,
+   "hec22FrontalOnly": 0.775661222019741,
+   "depthInGrateCellM": 0.0006414565425540336,
+   "swmmVersion": 52004
+  },
+  "SS13-s1-r50 [gpu]": {
+   "takenLs": 3.348514499181571,
+   "share": 0.39916066877661116,
+   "hec22": 0.8801998622925626,
+   "hec22FrontalOnly": 0.775661222019741,
+   "depthInGrateCellM": 0.008291209116578102,
+   "swmmVersion": 52004
+  },
+  "SS13-s1-r100 [cpu]": {
+   "takenLs": 12.298285029828419,
+   "share": 0.7330103660162633,
+   "hec22": 0.7909896715577379,
+   "hec22FrontalOnly": 0.6576324847405798,
+   "depthInGrateCellM": 0.0016239431837252924,
+   "swmmVersion": 52004
+  },
+  "SS13-s1-r100 [gpu]": {
+   "takenLs": 6.124589235405438,
+   "share": 0.3650417425076089,
+   "hec22": 0.7909896715577379,
+   "hec22FrontalOnly": 0.6576324847405798,
+   "depthInGrateCellM": 0.012411417439579964,
+   "swmmVersion": 52004
+  },
+  "SS13-s1-r200 [cpu]": {
+   "takenLs": 20.172373130917737,
+   "share": 0.6011634376763565,
+   "hec22": 0.6893368058184723,
+   "hec22FrontalOnly": 0.5444036899644755,
+   "depthInGrateCellM": 0.004315239021355063,
+   "swmmVersion": 52004
+  },
+  "SS13-s1-r200 [gpu]": {
+   "takenLs": 10.481456192367961,
+   "share": 0.3123612772559989,
+   "hec22": 0.6893368058184723,
+   "hec22FrontalOnly": 0.5444036899644755,
+   "depthInGrateCellM": 0.01775864139199257,
+   "swmmVersion": 52004
+  },
+  "SS13-s2-r50 [cpu]": {
+   "takenLs": 6.984111871570346,
+   "share": 0.8325431370083857,
+   "hec22": 0.8918251745541743,
+   "hec22FrontalOnly": 0.8326684441286959,
+   "depthInGrateCellM": 0.0002996690595482481,
+   "swmmVersion": 52004
+  },
+  "SS13-s2-r50 [gpu]": {
+   "takenLs": 3.0856763702468015,
+   "share": 0.3678289712876982,
+   "hec22": 0.8918251745541743,
+   "hec22FrontalOnly": 0.8326684441286959,
+   "depthInGrateCellM": 0.00785244069993496,
+   "swmmVersion": 52004
+  },
+  "SS13-s2-r100 [cpu]": {
+   "takenLs": 12.382190208882195,
+   "share": 0.7380113369532434,
+   "hec22": 0.7976210683494366,
+   "hec22FrontalOnly": 0.7166979878756061,
+   "depthInGrateCellM": 0.0014519862535616454,
+   "swmmVersion": 52004
+  },
+  "SS13-s2-r100 [gpu]": {
+   "takenLs": 5.634113248670474,
+   "share": 0.33580807442406796,
+   "hec22": 0.7976210683494366,
+   "hec22FrontalOnly": 0.7166979878756061,
+   "depthInGrateCellM": 0.011739619076251984,
+   "swmmVersion": 52004
+  },
+  "SS13-s2-r200 [cpu]": {
+   "takenLs": 20.785644650458604,
+   "share": 0.6194397412388326,
+   "hec22": 0.6903877698648841,
+   "hec22FrontalOnly": 0.5998657234825692,
+   "depthInGrateCellM": 0.003574835168422922,
+   "swmmVersion": 52004
+  },
+  "SS13-s2-r200 [gpu]": {
+   "takenLs": 9.732196984308151,
+   "share": 0.29003236045951447,
+   "hec22": 0.6903877698648841,
+   "hec22FrontalOnly": 0.5998657234825692,
+   "depthInGrateCellM": 0.016900798305869102,
+   "swmmVersion": 52004
+  },
+  "SS13-s4-r50 [cpu]": {
+   "takenLs": 6.951877616321023,
+   "share": 0.8287006430051551,
+   "hec22": 0.9146420104840809,
+   "hec22FrontalOnly": 0.8853883264151149,
+   "depthInGrateCellM": 0.00006114633514747459,
+   "swmmVersion": 52004
+  },
+  "SS13-s4-r50 [gpu]": {
+   "takenLs": 2.716784795144728,
+   "share": 0.32385514114308017,
+   "hec22": 0.9146420104840809,
+   "hec22FrontalOnly": 0.8853883264151149,
+   "depthInGrateCellM": 0.007216961123049259,
+   "swmmVersion": 52004
+  },
+  "SS13-s4-r100 [cpu]": {
+   "takenLs": 12.600177420924119,
+   "share": 0.7510039522405104,
+   "hec22": 0.8206137970672529,
+   "hec22FrontalOnly": 0.775661222019741,
+   "depthInGrateCellM": 0.000952246084288896,
+   "swmmVersion": 52004
+  },
+  "SS13-s4-r100 [gpu]": {
+   "takenLs": 4.907759497376295,
+   "share": 0.29251546673103745,
+   "hec22": 0.8206137970672529,
+   "hec22FrontalOnly": 0.775661222019741,
+   "depthInGrateCellM": 0.010709122754633427,
+   "swmmVersion": 52004
+  },
+  "SS13-s4-r200 [cpu]": {
+   "takenLs": 21.257080882788415,
+   "share": 0.6334891653811118,
+   "hec22": 0.7106498764167674,
+   "hec22FrontalOnly": 0.6576324847405798,
+   "depthInGrateCellM": 0.0027563760547463403,
+   "swmmVersion": 52004
+  },
+  "SS13-s4-r200 [gpu]": {
+   "takenLs": 8.616147547339398,
+   "share": 0.2567726090266708,
+   "hec22": 0.7106498764167674,
+   "hec22FrontalOnly": 0.6576324847405798,
+   "depthInGrateCellM": 0.015582547523081303,
+   "swmmVersion": 52004
+  }
+ },
+ "notRun": [],
+ "raw": {
+  "SS13-s1-r50 [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS13-s1-r50.cpu.json",
+   "sha256": "9f4da539bac83698e83b8f7b4c1022365dde3645f46f9a7744e04b29fc385c21",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 2.795,
+   "steps": 3500,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s1-r50 [gpu]": {
+   "file": "street/raw/2026-11-17T22-45-fix2-gpu/SS13-s1-r50.gpu.json",
+   "sha256": "0db903b90e083e9c023b4e56c8be4c854977e08f4bc1de91615f2445cd92ed62",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 13.79,
+   "steps": 3316,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s1-r100 [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS13-s1-r100.cpu.json",
+   "sha256": "1b3fd654aae6d40c3583dd98c89cfedc0dcd8f4634caeb3b44610409fac64cfa",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 4.076,
+   "steps": 4500,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s1-r100 [gpu]": {
+   "file": "street/raw/2026-11-17T22-45-fix2-gpu/SS13-s1-r100.gpu.json",
+   "sha256": "33c7b888f4636aba612c085a6d56cccfd58b5d4e3407f844de7e1c76dac64b44",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 13.901,
+   "steps": 3964,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s1-r200 [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS13-s1-r200.cpu.json",
+   "sha256": "7dceb5f7d18101c1246320ddd29418be8d1082341e0b3623e902b38300bc2acf",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 6.002,
+   "steps": 5699,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s1-r200 [gpu]": {
+   "file": "street/raw/2026-11-17T22-45-fix2-gpu/SS13-s1-r200.gpu.json",
+   "sha256": "17028619a2913a1add9d03d148ad8dd4d048cb828a74301d3c9ed1c5e4b86001",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 13.794,
+   "steps": 5259,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s2-r50 [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS13-s2-r50.cpu.json",
+   "sha256": "d90a096e3a12ed793d72e0fbf01badbda7d53bff83933adc04e4a731ecfc9f63",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 3.955,
+   "steps": 4573,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s2-r50 [gpu]": {
+   "file": "street/raw/2026-11-17T22-45-fix2-gpu/SS13-s2-r50.gpu.json",
+   "sha256": "b687b05b28b8cf33f651b6276d90ecbc8968045fc883bbf2dd898e450000e6f8",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 13.911,
+   "steps": 3343,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s2-r100 [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS13-s2-r100.cpu.json",
+   "sha256": "949875a9f692cb479c1a46cc35228baf9d85861d23b42d8ac88a3b44280b36ce",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 4.655,
+   "steps": 5081,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s2-r100 [gpu]": {
+   "file": "street/raw/2026-11-17T22-45-fix2-gpu/SS13-s2-r100.gpu.json",
+   "sha256": "ac7981b8348586625cb50df8a665cb8bd8054cc9c8bfb33e5815a886b5ceafa9",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 13.954,
+   "steps": 3992,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s2-r200 [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS13-s2-r200.cpu.json",
+   "sha256": "370af46863fc9b9912cd00e096ea2a8e2750fd8b7777d31256146a10cb058f42",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 6.774,
+   "steps": 6286,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s2-r200 [gpu]": {
+   "file": "street/raw/2026-11-17T22-45-fix2-gpu/SS13-s2-r200.gpu.json",
+   "sha256": "5a74d4ef9bc7450dbcfdc823e0e2389b3aa5418968151ecb0e52c1b5294697b2",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 13.853,
+   "steps": 5171,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s4-r50 [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS13-s4-r50.cpu.json",
+   "sha256": "dfd30f9d3d2c97bcfd17a09afd5556b3932251ee277c372facd136192aad0310",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 4.113,
+   "steps": 5184,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s4-r50 [gpu]": {
+   "file": "street/raw/2026-11-17T22-45-fix2-gpu/SS13-s4-r50.gpu.json",
+   "sha256": "08eaae697281f5a05c48381bfa466ad93cbf734b49ed5b65eefe0eef9754a477",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 13.923,
+   "steps": 3370,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s4-r100 [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS13-s4-r100.cpu.json",
+   "sha256": "3e3e2b6ac67a19c91fb768bf76d425f851534eef05490a5c408a83892aa6915f",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 5.291,
+   "steps": 5665,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s4-r100 [gpu]": {
+   "file": "street/raw/2026-11-17T22-45-fix2-gpu/SS13-s4-r100.gpu.json",
+   "sha256": "2b550289e2ccc0e90226e415e300deb2c78399b741ea492d8a062d6796bc2f18",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 14.155,
+   "steps": 4521,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s4-r200 [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS13-s4-r200.cpu.json",
+   "sha256": "5f9e77f0454e310d0d096d2c03d725138b9465762c3fa033f3c2845486ec2ff0",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 6.174,
+   "steps": 6883,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  },
+  "SS13-s4-r200 [gpu]": {
+   "file": "street/raw/2026-11-17T22-45-fix2-gpu/SS13-s4-r200.gpu.json",
+   "sha256": "49d54bec9be8896dda966524a2f3bf1c58a484f78b7dbb580586401ab44d3118",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 14.234,
+   "steps": 5207,
+   "grid": {
+    "nx": 100,
+    "ny": 8,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 800
+   }
+  }
+ },
+ "hand": {
+  "SS13-s1-r50": {
+   "flowReachingTheGrateLs": 8.38888888888889,
+   "spreadM": 1.3997037866569606,
+   "velocityMs": 0.42818570786468474,
+   "frontalShare": 0.775661222019741,
+   "efficiency": 0.8801998622925626,
+   "kerbCellDepthAboveM": 0.017284806410995442
+  },
+  "SS13-s1-r100": {
+   "flowReachingTheGrateLs": 16.77777777777778,
+   "spreadM": 1.814602288439003,
+   "velocityMs": 0.5095320766061713,
+   "frontalShare": 0.6576324847405798,
+   "efficiency": 0.7909896715577379,
+   "kerbCellDepthAboveM": 0.02537253569289778
+  },
+  "SS13-s1-r200": {
+   "flowReachingTheGrateLs": 33.55555555555556,
+   "spreadM": 2.3524845017905647,
+   "velocityMs": 0.6063325616011529,
+   "frontalShare": 0.5444036899644755,
+   "efficiency": 0.6893368058184723,
+   "kerbCellDepthAboveM": 0.03585761989651143
+  },
+  "SS13-s2-r50": {
+   "flowReachingTheGrateLs": 8.38888888888889,
+   "spreadM": 1.2293158442828567,
+   "velocityMs": 0.5551079969740449,
+   "frontalShare": 0.8326684441286959,
+   "efficiency": 0.8918251745541743,
+   "kerbCellDepthAboveM": 0.013963387931769274
+  },
+  "SS13-s2-r100": {
+   "flowReachingTheGrateLs": 16.77777777777778,
+   "spreadM": 1.5937081584796067,
+   "velocityMs": 0.6605669578496585,
+   "frontalShare": 0.7166979878756061,
+   "efficiency": 0.7976210683494366,
+   "kerbCellDepthAboveM": 0.02106658636938958
+  },
+  "SS13-s2-r200": {
+   "flowReachingTheGrateLs": 33.55555555555556,
+   "spreadM": 2.0661132012710355,
+   "velocityMs": 0.7860609254079161,
+   "frontalShare": 0.5998657234825692,
+   "efficiency": 0.6903877698648841,
+   "kerbCellDepthAboveM": 0.030275306287856962
+  },
+  "SS13-s4-r50": {
+   "flowReachingTheGrateLs": 8.38888888888889,
+   "spreadM": 1.0796694696484677,
+   "velocityMs": 0.7196524373529914,
+   "frontalShare": 0.8853883264151149,
+   "efficiency": 0.9146420104840809,
+   "kerbCellDepthAboveM": 0.011046290470913949
+  },
+  "SS13-s4-r100": {
+   "flowReachingTheGrateLs": 16.77777777777778,
+   "spreadM": 1.3997037866569606,
+   "velocityMs": 0.8563714157293695,
+   "frontalShare": 0.775661222019741,
+   "efficiency": 0.8206137970672529,
+   "kerbCellDepthAboveM": 0.017284806410995442
+  },
+  "SS13-s4-r200": {
+   "flowReachingTheGrateLs": 33.55555555555556,
+   "spreadM": 1.814602288439003,
+   "velocityMs": 1.0190641532123426,
+   "frontalShare": 0.6576324847405798,
+   "efficiency": 0.7106498764167674,
+   "kerbCellDepthAboveM": 0.02537253569289778
+  }
+ }
+}

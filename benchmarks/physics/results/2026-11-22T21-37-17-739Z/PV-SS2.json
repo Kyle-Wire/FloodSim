@@ -1,0 +1,599 @@
+{
+ "id": "PV-SS2",
+ "spec": "benchmarks/physics/spec/PV-SS2.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-a [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.12,
+   "sim": 0.1199700103433083,
+   "abs": -0.000029989656691695177,
+   "rel": -0.0002499138057641265,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-a [cpu]",
+   "quantity": "spilled over the rim (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": -0.0022082062007164893,
+   "abs": -0.0022082062007164893,
+   "rel": null,
+   "limit": 0.3,
+   "criterion": {
+    "abs": 0.3
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-a [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -5.017957173447066e-16,
+   "abs": -5.017957173447066e-16,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-a [gpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.12,
+   "sim": 0.1199699692428112,
+   "abs": -0.000030030757188798107,
+   "rel": -0.00025025630990665093,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-a [gpu]",
+   "quantity": "spilled over the rim (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": -0.0022082775107330477,
+   "abs": -0.0022082775107330477,
+   "rel": null,
+   "limit": 0.3,
+   "criterion": {
+    "abs": 0.3
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-a [gpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -4.3164554777943424e-7,
+   "abs": -4.3164554777943424e-7,
+   "rel": null,
+   "limit": 0.00001,
+   "criterion": {
+    "abs": 0.00001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-b [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20001393535938802,
+   "abs": 0.000013935359388012047,
+   "rel": 0.00006967679694006024,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-b [cpu]",
+   "quantity": "spilled over the rim (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 12,
+   "sim": 11.993452071236407,
+   "abs": -0.006547928763593447,
+   "rel": -0.0005456607302994539,
+   "limit": 0.3,
+   "criterion": {
+    "abs": 0.3
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-b [cpu]",
+   "quantity": "peak depth in the hollow (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.21196,
+   "abs": 0.005482114883786637,
+   "rel": 0.026550615242407684,
+   "limit": 0.008,
+   "criterion": {
+    "abs": 0.008
+   },
+   "status": "Passed",
+   "note": "reference: rim plus the head of frictionless critical flow"
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-b [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 9.032322912204638e-15,
+   "abs": 9.032322912204638e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-b [gpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20001608431339263,
+   "abs": 0.000016084313392616956,
+   "rel": 0.00008042156696308478,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-b [gpu]",
+   "quantity": "spilled over the rim (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 12,
+   "sim": 11.993730382003486,
+   "abs": -0.006269617996514043,
+   "rel": -0.0005224681663761702,
+   "limit": 0.3,
+   "criterion": {
+    "abs": 0.3
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-b [gpu]",
+   "quantity": "peak depth in the hollow (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.21196,
+   "abs": 0.005482114883786637,
+   "rel": 0.026550615242407684,
+   "limit": 0.008,
+   "criterion": {
+    "abs": 0.008
+   },
+   "status": "Passed",
+   "note": "reference: rim plus the head of frictionless critical flow"
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-b [gpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000013611271155827544,
+   "abs": 0.000013611271155827544,
+   "rel": null,
+   "limit": 0.00001,
+   "criterion": {
+    "abs": 0.00001
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c [cpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20001399703582465,
+   "abs": 0.000013997035824636628,
+   "rel": 0.00006998517912318314,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c [cpu]",
+   "quantity": "spilled over the rim (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 44,
+   "sim": 43.99344420203049,
+   "abs": -0.0065557979695114454,
+   "rel": -0.0001489954083979874,
+   "limit": 0.88,
+   "criterion": {
+    "abs": 0.88
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c [cpu]",
+   "quantity": "peak depth in the hollow (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.21028300164800623,
+   "sim": 0.21764,
+   "abs": 0.007356998351993771,
+   "rel": 0.03498617717236454,
+   "limit": 0.008,
+   "criterion": {
+    "abs": 0.008
+   },
+   "status": "Passed",
+   "note": "reference: rim plus the head of frictionless critical flow"
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c [cpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": -2.2957154068520042e-15,
+   "abs": -2.2957154068520042e-15,
+   "rel": null,
+   "limit": 1e-9,
+   "criterion": {
+    "abs": 1e-9
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c [gpu]",
+   "quantity": "depth in the hollow at the end (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20001618564128876,
+   "abs": 0.000016185641288746222,
+   "rel": 0.00008092820644373111,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c [gpu]",
+   "quantity": "spilled over the rim (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 44,
+   "sim": 43.99365692930394,
+   "abs": -0.006343070696061659,
+   "rel": -0.00014416069763776497,
+   "limit": 0.88,
+   "criterion": {
+    "abs": 0.88
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c [gpu]",
+   "quantity": "peak depth in the hollow (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.21028300164800623,
+   "sim": 0.21764,
+   "abs": 0.007356998351993771,
+   "rel": 0.03498617717236454,
+   "limit": 0.008,
+   "criterion": {
+    "abs": 0.008
+   },
+   "status": "Passed",
+   "note": "reference: rim plus the head of frictionless critical flow"
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c [gpu]",
+   "quantity": "surface books (relative)",
+   "errorType": "accounting",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.000006543572790134627,
+   "abs": 0.000006543572790134627,
+   "rel": null,
+   "limit": 0.00001,
+   "criterion": {
+    "abs": 0.00001
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c against SS2-b [cpu]",
+   "quantity": "end depth, a storm twice as large less the smaller one (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 6.167643662458033e-8,
+   "abs": 6.167643662458033e-8,
+   "rel": null,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS2",
+   "case": "SS2-c against SS2-b [gpu]",
+   "quantity": "end depth, a storm twice as large less the smaller one (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 1.0132789612926629e-7,
+   "abs": 1.0132789612926629e-7,
+   "rel": null,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS2-a [cpu]": {
+   "peakDepthM": 0.11997,
+   "hmaxMeanM": 0.11997003629920393,
+   "edgeShareOfRain": 0.32190914089261685
+  },
+  "SS2-a [gpu]": {
+   "peakDepthM": 0.11997,
+   "hmaxMeanM": 0.1199700616300106,
+   "edgeShareOfRain": 0.32190913686380046
+  },
+  "SS2-b [cpu]": {
+   "peakDepthM": 0.21196,
+   "hmaxMeanM": 0.21195703436347293,
+   "edgeShareOfRain": 0.5761324591363629
+  },
+  "SS2-b [gpu]": {
+   "peakDepthM": 0.21196,
+   "hmaxMeanM": 0.21195704340934754,
+   "edgeShareOfRain": 0.5761383555509211
+  },
+  "SS2-c [cpu]": {
+   "peakDepthM": 0.21764,
+   "hmaxMeanM": 0.21764465445333628,
+   "edgeShareOfRain": 0.7880661462079452
+  },
+  "SS2-c [gpu]": {
+   "peakDepthM": 0.21764,
+   "hmaxMeanM": 0.21764468401670456,
+   "edgeShareOfRain": 0.7880683996748297
+  }
+ },
+ "notRun": [],
+ "raw": {
+  "SS2-a [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS2-a.cpu.json",
+   "sha256": "b09fdfab0716b57d61102d861430a3d354578e14f392e1372044208489a9adb9",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 14.894,
+   "steps": 29695,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS2-a [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS2-a.gpu.json",
+   "sha256": "c01335ea10aa3246e3c427c77e95dbb3604d44e22c8219e646caa79a2a0dba8c",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 13.858,
+   "steps": 29696,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS2-b [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS2-b.cpu.json",
+   "sha256": "b2abb5ef2049aedbc77df5f94a5c446cac5caaedaf279dbadb4bd24793b0df8c",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 33.445,
+   "steps": 58797,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS2-b [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS2-b.gpu.json",
+   "sha256": "c3bdc95f86b0bfef252a429e15990f263fbc07426fa7bcbf9922461031296a16",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 22.087,
+   "steps": 58797,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS2-c [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS2-c.cpu.json",
+   "sha256": "64e57298a5cd730918c58efad9dd274b61357428ba0988c9b3a017cbb0ba1959",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 35.333,
+   "steps": 61503,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS2-c [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS2-c.gpu.json",
+   "sha256": "71cab12a4ae22715f683c0a7579fb6a41bcb88b5ab6759b03a86978f3a4559b1",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 22.166,
+   "steps": 61503,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  }
+ },
+ "hand": {
+  "SS2-a": {
+   "rainM": 0.03,
+   "volumeToHollowM3": 12,
+   "hollowVolumeM3": 20,
+   "spills": false,
+   "finalDepthM": 0.12,
+   "spillM3": 0,
+   "rainBelowRimM3": 5.7,
+   "peakDepthM": 0.12
+  },
+  "SS2-b": {
+   "rainM": 0.08,
+   "volumeToHollowM3": 32,
+   "hollowVolumeM3": 20,
+   "spills": true,
+   "finalDepthM": 0.2,
+   "spillM3": 12,
+   "rainBelowRimM3": 15.200000000000001,
+   "peakDepthM": 0.20647788511621337
+  },
+  "SS2-c": {
+   "rainM": 0.16,
+   "volumeToHollowM3": 64,
+   "hollowVolumeM3": 20,
+   "spills": true,
+   "finalDepthM": 0.2,
+   "spillM3": 44,
+   "rainBelowRimM3": 30.400000000000002,
+   "peakDepthM": 0.21028300164800623
+  }
+ }
+}

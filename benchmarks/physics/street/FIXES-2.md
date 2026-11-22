@@ -34,3 +34,38 @@ ponded-grate rows whose hand answer assumed Cw 0.5, and each of those is listed;
 (c) npm test and Gate C pass. Otherwise the defaults go back to off/0.5 and this page says why.
 
 Nothing reaches a report until Climate Home Inspection moves its FloodSim pin with a decision line.
+
+## Outcome (22 Nov 2026, 21:40 UTC): the rule is not met; the defaults go back to off/0.5
+
+Every street case on the CPU was run again with the change set (`raw/fixes2-cpu/`, scored in
+`benchmarks/physics/results/2026-11-22T21-37-17-739Z/`) and compared row by row with the 17:45 run.
+
+| Before → after (CPU rows) | Rows | Which |
+|---|---:|---|
+| passed → passed | 146 | |
+| failed → passed | 25 | PV-SS10 × 15 (calibration: 0.32 was fitted on them), PV-SS13 grate rows × 9, PV-SS11 hill pipe kerb cell |
+| passed → failed | 2 | see below |
+
+- **SS3-c, depth over the grate:** 0.0293 → 0.0395 m. A ponded grate whose hand answer was worked with Cw 0.5 (0.0293 ×
+  1.35 = 0.0394, as predicted above). Allowed by (a).
+- **SS3-x2, SWMM continuity:** −0.424 → −0.584 % against the 0.5 % limit. Not a ponded-grate row, so **(a) fails**.
+
+(b) passes (9 of 9 PV-SS13 grate rows). (c) passes: `npm test` 53 of 53; Gate C sets its own coefficients and no
+capture, so it is not moved.
+
+**Which change moves SS3-x2.** An unscored diagnostic (`diagnostics/x2-split.mjs`, run after the result above was
+seen) ran the case under the four combinations:
+
+| Cw | capture | to the network (m³) | SWMM continuity |
+|---|---|---:|---:|
+| 0.5 | off | 496.6 | −0.424 % |
+| 0.32 | off | 470.9 | **−0.584 %** |
+| 0.5 | hec22 | 493.6 | −0.297 % |
+| 0.32 | hec22 | 470.9 | **−0.584 %** |
+
+The weir coefficient alone moves it past the limit; the grate capture alone moves it the other way. It is a SWMM
+bookkeeping figure (no flooding, no return flow: the same 0.025 ML stored, about 26 m³ less taken in), so it says
+nothing direct about the grate, but the rule was fixed before the run and is applied as written: **`Cw` goes back to
+0.5 and `capture` back to off.** F15 stays open: the Sheffield excess is real, and the next step is to find why less
+inflow to this network raises SWMM's routing error (with F14). Capture alone is registered as a new candidate in
+`FIXES-3.md`; the diagnostic above was seen before that registration, so SS3-x2 is not evidence there.

@@ -24,10 +24,10 @@
   },
   "appCoefficients": {
    "value": {
-    "Cw": 0.32,
+    "Cw": 0.5,
     "Co": 0.6
    },
-   "unit": "-, - (src/drainage.js DESIGN_DEFAULTS; Cw 0.5 until 22 Nov 2026, see street/FIXES-2.md)"
+   "unit": "-, - (src/drainage.js DESIGN_DEFAULTS; Cw 0.32 was tried as the default on 22 Nov 2026 and failed its rule, see street/FIXES-2.md)"
   },
   "paperCi": {
    "value": {
@@ -258,7 +258,7 @@
  "criteria": {
   "exchangeRel": 0.1
  },
- "criteriaNotes": "10 %: the paper's own coefficient range is +/- 9 % and its flow error 1 to 5 %. Not a blind test: the spreadsheets' means and the paper's coefficient had been read, and a hand estimate made (the default over-predicts by about half), before this was registered. 22 Nov 2026: the app default became Cw 0.32, fitted to these 15 tests (F15, street/FIXES-2.md), so rows from then on are calibration, not evidence.",
+ "criteriaNotes": "10 %: the paper's own coefficient range is +/- 9 % and its flow error 1 to 5 %. Not a blind test: the spreadsheets' means and the paper's coefficient had been read, and a hand estimate made (the default over-predicts by about half), before this was registered. 22 Nov 2026: Cw 0.32, fitted to these 15 tests (F15), was tried as the default and failed its adoption rule (street/FIXES-2.md); rows scored with 0.32 (raw/fixes2-cpu) are calibration, not evidence.",
  "conservation": "not applicable",
  "resolution": "not applicable (no grid). In a model run the law sees the depth in the inlet's own 1 m cell; the laboratory depth is 0.46 m from the inlet's centre",
  "assumptions": [

@@ -14,7 +14,7 @@ const r2 = (x) => Math.round(x * 100) / 100;
  * drawing (named in `basis`). The first five are the generic kinds the Inlet hydraulics select offers.
  */
 export const INLET_KINDS = Object.freeze({
-  typical: { label: 'Typical street grate', v: [0.2, 2, 0.32, 0.6], basis: 'A 0.6 × 0.35 m street grate. The model’s default (weir coefficient fitted to the Sheffield rig, F15).' },
+  typical: { label: 'Typical street grate', v: [0.2, 2, 0.5, 0.6], basis: 'A 0.6 × 0.35 m street grate. The model’s default.' },
   hec22: { label: 'Street grate, FHWA HEC-22 coefficients', v: [0.2, 2, 0.37, 0.67], basis: 'The same grate with the FHWA HEC-22 grate coefficients (weir 1.66 SI, orifice 0.67). Takes a little less while the water is shallow.' },
   small: { label: 'Small yard or alley grate', v: [0.1, 1.4, 0.5, 0.6], basis: 'About 0.4 × 0.3 m, as in yards, alleys and parking lots.' },
   large: { label: 'Double grate', v: [0.4, 3, 0.5, 0.6], basis: 'Two street grates side by side.' },
