@@ -31,7 +31,10 @@ export const DESIGN_DEFAULTS = {
   fallbackIntensity: 100, // mm/hr when Atlas 14 is unavailable
   inletArea: 0.2,       // m², one grate opening (≈ 0.6 × 0.35 m clear)
   inletPerim: 2.0,      // m, weir length of one grate
-  Cw: 0.5, Co: 0.6,     // weir and orifice coefficients
+  Cw: 0.32, Co: 0.6,    // weir and orifice coefficients. Cw was 0.5 until 22 Nov 2026: 1.55 times too much on the
+                        // Sheffield rig (F15, PV-SS10 fit; benchmarks/physics/street/FIXES-2.md)
+  capture: 'hec22',     // a grate on a grade also takes HEC-22's share of the water arriving moving (F21, grateCapture);
+  grateW: 0.6, grateL: 0.9, // null = the depth law alone. The grate's size for it (m, a 2 × 3 ft grate)
   continuation: 100,    // m of off-site pipe beyond each boundary outlet (stands in for the downstream sewer)
   grateMerge: 12,       // m: real grates closer than this along a street share a manhole
   surDepth: 0,          // open manholes when the coupler takes water in only: a full node overflows (SWMM 'flooding') and the
@@ -521,7 +524,9 @@ export function inletOptions(parts, base) {
     const o = hyd ? { ...base, ...hyd } : base;
     n += g; A += o.inletArea * g; P += o.inletPerim * g; CwP += o.Cw * o.inletPerim * g; CoA += o.Co * o.inletArea * g;
   }
-  return n > 0 ? { ...base, inletArea: A / n, inletPerim: P / n, Cw: P > 0 ? CwP / P : base.Cw, Co: A > 0 ? CoA / A : base.Co } : base;
+  // a point whose openings all keep the depth law (curb openings, slab inlets) does not take HEC-22's grate capture
+  const capture = parts.every(p => p[1] && p[1].capture === null) ? null : base.capture;
+  return n > 0 ? { ...base, inletArea: A / n, inletPerim: P / n, Cw: P > 0 ? CwP / P : base.Cw, Co: A > 0 ? CoA / A : base.Co, capture } : base;
 }
 
 export function inletFlow(h, zs, Hn, nInlets, o = DESIGN_DEFAULTS, crest = 0) {

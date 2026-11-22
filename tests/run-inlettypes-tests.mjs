@@ -40,7 +40,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= tol;
   check('NCDOT catch basin 840.03: 3.1 ft²', near(cb.inletArea, 3.1 * 0.0929, 0.005), JSON.stringify(cb));
   check('slab-top drop inlet: per open side', near(kindHydraulics('ncdotSlab', 3).inletArea, 3 * INLET_KINDS.ncdotSlab.v[0], 1e-9) && near(kindHydraulics('ncdotSlab', 3).inletPerim, 3 * INLET_KINDS.ncdotSlab.v[1], 1e-9));
   check('estimated values say so', ['ncdotCB', 'ncdotDCB', 'ncdotCI', 'ncdotElong', 'ncdotSlab'].every(k => INLET_KINDS[k].est && /estimated/i.test(INLET_KINDS[k].basis)) && !INLET_KINDS.ncdotDI.est);
-  check('the generic kinds keep the values the Kind of inlet select had', JSON.stringify(INLET_KINDS.typical.v) === '[0.2,2,0.5,0.6]' && JSON.stringify(INLET_KINDS.curb.v) === '[0.2,1.5,0.28,0.67]');
+  check('the generic kinds keep the values the Kind of inlet select had (typical: Cw 0.32 since F15, 22 Nov 2026)', JSON.stringify(INLET_KINDS.typical.v) === '[0.2,2,0.32,0.6]' && JSON.stringify(INLET_KINDS.curb.v) === '[0.2,1.5,0.28,0.67]');
   check('the typical kind is the model default', INLET_KINDS.typical.v.join() === [DESIGN_DEFAULTS.inletArea, DESIGN_DEFAULTS.inletPerim, DESIGN_DEFAULTS.Cw, DESIGN_DEFAULTS.Co].join());
 }
 
@@ -124,7 +124,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= tol;
   };
   const qa = run({ node: 0, cell: 42, grates: 1 }), qb = run({ node: 0, cell: 42, grates: 1, parts: [[1, di]] });
   check('a point without parts: the area setting', near(qa, inletFlow(0.03, 10, 8, 1, DESIGN_DEFAULTS), 1e-7), qa.toFixed(6));
-  check('a point with its kind: that grate (the NCDOT drop inlet, HEC-22 weir coefficient: a little less while shallow)', near(qb, inletFlow(0.03, 10, 8, 1, { ...DESIGN_DEFAULTS, ...di }), 1e-7) && qb < qa, `${qa.toFixed(5)} → ${qb.toFixed(5)} m³/s`);
+  check('a point with its kind: that grate (the NCDOT drop inlet, its own opening and coefficient, not the default)', near(qb, inletFlow(0.03, 10, 8, 1, { ...DESIGN_DEFAULTS, ...di }), 1e-7) && Math.abs(qb - qa) > 1e-6, `${qa.toFixed(5)} → ${qb.toFixed(5)} m³/s`);
 }
 
 // ---- a settings test names the types whose kind changed
