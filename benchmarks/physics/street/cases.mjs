@@ -119,7 +119,7 @@ function onePipe(d, base, c, e) {
   const cell = Math.floor(d.inlet[1] / c.dx) * c.nx + Math.floor(d.inlet[0] / c.dx), zs = c.z[cell];
   const out = { name: 'O1', p: [c.nx + d.L, d.inlet[1]], ground: zs + d.invOut, invert: zs + d.invOut, depth: 0, outfall: true, outfallType: d.outlet === 'FREE' ? 'FREE' : d.stage == null || d.viaStage ? 'FREE' : `FIXED ${(zs + d.stage).toFixed(4)}`, ...(d.viaStage ? { toStream: true } : {}) };
   const net = { nodes: [{ name: 'J1', p: d.inlet, ground: zs, invert: zs + d.invUp, depth: -d.invUp, outfall: false }, out],
-    pipes: [{ name: 'C0', from: 0, to: 1, L: d.L, D: d.D, inOffset: 0, outOffset: 0 }], inlets: [{ node: 0, cell, grates: 1 }], opts: { ...DESIGN_DEFAULTS } };
+    pipes: [{ name: 'C0', from: 0, to: 1, L: d.L, D: d.D, inOffset: 0, outOffset: 0 }], inlets: [{ node: 0, cell, grates: 1 }], opts: { ...DESIGN_DEFAULTS, ...(d.opts ?? {}) } };
   const ref = { x0: 0, y1: c.ny * c.dx, dx: 1 }, twoWay = d.twoWay !== false;
   return { net, twoWay, interval: 2, inp: toINP(net, ref, { durationS: Math.ceil(e.tEnd / 60) * 60 + 3600, pressurise: twoWay, title: 'Street sandbox: one inlet, one pipe' }), stage: d.viaStage ? zs + d.stage : null, zs };
 }

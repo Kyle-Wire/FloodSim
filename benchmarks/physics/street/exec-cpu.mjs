@@ -30,7 +30,19 @@ export class CpuSim {
   get rainRate() { return this.s.rainRate; } set rainRate(v) { this.s.rainRate = v; }
   setDepth(fn) { this.s.setDepth(fn); }
   setInletRates(q) { for (let m = 0; m < this.inQ.length; m++) this.inQ[m] = q[m]; }
-  async readInlets() { const vol = Float64Array.from(this.inV), h = Float32Array.from(this.inC, c => this.s.h[c]); this.inV.fill(0); return { vol, h }; }
+  async readInlets() {
+    const vol = Float64Array.from(this.inV), h = Float32Array.from(this.inC, c => this.s.h[c]); this.inV.fill(0);
+    // as the GPU's approachAt (F21): each interior neighbour's discharge toward the inlet cell; the largest is frontal
+    const s = this.s, NX = s.NX, app = new Float32Array(4 * this.inC.length);
+    this.inC.forEach((c, m) => {
+      const i = c % NX - (s.NX - this.nx) / 2, j = Math.floor(c / NX) - (s.NY - this.ny) / 2;
+      const f = [i > 0 ? Math.max(0, s.hu[c - 1]) : 0, i < this.nx - 1 ? Math.max(0, -s.hu[c + 1]) : 0, j > 0 ? Math.max(0, s.hv[c - NX]) : 0, j < this.ny - 1 ? Math.max(0, -s.hv[c + NX]) : 0];
+      let k = 0; for (let q = 1; q < 4; q++) if (f[q] > f[k]) k = q;
+      const fm = f[k], nb = [c - 1, c + 1, c - NX, c + NX][k];
+      app.set([fm * this.dx, (f[0] + f[1] + f[2] + f[3] - fm) * this.dx, fm > 0 ? s.h[nb] : 0, k >= 2 ? 1 : 0], 4 * m);
+    });
+    return { vol, h, app };
+  }
   async advance(tTarget) {
     const s = this.s, A = s.dx * s.dx;
     while (s.t < tTarget - 1e-12) {

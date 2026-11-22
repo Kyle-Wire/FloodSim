@@ -26,7 +26,7 @@
 // than that. An area taken too small only slows the approach; one taken more than about 1.7 times too large would
 // swing, so a caller that sets a smaller MIN_SURFAREA in the .inp must pass it here. (A first version took half the
 // minimum for safety; its slower start left the A12-010 books 0.004 points outside their limit.)
-import { inletFlow, inletOptions, returnsHere, posKey } from './drainage.js';
+import { inletFlow, inletOptions, grateCapture, returnsHere, posKey } from './drainage.js';
 
 const FOLLOW_GAIN = 0.5;   // share of the head gap closed each interval
 
@@ -56,6 +56,15 @@ export class Coupler {
     this.crest = net.inlets.map(g => g.crest ?? 0);
     // each point's grate hydraulics: the area's setting, or the equivalent of its grates' own kinds (drainage.js inletOptions)
     this.opt = net.inlets.map(g => inletOptions(g.parts, net.opts));
+    // F21 (opt capture: 'hec22', default off): each inlet cell's bed slope (x, y), from in-domain neighbours less than
+    // 0.3 m away (a kerb face or a wall is not the street's slope), for grateCapture's cross slope
+    this.capture = this.opt.some(o => o.capture === 'hec22');
+    if (this.capture) {
+      const nx = solver.nx, ny = zs.length / nx, dx = solver.dx ?? 1;
+      const sl = (k, di, dj) => { const i = k % nx, j = (k / nx) | 0, d = []; for (const s of [-1, 1]) { const ii = i + s * di, jj = j + s * dj; if (ii >= 0 && ii < nx && jj >= 0 && jj < ny) { const dz = zs[jj * nx + ii] - zs[k]; if (Math.abs(dz) < 0.3) d.push(s * dz / dx); } } return d.length ? d.reduce((a, b) => a + b, 0) / d.length : 0; };
+      this.bedSlope = net.inlets.map(g => [sl(g.cell, 1, 0), sl(g.cell, 0, 1)]);
+      this.dx = dx;
+    }
     this.swIdx = net.nodes.map(n => swmm.index('NODE', n.name));
     if (this.swIdx.some(i => i < 0)) throw new Error('SWMM node lookup failed');
     this.lkIdx = net.pipes.map(p => swmm.index('LINK', p.name)); // by name: regulator weirs and outlets follow the conduits in the .inp
@@ -82,14 +91,20 @@ export class Coupler {
 
   /** Call when the surface solver has reached `this.tNext` (standalone; with other link models use a LinkHub). */
   async exchange() {
-    const { vol, h } = await this.solver.readInlets();
-    this.solver.setInletRates(this.step(vol, h, this.interval, this.tNext));
+    const { vol, h, app } = await this.solver.readInlets();
+    this.solver.setInletRates(this.step(vol, h, this.interval, this.tNext, app));
     this.tNext += this.interval;
   }
 
   /** Measured exchange over the interval ending at tNext → SWMM strides to tNext → rates for the next interval. */
-  step(vol, h, interval, tNext) {
+  step(vol, h, interval, tNext, app = null) {
     const { solver, swmm, net } = this, M = this.inletNodes.length;
+    // F21: what each grate could take of the water arriving moving (0 without capture or the solver's approach flows)
+    const cap = (m) => {
+      if (!this.capture || !app || this.opt[m].capture !== 'hec22') return 0;
+      const a = app.subarray(4 * m, 4 * m + 4), [gx, gy] = this.bedSlope[m];
+      return grateCapture(a, Math.abs(a[3] ? gx : gy), this.dx, this.grates[m], this.opt[m]);
+    };
     // SWMM gets exactly what the surface gave up (or received) over the interval, summed over each manhole's grates.
     // Overflow that SWMM discarded last interval was handed to the street by netting it out of this rate; it is credited
     // back so SWMM is not charged twice (it already booked it as flooding).
@@ -157,10 +172,12 @@ export class Coupler {
     for (let m = 0; m < M; m++) {
       const i = this.inletNodes[m], n = net.nodes[i];
       const share = overflow[i] / this.perNode[i]; // a manhole's overflow leaves through all of its grates
+      const cm = cap(m); // free inflow only: a submerged grate keeps the orifice law on the head difference
       let take = inletFlow(h[m], this.zs[m], this.state.head[i], this.grates[m], this.opt[m], this.crest[m]), bk = back?.[m] ?? 0;
+      if (cm > 0 && this.state.head[i] < this.zs[m] + this.crest[m]) take = Math.max(take, cm);
       if (this.follow && this.grates[m] > 0) {
         const o = this.opt[m], kA = o.Co * o.inletArea * this.grates[m] * (1 - Math.min(0.95, o.clog ?? 0));
-        const free = inletFlow(h[m], this.zs[m], -Infinity, this.grates[m], o, this.crest[m]), eta = this.zs[m] + Math.max(this.crest[m], h[m]);
+        const free = Math.max(cm, inletFlow(h[m], this.zs[m], -Infinity, this.grates[m], o, this.crest[m])), eta = this.zs[m] + Math.max(this.crest[m], h[m]);
         const qm = vol[m] / interval + this.ret[m];                 // what went through this grate over the interval just ended
         const loss = Math.sign(qm) * (qm / kA) ** 2 / (2 * 9.81);  // the grate's own head loss at that rate
         const want = (carried[i] - (lat[i] - grateIn[i])) / this.perNode[i] + FOLLOW_GAIN * (eta - loss - this.state.head[i]) * this.nodeArea / interval / this.perNode[i];
