@@ -33,7 +33,7 @@ export const DESIGN_DEFAULTS = {
   inletPerim: 2.0,      // m, weir length of one grate
   Cw: 0.5, Co: 0.6,     // weir and orifice coefficients. 0.32 (F15's fit to the Sheffield rig) was tried as the default
                         // on 22 Nov 2026 and failed its rule (benchmarks/physics/street/FIXES-2.md, Outcome)
-  capture: null,        // 'hec22': a grate on a grade also takes HEC-22's share of the water arriving moving (F21,
+  capture: 'hec22',     // a grate on a grade also takes HEC-22's share of the water arriving moving (F21,
   grateW: 0.6, grateL: 0.9, // grateCapture); null = the depth law alone. The grate's size for it (m, a 2 × 3 ft grate)
   continuation: 100,    // m of off-site pipe beyond each boundary outlet (stands in for the downstream sewer)
   grateMerge: 12,       // m: real grates closer than this along a street share a manhole
