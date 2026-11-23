@@ -2,12 +2,17 @@
 // real inlet (and outfall) locations; pipes are still synthesized through them unless the utility publishes mains.
 // Add a city by appending to UTILITIES: an ArcGIS FeatureServer/MapServer layer per feature type is enough, or a
 // Socrata (SODA) dataset of points (`socrata`, with its point column `geom`).
+//
+// `commercial` says whether the publisher's terms allow commercial use. Build uses a utility only when it is `true`,
+// unless the page is opened with `?utilities=all` (research, never a paid product). The City of Philadelphia's terms
+// say "Commercial use is prohibited without the prior written permission of the City" (phila.gov/terms-of-use, opened
+// 23 Nov 2026), so PWD is off by default and Philadelphia builds place inlets themselves, as everywhere else.
 
 export const UTILITIES = [
   {
     id: 'pwd', name: 'Philadelphia Water Department', city: 'Philadelphia, PA',
     bbox: [-75.2803, 39.8670, -74.9557, 40.1379],
-    license: 'City of Philadelphia License (OpenDataPhilly)',
+    license: 'City of Philadelphia License (OpenDataPhilly)', commercial: false,
     inlets: { url: 'https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/INLETS/FeatureServer/0', system: 'system', type: 'inlettype' },
     outfalls: { url: 'https://mapservices.pasda.psu.edu/server/rest/services/pasda/CityPhillyWater/MapServer/2', system: 'SYSTEM', type: 'OUTFALL_TY' },
     combinedArea: { url: 'https://services.arcgis.com/fLeGjb7u4uXqeF9q/arcgis/rest/services/Combined_Sewer_Service_Area/FeatureServer/0' },
@@ -16,7 +21,7 @@ export const UTILITIES = [
   {
     id: 'nycdep', name: 'NYC Department of Environmental Protection', city: 'New York, NY',
     bbox: [-74.2591, 40.4774, -73.7004, 40.9176],
-    license: 'NYC Open Data (NYC Terms of Use)',
+    license: 'NYC Open Data (NYC Terms of Use)', commercial: null, // terms not yet read for commercial use
     inlets: { socrata: 'https://data.cityofnewyork.us/resource/2w2g-fk3i.json', geom: 'the_geom', system: null, type: null }, // catch basins
     outfalls: { socrata: 'https://data.cityofnewyork.us/resource/8rjn-kpsh.json', geom: 'the_geom', system: 'outfall_ty', type: 'receiving_' },
     // no combined-area layer: DEP maps only the separate (MS4) drainage areas, so the area is combined where most of it
@@ -26,7 +31,9 @@ export const UTILITIES = [
   },
 ];
 
-export const utilityFor = ([w, s, e, n]) => UTILITIES.find(u => w >= u.bbox[0] && e <= u.bbox[2] && s >= u.bbox[1] && n <= u.bbox[3]) ?? null;
+/** The registered utility covering a lon/lat box, or null. Only utilities whose terms allow commercial use, unless `all`. */
+export const utilityFor = ([w, s, e, n], { all = false } = {}) =>
+  UTILITIES.find(u => (all || u.commercial === true) && w >= u.bbox[0] && e <= u.bbox[2] && s >= u.bbox[1] && n <= u.bbox[3]) ?? null;
 
 /** All point features of an ArcGIS layer inside a lon/lat box, paging past the server's record limit. */
 async function queryPoints(layer, [w, s, e, n], fetcher, fields) {
@@ -76,8 +83,8 @@ export function shareInside(polys, [w, s, e, n], N = 40) {
  * Real drainage features for a lon/lat box from the covering utility, or null when none is registered.
  * @returns {{utility, inlets: {lon,lat,system,type}[], outfalls: {lon,lat,system,type}[], combined: boolean}}
  */
-export async function fetchUtility(bounds, fetcher) {
-  const u = utilityFor(bounds);
+export async function fetchUtility(bounds, fetcher, opts = {}) {
+  const u = utilityFor(bounds, opts);
   if (!u) return null;
   const [w, s, e, n] = bounds, pad = 0.0015; // outfalls just beyond the area still receive its pipes
   const [inl, outs, comb] = await Promise.all([
