@@ -568,6 +568,17 @@ an error estimate. It is for screening: confirm with a solver run before a numbe
   - a synthetic lake and a tilting flood surface with moving fronts, recovered at held-out points; a design value that
     raises a pad out of the water;
   - Atlas 14 between columns, and a saved emulator predicting exactly what the trained one did.
+- **Cascade** (`src/cascade.js`): decides per request whether the emulator may answer or the solver must run. A
+  request goes to the solver when a value is outside the trained box, when it is far from every training run in the
+  GPs' length scales, or when the calibrated 2σ of the max depth on the cells of interest (or of a named scalar) is
+  above the tolerance. The calibration factor k is the 95th percentile of |error| / σ on runs the emulator did not
+  train on, divided by 1.96 (at least 1). A solver answer joins the training set. `npm run test:cascade`.
+  - On a synthetic four-lot block with homeowner fixes as sliders (`benchmarks/emulator/`, 136 CPU solver runs): trained
+    on 81 runs, the emulator answers in 2.5 ms against 111 s for the solver; at 40 unseen points the worst cell on the
+    home lot was at most 1.5 cm and the calibrated ±2σ held about 98 % of the cell errors. At a 3 cm tolerance 1 of 40
+    requests went to the solver. With only 24 training runs one answer got through at 3.4 cm, above the tolerance.
+    The change a set of fixes makes was within 0.2 cm at the back wall on 12 paired runs. Details and limits:
+    `benchmarks/emulator/RESULTS.md`. A browser what-if page is built from it (`build-whatif-page.mjs`).
 
 **Flood barriers** (drawer tools *Flood wall*, *Levee / berm*, *Deployable*; `src/barriers.js`). Each is a line with
 a crest, set either as a height above the lidar ground under it (so it follows the ground) or as a fixed elevation
@@ -1556,6 +1567,7 @@ node tests/run-bathymetry-tests.mjs # channel bathymetry: regional curves, flatt
 node tests/run-hecras-tests.mjs   # HEC-RAS: GeoTIFF and shapefile round trips, .g01 parsing, bed between sections, the 2D package
 node tests/run-window-tests.mjs   # window reruns: the window, its edge segments (+ outward), inflow rates, the edge check, merging
 node tests/run-emulator-tests.mjs # emulator: Latin hypercube, Gaussian process, leave-one-out, PCA, synthetic floods, Atlas 14 between columns
+node tests/run-cascade-tests.mjs  # emulator cascade: routing to the solver, calibration of the error estimate, learning from solver runs
 node tests/run-radar-tests.mjs    # radar overlay: product by date, tile and listing URLs, frame at a time (--live: Ida's frames)
 node tests/run-mrms-tests.mjs     # radar rainfall: PNG decoding (8 and 16 bit, all filters), GRIB2, value tables, gauge-corrected totals, timing (--live: Ida)
 node tests/run-nowcast-tests.mjs  # live radar: storm motion (whole and part pixels), advection, a live build with a cell arriving in the nowcast, PrecipRate fill
@@ -1655,6 +1667,7 @@ src/shapefile.js      ESRI shapefile writer (points, lines, polygons; .shx, .dbf
 src/hecras.js         HEC-RAS handoff: .g01 cross-sections into the channel bed; the 2D package export
 src/window.js         window reruns: the window, edge segments, inflow rates, the edge check, merging
 src/emulator.js       per-project emulator: Latin hypercube, Gaussian processes, PCA of flood fields, leave-one-out, save / load
+src/cascade.js        emulator cascade: when the emulator may answer and when the solver must run; calibration
 tools/batch.mjs       runs a project's batch study headless (tools/headless.mjs: Chrome/Edge over DevTools)
 tools/validate.mjs    the validation suite: scores each case in benchmarks/validation, keeps the history, writes its summary
 tools/outlet-reach.mjs a river outlet's edge level two ways (prismatic, lidar cross-sections) for a gauge and a box
