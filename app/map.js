@@ -4474,5 +4474,7 @@ const projects = initProjects({ capture: captureProject, layer: () => infra.laye
   if (pf) projects.open(pf).then(built).then(() => batchUI.opened({ auto: qp.get('batch') === 'run' })).then(st => { window.__batchDone = { ok: true, study: st }; })
     .catch(e => { log('Opening the project failed: ' + e.message, 'err'); window.__batchDone = { ok: false, error: e.message }; });
 }
-window.__floodsim = { batchUI, analyzeRecord, eadFamily, checksOf, loadSaved, damageAssets, saveCheckpoint: () => saveCheckpoint(run), resumeCheckpoint: () => resumeCheckpoint(run), get run() { return run; }, get model() { return model; }, nc, rollLive, captureProject, get records() { return records; }, map, setArea, infra, design, projects, buildPackage, runFiles, rasFiles, reportUI, compareUI, runWindowPair }; // console debugging
+window.__floodsim = { batchUI, analyzeRecord, eadFamily, checksOf, loadSaved, damageAssets, saveCheckpoint: () => saveCheckpoint(run), resumeCheckpoint: () => resumeCheckpoint(run), get run() { return run; }, get model() { return model; }, nc, rollLive, captureProject, get records() { return records; }, map, setArea, infra, design, projects, buildPackage, runFiles, rasFiles, reportUI, compareUI, runWindowPair,
+  // emulator studies driven headless (tools/emulator-runs.mjs): one training run with overrides, the parameters on offer, a design's build log
+  runAt, emuParams, designLog: (scName, values) => designAt(scName, values).log }; // console debugging
 gpuReady.then(() => updateSizeNote());
