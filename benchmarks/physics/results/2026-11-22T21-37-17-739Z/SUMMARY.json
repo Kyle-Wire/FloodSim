@@ -1,0 +1,350 @@
+{
+ "runId": "2026-11-22T21-37-17-739Z",
+ "order": [
+  "PV-C1",
+  "PV-P1",
+  "PV-SS1",
+  "PV-SS10",
+  "PV-SS11",
+  "PV-SS12",
+  "PV-SS13",
+  "PV-SS14",
+  "PV-SS2",
+  "PV-SS3",
+  "PV-SS4",
+  "PV-SS5",
+  "PV-SS6",
+  "PV-SS7",
+  "PV-SS8",
+  "PV-SS9",
+  "PV-TF1",
+  "PV-U1",
+  "PV-X1"
+ ],
+ "timing": {
+  "PV-C1": 4.1,
+  "PV-P1": 0.1,
+  "PV-SS1": 0,
+  "PV-SS10": 0,
+  "PV-SS11": 60.6,
+  "PV-SS12": 0,
+  "PV-SS13": 0,
+  "PV-SS14": 0,
+  "PV-SS2": 0,
+  "PV-SS3": 18.5,
+  "PV-SS4": 21.4,
+  "PV-SS5": 0,
+  "PV-SS6": 0,
+  "PV-SS7": 0,
+  "PV-SS8": 0.3,
+  "PV-SS9": 0.2,
+  "PV-TF1": 283.8,
+  "PV-U1": 6.9,
+  "PV-X1": 0.4
+ },
+ "counts": {
+  "PV-C1": {
+   "byStatus": {
+    "Passed": 18,
+    "Insufficient reference data": 1,
+    "Qualified": 1
+   },
+   "byErrorTypeAndStatus": {
+    "accounting/Passed": 15,
+    "numerical/Passed": 3,
+    "accounting/Insufficient reference data": 1,
+    "numerical/Qualified": 1
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-P1": {
+   "byStatus": {
+    "Passed": 36,
+    "Not independently validated": 12
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 12,
+    "physical-model/Not independently validated": 12,
+    "accounting/Passed": 24
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS1": {
+   "byStatus": {
+    "Passed": 24
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 20,
+    "accounting/Passed": 4
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS10": {
+   "byStatus": {
+    "Passed": 15
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Passed": 15
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS11": {
+   "byStatus": {
+    "Passed": 23,
+    "Failed": 51
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Passed": 23,
+    "physical-model/Failed": 51
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS12": {
+   "byStatus": {
+    "Passed": 20,
+    "Unsupported": 4
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 20,
+    "physical-model/Unsupported": 4
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS13": {
+   "byStatus": {
+    "Passed": 27,
+    "Failed": 9
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Passed": 9,
+    "numerical/Passed": 18,
+    "physical-model/Failed": 9
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS14": {
+   "byStatus": {
+    "Passed": 54,
+    "Failed": 6
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Passed": 24,
+    "numerical/Passed": 30,
+    "physical-model/Failed": 6
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS2": {
+   "byStatus": {
+    "Passed": 23,
+    "Failed": 1
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 18,
+    "accounting/Passed": 5,
+    "accounting/Failed": 1
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS3": {
+   "byStatus": {
+    "Failed": 19,
+    "Passed": 41
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Failed": 14,
+    "physical-model/Passed": 12,
+    "accounting/Passed": 28,
+    "accounting/Failed": 4,
+    "numerical/Failed": 1,
+    "numerical/Passed": 1
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS4": {
+   "byStatus": {
+    "Passed": 20,
+    "Failed": 14
+   },
+   "byErrorTypeAndStatus": {
+    "physical-model/Passed": 10,
+    "accounting/Passed": 10,
+    "accounting/Failed": 6,
+    "physical-model/Failed": 8
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS5": {
+   "byStatus": {
+    "Passed": 16,
+    "Failed": 2
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 8,
+    "physical-model/Failed": 2,
+    "physical-model/Passed": 8
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS6": {
+   "byStatus": {
+    "Passed": 33,
+    "Failed": 11
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 33,
+    "numerical/Failed": 11
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS7": {
+   "byStatus": {
+    "Passed": 17
+   },
+   "byErrorTypeAndStatus": {
+    "accounting/Passed": 17
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS8": {
+   "byStatus": {
+    "Passed": 22,
+    "Failed": 10
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 6,
+    "accounting/Passed": 16,
+    "physical-model/Failed": 10
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-SS9": {
+   "byStatus": {
+    "Passed": 27,
+    "Not independently validated": 12,
+    "Failed": 11
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 27,
+    "numerical/Not independently validated": 12,
+    "numerical/Failed": 11
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-TF1": {
+   "byStatus": {
+    "Insufficient reference data": 8,
+    "Passed": 19
+   },
+   "byErrorTypeAndStatus": {
+    "accounting/Insufficient reference data": 4,
+    "numerical/Insufficient reference data": 4,
+    "accounting/Passed": 19
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-U1": {
+   "byStatus": {
+    "Passed": 92,
+    "Failed": 4
+   },
+   "byErrorTypeAndStatus": {
+    "numerical/Passed": 68,
+    "accounting/Passed": 24,
+    "numerical/Failed": 4
+   },
+   "deliberateFaults": {
+    "rows": 0,
+    "caught": 0
+   }
+  },
+  "PV-X1": {
+   "byStatus": {},
+   "byErrorTypeAndStatus": {},
+   "deliberateFaults": {
+    "rows": 4,
+    "caught": 4
+   }
+  }
+ },
+ "overall": {
+  "byStatus": {
+   "Passed": 527,
+   "Insufficient reference data": 9,
+   "Qualified": 1,
+   "Not independently validated": 24,
+   "Failed": 138,
+   "Unsupported": 4
+  },
+  "byErrorTypeAndStatus": {
+   "accounting/Passed": 162,
+   "numerical/Passed": 264,
+   "accounting/Insufficient reference data": 5,
+   "numerical/Qualified": 1,
+   "physical-model/Not independently validated": 12,
+   "physical-model/Passed": 101,
+   "physical-model/Failed": 100,
+   "physical-model/Unsupported": 4,
+   "accounting/Failed": 11,
+   "numerical/Failed": 27,
+   "numerical/Not independently validated": 12,
+   "numerical/Insufficient reference data": 4
+  },
+  "deliberateFaults": {
+   "rows": 4,
+   "caught": 4
+  }
+ },
+ "invalidStatuses": 0
+}

@@ -1,0 +1,312 @@
+{
+ "id": "PV-SS10",
+ "spec": "benchmarks/physics/spec/PV-SS10.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 1 (h_s 7.7 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.6859,
+   "sim": 1.1282795275816997,
+   "abs": 0.44237952758169974,
+   "rel": 0.6449621338120713,
+   "limit": 0.06859,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 2 (h_s 8.2 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.7691,
+   "sim": 1.2399420797316332,
+   "abs": 0.47084207973163317,
+   "rel": 0.6121987774432884,
+   "limit": 0.07691,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 3 (h_s 8.5 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8281,
+   "sim": 1.3086063061818276,
+   "abs": 0.48050630618182766,
+   "rel": 0.580251547134196,
+   "limit": 0.08281,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 4 (h_s 8.8 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.8808,
+   "sim": 1.3784932012153075,
+   "abs": 0.49769320121530747,
+   "rel": 0.5650467770382691,
+   "limit": 0.08808,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 5 (h_s 9.0 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9017,
+   "sim": 1.425753296589694,
+   "abs": 0.524053296589694,
+   "rel": 0.5811836493176157,
+   "limit": 0.09017,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 6 (h_s 9.2 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9327,
+   "sim": 1.473541465040992,
+   "abs": 0.540841465040992,
+   "rel": 0.5798664790832979,
+   "limit": 0.09327,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 7 (h_s 9.4 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.9717,
+   "sim": 1.5218519344120083,
+   "abs": 0.5501519344120083,
+   "rel": 0.5661746777935662,
+   "limit": 0.09717,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 8 (h_s 9.7 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 1.0624,
+   "sim": 1.5952847795801917,
+   "abs": 0.5328847795801916,
+   "rel": 0.5015858241530419,
+   "limit": 0.10624,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 9 (h_s 9.9 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 1.0968,
+   "sim": 1.6448769400481371,
+   "abs": 0.5480769400481371,
+   "rel": 0.49970545226854224,
+   "limit": 0.10968,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 10 (h_s 10.0 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 1.1086,
+   "sim": 1.669862147672967,
+   "abs": 0.5612621476729669,
+   "rel": 0.5062801259904085,
+   "limit": 0.11086000000000001,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 11 (h_s 10.2 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 1.1366,
+   "sim": 1.7202076626943177,
+   "abs": 0.5836076626943176,
+   "rel": 0.5134679418390969,
+   "limit": 0.11366000000000001,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 12 (h_s 10.4 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 1.1464,
+   "sim": 1.7710492126068385,
+   "abs": 0.6246492126068384,
+   "rel": 0.5448789363283656,
+   "limit": 0.11464000000000002,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 13 (h_s 10.7 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 1.2156,
+   "sim": 1.8482311552902169,
+   "abs": 0.6326311552902169,
+   "rel": 0.5204270774022843,
+   "limit": 0.12156,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 14 (h_s 10.8 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 1.2025,
+   "sim": 1.8742013807508693,
+   "abs": 0.6717013807508694,
+   "rel": 0.5585874268198499,
+   "limit": 0.12025,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS10",
+   "case": "S1 test 15 (h_s 11.0 mm)",
+   "quantity": "exchange into the sewer (l/s)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 1.2489,
+   "sim": 1.926502815274202,
+   "abs": 0.6776028152742022,
+   "rel": 0.5425597047595502,
+   "limit": 0.12489,
+   "criterion": {
+    "rel": 0.1
+   },
+   "status": "Failed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "coefficients": {
+   "appWeirCoefficient": 0.5,
+   "paperEquivalent": [
+    0.32866666666666666,
+    0.36,
+    0.3913333333333333
+   ],
+   "fittedToTheTests": 0.3218709599649328,
+   "fittedWithRawP7Depths": 0.19625460630142263,
+   "grates2018EquivalentOnOuterCircumference": {
+    "A": 0.309,
+    "B": 0.23,
+    "C": 0.238,
+    "D": 0.242,
+    "E": 0.284,
+    "F": 0.407,
+    "G": 0.314,
+    "H": 0.169,
+    "I": 0.29,
+    "J": 0.28
+   }
+  }
+ },
+ "notRun": [],
+ "raw": {},
+ "hand": {
+  "coefficients": {
+   "appWeirCoefficient": 0.5,
+   "paperEquivalent": [
+    0.32866666666666666,
+    0.36,
+    0.3913333333333333
+   ],
+   "fittedToTheTests": 0.3218709599649328,
+   "fittedWithRawP7Depths": 0.19625460630142263,
+   "grates2018EquivalentOnOuterCircumference": {
+    "A": 0.309,
+    "B": 0.23,
+    "C": 0.238,
+    "D": 0.242,
+    "E": 0.284,
+    "F": 0.407,
+    "G": 0.314,
+    "H": 0.169,
+    "I": 0.29,
+    "J": 0.28
+   }
+  }
+ }
+}

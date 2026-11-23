@@ -1,0 +1,591 @@
+{
+ "id": "PV-SS5",
+ "spec": "benchmarks/physics/spec/PV-SS5.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-up-large [cpu]",
+   "quantity": "depth at the block against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.010113544515725732,
+   "sim": 0.010123954014069307,
+   "abs": 0.000010409498343575893,
+   "rel": 0.0010292631161498303,
+   "limit": 0.0005056772257862866,
+   "criterion": {
+    "abs": 0.0005056772257862866
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-up-large [gpu]",
+   "quantity": "depth at the block against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.010113544515725732,
+   "sim": 0.010123983025550842,
+   "abs": 0.000010438509825110714,
+   "rel": 0.0010321316931842925,
+   "limit": 0.0005056772257862866,
+   "criterion": {
+    "abs": 0.0005056772257862866
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-up-small [cpu]",
+   "quantity": "depth at the block against this box's own slope length (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.0038811586347837334,
+   "sim": 0.0038198638802934095,
+   "abs": -0.00006129475449032388,
+   "rel": -0.015792901104579395,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-up-small [cpu]",
+   "quantity": "depth at the block against the true depth (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.010113544515725732,
+   "sim": 0.0038198638802934095,
+   "abs": -0.0062936806354323225,
+   "rel": -0.6223021637612971,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Failed",
+   "note": "the box is cut below the divide"
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-up-small [gpu]",
+   "quantity": "depth at the block against this box's own slope length (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.0038811586347837334,
+   "sim": 0.003819874254986644,
+   "abs": -0.0000612843797970896,
+   "rel": -0.015790228012801777,
+   "limit": 0.0005,
+   "criterion": {
+    "abs": 0.0005
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-up-small [gpu]",
+   "quantity": "depth at the block against the true depth (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.010113544515725732,
+   "sim": 0.003819874254986644,
+   "abs": -0.006293670260739088,
+   "rel": -0.6223011379396163,
+   "limit": 0.005,
+   "criterion": {
+    "abs": 0.005
+   },
+   "status": "Failed",
+   "note": "the box is cut below the divide"
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-large [cpu]",
+   "quantity": "depth at the block at the end against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20001393785136168,
+   "abs": 0.000013937851361667253,
+   "rel": 0.00006968925680833626,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-large [cpu]",
+   "quantity": "peak depth at the block against the true peak (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.21195,
+   "abs": 0.005472114883786627,
+   "rel": 0.026502183905587368,
+   "limit": 0.008,
+   "criterion": {
+    "abs": 0.008
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-large [gpu]",
+   "quantity": "depth at the block at the end against the true depth (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20001596957445145,
+   "abs": 0.00001596957445143543,
+   "rel": 0.00007984787225717715,
+   "limit": 0.003,
+   "criterion": {
+    "abs": 0.003
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-large [gpu]",
+   "quantity": "peak depth at the block against the true peak (m)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.21195,
+   "abs": 0.005472114883786627,
+   "rel": 0.026502183905587368,
+   "limit": 0.008,
+   "criterion": {
+    "abs": 0.008
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-ok [cpu]",
+   "quantity": "depth at the block at the end against the true depth (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.200013937572996,
+   "abs": 0.000013937572995975644,
+   "rel": 0.00006968786497987822,
+   "limit": 0.020000000000000004,
+   "criterion": {
+    "abs": 0.020000000000000004
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-ok [cpu]",
+   "quantity": "peak depth at the block against the true peak (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.21195,
+   "abs": 0.005472114883786627,
+   "rel": 0.026502183905587368,
+   "limit": 0.02064778851162134,
+   "criterion": {
+    "abs": 0.02064778851162134
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-ok [gpu]",
+   "quantity": "depth at the block at the end against the true depth (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20001646876335144,
+   "abs": 0.000016468763351429327,
+   "rel": 0.00008234381675714664,
+   "limit": 0.020000000000000004,
+   "criterion": {
+    "abs": 0.020000000000000004
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-ok [gpu]",
+   "quantity": "peak depth at the block against the true peak (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.21195,
+   "abs": 0.005472114883786627,
+   "rel": 0.026502183905587368,
+   "limit": 0.02064778851162134,
+   "criterion": {
+    "abs": 0.02064778851162134
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-small [cpu]",
+   "quantity": "depth at the block at the end against the true depth (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20944502366548598,
+   "abs": 0.009445023665485969,
+   "rel": 0.047225118327429844,
+   "limit": 0.020000000000000004,
+   "criterion": {
+    "abs": 0.020000000000000004
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-small [cpu]",
+   "quantity": "peak depth at the block against the true peak (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.20945,
+   "abs": 0.002972114883786625,
+   "rel": 0.014394349700520273,
+   "limit": 0.02064778851162134,
+   "criterion": {
+    "abs": 0.02064778851162134
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-small [gpu]",
+   "quantity": "depth at the block at the end against the true depth (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.2,
+   "sim": 0.20944406340519586,
+   "abs": 0.009444063405195852,
+   "rel": 0.04722031702597926,
+   "limit": 0.020000000000000004,
+   "criterion": {
+    "abs": 0.020000000000000004
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS5",
+   "case": "SS5-down-small [gpu]",
+   "quantity": "peak depth at the block against the true peak (m)",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": 0.20647788511621337,
+   "sim": 0.20944,
+   "abs": 0.002962114883786615,
+   "rel": 0.014345918363699955,
+   "limit": 0.02064778851162134,
+   "criterion": {
+    "abs": 0.02064778851162134
+   },
+   "status": "Passed",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS5-up-large [cpu]": {
+   "edgeShareOfRain": 0.8194548986546198
+  },
+  "SS5-up-large [gpu]": {
+   "edgeShareOfRain": 0.8194554533926641
+  },
+  "SS5-up-small [cpu]": {
+   "edgeShareOfRain": 0.9125692385376947
+  },
+  "SS5-up-small [gpu]": {
+   "edgeShareOfRain": 0.9125702263562809
+  },
+  "SS5-down-large [cpu]": {
+   "edgeShareOfRain": 0.5761324524411193,
+   "box": [
+    0,
+    60
+   ]
+  },
+  "SS5-down-large [gpu]": {
+   "edgeShareOfRain": 0.5761376719771354,
+   "box": [
+    0,
+    60
+   ]
+  },
+  "SS5-down-ok [cpu]": {
+   "edgeShareOfRain": 0.46794375505981867,
+   "box": [
+    0,
+    48
+   ]
+  },
+  "SS5-down-ok [gpu]": {
+   "edgeShareOfRain": 0.4679601594925884,
+   "box": [
+    0,
+    48
+   ]
+  },
+  "SS5-down-small [cpu]": {
+   "edgeShareOfRain": 0.01814834922259864,
+   "box": [
+    20,
+    36
+   ]
+  },
+  "SS5-down-small [gpu]": {
+   "edgeShareOfRain": 0.018148572325466263,
+   "box": [
+    20,
+    36
+   ]
+  }
+ },
+ "notRun": [],
+ "raw": {
+  "SS5-up-large [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS5-up-large.cpu.json",
+   "sha256": "fc34dfb4ad9faae965c7b8246e20e504f08112ae87d8d3dd53e62b1abb2225c9",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 4.752,
+   "steps": 3232,
+   "grid": {
+    "nx": 200,
+    "ny": 6,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1200
+   }
+  },
+  "SS5-up-large [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS5-up-large.gpu.json",
+   "sha256": "b52172d44cc8398f2fff0a4a237ca6da722ec192808fb79358bace1ea94372c6",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 7.393,
+   "steps": 3232,
+   "grid": {
+    "nx": 200,
+    "ny": 6,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 1200
+   }
+  },
+  "SS5-up-small [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS5-up-small.cpu.json",
+   "sha256": "c93fdb1b1b8b74b165f4d2373aa866f45dc657e4ef162cea34b8bd7bc8dbee86",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 1.05,
+   "steps": 2285,
+   "grid": {
+    "nx": 60,
+    "ny": 6,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 360
+   }
+  },
+  "SS5-up-small [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS5-up-small.gpu.json",
+   "sha256": "467ce2daf3ed7e8fcbf9072c9e348fd31bbb52431a7d72cfc649aec2acb87bdb",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 5.388,
+   "steps": 2285,
+   "grid": {
+    "nx": 60,
+    "ny": 6,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 360
+   }
+  },
+  "SS5-down-large [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS5-down-large.cpu.json",
+   "sha256": "f790c5ac0c3f10188f09b4b3c9fa84dfcc1f3064c117122deeacddeafa196927",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 32.577,
+   "steps": 58801,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS5-down-large [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS5-down-large.gpu.json",
+   "sha256": "59d98d37778217eaeeaa317096f7523256f44762de2d30151cbbd67bbebdf586",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 35.153,
+   "steps": 58801,
+   "grid": {
+    "nx": 60,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 600
+   }
+  },
+  "SS5-down-ok [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS5-down-ok.cpu.json",
+   "sha256": "47d355a4f7b7ff4243152bbecd56fb87322fbc1c3429d9ffa0449b4008c0ad0a",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 26.684,
+   "steps": 58801,
+   "grid": {
+    "nx": 48,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 480
+   }
+  },
+  "SS5-down-ok [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS5-down-ok.gpu.json",
+   "sha256": "804893c12aa2f4502b2e6505671348d4e1a18cdc24fa6c35457d559699f6b491",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 38.669,
+   "steps": 58801,
+   "grid": {
+    "nx": 48,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 480
+   }
+  },
+  "SS5-down-small [cpu]": {
+   "file": "street/raw/fixes3-cpu/SS5-down-small.cpu.json",
+   "sha256": "3506bf275fffdfa4ab748a4f5950fd4e89da6f1d9ac5e5dea42053cec5202c04",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 9.522,
+   "steps": 57287,
+   "grid": {
+    "nx": 16,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 160
+   }
+  },
+  "SS5-down-small [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS5-down-small.gpu.json",
+   "sha256": "841663de0def0c6909dec273ec4668f77b7d6a3b246acf145f2219bd45ea352f",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 35.859,
+   "steps": 57287,
+   "grid": {
+    "nx": 16,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 160
+   }
+  }
+ },
+ "hand": {
+  "SS5-up-large": {
+   "trueDepthM": 0.010113544515725732,
+   "thisBoxDepthM": 0.010113544515725732,
+   "shareOfTrue": 1
+  },
+  "SS5-up-small": {
+   "trueDepthM": 0.010113544515725732,
+   "thisBoxDepthM": 0.0038811586347837334,
+   "shareOfTrue": 0.3837584962175081
+  },
+  "SS5-down-large": {
+   "trueEndDepthM": 0.2,
+   "truePeakDepthM": 0.20647788511621337
+  },
+  "SS5-down-ok": {
+   "trueEndDepthM": 0.2,
+   "truePeakDepthM": 0.20647788511621337
+  },
+  "SS5-down-small": {
+   "trueEndDepthM": 0.2,
+   "truePeakDepthM": 0.20647788511621337
+  }
+ }
+}

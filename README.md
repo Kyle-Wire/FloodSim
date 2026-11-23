@@ -1265,6 +1265,13 @@ Limits:
   node's overflow exactly as SWMM books it, returns it to the street over the next interval and credits it back to
   SWMM's inflow. (End-of-interval sampling mis-stated it by 24 %; sealed manholes spiked heads to the surcharge cap.)
 - Every manhole without a grate gets a lid point (0 grates) so its overflow still reaches the street.
+- A grate on a grade also takes FHWA HEC-22's share of the water arriving at it moving (`capture: 'hec22'`, the
+  default since 22 Nov 2026; `drainage.js grateCapture`): the solver reports the flow approaching each inlet cell, the
+  frontal share inside the grate's width is taken at Rf and the rest at Rs (HEC-22 Eq. 4-16 to 4-19), and the coupler
+  takes the larger of that and the depth law. Curb openings and slab inlets keep the depth law. On the street sandbox the
+  grate now takes 60–86 % where HEC-22 gives 69–94 % (it took 26–40 %); `benchmarks/physics/street/FIXES-3.md`.
+  The weir coefficient stays 0.5, though the Sheffield rig says it is about 1.55 times too large (F15): the fitted 0.32
+  failed its adoption rule (FIXES-2.md).
 - SWMM runs with the Preissmann slot surcharge method and conduit lengthening; EXTRAN gave −4.6 to −6 % continuity on
   the surcharged South Street network, SLOT −0.35 %.
 

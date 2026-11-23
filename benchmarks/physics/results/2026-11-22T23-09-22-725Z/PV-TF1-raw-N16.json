@@ -1,0 +1,400 @@
+{
+ "benchmark": "PV-TF1",
+ "case": "N16",
+ "format": "little-endian Float64, row-major, one row per routing step (state at the end of the step), gzip",
+ "columns": [
+  "t",
+  "dt",
+  "J1.depth",
+  "J1.head",
+  "J1.volume",
+  "J1.latflow",
+  "J2.depth",
+  "J2.head",
+  "J2.volume",
+  "J2.latflow",
+  "J3.depth",
+  "J3.head",
+  "J3.volume",
+  "J3.latflow",
+  "J4.depth",
+  "J4.head",
+  "J4.volume",
+  "J4.latflow",
+  "J5.depth",
+  "J5.head",
+  "J5.volume",
+  "J5.latflow",
+  "J6.depth",
+  "J6.head",
+  "J6.volume",
+  "J6.latflow",
+  "J7.depth",
+  "J7.head",
+  "J7.volume",
+  "J7.latflow",
+  "J8.depth",
+  "J8.head",
+  "J8.volume",
+  "J8.latflow",
+  "J9.depth",
+  "J9.head",
+  "J9.volume",
+  "J9.latflow",
+  "J10.depth",
+  "J10.head",
+  "J10.volume",
+  "J10.latflow",
+  "J11.depth",
+  "J11.head",
+  "J11.volume",
+  "J11.latflow",
+  "J12.depth",
+  "J12.head",
+  "J12.volume",
+  "J12.latflow",
+  "J13.depth",
+  "J13.head",
+  "J13.volume",
+  "J13.latflow",
+  "J14.depth",
+  "J14.head",
+  "J14.volume",
+  "J14.latflow",
+  "J15.depth",
+  "J15.head",
+  "J15.volume",
+  "J15.latflow",
+  "T1.depth",
+  "T1.head",
+  "T1.volume",
+  "T1.latflow",
+  "T2.depth",
+  "T2.head",
+  "T2.volume",
+  "T2.latflow",
+  "OUT.depth",
+  "OUT.head",
+  "OUT.volume",
+  "OUT.latflow",
+  "C1.depth",
+  "C1.flow",
+  "C1.velocity",
+  "C2.depth",
+  "C2.flow",
+  "C2.velocity",
+  "C3.depth",
+  "C3.flow",
+  "C3.velocity",
+  "C4.depth",
+  "C4.flow",
+  "C4.velocity",
+  "C5.depth",
+  "C5.flow",
+  "C5.velocity",
+  "C6.depth",
+  "C6.flow",
+  "C6.velocity",
+  "C7.depth",
+  "C7.flow",
+  "C7.velocity",
+  "C8.depth",
+  "C8.flow",
+  "C8.velocity",
+  "C9.depth",
+  "C9.flow",
+  "C9.velocity",
+  "C10.depth",
+  "C10.flow",
+  "C10.velocity",
+  "C11.depth",
+  "C11.flow",
+  "C11.velocity",
+  "C12.depth",
+  "C12.flow",
+  "C12.velocity",
+  "C13.depth",
+  "C13.flow",
+  "C13.velocity",
+  "C14.depth",
+  "C14.flow",
+  "C14.velocity",
+  "C15.depth",
+  "C15.flow",
+  "C15.velocity",
+  "C16.depth",
+  "C16.flow",
+  "C16.velocity",
+  "W0.depth",
+  "W0.flow",
+  "W0.velocity"
+ ],
+ "units": {
+  "t": "s (end of step)",
+  "dt": "s",
+  "depth": "m",
+  "head": "m (SWMM datum)",
+  "volume": "m³",
+  "latflow": "m³/s",
+  "flow": "m³/s",
+  "velocity": "m/s",
+  "volume420": "m³ (instrumented build only)"
+ },
+ "rows": 43200,
+ "bytesUncompressed": 43200000,
+ "gzSha256": "f8ecdede19e4988889450cb1180ae8645576b55004d96c642f13824606494c9a",
+ "specFile": "benchmarks/physics/spec/PV-TF1.json",
+ "specSha256": "320a92b1b4e19598911cd92dfca7d8541d6c48c3559afe1a07427260c3eff2fc",
+ "swmmVersion": 52004,
+ "wasm": {
+  "file": "vendor/swmm-wasm/swmm.wasm",
+  "sha256": "ecfc0f1846898e8ec5efcc02d732209a6947b28dd4368ea4434d92624f5525a6"
+ },
+ "network": {
+  "nodes": [
+   {
+    "id": "J1",
+    "i": 0,
+    "elev": 0
+   },
+   {
+    "id": "J2",
+    "i": 1,
+    "elev": 0
+   },
+   {
+    "id": "J3",
+    "i": 2,
+    "elev": 0
+   },
+   {
+    "id": "J4",
+    "i": 3,
+    "elev": 0
+   },
+   {
+    "id": "J5",
+    "i": 4,
+    "elev": 0
+   },
+   {
+    "id": "J6",
+    "i": 5,
+    "elev": 0
+   },
+   {
+    "id": "J7",
+    "i": 6,
+    "elev": 0
+   },
+   {
+    "id": "J8",
+    "i": 7,
+    "elev": 0
+   },
+   {
+    "id": "J9",
+    "i": 8,
+    "elev": 0
+   },
+   {
+    "id": "J10",
+    "i": 9,
+    "elev": 0
+   },
+   {
+    "id": "J11",
+    "i": 10,
+    "elev": 0
+   },
+   {
+    "id": "J12",
+    "i": 11,
+    "elev": 0
+   },
+   {
+    "id": "J13",
+    "i": 12,
+    "elev": 0
+   },
+   {
+    "id": "J14",
+    "i": 13,
+    "elev": 0
+   },
+   {
+    "id": "J15",
+    "i": 14,
+    "elev": 0
+   },
+   {
+    "id": "T1",
+    "i": 15,
+    "elev": 0
+   },
+   {
+    "id": "T2",
+    "i": 16,
+    "elev": 0
+   },
+   {
+    "id": "OUT",
+    "i": 17,
+    "elev": 0
+   }
+  ],
+  "conduits": [
+   {
+    "id": "C1",
+    "i": 0,
+    "node1": "T1",
+    "node2": "J1",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C2",
+    "i": 1,
+    "node1": "J1",
+    "node2": "J2",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C3",
+    "i": 2,
+    "node1": "J2",
+    "node2": "J3",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C4",
+    "i": 3,
+    "node1": "J3",
+    "node2": "J4",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C5",
+    "i": 4,
+    "node1": "J4",
+    "node2": "J5",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C6",
+    "i": 5,
+    "node1": "J5",
+    "node2": "J6",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C7",
+    "i": 6,
+    "node1": "J6",
+    "node2": "J7",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C8",
+    "i": 7,
+    "node1": "J7",
+    "node2": "J8",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C9",
+    "i": 8,
+    "node1": "J8",
+    "node2": "J9",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C10",
+    "i": 9,
+    "node1": "J9",
+    "node2": "J10",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C11",
+    "i": 10,
+    "node1": "J10",
+    "node2": "J11",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C12",
+    "i": 11,
+    "node1": "J11",
+    "node2": "J12",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C13",
+    "i": 12,
+    "node1": "J12",
+    "node2": "J13",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C14",
+    "i": 13,
+    "node1": "J13",
+    "node2": "J14",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C15",
+    "i": 14,
+    "node1": "J14",
+    "node2": "J15",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   },
+   {
+    "id": "C16",
+    "i": 15,
+    "node1": "J15",
+    "node2": "T2",
+    "length": 25,
+    "slope": 0.00001219200000090614,
+    "fullDepth": 0.9999999999999999
+   }
+  ],
+  "weir": {
+   "id": "W0",
+   "i": 16,
+   "node1": "T2",
+   "node2": "OUT"
+  }
+ },
+ "inp": "[OPTIONS]\nFLOW_UNITS CMS\nFLOW_ROUTING DYNWAVE\nLINK_OFFSETS DEPTH\nALLOW_PONDING NO\nSKIP_STEADY_STATE NO\nSTART_DATE 01/01/2000\nSTART_TIME 00:00:00\nREPORT_START_DATE 01/01/2000\nREPORT_START_TIME 00:00:00\nEND_DATE 01/01/2000\nEND_TIME 12:00:00\nREPORT_STEP 00:15:00\nWET_STEP 00:01:00\nDRY_STEP 00:01:00\nROUTING_STEP 1\nVARIABLE_STEP 0\nLENGTHENING_STEP 0\nMIN_SURFAREA 1.167\nNORMAL_FLOW_LIMITED BOTH\nINERTIAL_DAMPING PARTIAL\nSURCHARGE_METHOD EXTRAN\nMIN_SLOPE 0\nMAX_TRIALS 8\nHEAD_TOLERANCE 0.0015\nTHREADS 1\n\n[JUNCTIONS]\nJ1 0 3 0 0 0\nJ2 0 3 0 0 0\nJ3 0 3 0 0 0\nJ4 0 3 0 0 0\nJ5 0 3 0 0 0\nJ6 0 3 0 0 0\nJ7 0 3 0 0 0\nJ8 0 3 0 0 0\nJ9 0 3 0 0 0\nJ10 0 3 0 0 0\nJ11 0 3 0 0 0\nJ12 0 3 0 0 0\nJ13 0 3 0 0 0\nJ14 0 3 0 0 0\nJ15 0 3 0 0 0\n\n[STORAGE]\nT1 0 3 0 FUNCTIONAL 0 0 20 0 0\nT2 0 3 0 FUNCTIONAL 0 0 20 0 0\n\n[OUTFALLS]\nOUT 0 FREE NO\n\n[CONDUITS]\nC1 T1 J1 25 0.013 0 0 0 0\nC2 J1 J2 25 0.013 0 0 0 0\nC3 J2 J3 25 0.013 0 0 0 0\nC4 J3 J4 25 0.013 0 0 0 0\nC5 J4 J5 25 0.013 0 0 0 0\nC6 J5 J6 25 0.013 0 0 0 0\nC7 J6 J7 25 0.013 0 0 0 0\nC8 J7 J8 25 0.013 0 0 0 0\nC9 J8 J9 25 0.013 0 0 0 0\nC10 J9 J10 25 0.013 0 0 0 0\nC11 J10 J11 25 0.013 0 0 0 0\nC12 J11 J12 25 0.013 0 0 0 0\nC13 J12 J13 25 0.013 0 0 0 0\nC14 J13 J14 25 0.013 0 0 0 0\nC15 J14 J15 25 0.013 0 0 0 0\nC16 J15 T2 25 0.013 0 0 0 0\n\n[WEIRS]\nW0 T2 OUT TRANSVERSE 2.5 1.84 NO 0 0\n\n[XSECTIONS]\nC1 CIRCULAR 1 0 0 0 1\nC2 CIRCULAR 1 0 0 0 1\nC3 CIRCULAR 1 0 0 0 1\nC4 CIRCULAR 1 0 0 0 1\nC5 CIRCULAR 1 0 0 0 1\nC6 CIRCULAR 1 0 0 0 1\nC7 CIRCULAR 1 0 0 0 1\nC8 CIRCULAR 1 0 0 0 1\nC9 CIRCULAR 1 0 0 0 1\nC10 CIRCULAR 1 0 0 0 1\nC11 CIRCULAR 1 0 0 0 1\nC12 CIRCULAR 1 0 0 0 1\nC13 CIRCULAR 1 0 0 0 1\nC14 CIRCULAR 1 0 0 0 1\nC15 CIRCULAR 1 0 0 0 1\nC16 CIRCULAR 1 0 0 0 1\nW0 RECT_OPEN 0.3 1 0 0\n\n[TIMESERIES]\nINF 00:00:00 0\nINF 00:01:00 0.1\nINF 00:30:00 0.1\nINF 00:31:00 0\n\n[INFLOWS]\nT1 FLOW INF FLOW 1.0 1.0\n"
+}

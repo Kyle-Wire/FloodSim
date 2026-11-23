@@ -40,7 +40,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= tol;
   check('NCDOT catch basin 840.03: 3.1 ft²', near(cb.inletArea, 3.1 * 0.0929, 0.005), JSON.stringify(cb));
   check('slab-top drop inlet: per open side', near(kindHydraulics('ncdotSlab', 3).inletArea, 3 * INLET_KINDS.ncdotSlab.v[0], 1e-9) && near(kindHydraulics('ncdotSlab', 3).inletPerim, 3 * INLET_KINDS.ncdotSlab.v[1], 1e-9));
   check('estimated values say so', ['ncdotCB', 'ncdotDCB', 'ncdotCI', 'ncdotElong', 'ncdotSlab'].every(k => INLET_KINDS[k].est && /estimated/i.test(INLET_KINDS[k].basis)) && !INLET_KINDS.ncdotDI.est);
-  check('the generic kinds keep the values the Kind of inlet select had (typical: Cw 0.32 since F15, 22 Nov 2026)', JSON.stringify(INLET_KINDS.typical.v) === '[0.2,2,0.32,0.6]' && JSON.stringify(INLET_KINDS.curb.v) === '[0.2,1.5,0.28,0.67]');
+  check('the generic kinds keep the values the Kind of inlet select had', JSON.stringify(INLET_KINDS.typical.v) === '[0.2,2,0.5,0.6]' && JSON.stringify(INLET_KINDS.curb.v) === '[0.2,1.5,0.28,0.67]');
   check('the typical kind is the model default', INLET_KINDS.typical.v.join() === [DESIGN_DEFAULTS.inletArea, DESIGN_DEFAULTS.inletPerim, DESIGN_DEFAULTS.Cw, DESIGN_DEFAULTS.Co].join());
 }
 

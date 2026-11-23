@@ -1,0 +1,763 @@
+{
+ "id": "PV-SS12",
+ "spec": "benchmarks/physics/spec/PV-SS12.json",
+ "rawFiles": [],
+ "rows": [
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-under [cpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.0009585526534604296,
+   "abs": 0.0009585526534604296,
+   "rel": null,
+   "limit": 0.03,
+   "criterion": {
+    "abs": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-under [cpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 0.9990414473465397,
+   "abs": -0.0009585526534603428,
+   "rel": -0.0009585526534603428,
+   "limit": 0.03,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-under [gpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0,
+   "sim": 0.0009587814414975006,
+   "abs": 0.0009587814414975006,
+   "rel": null,
+   "limit": 0.03,
+   "criterion": {
+    "abs": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-under [gpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1,
+   "sim": 0.9990403856229477,
+   "abs": -0.0009596143770522758,
+   "rel": -0.0009596143770522758,
+   "limit": 0.03,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-over [cpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1.752,
+   "sim": 1.7520044444444638,
+   "abs": 0.0000044444444637914415,
+   "rel": 0.0000025367833697439733,
+   "limit": 0.052559999999999996,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-over [cpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1.248,
+   "sim": 1.2479955555555384,
+   "abs": -0.0000044444444615709955,
+   "rel": -0.000003561253574976759,
+   "limit": 0.03744,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-over [gpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1.752,
+   "sim": 1.7529852412079578,
+   "abs": 0.0009852412079578432,
+   "rel": 0.0005623522876471707,
+   "limit": 0.052559999999999996,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-garden-over [gpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 1.248,
+   "sim": 1.247008927166462,
+   "abs": -0.0009910728335380536,
+   "rel": -0.0007941288730272866,
+   "limit": 0.03744,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-paving [cpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.9599999999999995,
+   "sim": 0.960011111111106,
+   "abs": 0.000011111111106520966,
+   "rel": 0.000011574074069292678,
+   "limit": 0.028799999999999985,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-paving [cpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 2.0400000000000005,
+   "sim": 2.039988888888902,
+   "abs": -0.000011111111098305315,
+   "rel": -0.000005446623087404565,
+   "limit": 0.06120000000000001,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-paving [gpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.9599999999999995,
+   "sim": 0.9605155566977146,
+   "abs": 0.0005155566977150805,
+   "rel": 0.0005370382267865424,
+   "limit": 0.028799999999999985,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-paving [gpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 2.0400000000000005,
+   "sim": 2.039492997340858,
+   "abs": -0.000507002659142497,
+   "rel": -0.0002485307152659298,
+   "limit": 0.06120000000000001,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-soil [cpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 2.6,
+   "sim": 2.600000000000046,
+   "abs": 4.574118861455645e-14,
+   "rel": 1.759276485175248e-14,
+   "limit": 0.078,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-soil [cpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.39999999999999997,
+   "sim": 0.39999999999999364,
+   "abs": -6.328271240363392e-15,
+   "rel": -1.582067810090848e-14,
+   "limit": 0.011999999999999999,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-soil [gpu]",
+   "quantity": "water left on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 2.6,
+   "sim": 2.6000293828064436,
+   "abs": 0.000029382806443489784,
+   "rel": 0.000011301079401342224,
+   "limit": 0.078,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-soil [gpu]",
+   "quantity": "water the measure took (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 0.39999999999999997,
+   "sim": 0.40000005974434316,
+   "abs": 5.974434319488964e-8,
+   "rel": 1.493608579872241e-7,
+   "limit": 0.011999999999999999,
+   "criterion": {
+    "rel": 0.03
+   },
+   "status": "Passed",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-roof-open [cpu]",
+   "quantity": "water on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 3,
+   "sim": 2.999999999999995,
+   "abs": -4.884981308350689e-15,
+   "rel": -1.6283271027835629e-15,
+   "limit": 0.003,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": "the roof sheds onto the ground (control)"
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-roof-open [gpu]",
+   "quantity": "water on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 3,
+   "sim": 2.999997989942268,
+   "abs": -0.0000020100577318160617,
+   "rel": -6.700192439386873e-7,
+   "limit": 0.003,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": "the roof sheds onto the ground (control)"
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-roof-held [cpu]",
+   "quantity": "water on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 2.52,
+   "sim": 2.520000000000007,
+   "abs": 7.105427357601002e-15,
+   "rel": 2.8196140307940482e-15,
+   "limit": 0.00252,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": "the roof holds its rain"
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "SS12-roof-held [gpu]",
+   "quantity": "water on the ground at the end (m³)",
+   "errorType": "numerical",
+   "unit": "",
+   "ref": 2.52,
+   "sim": 2.5199990440530495,
+   "abs": -9.559469504871743e-7,
+   "rel": -3.793440279711009e-7,
+   "limit": 0.00252,
+   "criterion": {
+    "rel": 0.001
+   },
+   "status": "Passed",
+   "note": "the roof holds its rain"
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "A rain barrel or cistern on an existing house",
+   "quantity": "no control: a cistern exists only for a building drawn in site design (src/design.js roof 'cistern'), and its filling and overflow are timed in app/map.js (roofHoldStages), which a headless run of src/ does not reach. SS12-roof-held tests only that a held roof sheds nothing",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": null,
+   "sim": null,
+   "abs": null,
+   "rel": null,
+   "limit": null,
+   "criterion": {},
+   "status": "Unsupported",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "A French drain",
+   "quantity": "no control: the nearest thing is a rain garden's underdrain to a sewer manhole (src/stormwater.js UnderdrainLinks, GPU kernel only). A trench drain to daylight or to a dry well is not represented",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": null,
+   "sim": null,
+   "abs": null,
+   "rel": null,
+   "limit": null,
+   "criterion": {},
+   "status": "Unsupported",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "Removing paving (bare soil in its place) as a what-if",
+   "quantity": "no control: site design can add paving or permeable paving but cannot turn paving into soil. SS12-soil tests the solver's infiltration at a soil's rate, which is what such a control would use",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": null,
+   "sim": null,
+   "abs": null,
+   "rel": null,
+   "limit": null,
+   "criterion": {},
+   "status": "Unsupported",
+   "note": null
+  },
+  {
+   "benchmark": "PV-SS12",
+   "case": "A green roof on an existing house",
+   "quantity": "area-wide only (a share of all roofs holds the first 25 mm), timed in app/map.js; not one owner's roof",
+   "errorType": "physical-model",
+   "unit": "",
+   "ref": null,
+   "sim": null,
+   "abs": null,
+   "rel": null,
+   "limit": null,
+   "criterion": {},
+   "status": "Unsupported",
+   "note": null
+  }
+ ],
+ "cases": {
+  "SS12-garden-under [cpu]": {
+   "leftM3": 0.0009585526534604296,
+   "takenM3": 0.9990414473465397,
+   "inTheStoreM3": 0.9510458917908398,
+   "depthAtTheLowEdgeM": 0.0000059053922141905716
+  },
+  "SS12-garden-under [gpu]": {
+   "leftM3": 0.0009587814414975006,
+   "takenM3": 0.9990403856229477,
+   "inTheStoreM3": 0.9510451257228851,
+   "depthAtTheLowEdgeM": 0.00000590532736168825
+  },
+  "SS12-garden-over [cpu]": {
+   "leftM3": 1.7520044444444638,
+   "takenM3": 1.2479955555555384,
+   "inTheStoreM3": 1.2,
+   "depthAtTheLowEdgeM": 0.07378504366686953
+  },
+  "SS12-garden-over [gpu]": {
+   "leftM3": 1.7529852412079578,
+   "takenM3": 1.247008927166462,
+   "inTheStoreM3": 1.2000000476837158,
+   "depthAtTheLowEdgeM": 0.07380956336855889
+  },
+  "SS12-paving [cpu]": {
+   "leftM3": 0.960011111111106,
+   "takenM3": 2.039988888888902,
+   "inTheStoreM3": 1.9999999999999998,
+   "depthAtTheLowEdgeM": 0.051976935716449166
+  },
+  "SS12-paving [gpu]": {
+   "leftM3": 0.9605155566977146,
+   "takenM3": 2.039492997340858,
+   "inTheStoreM3": 2.0000000298023224,
+   "depthAtTheLowEdgeM": 0.05199374593794346
+  },
+  "SS12-soil [cpu]": {
+   "leftM3": 2.600000000000046,
+   "takenM3": 0.39999999999999364,
+   "inTheStoreM3": 0,
+   "depthAtTheLowEdgeM": 0.09198970842646971
+  },
+  "SS12-soil [gpu]": {
+   "leftM3": 2.6000293828064436,
+   "takenM3": 0.40000005974434316,
+   "inTheStoreM3": 0,
+   "depthAtTheLowEdgeM": 0.09199028462171555
+  },
+  "SS12-roof-open [cpu]": {
+   "leftM3": 2.999999999999995,
+   "takenM3": 0,
+   "inTheStoreM3": 0,
+   "depthAtTheLowEdgeM": 0.09999320301723402
+  },
+  "SS12-roof-open [gpu]": {
+   "leftM3": 2.999997989942268,
+   "takenM3": 0,
+   "inTheStoreM3": 0,
+   "depthAtTheLowEdgeM": 0.09999316036701203
+  },
+  "SS12-roof-held [cpu]": {
+   "leftM3": 2.520000000000007,
+   "takenM3": 0,
+   "inTheStoreM3": 0,
+   "depthAtTheLowEdgeM": 0.09039320280020756
+  },
+  "SS12-roof-held [gpu]": {
+   "leftM3": 2.5199990440530495,
+   "takenM3": 0,
+   "inTheStoreM3": 0,
+   "depthAtTheLowEdgeM": 0.09039317816495895
+  }
+ },
+ "notRun": [],
+ "raw": {
+  "SS12-garden-under [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS12-garden-under.cpu.json",
+   "sha256": "6d7cbe48207c2ac72f99c67a4dbb1abe948020cb8886ac1aa1020d0fa92450c0",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 2.595,
+   "steps": 25158,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-garden-under [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS12-garden-under.gpu.json",
+   "sha256": "2e7b21f01bb13a3be48a7e40540faf7a9d33085093648bbd55d3609470788836",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 9.615,
+   "steps": 20577,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-garden-over [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS12-garden-over.cpu.json",
+   "sha256": "84579e7f50cec076630c929e7add2deadb19ab7aeeb392239066bcd2f15a1663",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 8.406,
+   "steps": 78272,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-garden-over [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS12-garden-over.gpu.json",
+   "sha256": "4012b5445fafd093e9d7318348ac1547f80861bf4ff1255e61c4b327541a34b3",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 35.416,
+   "steps": 78274,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-paving [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS12-paving.cpu.json",
+   "sha256": "69805f3fd9558ecad7a9ea2278737749bd63ec77873b433902665dcebc0a3d3a",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 1.834,
+   "steps": 18049,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-paving [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS12-paving.gpu.json",
+   "sha256": "485db9f34b720252922b60c55bd4873e3afc105ee0226c61b1526643e16fb69d",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 7.584,
+   "steps": 18049,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-soil [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS12-soil.cpu.json",
+   "sha256": "c40b87c1e543f2850a2cd468cc013a7173c6c1ae5a49174049a7432aa81cfead",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 2.971,
+   "steps": 27249,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-soil [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS12-soil.gpu.json",
+   "sha256": "dcf5512c5e673b62bcbd19bd1d834c291a22737ce70f225a0a92871df905468f",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 9.639,
+   "steps": 27249,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-roof-open [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS12-roof-open.cpu.json",
+   "sha256": "3db542a95be089a6eec276b3d46068c45c5cfb65da16b45a7a272d313c083dbe",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 1.603,
+   "steps": 13037,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-roof-open [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS12-roof-open.gpu.json",
+   "sha256": "d085dfc1eca947a3310bc4f00065ce2c748c883987a90a81357c5c6681f5338d",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 4.661,
+   "steps": 13037,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-roof-held [cpu]": {
+   "file": "street/raw/fixes2-cpu/SS12-roof-held.cpu.json",
+   "sha256": "342b118aca405a7bbf796a727f15c3ad03264baee50936cce920dba60f6a790b",
+   "engine": "CPUSolver fp64 (src/solver-cpu.js), node v22.23.5",
+   "adapter": null,
+   "wallSeconds": 1.277,
+   "steps": 12388,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  },
+  "SS12-roof-held [gpu]": {
+   "file": "street/raw/2026-11-17T20-15-gpu/SS12-roof-held.gpu.json",
+   "sha256": "a89a50e39b010cfbe4a6a8c2a48a5a93c412d6c916690a586f0b71b0b5e84a30",
+   "engine": "GPUSolver fp32 (src/solver-gpu.js), browser WebGPU",
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "blackwell",
+    "device": "",
+    "description": "",
+    "fallback": false,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+   },
+   "wallSeconds": 4.335,
+   "steps": 12388,
+   "grid": {
+    "nx": 10,
+    "ny": 10,
+    "dx": 1,
+    "F": 1,
+    "subgrid": false,
+    "cells": 100
+   }
+  }
+ },
+ "hand": {
+  "SS12-garden-under": {
+   "rainReachingTheGroundM3": 1,
+   "measureAreaM2": 4,
+   "storageM3": 1.2,
+   "fullAfterS": 11020.408163265307,
+   "canTakeByTheEndM3": 1.248,
+   "takenM3": 1,
+   "leftOnTheGroundM3": 0
+  },
+  "SS12-garden-over": {
+   "rainReachingTheGroundM3": 3,
+   "measureAreaM2": 4,
+   "storageM3": 1.2,
+   "fullAfterS": 11020.408163265307,
+   "canTakeByTheEndM3": 1.248,
+   "takenM3": 1.248,
+   "leftOnTheGroundM3": 1.752
+  },
+  "SS12-paving": {
+   "rainReachingTheGroundM3": 3,
+   "measureAreaM2": 10,
+   "storageM3": 2,
+   "fullAfterS": 721.4428857715432,
+   "canTakeByTheEndM3": 2.0400000000000005,
+   "takenM3": 2.0400000000000005,
+   "leftOnTheGroundM3": 0.9599999999999995
+  },
+  "SS12-soil": {
+   "rainReachingTheGroundM3": 3,
+   "soilAreaM2": 20,
+   "takenM3": 0.39999999999999997,
+   "leftOnTheGroundM3": 2.6
+  },
+  "SS12-roof-open": {
+   "rainReachingTheGroundM3": 3,
+   "takenM3": 0,
+   "leftOnTheGroundM3": 3
+  },
+  "SS12-roof-held": {
+   "rainReachingTheGroundM3": 2.52,
+   "takenM3": 0,
+   "leftOnTheGroundM3": 2.52
+  }
+ }
+}
