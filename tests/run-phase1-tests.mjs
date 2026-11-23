@@ -212,6 +212,15 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} 
   check('every exchange cell is unique and every outfall has one link', new Set(net.inlets.map(i => i.cell)).size === net.inlets.length && [...outfallLinks.values()].every(n => n === 1));
 }
 
+// ---- utility registry: only GIS whose terms allow commercial use, unless asked for all
+{
+  const { utilityFor } = await import('../src/utilities.js');
+  const southStreet = [-75.1590, 39.9405, -75.1525, 39.9440], forestHills = [-73.855, 40.715, -73.845, 40.722];
+  check('Philadelphia Water (no commercial use) is skipped by default', utilityFor(southStreet) === null);
+  check('?utilities=all still reaches it for research', utilityFor(southStreet, { all: true })?.id === 'pwd');
+  check('a utility whose terms are unread is skipped too', utilityFor(forestHills) === null && utilityFor(forestHills, { all: true })?.id === 'nycdep');
+}
+
 // ---- roofs to sewer, linked pipe layers, tier-1 builder, continuation outlets
 {
   const { roofConnections } = await import('../src/terrain.js');

@@ -21,6 +21,8 @@ import * as NC from '../src/nowcast.js';
 import { labelImage } from './labels.js';
 import { Coupler } from '../src/coupler.js';
 import { fetchUtility, utilityFor } from '../src/utilities.js';
+// ?utilities=all also uses utility GIS whose terms forbid commercial use (src/utilities.js); research only
+const UTIL_OPTS = { all: new URLSearchParams(location.search).get('utilities') === 'all' };
 import { describeSource, fetchFeatures, detectPipeFields, pipeRecords, pointRecords } from '../src/linked.js';
 import { realNetwork } from '../src/network-real.js';
 import { breachChannels, culvertLinks, culvertDiameter, bridgeMask } from '../src/channels.js';
@@ -510,7 +512,7 @@ async function findPlace(q) {
     }
     if (!hit) { note.textContent = 'No match. Try a street address with city and state.'; return; }
     map.jumpTo({ center: [hit.lon, hit.lat], zoom: 17 });
-    const u = utilityFor([hit.lon, hit.lat, hit.lon, hit.lat]);
+    const u = utilityFor([hit.lon, hit.lat, hit.lon, hit.lat], UTIL_OPTS);
     note.textContent = `${hit.label}. Now draw a box or polygon around it.${u ? ` Real ${u.name} inlets will be used.` : ''}`;
   } catch (e) { note.textContent = 'Search failed: ' + e.message; }
 }
@@ -624,7 +626,7 @@ $('buildBtn').onclick = async () => {
     const lA14 = log('NOAA Atlas 14 rainfall frequency');
     const lFema = log('FEMA flood zones (NFHL)');
     const femaP = FEMA.fetchNFHL(fine.lonlatBounds(0.0004), fetcher, { datumShift: (lo, la) => ngvdToNavd(lo, la, fetcher) }).catch((e) => { lFema.set('FEMA flood zones unavailable', 'warn', e.message); return null; });
-    const ut = utilityFor(fine.lonlatBounds()), lUtil = ut ? log(`${ut.name} drainage inlets`) : null;
+    const ut = utilityFor(fine.lonlatBounds(), UTIL_OPTS), lUtil = ut ? log(`${ut.name} drainage inlets`) : null;
     const links = linkedLinks(), lLink = (links.pipes.length || links.inlets.length || links.outfalls.length) ? log('Your linked drainage data') : null;
     const [cx, cy] = [(fine.x0 + fine.x1) / 2, (fine.y0 + fine.y1) / 2], [clon, clat] = fromUTM(cx, cy, fine.zone);
     const [dem, osm, nlcd, soils, util, linked, atlas14] = await Promise.all([
@@ -639,7 +641,7 @@ $('buildBtn').onclick = async () => {
         .catch((e) => { lLc.set('Land cover unavailable, using urban defaults', 'warn', e.message); return null; }),
       fetchSoils(bounds, fetcher).then((s) => { lSoil.set(`${s.length} soil map units → infiltration`, 'ok', [...new Set(s.map(u => u.hsg || 'urban/none'))].join(', ')); return s; })
         .catch((e) => { lSoil.set('Soils unavailable, using compacted-fill rate', 'warn', e.message); return []; }),
-      ut ? fetchUtility(fine.lonlatBounds(), fetcher).then((u) => { lUtil.set(`${u.inlets.length.toLocaleString()} real inlets, ${u.outfalls.length} outfalls nearby`, 'ok', `${u.utility.name} · ${u.combined ? 'combined sewer area' : 'separate storm sewers'} · pipes not published, synthesized`); return u; })
+      ut ? fetchUtility(fine.lonlatBounds(), fetcher, UTIL_OPTS).then((u) => { lUtil.set(`${u.inlets.length.toLocaleString()} real inlets, ${u.outfalls.length} outfalls nearby`, 'ok', `${u.utility.name} · ${u.combined ? 'combined sewer area' : 'separate storm sewers'} · pipes not published, synthesized`); return u; })
         .catch((e) => { lUtil.set('Utility inlets unavailable, synthetic placement', 'warn', e.message); return null; }) : Promise.resolve(null),
       lLink ? loadLinked(links, bounds).then((d) => { lLink.set(`Linked: ${d.pipes.length} pipes, ${d.inlets.length} inlets, ${d.outfalls.length} outfalls`, 'ok', d.notes.join(' · ')); return d; })
         .catch((e) => { lLink.set('Linked data failed', 'err', e.message); return null; }) : Promise.resolve(null),

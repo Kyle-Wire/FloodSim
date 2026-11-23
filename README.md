@@ -1284,6 +1284,10 @@ Philadelphia, every PWD inlet (85,603 citywide, ~±1 ft), outfalls and the combi
 snapped to its street; grates within 12 m share a manhole but keep their own exchange cell; grates > 25 m from a
 modelled street get a lateral (≤ 60 m) or are reported unconnected. PWD does not publish its mains, so pipes stay
 synthetic and the tier is labelled 2+. Add a city by appending its ArcGIS layer URLs to `UTILITIES`.
+Each entry says whether its publisher allows commercial use (`commercial`). Build uses only those marked `true`; open
+the page with `?utilities=all` to include the rest for research. The City of Philadelphia's terms prohibit commercial
+use without its written permission, and NYC's have not been read, so both are skipped by default and those areas get
+FloodSim's own inlet placement like everywhere else (23 Nov 2026).
 New York City (NYC DEP) comes from NYC Open Data (Socrata): catch basins (2w2g-fk3i) and outfalls (8rjn-kpsh). Its
 combined-sewer test is the share of the area outside DEP's separate-storm-sewer (MS4) drainage areas, bundled as
 `src/nyc-ms4.js` (438 polygons, simplified to 30 m), since that layer is a download only: under half separate counts as
