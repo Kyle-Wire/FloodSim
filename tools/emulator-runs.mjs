@@ -69,7 +69,7 @@ for (let attempt = 0; attempt <= retries; attempt++) {
     if (!r) break; // crashed: relaunch and carry on
     if (!r.ok) { console.log(`${stamp()}  ${p.id} FAILED: ${r.error}`); continue; }
     const summary = JSON.parse(readFileSync(join(projectsDir, folder, 'runs', r.dir, 'summary.json'), 'utf8'));
-    const ran = summary.scenario?.name ?? summary.scenario ?? null;
+    const named = summary.scenario?.name ?? summary.scenario ?? null, ran = named === 'Existing conditions' ? null : named; // FloodSim files existing conditions under that name
     if ((ran ?? null) !== (p.scenario ?? null)) { console.log(`${stamp()}  ${p.id} FAILED: ran as scenario ${JSON.stringify(ran)}, not ${JSON.stringify(p.scenario)}`); continue; }
     done[p.id] = { dir: r.dir, wall: r.wall, seconds: (Date.now() - t) / 1000, scenario: ran, storm: summary.storm?.label ?? null, commit: summary.commit ?? null };
     writeFileSync(doneFile, JSON.stringify(done, null, 1));
