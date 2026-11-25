@@ -42,6 +42,11 @@ export class CPUSolver {
    *  hfront       depth below which reconstruction drops to first order, default 1e-3
    *  crest        flood-barrier faces [{ i, j, axis, z, C, ground }] (see GPUSolver); setCrestLevels changes them mid-run
    *  lts          local time stepping: true (3 levels, steps up to 8× the base step) or the number of levels (1–4)
+   *  implicitFriction  F26, default false (CPU only for now): Manning friction implicit in the new speed, and applied to
+   *               the RK predictor before the second stage's fluxes, so a thin film's steady speed does not depend on dt
+   *  stepFlux     F26, default false (CPU only; ignored with lts): where a film with friction is thinner than the bed
+   *               step to its neighbour, the face passes the upper cell's own discharge and the lower cell feels the
+   *               whole step (benchmarks/physics/depth family R: kinematic sheet flow within 12 %, was 10 % to 100 %)
    *  Every step also tracks the hazard products of src/hazard.js per cell (this.hz, readHazard), as the GPU does.
    */
   constructor(o) {
@@ -54,6 +59,8 @@ export class CPUSolver {
     this.cfl = o.cfl ?? (this.secondOrder ? 0.48 : 0.9);
     this.hdry = o.hdry ?? 1e-6;
     this.hfront = o.hfront ?? 1e-3;
+    this.implicitFriction = o.implicitFriction ?? false; // F26: friction implicit in the new speed (see _sources)
+    this.stepFlux = o.stepFlux ?? false; // F26: upwind flux down a bed step taller than the film (see _face)
     this.dtDry = o.dtDry ?? 1.0;       // time step used while the whole domain is dry (s)
     this.lim = (o.limiter === 'vanleer') ? vanleer : minmod;
     this.bc = Object.assign({ west: 'wall', east: 'wall', south: 'wall', north: 'wall' }, o.bc || {});
@@ -213,6 +220,9 @@ export class CPUSolver {
     const a = c - s, b = c + s;
     const Ma = M[a], Mb = M[b];
     if (!fo && ((Ma && Hp[a] < hfront) || (Mb && Hp[b] < hfront))) fo = true;
+    // F26: a film thinner than the bed's change across the cell is a cascade; reconstruct it first order so the
+    // face keeps the step and _face's step flux applies (MUSCL would smooth the bed and lose it)
+    if (!fo && this.stepFlux && !this.lts && this.n[c] > 0 && Hp[c] < 0.5 * Math.abs((Mb ? this.z[b] : this.z[c]) - (Ma ? this.z[a] : this.z[c]))) fo = true;
     if (fo) { out[o] = Hp[c]; out[o + 1] = Ep[c]; out[o + 2] = un[c]; out[o + 3] = ut[c]; return; }
     const half = 0.5 * sg;
     const sl = (q) => { const qc = q[c]; const qm = Ma ? q[a] : qc; const qp = Mb ? q[b] : qc; return lim(qc - qm, qp - qc); };
@@ -236,12 +246,32 @@ export class CPUSolver {
     const hR = r[4], zR = r[5] - r[4], uR = r[6], vR = r[7];
     const zs = Math.max(zL, zR, zc);
     const hLs = Math.max(0, r[1] - zs), hRs = Math.max(0, r[5] - zs);
-    if (Ma && Mb && zc > Math.max(this.z[a], this.z[b])) this._weir(a, b, isX, zc, cw, hLs, hRs, F, f);
+    const weir = Ma && Mb && zc > Math.max(this.z[a], this.z[b]);
+    let cas = 0; // 1 or -1: a step face (F26)
+    if (this.stepFlux && !this.lts && !weir && Ma && Mb && this.n[a] > 0 && this.n[b] > 0) {
+      if (hLs > this.hdry && hRs <= 0 && hR > this.hdry) cas = 1;       // film on the left steps down to the right
+      else if (hRs > this.hdry && hLs <= 0 && hL > this.hdry) cas = -1; // and the mirror
+    }
+    if (weir) this._weir(a, b, isX, zc, cw, hLs, hRs, F, f);
+    else if (cas === 1) this._stepFlux(hLs, Math.max(uL, 0), vL, g, F, f);
+    else if (cas === -1) this._stepFlux(hRs, Math.min(uR, 0), vR, g, F, f);
     else hllc(hLs, uL, vL, hRs, uR, vR, g, this.hdry, F, f);
     F[f + 3] = 0.5 * g * (hL * hL - hLs * hLs);
     F[f + 4] = 0.5 * g * (hR * hR - hRs * hRs);
+    // F26: the lower cell feels the whole step (g h dz), not only its own column (1/2 g h^2): continuous with the
+    // hydrostatic reconstruction at the threshold (surface level with the step's top)
+    if (cas === 1) F[f + 4] = 0.5 * g * hR * hR + g * hR * (zs - r[5]);
+    else if (cas === -1) F[f + 3] = 0.5 * g * hL * hL + g * hL * (zs - r[1]);
     F[f + 5] = hL; F[f + 6] = zL; F[f + 7] = hR; F[f + 8] = zR;
     if (!Mb) { F[f + 4] = 0; } if (!Ma) { F[f + 3] = 0; }
+  }
+
+  // F26: a wet film flowing down a bed step taller than itself (after hydrostatic reconstruction the lower side is dry).
+  // HLLC would solve a dam break into a dry bed and export at the film's wave speed (u + 2 sqrt(gh)), far faster than
+  // friction allows; instead the face passes the upper cell's own discharge (upwind), and its pressure.
+  _stepFlux(h, u, v, g, F, f) {
+    const q = h * u;
+    F[f] = q; F[f + 1] = q * u + 0.5 * g * h * h; F[f + 2] = q * v;
   }
 
   // flow over a barrier crest: broad-crested weir with Villemonte submergence (as the GPU kernel's weir())
@@ -386,7 +416,12 @@ export class CPUSolver {
       this._stage = 0; const q1 = this._L(h, hu, hv, dt);
       interior(c => { h[c] += dt * dh[c]; hu[c] += dt * dhu[c]; hv[c] += dt * dhv[c]; });
       this._fix(h, hu, hv);
+      // F26: the second stage's fluxes see the predictor's momentum after friction (the step flux is h u, and an
+      // unfrictioned predictor carries a whole step of unbalanced gravity); the update itself is unchanged
+      let keep = null;
+      if (this.implicitFriction) { keep = [hu.slice(), hv.slice()]; this._friction(h, hu, hv, dt); }
       this._stage = 1; const q2 = this._L(h, hu, hv, dt);
+      if (keep) { hu.set(keep[0]); hv.set(keep[1]); }
       interior(c => {
         h[c] = 0.5 * (h0[c] + h[c] + dt * dh[c]);
         hu[c] = 0.5 * (hu0[c] + hu[c] + dt * dhu[c]);
@@ -405,6 +440,18 @@ export class CPUSolver {
     return dt;
   }
 
+  /** Friction alone over dt on (h, hu, hv), in place: the implicit form of _sources (F26). */
+  _friction(h, hu, hv, dt, cells = null) {
+    const { NX, NY, M, g, n, hdry } = this;
+    const one = (c) => {
+      const d = h[c]; if (!M[c] || d <= hdry || !(n[c] > 0)) return;
+      const a = dt * g * n[c] * n[c] / Math.pow(d, 4 / 3), sp = Math.hypot(hu[c], hv[c]) / d;
+      const k = 0.5 * (1 + Math.sqrt(1 + 4 * a * sp)); hu[c] /= k; hv[c] /= k;
+    };
+    if (cells) { for (const c of cells) one(c); return; }
+    for (let j = GH; j < NY - GH; j++) for (let i = GH; i < NX - GH; i++) one(j * NX + i);
+  }
+
   /** Semi-implicit friction, rain, infiltration (GI, Green-Ampt), max depth and hazard over dt, in the cells sel picks (null: all), the step ending at tEnd. */
   _sources(dt, sel, tEnd) {
     const { h, hu, hv, NX, NY, M, g, n, hdry, infil, rainField } = this; const r0 = this.rainRate, A = this.dx * this.dx;
@@ -414,7 +461,10 @@ export class CPUSolver {
       const d = h[c];
       if (d > hdry && n[c] > 0) {
         const u = hu[c] / d, v = hv[c] / d;
-        const k = 1 + dt * g * n[c] * n[c] * Math.sqrt(u * u + v * v) / Math.pow(d, 4 / 3);
+        const a = dt * g * n[c] * n[c] / Math.pow(d, 4 / 3), sp = Math.sqrt(u * u + v * v);
+        // F26: fully implicit in the speed (k = 1 + a |u_new|), so the steady balance does not depend on dt; the old
+        // form (k = 1 + a |u_old|) caps the speed near 1/a = h^(4/3) / (g n^2 dt) on thin films with long steps
+        const k = this.implicitFriction ? 0.5 * (1 + Math.sqrt(1 + 4 * a * sp)) : 1 + a * sp;
         hu[c] /= k; hv[c] /= k;
       }
       const r = r0 * (rainField ? rainField[c] : 1) * dt;
@@ -489,7 +539,10 @@ export class CPUSolver {
       this._stage = 0; const q1 = this._L(h, hu, hv, dt); gather();
       for (const c of cells) { h[c] = h0[c] + dt * dh[c]; hu[c] = hu0[c] + dt * dhu[c]; hv[c] = hv0[c] + dt * dhv[c]; }
       fix();
+      let keep = null; // F26, as in step(): stage-2 fluxes see the predictor after friction
+      if (this.implicitFriction) { keep = cells.map((c) => [hu[c], hv[c]]); this._friction(h, hu, hv, dt, cells); }
       this._stage = 1; const q2 = this._L(h, hu, hv, dt); gather();
+      if (keep) cells.forEach((c, k) => { hu[c] = keep[k][0]; hv[c] = keep[k][1]; });
       for (const c of cells) { h[c] = 0.5 * (h0[c] + h[c] + dt * dh[c]); hu[c] = 0.5 * (hu0[c] + hu[c] + dt * dhu[c]); hv[c] = 0.5 * (hv0[c] + hv[c] + dt * dhv[c]); }
       fix();
       this.vol.outflow += dt * 0.5 * (q1 + q2);

@@ -10,6 +10,7 @@
 import { CPUSolver } from '../../../src/solver-cpu.js';
 
 const g = 9.81;
+const OPTS = process.env.FS_OPTS ? JSON.parse(process.env.FS_OPTS) : {}; // solver options under test, e.g. {"stepFlux":true,"implicitFriction":true} (F26)
 const normalDepth = (q, n, S, R = (h) => h) => { // per unit width q (m2/s); R(h) hydraulic radius
   let lo = 1e-6, hi = 50;
   for (let k = 0; k < 200; k++) { const h = 0.5 * (lo + hi); (h * Math.pow(R(h), 2 / 3) * Math.sqrt(S) / n > q) ? hi = h : lo = h; }
@@ -31,7 +32,7 @@ function channelRun({ W, dx, S, n, Q, L = 240, wallH = 20, east = 'outflow', sta
   const Wm = ncell * dx;                                         // the width the model actually has
   if (!Wm) return { W, dx, Wm: 0, skipped: 'no cell centre inside the channel' };
   const stageCells = []; if (stage != null) for (let j = 0; j < ny; j++) if (mask[j * nx + nx - 1]) stageCells.push(j * nx + nx - 1);
-  const s = new CPUSolver({ nx, ny, dx, z, manning: n, mask, bc: { west: 'wall', east: stage != null ? 'wall' : east, south: 'wall', north: 'wall' }, stageCells });
+  const s = new CPUSolver({ ...OPTS, nx, ny, dx, z, manning: n, mask, bc: { west: 'wall', east: stage != null ? 'wall' : east, south: 'wall', north: 'wall' }, stageCells });
   if (stage != null) s.setStage(stage);
   const hn = normalDepth(Q / Wm, n, S), u0 = Q / (Wm * hn);
   s.setDepth((x, y, zz) => hn); s.setVelocity(() => [u0, 0]);
@@ -107,7 +108,7 @@ function famR(quick) {
   for (const dx of (quick ? [1] : [1, 2, 4])) for (const [S, n, mmh] of (quick ? [[0.05, 0.1, 50]] : [[0.05, 0.1, 50], [0.15, 0.1, 50], [0.05, 0.03, 50], [0.05, 0.1, 150], [0.01, 0.06, 80]])) {
     const L = 120, nx = Math.round(L / dx), ny = Math.max(3, Math.round(8 / dx)), z = new Float64Array(nx * ny);
     for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = 100 - S * (i + 0.5) * dx;
-    const s = new CPUSolver({ nx, ny, dx, z, manning: n, bc: { west: 'wall', east: 'outflow', south: 'wall', north: 'wall' } });
+    const s = new CPUSolver({ nx, ny, dx, z, manning: n, bc: { west: 'wall', east: 'outflow', south: 'wall', north: 'wall' }, ...OPTS });
     const i_ms = mmh / 1000 / 3600; s.rainRate = i_ms;
     const tc = Math.pow(L * n / Math.sqrt(S), 0.6) / Math.pow(i_ms, 0.4);  // kinematic time of concentration (s)
     s.run(3 * tc + 300);
