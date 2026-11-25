@@ -1969,7 +1969,11 @@ function ensureSolver() {
     bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
     // --- local time stepping (opt-in, Solver settings checkbox; off by default) ---
     lts: $('ltsOn')?.checked || undefined,
+    // F26 thin-film fix (opt-in, Terrain and channels checkbox; off by default): implicit friction + step flux
+    implicitFriction: $('thinFilm')?.checked || undefined, stepFlux: $('thinFilm')?.checked || undefined,
   });
+  run.thinFilm = !!$('thinFilm')?.checked;
+  if (run.thinFilm) log(`Thin-film sheet flow fix (F26) is on: implicit friction${run.solver.lts ? '; the step flux is ignored under local time stepping' : ' and the step flux at wet-to-dry steps'}`, 'ok');
   if (run.solver.ltsOff) log(`Local time stepping is off with ${run.solver.ltsOff}; stepping globally`, 'warn');
   // --- /local time stepping ---
   const start = startWater(c, F, stageCells); // rivers, lakes and tidal water from the gauges (or dry: the lidar surface)
@@ -2356,7 +2360,7 @@ function forcingRecord(r) {
       reach: r.outletReady.reach ? { sections: r.outletReady.reach.sections.length, km: r.outletReady.reach.length / 1000, depth: r.outletReady.reach.depth } : 'prismatic' } : null,
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...($('wetness').value === 'auto' ? { start: wetnessKey(), rainBefore: stormBase()?.antecedent ? (({ mm, days, source, amc, season }) => ({ mm, days, source, amc, season }))(stormBase().antecedent) : null } : {}), ...(Number($('gwShare').value) > 0 ? { groundwater: val('gwShare', 'gwLag') } : {}), ...(emu?.se != null && Math.abs(emu.se - WETNESS[wetnessKey()]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
-    solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM },
+    solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM, ...(r.thinFilm ? { thinFilm: true, implicitFriction: true, stepFlux: !r.solver?.lts } : {}) },
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
     drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },

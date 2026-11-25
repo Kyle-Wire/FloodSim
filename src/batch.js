@@ -17,6 +17,7 @@ export const VARIANTS = {
   'n+20': { key: 'n+20', label: 'Roughness × 1.2', inputs: { calManning: '1.2' } },
   'infil-50': { key: 'infil-50', label: 'Infiltration × 0.5', inputs: { calInfil: '0.5' } },
   'rain+10': { key: 'rain+10', label: 'Rain + 10 % (design storms)', designOnly: true, inputs: { uplift: '10' } },
+  'thin-film': { key: 'thin-film', label: 'Thin-film sheet flow fix (F26)', inputs: { thinFilm: true } },
   coarse: { key: 'coarse', label: 'One cell size coarser', coarser: true, inputs: {} },
 };
 

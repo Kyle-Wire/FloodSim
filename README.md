@@ -1457,11 +1457,14 @@ One scheme, written twice: a fp64 CPU reference (`src/solver-cpu.js`) and WGSL c
 - SSP-RK2 (Heun); CFL on λx + λy (0.48 second order, 0.9 first order)
 - Draining-time flux limiter: a cell never exports more water than it holds → positivity with exact mass
 - Semi-implicit point-wise Manning friction
-- Thin films on steep ground (FINDINGS F26, CPU only, opt-in until the GPU kernels match): `implicitFriction` makes
+- Thin films on steep ground (FINDINGS F26, CPU and GPU, opt-in; GPU suite section `sheetflow`): `implicitFriction` makes
   Manning friction implicit in the new speed and applies it to the RK predictor; `stepFlux` passes a film thinner than
   the bed step to its neighbour as the upper cell's own discharge, with the whole step's force on the lower cell.
   Together they bring rain sheet flow to within 12 % of the kinematic depth (`tests/run-sheetflow-tests.mjs`,
-  `benchmarks/physics/depth/` family R); without them it is 10 % to 100 % of it. `stepFlux` is ignored under `lts`.
+  `benchmarks/physics/depth/` family R); without them it is 10 % to 100 % of it. `stepFlux` is ignored under `lts`, and neither applies to the subgrid
+  speed modes (local inertial). In the app it is the "Thin-film sheet flow fix" checkbox (Area and model → Terrain
+  and channels, input id `thinFilm`); a batch study runs it as the `thin-film` variant, and the run's `summary.json`
+  records `solver.thinFilm` only when it is on, so earlier runs keep their record.
 - Rainfall (with optional per-cell multiplier for roof routing) and constant-capacity infiltration sources;
   buildings as reflective wall cells; wall / open (transmissive) / outflow-only boundaries
 - Full mass accounting: rain, infiltration, boundary outflow, storage (and clipped volume, which is now zero). Depth
