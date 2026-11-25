@@ -787,3 +787,21 @@ the coupled run that read 1.9e-5 reads 3.3e-6.
   nodes and return flow (0.8–1.1 % with rain, 17–19 % of a few cubic metres without).
 - **F18:** EXTRAN with two-way exchange is refused. Spill at the rim is unchanged.
 - **F20:** fixed; PV-SS7 passes 17 of 17.
+
+### F26–F28. Depth audit on planted cases (25 Nov 2026; `benchmarks/physics/depth/`, gridzip-lab PROTOCOL-12)
+
+**F26. Rain sheet flow on a slope is too thin on steep ground and coarse cells.** Steady rain on a uniform plane, CPU
+solver, scored against the kinematic-wave depth at x ≥ 20 m (expected within 15 %). At 1 m cells the model gives 0.36
+(15 % slope) to 1.00 (1 % slope) of the right depth; at 4 m cells, 0.10 to 0.78. Mass is exact, so the water moves too
+fast. The miss follows √(slope × cell size). The likely seat is a film much thinner than the bed step between cells
+under hydrostatic reconstruction. A probe (dx 2 m, S 0.05, n 0.1, 50 mm/h, depth at 100 m) gives 0.445 of truth by default, 0.441 with van Leer or a tiny
+`hfront`, and 0.639 first order: MUSCL makes it worse but is not the cause. At the downstream face the step leaves the lower
+cell dry after reconstruction (h ≪ ΔZ), so the flux is a dam break into a dry bed rather than friction-limited flow. Failed; fix candidate, with family R as its check.
+
+**F27. A 2D model has no wall friction, and a drawn channel's width is the cells' width.** Steady flow between walls:
+the model equals the 2D answer at its own drawn width to 0.5 % in 96 cases (passes). Against a real walled channel
+it is low by −0.6·ln(Wm/W) − 0.4·ln(1 + 2h/W); narrow deep channels come out near half depth. Recorded as model scope.
+
+**F28. A free downstream edge drains a backed-up river for kilometres.** Held edge: exact (0.2 %). Free edge: 0.26 to
+0.44 of the true depth at the edge, recovering over about one backwater length (h/S). Wherever a real river is backed
+up below the model box, hold the edge (`outStage`); CHI's wall check does this in its plan A11.
