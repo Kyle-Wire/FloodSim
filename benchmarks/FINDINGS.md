@@ -794,7 +794,9 @@ the coupled run that read 1.9e-5 reads 3.3e-6.
 solver, scored against the kinematic-wave depth at x ≥ 20 m (expected within 15 %). At 1 m cells the model gives 0.36
 (15 % slope) to 1.00 (1 % slope) of the right depth; at 4 m cells, 0.10 to 0.78. Mass is exact, so the water moves too
 fast. The miss follows √(slope × cell size). The likely seat is a film much thinner than the bed step between cells
-under hydrostatic reconstruction; not yet traced in the code. Failed; fix candidate, with family R as its check.
+under hydrostatic reconstruction. A probe (dx 2 m, S 0.05, n 0.1, 50 mm/h, depth at 100 m) gives 0.445 of truth by default, 0.441 with van Leer or a tiny
+`hfront`, and 0.639 first order: MUSCL makes it worse but is not the cause. At the downstream face the step leaves the lower
+cell dry after reconstruction (h ≪ ΔZ), so the flux is a dam break into a dry bed rather than friction-limited flow. Failed; fix candidate, with family R as its check.
 
 **F27. A 2D model has no wall friction, and a drawn channel's width is the cells' width.** Steady flow between walls:
 the model equals the 2D answer at its own drawn width to 0.5 % in 96 cases (passes). Against a real walled channel
