@@ -25,6 +25,24 @@ export async function runGpuSuite(device, log = console.log, { only } = {}) {
     return { g, c, gs, ch, dmax, gms };
   }
 
+  // F26 sheet flow: steady rain on a 5 % plane at 2 m cells with implicitFriction + stepFlux, GPU against CPU and the
+  // kinematic depth (CPU 1.01 of kinematic at 100 m; the default solver gives 0.45)
+  async function sheetFlowF26() {
+    const dx = 2, S = 0.05, n = 0.1, i_ms = 50 / 1000 / 3600, L = 120, nx = L / dx, ny = 3, z = new Float64Array(nx * ny);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = 100 - S * (i + 0.5) * dx;
+    const tc = Math.pow(L * n / Math.sqrt(S), 0.6) / Math.pow(i_ms, 0.4);
+    const r = await both({ nx, ny, dx, z, manning: n, bc: { west: 'wall', east: 'outflow', south: 'wall', north: 'wall' }, implicitFriction: true, stepFlux: true },
+      () => {}, 3 * tc + 300, { rate: i_ms });
+    const i = Math.floor(100 / dx), xc = (i + 0.5) * dx, hk = Math.pow(i_ms * xc * n / Math.sqrt(S), 0.6);
+    const hg = r.gs.h[nx + i], hc = r.ch[nx + i];
+    results.sheetFlowF26 = { gpuOverKinematic: hg / hk, cpuOverKinematic: hc / hk, gpuOverCpu: hg / hc, massRel: r.gs.mass.rel };
+    log(`sheet flow F26 (2 m, 5 %): GPU/kinematic ${(hg / hk).toFixed(3)}  CPU/kinematic ${(hc / hk).toFixed(3)}  GPU/CPU ${(hg / hc).toFixed(4)}  mass rel=${r.gs.mass.rel.toExponential(2)}`);
+    r.g.destroy();
+    if (Math.abs(hg / hc - 1) > 0.03 || Math.abs(hg / hk - 1) > 0.15) throw new Error(`sheet flow F26: GPU ${hg} vs CPU ${hc} vs kinematic ${hk}`);
+  }
+
+  if (only === 'sheetflow') { await sheetFlowF26(); return results; }
+
   // Dam breaks
   for (const [name, hR] of [['stoker', 0.5], ['ritter', 0]]) {
     const nx = 400, ny = 3, dx = 100 / nx, x0 = 50, tEnd = 6;
@@ -35,6 +53,8 @@ export async function runGpuSuite(device, log = console.log, { only } = {}) {
     log(`${name}: GPU L1 rel err=${(e / n).toExponential(3)}  max|h_gpu-h_cpu|=${r.dmax.toExponential(2)} m  mass rel=${r.gs.mass.rel.toExponential(2)}  steps gpu/cpu=${r.g.steps}/${r.c.steps}`);
     r.g.destroy();
   }
+
+  await sheetFlowF26();
 
   // Lake at rest
   for (const [name, bump] of [['lakeSubmerged', 0.8], ['lakeIsland', 1.2]]) {
