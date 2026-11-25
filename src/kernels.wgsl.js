@@ -8,7 +8,7 @@ struct Params {
   secondOrder: u32, limiter: u32, bcW: u32, bcE: u32,
   bcS: u32, bcN: u32, nInlets: u32, stage: f32,
   tilesX: u32, tilesY: u32, tiles: u32, nBar: u32,
-  nLine: u32, lts: u32, pad2: u32, pad3: u32,
+  nLine: u32, lts: u32, flags: u32, pad3: u32, // flags: 1 implicitFriction, 2 stepFlux (F26; stepFlux off under lts)
 };
 const GH: i32 = 2;
 override STAGE: u32 = 0u;
@@ -136,6 +136,11 @@ fn primAt(i: i32, j: i32) {
   var u = 0.0; var v = 0.0;
   if (q.x > P.hdry) { u = q.y / q.x * fu; v = q.z / q.x * fv; }
   let e = sj * NX + si;
+  // F26 (implicitFriction): the second RK stage's fluxes see the predictor after friction, as CPUSolver.step()
+  if (STAGE == 1u && (P.flags & 1u) != 0u && q.x > P.hdry && S[e].y > 0.0) {
+    let a = DT[0] * P.g * S[e].y * S[e].y / pow(q.x, 4.0 / 3.0);
+    let kf = 0.5 * (1.0 + sqrt(1.0 + 4.0 * a * sqrt(u * u + v * v))); u = u / kf; v = v / kf;
+  }
   if (i < GH && P.bcW == 2u) { u = -outVel(e, e + 1); }
   if (i >= NX - GH && P.bcE == 2u) { u = outVel(e, e - 1); }
   if (j < GH && P.bcS == 2u) { v = -outVel(e, e + NX); }
@@ -157,6 +162,11 @@ fn recon(c: i32, s: i32, sg: f32, isX: bool) -> vec4f {
   let qc = vec4f(wc.x, wc.y, select(wc.w, wc.z, isX), select(wc.z, wc.w, isX));
   var fo = (P.secondOrder == 0u) || (wc.x < P.hfront);
   if ((Ma && wa.x < P.hfront) || (Mb && wb.x < P.hfront)) { fo = true; }
+  // F26 (stepFlux): a film with friction thinner than the bed's change across the cell keeps its step (first order)
+  if (!fo && (P.flags & 2u) != 0u && P.lts == 0u && S[c].y > 0.0) {
+    let zb = select(S[c].x, S[c + s].x, Mb); let za = select(S[c].x, S[c - s].x, Ma);
+    if (wc.x < 0.5 * abs(zb - za)) { fo = true; }
+  }
   if (fo) { return qc; }
   var qa = vec4f(wa.x, wa.y, select(wa.w, wa.z, isX), select(wa.z, wa.w, isX));
   var qb = vec4f(wb.x, wb.y, select(wb.w, wb.z, isX), select(wb.z, wb.w, isX));
@@ -233,10 +243,21 @@ fn face(a: i32, b: i32, s: i32, isX: bool, zc: f32, cw: f32) -> array<f32, 9> {
   let zs = max(max(zL, zR), zc);
   let hLs = max(0.0, L.y - zs); let hRs = max(0.0, R.y - zs);
   var F: vec3f;
-  if (Ma && Mb && zc > max(S[a].x, S[b].x)) { F = weir(a, b, isX, zc, cw, hLs, hRs); } else { F = hllc(hLs, L.z, L.w, hRs, R.z, R.w); }
+  let isWeir = Ma && Mb && zc > max(S[a].x, S[b].x);
+  // F26 (stepFlux): a film stepping down a bed step taller than itself passes its own discharge (see CPUSolver._face)
+  var cas = 0;
+  if ((P.flags & 2u) != 0u && P.lts == 0u && !isWeir && Ma && Mb && S[a].y > 0.0 && S[b].y > 0.0) {
+    if (hLs > P.hdry && hRs <= 0.0 && R.x > P.hdry) { cas = 1; } else if (hRs > P.hdry && hLs <= 0.0 && L.x > P.hdry) { cas = -1; }
+  }
+  if (isWeir) { F = weir(a, b, isX, zc, cw, hLs, hRs); }
+  else if (cas == 1) { let un = max(L.z, 0.0); let q = hLs * un; F = vec3f(q, q * un + 0.5 * P.g * hLs * hLs, q * L.w); }
+  else if (cas == -1) { let un = min(R.z, 0.0); let q = hRs * un; F = vec3f(q, q * un + 0.5 * P.g * hRs * hRs, q * R.w); }
+  else { F = hllc(hLs, L.z, L.w, hRs, R.z, R.w); }
   o[0] = F.x; o[1] = F.y; o[2] = F.z;
   o[3] = select(0.5 * P.g * (L.x * L.x - hLs * hLs), 0.0, !Ma);
   o[4] = select(0.5 * P.g * (R.x * R.x - hRs * hRs), 0.0, !Mb);
+  if (cas == 1) { o[4] = 0.5 * P.g * R.x * R.x + P.g * R.x * (zs - R.y); }
+  if (cas == -1) { o[3] = 0.5 * P.g * L.x * L.x + P.g * L.x * (zs - L.y); }
   o[5] = L.x; o[6] = zL; o[7] = R.x; o[8] = zR;
   return o;
 }
@@ -532,7 +553,9 @@ fn sourcesAt(x: u32, y: u32, on: bool) {
   let d = q.x;
   if (d > P.hdry && s.y > 0.0) {
     let u = q.y / d; let v = q.z / d;
-    let k = 1.0 + dt * P.g * s.y * s.y * sqrt(u * u + v * v) / pow(d, 4.0 / 3.0);
+    let af = dt * P.g * s.y * s.y / pow(d, 4.0 / 3.0); let sp = sqrt(u * u + v * v);
+    // F26 (implicitFriction): implicit in the new speed, as CPUSolver._sources
+    let k = select(1.0 + af * sp, 0.5 * (1.0 + sqrt(1.0 + 4.0 * af * sp)), (P.flags & 1u) != 0u);
     q.y = q.y / k; q.z = q.z / k;
   }
   let r = P.rain * RF[c] * dt;

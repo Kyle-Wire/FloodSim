@@ -797,6 +797,14 @@ fast. The miss follows √(slope × cell size). The likely seat is a film much t
 under hydrostatic reconstruction. A probe (dx 2 m, S 0.05, n 0.1, 50 mm/h, depth at 100 m) gives 0.445 of truth by default, 0.441 with van Leer or a tiny
 `hfront`, and 0.639 first order: MUSCL makes it worse but is not the cause. At the downstream face the step leaves the lower
 cell dry after reconstruction (h ≪ ΔZ), so the flux is a dam break into a dry bed rather than friction-limited flow. Failed; fix candidate, with family R as its check.
+*Fix (25 Nov, CPU, opt-in):* two causes, both needed. (1) The step: once reconstruction leaves the lower side dry, HLLC
+solves a dam break into a dry bed; `stepFlux` passes the upper cell's discharge instead and gives the lower cell the
+whole step's force (g h Δz), with first-order reconstruction where the film is thinner than the step. (2) Friction:
+`k = 1 + a|u_old|` caps a thin film's speed near h^(4/3)/(g n² dt) on long steps, and Heun's second stage saw an
+unfrictioned predictor; `implicitFriction` solves k = 1 + a|u_new| and applies it to the predictor. With both, family R is
+within 12 % at every dx and slope (most within 5 %); C and B are unchanged; every CPU suite passes. Open: the WGSL
+kernels, the GPU suite, local time stepping (LTS against global differs while `stepFlux` is on, so it is off under
+`lts`), and a tuning-town rerun before it becomes the default.
 
 **F27. A 2D model has no wall friction, and a drawn channel's width is the cells' width.** Steady flow between walls:
 the model equals the 2D answer at its own drawn width to 0.5 % in 96 cases (passes). Against a real walled channel

@@ -40,6 +40,7 @@ export class GPUSolver {
     this.sg = o.subgrid ?? null;
     this.cfl = o.cfl ?? (this.sg ? 0.5 : (o.secondOrder ?? true) ? 0.48 : 0.9);
     this.hdry = o.hdry ?? 1e-5; this.hfront = o.hfront ?? 1e-3;
+    this.implicitFriction = !!o.implicitFriction; this.stepFlux = !!o.stepFlux; // F26, as CPUSolver (default off)
     this.secondOrder = this.sg ? false : o.secondOrder ?? true; // local inertial is a single explicit stage
     this.limiter = o.limiter === 'vanleer' ? 1 : 0;
     this.bc = Object.assign({ west: 'wall', east: 'wall', south: 'wall', north: 'wall' }, o.bc || {});
@@ -219,7 +220,7 @@ export class GPUSolver {
     const B = [this.buf.params, this.buf.U, this.buf.U0, this.buf.S, this.buf.W, this.buf.FX, this.buf.FY, this.buf.A, this.buf.DT, this.buf.RED, this.buf.OUT, this.buf.TH, this.buf.RF, this.buf.INC, this.buf.INQ, this.buf.INX, this.buf.STG,
       this.buf.TF, this.buf.TS, this.buf.TL, this.buf.TC, this.buf.TA, this.buf.GI, this.buf.GS, this.buf.CR, this.buf.BF, this.buf.BQ, this.buf.HZ, this.buf.SGC, this.buf.SGF, this.buf.EO, this.buf.GAP, this.buf.SCR, this.buf.SDA, this.buf.SDB, this.buf.SDP, this.buf.SE0, this.buf.BK, this.buf.BR, this.buf.LF, this.buf.CL, this.buf.UDC, this.buf.UDX, this.buf.INA];
     const uses = {
-      prim: [0, 1, 3, 4, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27, 32], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
+      prim: [0, 1, 3, 4, 8, 16], faceX: [0, 3, 4, 5, 8, 24], faceY: [0, 3, 4, 6, 8, 24], barrier: [0, 4, 5, 6, 8, 11, 24, 25, 26], hazard: [0, 1, 3, 8, 27, 32], resetTotals: [0, 7], edgeOut: [0, 4, 5, 6, 8, 11, 30],
       sgPrim: [0, 1, 4, 16, 28], sgFluxX: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgFluxY: [0, 4, 5, 6, 8, 9, 11, 24, 29], sgUpdate: [0, 1, 3, 5, 6, 7, 8, 11],
       sgHazard: [0, 1, 5, 6, 7, 8, 27, 28, 32], sgDt: [0, 1, 9, 28], sgPack: [0, 1, 5, 6, 10, 28], sgExchange: [0, 1, 8, 13, 14, 15, 28],
       update: [0, 1, 2, 3, 5, 6, 7, 8, 11], theta: [0, 1, 2, 3, 5, 6, 8, 11], sources: [0, 1, 3, 7, 8, 12, 22, 23, 31],
@@ -229,11 +230,11 @@ export class GPUSolver {
     const T = (u) => [...u, 19];
     const make = (entry, binds, constants) => {
       const pipeline = d.createComputePipeline({ layout: 'auto', compute: { module: mod, entryPoint: entry, constants } });
-      const bg = d.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: binds.map(b => ({ binding: b, resource: { buffer: B[b] } })) });
+      const bg = d.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: [...new Set(binds)].map(b => ({ binding: b, resource: { buffer: B[b] } })) });
       return { pipeline, bg };
     };
     this.k = {
-      prim: make('prim', uses.prim), faceX: make('faceX', uses.faceX), faceY: make('faceY', uses.faceY),
+      prim: make('prim', uses.prim), prim1: make('prim', uses.prim, { STAGE: 1 }), faceX: make('faceX', uses.faceX), faceY: make('faceY', uses.faceY),
       theta: make('theta', uses.theta),
       update0: make('update', uses.update, { STAGE: 0 }), update1: make('update', uses.update, { STAGE: 1 }),
       sources: make('sources', uses.sources), dtReduce: make('dtReduce', uses.dtReduce),
@@ -293,7 +294,7 @@ export class GPUSolver {
     f[8] = this.cfl; f[9] = this.rainRate; f[10] = tEnd; f[11] = this.dtDry;
     u[12] = this.secondOrder ? 1 : 0; u[13] = this.limiter;
     u[18] = this.nInlets; f[19] = this.stage - this.zref; u[14] = BC[this.bc.west]; u[15] = BC[this.bc.east]; u[16] = BC[this.bc.south]; u[17] = BC[this.bc.north];
-    u[20] = this.tilesX; u[21] = this.tilesY; u[22] = this.tiles; u[23] = this.nBar; u[24] = this.nLine; u[25] = this.lts;
+    u[20] = this.tilesX; u[21] = this.tilesY; u[22] = this.tiles; u[23] = this.nBar; u[24] = this.nLine; u[25] = this.lts; u[26] = (this.implicitFriction ? 1 : 0) | (this.stepFlux ? 2 : 0);
     this.device.queue.writeBuffer(this.buf.params, 0, ab);
   }
 
@@ -333,7 +334,7 @@ export class GPUSolver {
       }
       const stages = this.secondOrder ? [0, 1] : [0];
       for (const st of stages) {
-        this._dispatch(pass, k.prim, w(NX), w(NY));
+        this._dispatch(pass, st ? k.prim1 : k.prim, w(NX), w(NY));
         if (this.tiled) {
           this._indirect(pass, k.faceXT, 2); this._indirect(pass, k.faceYT, 2); this._indirect(pass, k.thetaT, 2);
           if (this.nBar) this._dispatch(pass, st ? k.barrier1 : k.barrier0, Math.ceil(this.nBar / 64));
