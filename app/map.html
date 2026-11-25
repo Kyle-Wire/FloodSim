@@ -536,6 +536,9 @@ input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 
         <!-- local time stepping (opt-in) -->
         <label class="toggle" title="Each 8 × 8 tile steps at its own power-of-two step (up to 8× the step the fastest cell allows): faster where a few deep channel cells set the step for a large shallow area. Off with subgrid cells and sediment"><input type="checkbox" id="ltsOn"> Local time stepping (experimental)</label>
         <!-- /local time stepping -->
+        <!-- thin-film fix (F26, opt-in) -->
+        <label class="toggle" title="F26: implicit friction plus the step flux at wet-to-dry steps, so a thin film of rain running down steep or coarse cells keeps its kinematic depth (benchmarks/physics/depth, family R). Off by default until the tuning towns are re-scored with it; ignored with local time stepping"><input type="checkbox" id="thinFilm"> Thin-film sheet flow fix (F26, experimental)</label>
+        <!-- /thin-film fix -->
         <div class="field"><label for="bathySel" title="Lidar flattens rivers at the flight-day water surface. Where NOAA BlueTopo has surveyed the bed (harbours, estuaries, tidal rivers) that is used; elsewhere this carves an estimated channel from regional bankfull curves (Bieger et al. 2015)">Channel bathymetry</label>
           <select id="bathySel"><option value="off">Lidar surface (none)</option><option value="USA">Estimate: nationwide curve</option><option value="APL">Estimate: Atlantic Plain</option><option value="AHI">Estimate: Appalachian Highlands</option>
             <option value="IPL">Estimate: Interior Plains</option><option value="IHI">Estimate: Interior Highlands</option><option value="LUP">Estimate: Laurentian Upland</option><option value="RMS">Estimate: Rocky Mountains</option>
