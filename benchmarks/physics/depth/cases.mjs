@@ -84,7 +84,8 @@ function gvf(q, n, S, hDown, Lmax) {
 
 function famB(quick) {
   const out = [];
-  for (const [S, n, q, rise] of (quick ? [[0.0005, 0.04, 2, 1.0]] : [[0.0005, 0.04, 2, 1.0], [0.0005, 0.04, 2, 2.0], [0.001, 0.035, 4, 1.0], [0.0002, 0.05, 1, 0.5], [0.002, 0.04, 3, 1.5]])) {
+  const setsB = quick ? [[0.0005, 0.04, 2, 1.0]] : [[0.0005, 0.04, 2, 1.0], [0.0005, 0.04, 2, 2.0], [0.001, 0.035, 4, 1.0], [0.0002, 0.05, 1, 0.5], [0.002, 0.04, 3, 1.5]];
+  for (const [S, n, q, rise] of (process.env.BK ? process.env.BK.split(',').map((k) => setsB[+k]) : setsB)) {
     const W = 20, dx = 2, Q = q * W, hn = normalDepth(q, n, S), L = quick ? 1200 : Math.min(4000, Math.max(1500, 3 * (hn + rise) / S));
     const zEdge = 100 - S * (L - dx / 2), hDown = hn + rise, prof = gvf(q, n, S, hDown, L);
     for (const mode of ['held', 'free']) {
