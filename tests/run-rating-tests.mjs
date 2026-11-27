@@ -4,7 +4,7 @@
 // The cases under "Revision 4" are the departures from the README found on 16 Nov 2026 and fixed in that revision
 // (benchmarks/rating/REGISTRATION.md).
 // Usage: node tests/run-rating-tests.mjs
-import { parseSteady, steadyMinutes, stepWindows, steadyFlow } from '../src/steady.js';
+import { parseSteady, steadyMinutes, stepWindows, steadyFlow, fillToLevel, settleStat, settleBudgetH, settleNext } from '../src/steady.js';
 import { score, verdict, curve, referenceScatter, THRESHOLDS } from '../benchmarks/rating/score.mjs';
 
 let fails = 0;
@@ -37,6 +37,51 @@ const near = (a, b, tol = 1e-9) => Math.abs(a - b) <= tol;
   check('flow: volume in = holds + ramps', near(vol, 8 * 3600 + 5 * 600 + 2 * 3000 + 3 * 300 + 4 * 300, 1e-6), `${vol.toFixed(1)} m³`);
   const z = steadyFlow(parseSteady('{"steps":[[3,30]],"ramp":0}'));
   check('flow: one step, no ramp', z(0) === 3 && z(1799) === 3 && z(5000) === 3);
+}
+
+// ---- src/steady.js, plan A15 settle (CHI FLOOD-WALLS-PLAN): known answers
+{
+  const s = parseSteady(JSON.stringify({ steps: [[1382, 240]], fill: { q: 1382, hours: 8 }, settle: {} }));
+  check('settle: defaults 1 cm/h, 24 h cap, start level on, 5 cm wet floor', s.settle.change === 0.01 && s.settle.capHours === 24 && s.settle.startLevel === true && s.settle.wetMin === 0.05);
+  check('settle: budget = cap - fill - steps (24 - 8 - 4 = 12 h)', settleBudgetH(s) === 12);
+  check('settle: absent → undefined, no budget; no fill → no budget', parseSteady('{"steps":[[1,60]]}').settle === undefined && settleBudgetH(parseSteady('{"steps":[[1,60]]}')) === 0
+    && settleBudgetH(parseSteady('{"steps":[[1,60]],"settle":{}}')) === 0);
+  check('settle: cap below fill + steps → no extra hours, never negative', settleBudgetH(parseSteady('{"steps":[[1,600]],"fill":{"q":1,"hours":20},"settle":{"capHours":24}}')) === 0);
+  check('settle: startLevel false and a custom limit kept', (() => { const t = parseSteady('{"steps":[[1,60]],"fill":{"q":1,"hours":2},"settle":{"startLevel":false,"change":0.02,"capHours":10}}').settle; return !t.startLevel && t.change === 0.02 && t.capHours === 10; })());
+}
+{
+  // a 6 x 3 bed: a valley at 10 m joined to the outlet column (x = 5), a hollow at 9 m behind a 12 m ridge, a wall cell
+  const nx = 6, ny = 3, z = Float64Array.from([
+    10, 10, 12, 10, 10, 10,
+     9, 10, 12, 10, 11, 10,
+    10, 10, 12, 10, 10, NaN]);
+  const d = fillToLevel(z, nx, ny, [5, 11], 11.0);
+  check('fill: connected low ground filled to the level, depth = level - bed', near(d[3], 1) && near(d[9], 1) && near(d[15], 1) && near(d[5], 1));
+  check('fill: ground at or above the level stays dry', d[10] === 0 && d[2] === 0);
+  check('fill: a hollow behind a higher ridge is not filled', d[6] === 0 && d[0] === 0);
+  check('fill: a no-data cell is never filled', d[17] === 0);
+  const m = new Uint8Array(nx * ny).fill(1); m[3] = 0;
+  const dm = fillToLevel(z, nx, ny, [5], 11.0, m);
+  check('fill: cells outside the mask stay dry, fill goes round them', dm[3] === 0 && near(dm[9], 1));
+  check('fill: a seed above the level fills nothing', fillToLevel(z, nx, ny, [2], 11.0).every(v => v === 0));
+}
+{
+  // a basin that relaxes towards its level: level(t) = 2 - a e^(-t/τ), a = 0.5 m, τ = 3 h. The change over hour t-1..t
+  // is a e^(-(t-1)/τ)(1 - e^(-1/τ)), under 1 cm once t - 1 > τ ln(a (1 - e^(-1/τ)) / 0.01) = 7.95, so at hour 9
+  const a = 0.5, tau = 3, N = 400, lv = (t) => 2.0 - a * Math.exp(-t / tau);
+  const s = parseSteady(JSON.stringify({ steps: [[1, 60]], fill: { q: 1, hours: 2 }, settle: { capHours: 24 } }));
+  const h = (t) => { const x = new Float32Array(N); for (let k = 0; k < N; k++) x[k] = k < 380 ? lv(t) : 0.01; return x; };
+  let hour = 2, extra = 0, out;
+  for (;;) { const m = settleStat(h(hour - 1), h(hour)); out = settleNext(s, m, extra); if (out !== 'more') break; hour++; extra++; }
+  check('settle: an exponential fill stops at the first hour its change is under 1 cm', out === 'settled' && hour === 9, `hour ${hour}`);
+  const st = settleStat(h(1), h(2));
+  check('settle: stats over cells wet at both ends only, mean rise positive', st.n === 380 && st.wet1 === 380 && st.rise > 0);
+  const slow = parseSteady(JSON.stringify({ steps: [[1, 60]], fill: { q: 1, hours: 2 }, settle: { capHours: 5 } }));
+  hour = 2; extra = 0; const far = (t) => { const x = new Float32Array(N); for (let k = 0; k < N; k++) x[k] = 1 + 0.1 * t; return x; };
+  for (;;) { out = settleNext(slow, settleStat(far(hour - 1), far(hour)), extra); if (out !== 'more') break; hour++; extra++; }
+  check('settle: a river still rising 10 cm/h stops at the cap, unsettled, with fill + steps + extra = cap', out === 'cap' && 2 + extra + 1 === 5, `extra ${extra}`);
+  check('settle: falling water counts too (|change|)', settleStat(Float32Array.of(1, 1), Float32Array.of(0.8, 0.8)).p95 > 0.19);
+  check('settle: nothing wet at both ends → Infinity, never settled', settleStat(Float32Array.of(0, 1), Float32Array.of(1, 0)).p95 === Infinity);
 }
 
 // ---- benchmarks/rating/score.mjs

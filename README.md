@@ -819,6 +819,15 @@ Catonsville and Elkridge gauges).
   then starts from that state, so its peaks, arrival times and books all begin with the storm. Skipped in the subgrid
   speed mode. At Ellicott City, 1 h of the Patapsco's 57 cfs base put 5,889 m³ in (57 cfs × 1.019 × 1 h is 5,940 m³),
   3,278 m³ of it still in the channel at the storm's start.
+- **Settled steady runs** (the hidden `steadyTest` input's `settle`, `src/steady.js`; used by Climate Home Inspection's
+  flood wall check, plan A15). A steady-flow test with a `fill` can start the low ground connected to the held outlet
+  edge at the outlet's level (`startLevel`, default on: `fillToLevel`, 8-connected through ground below that level),
+  then, after the fill hours, keeps filling 1 h at a time until the 95th percentile of the hour's |change in level|
+  over cells wet at both ends (`settleStat`, 5 cm wet floor) is under `change` (default 0.01 m), stopping at
+  `capHours` (default 24) of run time in all, fill plus steps. Each hour (that percentile, the mean rise, the wet area,
+  the volume in) and whether it settled go in `summary.json` under `runLength.settle`; a run that hits the cap says
+  "not settled" in the log and the summary. Without `settle`, a fill runs its fixed hours as before.
+  `npm run test:rating` checks the fill and the stopping rule on cases with known answers.
 - Check: Ellicott City in the speed mode with the Patapsco's 10-year flow: 1.35 million m³ through the model in 90
   minutes, surface mass error 1.6e-6 of the water that entered. `npm run test:inflow` (`--live` fits Hollofield).
 
