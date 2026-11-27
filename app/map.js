@@ -70,7 +70,7 @@ import * as RAS from '../src/hecras.js'; // HEC-RAS handoff: the 2D package expo
 import { MANNING } from '../src/terrain.js';
 import { layerInputs, transformFor } from '../src/infra.js';
 import { toUTM } from '../src/geo.js';
-import { parseSteady, steadyMinutes, steadyFlow } from '../src/steady.js';
+import { fillToLevel, settleStat, settleNext, parseSteady, steadyMinutes, steadyFlow } from '../src/steady.js';
 /** The steady-flow test setup (src/steady.js; RT-1), or null: opt-in, from the hidden #steadyTest input. */
 const steady = () => parseSteady($('steadyTest')?.value);
 import * as SSX from '../src/streamstats.js'; // ungauged inflows
@@ -2200,14 +2200,37 @@ async function warmUp(r) {
   if (stageCells?.length) s.setStage(stageAt(storm, 0));
   try {
     const start = startWater(c, F, stageCells), at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
-    s.setDepth((x, y) => Math.max(start ? start.depth[at(x, y)] : 0, c.bathyFill ? c.bathyFill[at(x, y)] : 0));
+    // plan A15 (sd.settle.startLevel): the low ground connected to the held outlet starts at the outlet's level
+    const lvl0 = sd?.settle?.startLevel && fill && stageCells?.length ? stageAt(storm, 0) : null;
+    const level0 = lvl0 != null ? fillToLevel(c.z, c.nx, c.ny, stageCells, lvl0, mask) : null;
+    if (level0) { let n = 0; for (const v of level0) if (v > 0) n++; log(`Settle start: ${(n * F * F * model.fine.dx ** 2 / 1e4).toFixed(1)} ha connected to the outlet start at ${lvl0.toFixed(2)} m`); }
+    s.setDepth((x, y) => Math.max(start ? start.depth[at(x, y)] : 0, c.bathyFill ? c.bathyFill[at(x, y)] : 0, level0 ? level0[at(x, y)] : 0));
     const links = new InflowLinks(entries), hub = new LinkHub(s, [links], 2);
     let shown = 0;
-    while (s.t < T - 1e-6) { if (run !== r) return; await s.advance(Math.min(T, hub.tNext)); if (s.t >= hub.tNext - 1e-6) await hub.exchange();
-      if (fill && s.t >= (shown + 1) * 3600) { shown = Math.floor(s.t / 3600); log(`Fill: ${shown} of ${hours} h at ${fill.q} m³/s (${Math.round(links.totals.volume).toLocaleString()} m³ in)`); } }
-    const st = await s.readState();
-    r.warm = { hours, h: st.h, hu: st.hu, hv: st.hv, volumeIn: links.totals.volume };
-    log(`${fill ? `Fill: ${hours} h at ${fill.q} m³/s before the steps` : `Baseflow warm-up: ${hours} h of river base flow before the storm`}${stageCells?.length ? `, the ${r.outlet ? 'river outlet' : 'tide'} held at ${stageAt(storm, 0).toFixed(2)} m on ${stageCells.length} edge cells` : ''} (${Math.round(links.totals.volume).toLocaleString()} m³ in, ${((performance.now() - t0) / 1000).toFixed(1)} s)`, 'ok');
+    const to = async (T1) => { while (s.t < T1 - 1e-6) { if (run !== r) return false; await s.advance(Math.min(T1, hub.tNext)); if (s.t >= hub.tNext - 1e-6) await hub.exchange();
+      if (fill && s.t >= (shown + 1) * 3600) { shown = Math.floor(s.t / 3600); log(`Fill: ${shown} of ${hours} h at ${fill.q} m³/s (${Math.round(links.totals.volume).toLocaleString()} m³ in)`); } } return true; };
+    // plan A15 (sd.settle): the last fill hour, then 1 h more at a time, until the hour's 95th-percentile change in
+    // level over cells wet at both ends is under the limit, or the cap; each hour goes in the run's summary
+    const set = fill && sd.settle, history = []; let st, settled = null, extra = 0;
+    if (set) {
+      if (!(await to(Math.max(0, T - 3600)))) return;
+      let prev = (await s.readState()).h.slice();
+      const cellHa = (F * model.fine.dx) ** 2 / 1e4;
+      for (;;) {
+        if (!(await to(T + extra * 3600))) return;
+        st = await s.readState();
+        const m = settleStat(prev, st.h, sd.settle.wetMin);
+        history.push({ hour: Math.round(s.t / 3600), p95ChangeM: +m.p95.toFixed(4), meanRiseM: +m.rise.toFixed(4), wetHa: +(m.wet1 * cellHa).toFixed(2), volumeInM3: Math.round(links.totals.volume) });
+        log(`Settle: hour ${Math.round(s.t / 3600)}, 95 % of wet cells changed under ${(m.p95 * 100).toFixed(1)} cm (limit ${(sd.settle.change * 100).toFixed(1)} cm), ${(m.wet1 * cellHa).toFixed(1)} ha wet`);
+        const next = settleNext(sd, m, extra);
+        if (next !== 'more') { settled = next === 'settled'; break; }
+        prev = st.h.slice(); extra++;
+      }
+      log(settled ? `Settled after ${hours + extra} h of fill` : `Not settled at the ${sd.settle.capHours} h cap (${hours + extra} h of fill): reported as unsettled`, settled ? 'ok' : 'warn');
+    } else { if (!(await to(T))) return; st = await s.readState(); }
+    r.warm = { hours: hours + extra, h: st.h, hu: st.hu, hv: st.hv, volumeIn: links.totals.volume,
+      ...(set ? { settle: { settled, fillH: hours, extraH: extra, changeLimitM: sd.settle.change, capHours: sd.settle.capHours, startLevelM: lvl0, history } } : {}) };
+    log(`${fill ? `Fill: ${r.warm.hours} h at ${fill.q} m³/s before the steps` : `Baseflow warm-up: ${hours} h of river base flow before the storm`}${stageCells?.length ? `, the ${r.outlet ? 'river outlet' : 'tide'} held at ${stageAt(storm, 0).toFixed(2)} m on ${stageCells.length} edge cells` : ''} (${Math.round(links.totals.volume).toLocaleString()} m³ in, ${((performance.now() - t0) / 1000).toFixed(1)} s)`, 'ok');
   } finally { s.destroy(); }
 }
 $('runBtn').onclick = async () => {
@@ -2361,7 +2384,7 @@ function forcingRecord(r) {
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...($('wetness').value === 'auto' ? { start: wetnessKey(), rainBefore: stormBase()?.antecedent ? (({ mm, days, source, amc, season }) => ({ mm, days, source, amc, season }))(stormBase().antecedent) : null } : {}), ...(Number($('gwShare').value) > 0 ? { groundwater: val('gwShare', 'gwLag') } : {}), ...(emu?.se != null && Math.abs(emu.se - WETNESS[wetnessKey()]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
     solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM, ...(r.thinFilm ? { thinFilm: true, implicitFriction: true, stepFlux: !r.solver?.lts } : {}) },
-    runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}) },
+    runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}), ...(r.warm?.settle ? { settle: r.warm.settle } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
     drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
     drainSettings: drainSettings(),
