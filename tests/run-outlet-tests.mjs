@@ -55,6 +55,27 @@ function channel(nx, edge, T = 4000) {
 }
 
 {
+  // CHI wall-check plan A19: a box cut across a wide floodplain. A channel runs east down the middle, floodplain 2 m above
+  // its bed on both sides, the east edge held at 3 m (1 m over the floodplain). Known answer: a steady river upstream of a
+  // held level sits at or above it everywhere. With the box's north and south sides free outfalls, the floodplain drains
+  // off them and the water there falls below the held level; with them closed (app/map.js sideBC), it does not.
+  const nx = 60, ny = 21, z = new Float64Array(nx * ny), lvl = 3;
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) z[j * nx + i] = j >= 8 && j <= 12 ? 0 : 2;
+  const east = Array.from({ length: ny }, (_, j) => j * nx + nx - 1), chan = [8, 9, 10, 11, 12];
+  const box = (side) => {
+    const s = new CPUSolver({ nx, ny, dx, z, manning: n, bc: { west: 'wall', east: 'outflow', north: side, south: side }, stageCells: east });
+    s.setStage(lvl); s.setDepth((x, y) => Math.max(0, lvl - z[Math.min(ny - 1, Math.floor(y / dx)) * nx + Math.min(nx - 1, Math.floor(x / dx))]));
+    let t0 = 0;
+    s.run(6000, (sv) => { const a = Q * (sv.t - t0) / (dx * dx * chan.length); t0 = sv.t; for (const j of chan) sv.h[sv.idx(0, j)] += a; });
+    let lo = Infinity; for (let j = 0; j < ny; j++) for (let i = 0; i < nx - 1; i++) { const k = s.idx(i, j); if (s.h[k] > 0.01) lo = Math.min(lo, s.h[k] + s.z[k]); }
+    return { lo, side: s.h[s.idx(30, 0)] + s.z[s.idx(30, 0)] };
+  };
+  const walls = box('wall'), free = box('outflow');
+  check('A19: sides closed, the floodplain stays at or above the held level', walls.lo >= lvl - 0.01, `lowest ${walls.lo.toFixed(3)} m vs ${lvl} m`);
+  check('A19: sides free, the floodplain drains off them below the held level', free.side < lvl - 0.1, `at the side ${free.side.toFixed(3)} m vs ${lvl} m`);
+}
+
+{
   // the reach from cross-sections: on a sloping prismatic channel, normal depth stays normal depth up the reach
   const S0 = 0.001, yn = (Q / (W * dx) * n / Math.sqrt(S0)) ** 0.6, wall = (x) => S0 * x + 100;
   const secs = [];

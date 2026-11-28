@@ -825,7 +825,9 @@ Catonsville and Elkridge gauges).
   then, after the fill hours, keeps filling 1 h at a time until the 95th percentile of the hour's |change in level|
   over cells wet at both ends (`settleStat`, 5 cm wet floor) is under `change` (default 0.01 m), stopping at
   `capHours` (default 24) of run time in all, fill plus steps. Each hour (that percentile, the mean rise, the wet area,
-  the volume in) and whether it settled go in `summary.json` under `runLength.settle`; a run that hits the cap says
+  the volume in) and whether it settled go in `summary.json` under `steadyFill.settle` (and the fill's hours and volume
+  under `steadyFill`; until this fix they reached only the forcing fingerprint, which summary.json keeps as hashes, so
+  the 28 Nov Lumber run has no settle record). The solver options as run are under `solver`. A run that hits the cap says
   "not settled" in the log and the summary. Without `settle`, a fill runs its fixed hours as before.
   `npm run test:rating` checks the fill and the stopping rule on cases with known answers.
 - Check: Ellicott City in the speed mode with the Patapsco's 10-year flow: 1.35 million m³ through the model in 90
@@ -1372,6 +1374,16 @@ Draw area, drag a box (releasing anywhere, even over a map control, finishes it)
 Build the SWMM engine once (needs the Emscripten SDK on PATH): `npm run build:swmm` → `vendor/swmm-wasm/`
 (452 KB wasm; built here with emsdk 6.0.13). `npm run test:swmm` drives the engine on the Eastwick network fixture.
 Without it the network is still generated, drawn and exported, but runs treat it as absent and say so.
+
+**Other edges closed** (River leaving the area → *Other edges*: *Closed (walls) where a downstream level is held*;
+`sideBC` in `app/map.js`). By default every edge of the grid is a free outfall. A box cut across a wide floodplain then
+drains the floodplain off its sides, and the water there falls below the level held downstream, which a steady river
+cannot do (CHI's wall check, 28 Nov 2026: at Lumber SC the east and west sides stood 0.7 to 0.9 m below the held
+16.62 m edge, and the town with them). With *Closed*, all four edges are walls whenever the run holds a level (a fixed
+level, a river outlet or a tide), in the warm-up and the run, so the river leaves only through the held cells; without a
+held level the setting is ignored with a warning (closed edges would trap the water). It is in the forcing
+fingerprint (`solver.sides`) and in `summary.json` (`solver.sides`). `node tests/run-outlet-tests.mjs` checks both
+against the known answer on a box cut across a floodplain.
 
 **Boundaries.** Real-terrain runs use `outflow` edges, a free outfall: the edge cell discharges at the Manning velocity
 on the water-surface slope toward the edge (beyond 1 in 10,000, and only with a wet neighbour), capped at critical

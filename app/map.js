@@ -1537,6 +1537,15 @@ async function outletReach(site) {
  * wetland under the cell, or a mapped stream or river within 30 m) and the ground beside it below the run's highest
  * stage, out to the banks. A pool above a dam, a closed inflow edge and higher ground stay free outfalls.
  */
+/** The four grid edges' boundary: free outfalls (default), or walls when "Other edges" is closed and the run holds a
+ *  level at its outlet (held cells drain it; CHI wall-check plan A19). Without a held level, closed edges would trap the
+ *  water, so they stay free and the log says so. */
+function sideBC(held) {
+  const closed = $('sideEdges')?.value === 'closed' && !!held;
+  if ($('sideEdges')?.value === 'closed' && !held) log('Other edges: closed needs a held downstream level (a fixed level, a gauge or a tide); the edges stay free outfalls', 'warn');
+  const k = closed ? 'wall' : 'outflow';
+  return { west: k, east: k, south: k, north: k };
+}
 function stageEdgeCells(c, F, mask, st) {
   if (!st?.wl) return undefined;
   const fine = model.fine, W = fine.nx, lines = (model.osm.waterways || []).filter(w => /river|stream|canal|tidal/.test(w.kind)).map(w => toCells(fine, w.line));
@@ -1966,13 +1975,14 @@ function ensureSolver() {
   run.solver = new GPUSolver(device, {
     nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, infil, inlets: inletCells, stageCells, subgrid: c.sg ?? undefined,
     sink: c.inside?.map(v => 1 - v), lines: run.lines.faces.length ? run.lines.faces : undefined, gi: run.gi ?? undefined, underdrains: coupled && run.sw.under.length ? run.sw.under.flatMap(g => g.cells) : undefined, crest, ga: steady() ? undefined : run.ga ?? undefined, scour: run.scour ?? undefined, sediment: run.sed ?? undefined, debris: run.debris, banks: run.banks ?? undefined, rainField: rainBase0(run, c),
-    bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2,
+    bc: sideBC(stageCells?.length), hdry: 1e-5, hfront: 1e-3, dtDry: 2,
     // --- local time stepping (opt-in, Solver settings checkbox; off by default) ---
     lts: $('ltsOn')?.checked || undefined,
     // F26 thin-film fix (opt-in, Terrain and channels checkbox; off by default): implicit friction + step flux
     implicitFriction: $('thinFilm')?.checked || undefined, stepFlux: $('thinFilm')?.checked || undefined,
   });
-  run.thinFilm = !!$('thinFilm')?.checked;
+  run.thinFilm = !!$('thinFilm')?.checked; run.sides = run.solver.bc.west === 'wall' ? 'closed' : 'free';
+  if (run.sides === 'closed') log('Other edges closed: the river leaves only through the held downstream level', 'ok');
   if (run.thinFilm) log(`Thin-film sheet flow fix (F26) is on: implicit friction${run.solver.lts ? '; the step flux is ignored under local time stepping' : ' and the step flux at wet-to-dry steps'}`, 'ok');
   if (run.solver.ltsOff) log(`Local time stepping is off with ${run.solver.ltsOff}; stepping globally`, 'warn');
   // --- /local time stepping ---
@@ -2196,7 +2206,7 @@ async function warmUp(r) {
   const storm = currentStorm(); let stageCells = stageEdgeCells(c, F, mask, storm); // the tide (or a river outlet) held at its level at the storm's start
   if (!stageCells) { r.outlet = outletFor(r, c, F, mask); stageCells = r.outlet?.cells; }
   const s = new GPUSolver(device, { nx: c.nx, ny: c.ny, dx: F, z: c.z, mask, manning: c.manning, inlets: entries.flatMap(e => e.cells), sink: c.inside?.map(v => 1 - v), stageCells,
-    bc: { west: 'outflow', east: 'outflow', south: 'outflow', north: 'outflow' }, hdry: 1e-5, hfront: 1e-3, dtDry: 2 });
+    bc: sideBC(stageCells?.length), hdry: 1e-5, hfront: 1e-3, dtDry: 2 });
   if (stageCells?.length) s.setStage(stageAt(storm, 0));
   try {
     const start = startWater(c, F, stageCells), at = (x, y) => Math.min(c.ny - 1, Math.floor(y / F)) * c.nx + Math.min(c.nx - 1, Math.floor(x / F));
@@ -2383,7 +2393,7 @@ function forcingRecord(r) {
       reach: r.outletReady.reach ? { sections: r.outletReady.reach.sections.length, km: r.outletReady.reach.length / 1000, depth: r.outletReady.reach.depth } : 'prismatic' } : null,
     antecedent: { ...val('infilModel', 'wetness', 'wtDepth'), ...($('wetness').value === 'auto' ? { start: wetnessKey(), rainBefore: stormBase()?.antecedent ? (({ mm, days, source, amc, season }) => ({ mm, days, source, amc, season }))(stormBase().antecedent) : null } : {}), ...(Number($('gwShare').value) > 0 ? { groundwater: val('gwShare', 'gwLag') } : {}), ...(emu?.se != null && Math.abs(emu.se - WETNESS[wetnessKey()]) > 1e-9 ? { se: emu.se } : {}) },
     grid: { solver: $('dxSel').value, F: r.F },
-    solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM, ...(r.thinFilm ? { thinFilm: true, implicitFriction: true, stepFlux: !r.solver?.lts } : {}) },
+    solver: { hdry: 1e-5, hfront: 1e-3, dtDry: 2, quantum: STEP_QUANTUM, ...(r.thinFilm ? { thinFilm: true, implicitFriction: true, stepFlux: !r.solver?.lts } : {}), ...(r.sides === 'closed' ? { sides: 'closed' } : {}) },
     runLength: { stop: tStop(), ...(r.warm ? { warmUpH: r.warm.hours } : {}), ...(r.warm?.settle ? { settle: r.warm.settle } : {}) },
     options: { sediment: !!r.sed, debris: !!r.debris, ...val('topsoil'), banks: !!r.banks },
     drainage: { src: drainSrc, ...linkedPart(), ...val('designAri', 'spacing', 'downspout', 'roof', 'lumpRate', 'giPave', 'giGarden', 'giRoof', 'giTank', 'twoWay', 'csoOn', 'csoDwf', 'csoCap', 'csoPerCap', 'csoDensity', 'csoGates', 'csoIet'), infra: CMP.hashOf(infra.layer), linked: linkedLinks(), cal: cal() },
@@ -3836,7 +3846,7 @@ async function setupInflow() {
   }).join('');
   for (let i = 0; i < inflow.entries.length; i++) for (const id of ['inGauge', 'inFlow', 'inLag', 'inScale']) $(id + i).onchange = () => { if (model && (!run || !run.solver)) resetRun(); inflowNoteUpdate(); areaNote(i); };
   for (let i = 0; i < inflow.entries.length; i++) ungaugedWire(i);
-  for (const id of ['inExp', 'warmUp', 'outGauge', 'outLen', 'outReach', 'outDepth', 'outStage', 'outSide']) $(id).onchange =() => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
+  for (const id of ['inExp', 'warmUp', 'outGauge', 'outLen', 'outReach', 'outDepth', 'outStage', 'outSide', 'sideEdges']) $(id).onchange =() => { if (model && (!run || !run.solver)) resetRun(); for (let i = 0; i < inflow.entries.length; i++) areaNote(i); };
   inflowNoteUpdate();
   inflow.entries.forEach((en, i) => { // the drainage area where each river enters (USGS NLDI), in the background
     const [lo, la] = ll(en.at); en.area = basinAreaKm2(lo, la, fetcher).then((a) => { en.areaKm2 = a.areaKm2; areaNote(i); return a; }).catch((e) => { en.areaErr = e.message; areaNote(i); return null; });
@@ -4426,6 +4436,10 @@ async function runFiles() {
     // whether the run was resumed from a checkpoint, and at what model time (s); runs before 10 Nov 2026 do not say, and
     // a run resumed before 742b56e stopped reading frames back at the resume (gauge series, max speeds, saved frames)
     resume: { at: run.resumedAt ?? null },
+    // the solver options and the steady-flow fill as run (plan A15 settle history, hour by hour), kept here and not only
+    // in the forcing fingerprint, which summary.json stores as hashes
+    solver: { thinFilm: !!run.thinFilm, implicitFriction: !!run.thinFilm, stepFlux: !!run.thinFilm && !run.solver?.lts, lts: !!run.solver?.lts, sides: run.sides ?? 'free' },
+    steadyFill: run.warm ? { hours: run.warm.hours, volumeInM3: Math.round(run.warm.volumeIn), ...(run.warm.settle ? { settle: run.warm.settle } : {}) } : null,
     forcing: run.record?.forcing ?? CMP.fingerprint(forcingRecord(run)), utilityData: utilityData(), drainSettings: run.record ? run.record.drainSettings : drainSettings(), commit: run.record?.commit ?? appCommit, ...(run.record ? (run.record.codeChanged ? { codeChanged: run.record.codeChanged } : {}) : appChanged.length ? { codeChanged: appChanged } : {}), grids: run.record ? Object.fromEntries(Object.entries(CMP.GRIDS).map(([k, v]) => [`grids/${k}.f32`, v])) : null,
     books: run.record?.books ?? null, validation: run.record?.validation ?? null, inflow: run.record?.inflow ?? null, ponds: run.record?.ponds ?? null, cso: run.record?.cso ?? null, controlLines: run.record?.lines.map(l => ({ id: l.id, name: l.name, volumeM3: l.volume, plusM3: l.plus, minusM3: l.minus, faces: l.faces, ...(l.endDepth ? { endDepthM: l.endDepth } : {}), ...CMP.lineStats(l) })) ?? null,
     design: run.scenario && model.design ? { ...resolvedValues(design.active?.design ?? { features: [] }, model.design.log), newBuildings: run.flooded ?? null } : null,
